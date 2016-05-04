@@ -21,32 +21,6 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
-## API
-
-#### `Promise<FetchBlobResponse> fetch(url, headers, body)`
-
-Send a HTTP request uses given headers and body, and return a Promise.
-
-#### url:`string` Required
-HTTP request destination url.
-#### headers:`object` (Optional)
-Headers of HTTP request, value of headers should be `stringified`.
-#### body:`string` (Optional)
-Body of the HTTP request, body MUST be a BASE64 string, this string will be converted into byte array in native code.
-
-### FetchBlobResponse
-
-When `fetch` success, it resolve a `FetchBlobResponse` object as first argument. `FetchBlobResponse` object has the following methods (these method are synchronous, so you might take quite a performance impact if the file is big):
-
-#### base64():string
-  returns base64 string of response data (done in native context)
-#### json():object
-  returns json parsed object (done in js context)
-#### text():string
-  returns decoded base64 string (done in js context)
-#### blob():Blob
-  returns Blob object (one in js context)
-
 ## Usage
 
 ```js
@@ -100,6 +74,32 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
     // error handling ..
   })
 ```
+
+## API
+
+#### `Promise<FetchBlobResponse> fetch(url, headers, body)`
+
+Send a HTTP request uses given headers and body, and return a Promise.
+
+#### url:`string` Required
+HTTP request destination url.
+#### headers:`object` (Optional)
+Headers of HTTP request, value of headers should be `stringified`.
+#### body:`string` (Optional)
+Body of the HTTP request, body MUST be a BASE64 string, this string will be converted into byte array in native code.
+
+### FetchBlobResponse
+
+When `fetch` success, it resolve a `FetchBlobResponse` object as first argument. `FetchBlobResponse` object has the following methods (these method are synchronous, so you might take quite a performance impact if the file is big):
+
+#### base64():string
+  returns base64 string of response data (done in native context)
+#### json():object
+  returns json parsed object (done in js context)
+#### text():string
+  returns decoded base64 string (done in js context)
+#### blob():Blob
+  returns Blob object (one in js context)
 
 ### TODO
 
