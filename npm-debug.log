@@ -1,0 +1,28 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/Users/xeiyan/.nvm/versions/node/v5.7.1/bin/node',
+1 verbose cli   '/Users/xeiyan/.nvm/versions/node/v5.7.1/bin/npm',
+1 verbose cli   'repo' ]
+2 info using npm@3.6.0
+3 info using node@v5.7.1
+4 silly fetchPackageMetaData .
+5 silly fetchDirectoryPackageData .
+6 verbose stack Error: no repository
+6 verbose stack     at getUrlAndOpen (/Users/xeiyan/.nvm/versions/node/v5.7.1/lib/node_modules/npm/lib/repo.js:27:21)
+6 verbose stack     at /Users/xeiyan/.nvm/versions/node/v5.7.1/lib/node_modules/npm/lib/repo.js:21:5
+6 verbose stack     at /Users/xeiyan/.nvm/versions/node/v5.7.1/lib/node_modules/npm/lib/fetch-package-metadata.js:37:12
+6 verbose stack     at addRequestedAndFinish (/Users/xeiyan/.nvm/versions/node/v5.7.1/lib/node_modules/npm/lib/fetch-package-metadata.js:82:5)
+6 verbose stack     at /Users/xeiyan/.nvm/versions/node/v5.7.1/lib/node_modules/npm/node_modules/read-package-json/read-json.js:345:5
+6 verbose stack     at checkBinReferences_ (/Users/xeiyan/.nvm/versions/node/v5.7.1/lib/node_modules/npm/node_modules/read-package-json/read-json.js:309:45)
+6 verbose stack     at final (/Users/xeiyan/.nvm/versions/node/v5.7.1/lib/node_modules/npm/node_modules/read-package-json/read-json.js:343:3)
+6 verbose stack     at then (/Users/xeiyan/.nvm/versions/node/v5.7.1/lib/node_modules/npm/node_modules/read-package-json/read-json.js:113:5)
+6 verbose stack     at /Users/xeiyan/.nvm/versions/node/v5.7.1/lib/node_modules/npm/node_modules/read-package-json/read-json.js:300:12
+6 verbose stack     at /Users/xeiyan/.nvm/versions/node/v5.7.1/lib/node_modules/npm/node_modules/graceful-fs/graceful-fs.js:76:16
+7 verbose cwd /Users/xeiyan/code/rn-test/fetchblob/src
+8 error Darwin 15.4.0
+9 error argv "/Users/xeiyan/.nvm/versions/node/v5.7.1/bin/node" "/Users/xeiyan/.nvm/versions/node/v5.7.1/bin/npm" "repo"
+10 error node v5.7.1
+11 error npm  v3.6.0
+12 error no repository
+13 error If you need help, you may report this error at:
+13 error     <https://github.com/npm/npm/issues>
+14 verbose exit [ 1, true ]
