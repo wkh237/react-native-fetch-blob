@@ -30,7 +30,7 @@ Send a HTTP request uses given headers and body, and return a Promise.
 #### url:`string` Required
 HTTP request destination url.
 #### headers:`object` (Optional)
-Headers of HTTP request, value of #### headers should be `stringified`.
+Headers of HTTP request, value of headers should be `stringified`.
 #### body:`string` (Optional)
 Body of the HTTP request, body MUST be a BASE64 string, this string will be converted into byte array in native code.
 
