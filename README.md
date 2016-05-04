@@ -104,4 +104,4 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
 ### TODO
 
 * Save file to storage
-* Native async format converion
+* Native async format conversion
