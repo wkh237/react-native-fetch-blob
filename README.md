@@ -52,7 +52,7 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
 ```js
 import RNFetchBlob from 'react-native-fetch-blob'
 ```
-#### Download : Fetch files that needs authorization token
+#### Download example : Fetch files that needs authorization token
 
 ```js
 
@@ -77,7 +77,7 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
   })
 ```
 
-####  Upload : Dropbox [files-upload](https://www.dropbox.com/developers/documentation/http/documentation#files-upload) API
+####  Upload example : Dropbox [files-upload](https://www.dropbox.com/developers/documentation/http/documentation#files-upload) API
 
 `react-native-fetch-blob` will convert the base64 string in `body` to binary format in native code.
 
