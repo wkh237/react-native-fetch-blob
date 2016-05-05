@@ -77,10 +77,12 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
 
 ## API
 
-#### `Promise<FetchBlobResponse> fetch(url, headers, body)`
+#### `Promise<FetchBlobResponse> fetch(method, url, headers, body)`
 
 Send a HTTP request uses given headers and body, and return a Promise.
 
+#### method:`string` Required
+HTTP request method, can be one of `get`, `post`, `delete`, and `put`, case-insensitive.
 #### url:`string` Required
 HTTP request destination url.
 #### headers:`object` (Optional)
