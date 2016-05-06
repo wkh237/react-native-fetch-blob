@@ -7,12 +7,20 @@ const fetch = (...args) => new Promise((resolve, reject) => {
 
   let [method, url, headers, body] = [...args]
 
-  RNFetchBlob.fetchBlob(method, url, headers, body, (err, data) => {
-    if(err)
-      reject(new Error(err, data))
-    else
-      resolve(new FetchBlobResponse(data))
-  })
+  if(Array.isArray(body))
+    RNFetchBlob.fetchBlobForm(method, url, headers, body, (err, data) => {
+      if(err)
+        reject(new Error(err, data))
+      else
+        resolve(new FetchBlobResponse(data))
+    })
+  else
+    RNFetchBlob.fetchBlob(method, url, headers, body, (err, data) => {
+      if(err)
+        reject(new Error(err, data))
+      else
+        resolve(new FetchBlobResponse(data))
+    })
 
 
 })

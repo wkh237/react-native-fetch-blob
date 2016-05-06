@@ -11,6 +11,7 @@
 #import "RCTBridgeModule.h"
 
 @interface RNFetchBlob : NSObject <RCTBridgeModule>
+
 @end
 
 
