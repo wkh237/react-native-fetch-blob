@@ -7,6 +7,13 @@ This plugin simply convert given base64 string into blob format and send the req
 
 If you're dealing with image or file server that requires an `Authorization` token in the header, you might try this plugin (this is also the reason why I made this plugin), the source code is very simple, just an implementation of native HTTP request.
 
+
+* [Installation](#user-content-installation)
+* [Examples](#user-content-usage)
+ * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
+ * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
+ * [Multipart/form upload](user-content-multipartform-data-example--post-form-data-with-file-and-data)
+
 ## Installation
 
 Install package from npm
