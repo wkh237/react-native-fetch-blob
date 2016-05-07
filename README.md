@@ -12,7 +12,8 @@ If you're dealing with image or file server that requires an `Authorization` tok
 * [Examples](#user-content-usage)
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
- * [Multipart/form upload](user-content-multipartform-data-example--post-form-data-with-file-and-data)
+ * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
+* [API](#user-content-api)
 
 ## Installation
 
