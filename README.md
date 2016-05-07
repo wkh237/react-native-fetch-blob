@@ -139,7 +139,7 @@ Content-Type: text/plain
 
 ## API
 
-#### `Promise<FetchBlobResponse> fetch(method, url, headers, body)`
+#### `fetch(method, url, headers, body):Promise<FetchBlobResponse> `
 
 Send a HTTP request uses given headers and body, and return a Promise.
 
