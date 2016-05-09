@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		A15C30141CD25C330074CB35 /* RNFetchBlob.m in Sources */ = {isa = PBXBuildFile; fileRef = A15C30131CD25C330074CB35 /* RNFetchBlob.m */; };
+		A166D1AA1CE0647A00273590 /* RNFetchBlob.h in Sources */ = {isa = PBXBuildFile; fileRef = A15C30111CD25C330074CB35 /* RNFetchBlob.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -112,6 +113,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A166D1AA1CE0647A00273590 /* RNFetchBlob.h in Sources */,
 				A15C30141CD25C330074CB35 /* RNFetchBlob.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

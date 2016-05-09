@@ -1,7 +1,7 @@
 //
 //  RNFetchBlob.m
 //
-//  Created by Ben Hsieh on 2016/4/28.
+//  Created by suzuri04x2 on 2016/4/28.
 //  Copyright © 2016年 Facebook. All rights reserved.
 //
 
@@ -10,7 +10,54 @@
 #import "RCTLog.h"
 #import <Foundation/Foundation.h>
 
-// CalendarManager.m
+
+////////////////////////////////////////
+//
+//  Util functions
+//
+////////////////////////////////////////
+
+@implementation FetchBlobUtils
+
+// callback class method to handle request
++ (void) onBlobResponse:(NSURLResponse * _Nullable)response withData:(NSData * _Nullable)data withError:(NSError * _Nullable)connectionError withCallback:(RCTResponseSenderBlock)callback{
+    
+    NSHTTPURLResponse* resp = (NSHTTPURLResponse *) response;
+    NSString* status = [NSString stringWithFormat:@"%d", resp.statusCode];
+    
+    if(connectionError)
+    {
+        callback(@[[connectionError localizedDescription], [NSNull null]]);
+    }
+    else if(![status isEqualToString:@"200"]) {
+        callback(@[status, [NSNull null]]);
+    }
+    else {
+        callback(@[[NSNull null], [data base64EncodedStringWithOptions:0]]);
+    }
+    
+}
+
+// removing case of headers
++ (NSMutableDictionary *) normalizeHeaders:(NSDictionary *)headers {
+    
+    NSMutableDictionary * mheaders = [[NSMutableDictionary alloc]init];
+    for(NSString * key in headers) {
+        [mheaders setValue:[headers valueForKey:key] forKey:[key lowercaseString]];
+    }
+    
+    return mheaders;
+}
+
+@end
+
+
+////////////////////////////////////////
+//
+//  Exported native methods
+//
+////////////////////////////////////////
+
 @implementation RNFetchBlob
 
 RCT_EXPORT_MODULE();
@@ -18,17 +65,13 @@ RCT_EXPORT_MODULE();
 // Fetch blob data request
 RCT_EXPORT_METHOD(fetchBlobForm:(NSString *)method url:(NSString *)url headers:(NSDictionary *)headers form:(NSArray *)form callback:(RCTResponseSenderBlock)callback)
 {
+    
     // send request
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
                                     initWithURL:[NSURL
                                                  URLWithString: url]];
+    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[ FetchBlobUtils normalizeHeaders:headers]];
     
-    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] init];
-    
-    // make headers case insensitive
-    for(NSString * key in headers) {
-        [mheaders setValue:[headers valueForKey:key] forKey:[key lowercaseString]];
-    }
     
     NSTimeInterval timeStamp = [[NSDate date] timeIntervalSince1970];
     NSNumber * timeStampObj = [NSNumber numberWithDouble: timeStamp];
@@ -40,7 +83,7 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSString *)method url:(NSString *)url headers:(
     if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
         NSMutableData * postData = [[NSMutableData alloc] init];
         
-        // combine body
+        // combine multipart/form-data body
         for(id field in form) {
             NSString * name = [field valueForKey:@"name"];
             NSString * content = [field valueForKey:@"data"];
@@ -81,19 +124,7 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSString *)method url:(NSString *)url headers:(
     NSOperationQueue *queue = [[NSOperationQueue alloc] init];
     [NSURLConnection sendAsynchronousRequest:request queue:queue completionHandler:^(NSURLResponse * _Nullable response, NSData * _Nullable data, NSError * _Nullable connectionError) {
         
-        NSHTTPURLResponse* resp = (NSHTTPURLResponse *) response;
-        NSString* status = [NSString stringWithFormat:@"%d", resp.statusCode];
-        
-        if(connectionError)
-        {
-            callback(@[[connectionError localizedDescription], [NSNull null]]);
-        }
-        else if(![status isEqualToString:@"200"]) {
-            callback(@[status, [NSNull null]]);
-        }
-        else {
-            callback(@[[NSNull null], [data base64EncodedStringWithOptions:0]]);
-        }
+        [FetchBlobUtils onBlobResponse:response withData:data withError: connectionError withCallback: callback];
         
     }];
     
@@ -107,16 +138,12 @@ RCT_EXPORT_METHOD(fetchBlob:(NSString *)method url:(NSString *)url headers:(NSDi
                                     initWithURL:[NSURL
                                                  URLWithString: url]];
     
-    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] init];
-    
-    // make headers case insensitive
-    for(NSString * key in headers) {
-        [mheaders setValue:[headers valueForKey:key] forKey:[key lowercaseString]];
-    }
+    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[FetchBlobUtils normalizeHeaders:headers]];
 
     // if method is POST or PUT, convert data string format
     if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
         
+        // generate octet-stream body
         NSData* blobData = [[NSData alloc] initWithBase64EncodedString:body options:0];
         NSMutableData* postBody = [[NSMutableData alloc] init];
         [postBody appendData:[NSData dataWithData:blobData]];
@@ -132,23 +159,10 @@ RCT_EXPORT_METHOD(fetchBlob:(NSString *)method url:(NSString *)url headers:(NSDi
     NSOperationQueue *queue = [[NSOperationQueue alloc] init];
     [NSURLConnection sendAsynchronousRequest:request queue:queue completionHandler:^(NSURLResponse * _Nullable response, NSData * _Nullable data, NSError * _Nullable connectionError) {
         
-        NSHTTPURLResponse* resp = (NSHTTPURLResponse *) response;
-        NSString* status = [NSString stringWithFormat:@"%d", resp.statusCode];
-        
-        if(connectionError)
-        {
-            callback(@[[connectionError localizedDescription], [NSNull null]]);
-        }
-        else if(![status isEqualToString:@"200"]) {
-            callback(@[status, [NSNull null]]);
-        }
-        else {
-            callback(@[[NSNull null], [data base64EncodedStringWithOptions:0]]);
-        }
+        [FetchBlobUtils onBlobResponse:response withData:data withError: connectionError withCallback: callback];
         
     }];
     
 }
-
-
 @end
+

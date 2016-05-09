@@ -1,7 +1,7 @@
 //
 //  RNFetchBlob.h
 //
-//  Created by Ben Hsieh on 2016/4/28.
+//  Created by suzuri04x2 on 2016/4/28.
 //  Copyright © 2016年 Facebook. All rights reserved.
 //
 
@@ -10,7 +10,14 @@
 
 #import "RCTBridgeModule.h"
 
-@interface RNFetchBlob : NSObject <RCTBridgeModule>
+@interface RNFetchBlob : NSObject <RCTBridgeModule> 
+
+@end
+
+@interface FetchBlobUtils : NSObject
+
++ (void) onBlobResponse;
++ (NSMutableDictionary *) normalizeHeaders;
 
 @end
 
