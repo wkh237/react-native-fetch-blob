@@ -176,4 +176,4 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
 * Custom MIME type in form data
 
 
-**I'm not very new to native module development in RN, if there's any problem, please feel free to contact with me :D** 
+**I'm very new to native module development in RN, if there's any problem, please feel free to contact with me :D** 
