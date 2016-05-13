@@ -111,32 +111,6 @@ Elements have property `filename` will be transformed into binary format, otherw
   })
 ```
 
-The above code will become something like this in your request body
-
-```
---RNFetchBlob-79338624
-Content-Disposition: form-data; name="avatar"; filename="avatar.png"
-Content-Type: application/octet-stream
-�PNG
-
-���
-IHDR��G���������ʣ��IDATx�흋s���/Ծl���رӧmu괝�kڙ��{���Q��@@��JQ[j�TA���,�Z"�
-���$��	!B `_�ٲ�9���7����B��ݻ��w���s��u����F�6n��r�@������9� G�������#��r�@������9� G��@������9� G�������#��r�@������9� G�����������9� Ǩ�����ᝲg�*������Z���$���������9�.�c�%��U�wn5�hO��{���@?�=@����?~Wvo^�"ő���"͏ޒ��*��r,=�f�$����-E���_���n�^ �Ҡ㞏}��Jq5�����Iv�5<\��1�ɖ��3���*1Z�����O?��
-�K-�
---RNFetchBlob-79338624
-Content-Disposition: form-data; name="name";
-Content-Type: text/plain
-
-user
---RNFetchBlob-79338624
-Content-Disposition: form-data; name="info";
-Content-Type: text/plain
-
-{"mail" : "example@example.com", "tel" : "12345678"}
---RNFetchBlob-79338624--
-```
-
-
 ## API
 
 #### `fetch(method, url, headers, body):Promise<FetchBlobResponse> `
@@ -172,8 +146,5 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
 ### TODO
 
 * Save file to storage
-* Native async format conversion
 * Custom MIME type in form data
 
-
-**I'm very new to native module development in RN, if there's any problem, please feel free to contact with me :D** 
