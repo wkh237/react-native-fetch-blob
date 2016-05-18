@@ -10,6 +10,7 @@ This module enables you upload/download binary data in js, see [Examples](#user-
 
 The source code is very simple, just an implementation of native HTTP request, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
 
+## Usage
 
 * [Installation](#user-content-installation)
 * [Examples](#user-content-usage)
