@@ -138,6 +138,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                 for(int i =0; i<body.size() ; i++) {
                     ReadableMap map = body.getMap(i);
                     String name = map.getString("name");
+                    // file field
                     if(map.hasKey("filename")) {
                         String filename = map.getString("filename");
                         byte [] file = Base64.decode(map.getString("data"), 0);
@@ -147,10 +148,11 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                         outputStream.write(file);
                         outputStream.write("\r\n".getBytes());
                     }
+                    // data field
                     else {
                         String data = map.getString("data");
                         outputStream.write(String.format("--%s\r\n", boundary).getBytes("UTF-8"));
-                        outputStream.write(String.format("Content-Disposition: form-data; name=\"%s\"; \r\n", boundary, name).getBytes("UTF-8"));
+                        outputStream.write(String.format("Content-Disposition: form-data; name=\"%s\"; \r\n", name).getBytes("UTF-8"));
                         outputStream.write(String.format("Content-Type: text/plain\r\n\r\n").getBytes());
                         outputStream.write((data+"\r\n").getBytes());
                     }
