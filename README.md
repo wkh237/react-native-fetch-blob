@@ -4,7 +4,7 @@ A react-native module for fetch file/image with custom headers, supports blob re
 
 If you're dealing with image or file server that requires an `Authorization` token in the header, or you're having problem with `fetch` API when receiving blob data, you might try this module (this is also the reason why I made this plugin).
 
-see [[fetch] Does fetch with blob() marshal data across the bridge?]([fetch] Does fetch with blob() marshal data across the bridge?).
+See [[fetch] Does fetch with blob() marshal data across the bridge?]([fetch] Does fetch with blob() marshal data across the bridge?).
 
 This module enables you upload/download binary data in js, see [Examples](#user-content-usage) bellow. 
 
