@@ -1,11 +1,12 @@
 # react-native-fetch-blob [![npm version](https://badge.fury.io/js/react-native-fetch-blob.svg)](https://badge.fury.io/js/react-native-fetch-blob)
 
-Since react-native `fetch` API [does not marshals `Blob` data in request/response
-body](https://github.com/facebook/react-native/issues/854), I made this plugin which send/receive HTTP request/response that have `Blob` body content.
+A react-native module for fetch file/image with custom headers, supports blob response data.
 
-This plugin simply convert given base64 string into blob format and send the request in a new thread. The process is done in native code, it supports both Android (uses awesome library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
+If you're dealing with image or file server that requires an `Authorization` token in the header, or you're having problem with `fetch` API when receiving blob data, you might try this module (this is also the reason why I made this plugin).
 
-If you're dealing with image or file server that requires an `Authorization` token in the header, you might try this plugin (this is also the reason why I made this plugin), the source code is very simple, just an implementation of native HTTP request.
+This module enables you upload/download binary data in js, see [Examples](#user-content-usage) bellow. 
+
+The source code is very simple, just an implementation of native HTTP request, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
 
 
 * [Installation](#user-content-installation)
@@ -48,7 +49,6 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
     // the conversion is done in native code
     let base64Str = res.base64()
     // the following conversions are done in js, it's SYNC
-    let blob = res.blob()
     let text = res.text()
     let json = res.json()
 
@@ -61,7 +61,7 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
 
 ####  Upload example : Dropbox [files-upload](https://www.dropbox.com/developers/documentation/http/documentation#files-upload) API
 
-`react-native-fetch-blob` will convert the base64 string in `body` to binary format in native code.
+`react-native-fetch-blob` will convert the base64 string in `body` to binary format using native API, this process will be  done in a new thread, so it's async.
 
 ```js
 
