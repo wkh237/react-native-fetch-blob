@@ -41,7 +41,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void fetchBlob(String method, String url, ReadableMap headers, String body, final Callback callback) {
+    public void fetchBlob(String method, String url, ReadableMap headers, String body, final Callback callback, final Callback progressEventHandler) {
 
         try {
             Uri uri = Uri.parse(url);
@@ -71,18 +71,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             }
 
             // create handler
-            AsyncHttpResponseHandler handler = new AsyncHttpResponseHandler() {
-                @Override
-                public void onSuccess(int statusCode, Header[] headers, byte[] binaryData) {
-                    String value = Base64.encodeToString(binaryData, Base64.NO_WRAP);
-                    callback.invoke(null, value);
-                }
-
-                @Override
-                public void onFailure(final int statusCode, final Header[] headers, byte[] binaryData, final Throwable error) {
-                    callback.invoke(statusCode, error.getMessage()+ ", "+ error.getCause());
-                }
-            };
+            AsyncHttpResponseHandler handler = new RNFetchBlobHandler(callback, progressEventHandler);
 
             // send request
             switch(method.toLowerCase()) {
@@ -106,7 +95,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void fetchBlobForm(String method, String url, ReadableMap headers, ReadableArray body, final Callback callback) {
+    public void fetchBlobForm(String method, String url, ReadableMap headers, ReadableArray body, final Callback callback, final Callback progressEventHandler) {
 
         try {
             Uri uri = Uri.parse(url);
@@ -165,18 +154,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             }
 
             // create handler
-            AsyncHttpResponseHandler handler = new AsyncHttpResponseHandler() {
-                @Override
-                public void onSuccess(int statusCode, Header[] headers, byte[] binaryData) {
-                    String value = Base64.encodeToString(binaryData, Base64.NO_WRAP);
-                    callback.invoke(null, value);
-                }
-
-                @Override
-                public void onFailure(final int statusCode, final Header[] headers, byte[] binaryData, final Throwable error) {
-                    callback.invoke(statusCode, error.getMessage()+ ", "+ error.getCause());
-                }
-            };
+            AsyncHttpResponseHandler handler = new RNFetchBlobHandler(callback, progressEventHandler);
 
             // send request
             switch(method.toLowerCase()) {
@@ -200,3 +178,4 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
 }
+

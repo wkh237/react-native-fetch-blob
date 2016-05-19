@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":react-native-fetch-blob" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$/../../android" external.system.id="GRADLE" external.system.module.group="fetchblob" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":react-native-fetch-blob" external.linked.project.path="$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android" external.root.project.path="$MODULE_DIR$/../../android" external.system.id="GRADLE" external.system.module.group="fetchblob" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="android-gradle" name="Android-Gradle">
       <configuration>
@@ -16,10 +16,10 @@
           <task>generateDebugSources</task>
         </afterSyncTasks>
         <option name="ALLOW_USER_CONFIGURATION" value="false" />
-        <option name="MANIFEST_FILE_RELATIVE_PATH" value="/../../node_modules/react-native-fetch-blob/android/src/main/AndroidManifest.xml" />
-        <option name="RES_FOLDER_RELATIVE_PATH" value="/../../node_modules/react-native-fetch-blob/android/src/main/res" />
+        <option name="MANIFEST_FILE_RELATIVE_PATH" value="/src/main/AndroidManifest.xml" />
+        <option name="RES_FOLDER_RELATIVE_PATH" value="/src/main/res" />
         <option name="RES_FOLDERS_RELATIVE_PATH" value="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/res" />
-        <option name="ASSETS_FOLDER_RELATIVE_PATH" value="/../../node_modules/react-native-fetch-blob/android/src/main/assets" />
+        <option name="ASSETS_FOLDER_RELATIVE_PATH" value="/src/main/assets" />
         <option name="LIBRARY_PROJECT" value="true" />
       </configuration>
     </facet>
@@ -28,7 +28,7 @@
     <output url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/classes/debug" />
     <output-test url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/classes/test/debug" />
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build">
+    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android">
       <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/generated/source/r/debug" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/generated/source/aidl/debug" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/generated/source/buildConfig/debug" isTestSource="false" generated="true" />
@@ -41,6 +41,46 @@
       <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/generated/source/rs/androidTest/debug" isTestSource="true" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/generated/res/rs/androidTest/debug" type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/generated/res/resValues/androidTest/debug" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/res" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/assets" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/aidl" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/jni" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/rs" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/shaders" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/res" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/resources" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/assets" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/aidl" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/jni" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/rs" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/shaders" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/res" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/assets" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/aidl" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/jni" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/rs" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/shaders" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/res" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/resources" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/assets" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/aidl" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/jni" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/rs" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/shaders" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/res" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/resources" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/assets" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/aidl" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/jni" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/rs" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/shaders" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/annotations" />
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/assets" />
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/blame" />
@@ -56,122 +96,17 @@
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/exploded-aar/com.facebook.fresco/imagepipeline/0.8.1/jars" />
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/exploded-aar/com.facebook.react/react-native/0.20.1/jars" />
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/incremental" />
+      <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/incremental-safeguard" />
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/jniLibs" />
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/lint" />
-      <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/mockable-android-23.jar" />
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/res" />
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/rs" />
+      <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/shaders" />
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/symbols" />
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/intermediates/transforms" />
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/outputs" />
       <excludeFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/build/tmp" />
     </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/aidl">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/aidl" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/assets">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/assets" type="java-test-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/java">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/java" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/jni">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/jni" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/res">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/res" type="java-test-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/resources">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/resources" type="java-test-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/rs">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/androidTest/rs" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/aidl">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/aidl" isTestSource="false" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/assets">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/assets" type="java-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/java">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/java" isTestSource="false" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/jni">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/jni" isTestSource="false" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/res">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/res" type="java-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/resources">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/resources" type="java-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/rs">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/debug/rs" isTestSource="false" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/aidl">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/aidl" isTestSource="false" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/assets">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/assets" type="java-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/java">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/java" isTestSource="false" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/jni">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/jni" isTestSource="false" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/res">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/res" type="java-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/resources">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/resources" type="java-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/rs">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/main/rs" isTestSource="false" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/aidl">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/aidl" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/assets">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/assets" type="java-test-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/java">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/java" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/jni">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/jni" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/res">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/res" type="java-test-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/resources">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/resources" type="java-test-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/rs">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/test/rs" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/aidl">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/aidl" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/assets">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/assets" type="java-test-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/java">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/java" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/jni">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/jni" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/res">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/res" type="java-test-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/resources">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/resources" type="java-test-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/rs">
-      <sourceFolder url="file://$MODULE_DIR$/../../node_modules/react-native-fetch-blob/android/src/testDebug/rs" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$" />
     <orderEntry type="jdk" jdkName="Android API 23 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="okhttp-ws-2.5.0" level="project" />
@@ -179,8 +114,8 @@
     <orderEntry type="library" exported="" name="okio-1.6.0" level="project" />
     <orderEntry type="library" exported="" name="stetho-okhttp-1.2.0" level="project" />
     <orderEntry type="library" exported="" name="okhttp-2.5.0" level="project" />
-    <orderEntry type="library" exported="" name="stetho-1.2.0" level="project" />
     <orderEntry type="library" exported="" name="jsr305-3.0.0" level="project" />
+    <orderEntry type="library" exported="" name="stetho-1.2.0" level="project" />
     <orderEntry type="library" exported="" name="jackson-core-2.2.3" level="project" />
     <orderEntry type="library" exported="" name="fbcore-0.8.1" level="project" />
     <orderEntry type="library" exported="" name="commons-cli-1.2" level="project" />

@@ -1,29 +1,41 @@
+/**
+ * @author wkh237
+ * @version 0.3.3
+ */
+
 import { NativeModules } from 'react-native';
 
 const RNFetchBlob = NativeModules.RNFetchBlob
 
+// Show warning if native module not detected
+if(RNFetchBlob === void 0) {
+  console.warn(
+    'react-native-fetch-blob could not find native module.',
+    'please make sure you have linked native modules using `rnpm link`,',
+    'and restart RN packager or manually compile IOS/Android project.'
+  )
+}
+
 // Promise wrapper function
-const fetch = (...args) => new Promise((resolve, reject) => {
+const fetch = (...args) => {
 
-  let [method, url, headers, body] = [...args]
+  let promise = new Promise((resolve, reject) => {
 
-  if(Array.isArray(body))
-    RNFetchBlob.fetchBlobForm(method, url, headers, body, (err, data) => {
+    let [method, url, headers, body] = [...args]
+    let nativeMethodName = Array.isArray(body) ? 'fetchBlobForm' : 'fetchBlob'
+
+    RNFetchBlob[nativeMethodName](method, url, headers, body, (err, ...data) => {
       if(err)
-        reject(new Error(err, data))
+        reject(new Error(err, ...data))
       else
-        resolve(new FetchBlobResponse(data))
-    })
-  else
-    RNFetchBlob.fetchBlob(method, url, headers, body, (err, data) => {
-      if(err)
-        reject(new Error(err, data))
-      else
-        resolve(new FetchBlobResponse(data))
+        resolve(new FetchBlobResponse(...data))
     })
 
+  })
 
-})
+  return promise
+
+}
 
 /**
  * RNFetchBlob response object class.
@@ -55,6 +67,10 @@ class FetchBlobResponse {
     this.json = () => {
       return JSON.parse(atob(this.data))
     }
+    /**
+     * Return BASE64 string directly.
+     * @return {string} BASE64 string of response body.
+     */
     this.base64 = () => {
       return this.data
     }
@@ -64,8 +80,7 @@ class FetchBlobResponse {
 }
 
 /**
- * Convert base64 string to blob, source : StackOverflow
- * {@link http://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript}
+ * Convert base64 string to blob, source {@link http://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript}
  * @param  {string} b64Data     Base64 string of data.
  * @param  {string} contentType MIME type of data.
  * @param  {number} sliceSize   Slice size, default to 512.
