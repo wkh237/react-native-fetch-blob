@@ -6,7 +6,7 @@ If you're dealing with image or file server that requires an `Authorization` tok
 
 See [[fetch] Does fetch with blob() marshal data across the bridge?]([fetch] Does fetch with blob() marshal data across the bridge?).
 
-This module enables you upload/download binary data in js, see [Examples](#user-content-usage) bellow. 
+This module enables you upload/download binary data in js, see [Examples](#user-content-usage) bellow.
 
 The source code is very simple, just an implementation of native HTTP request, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
 
@@ -131,6 +131,15 @@ Body of the HTTP request, body can either be a BASE64 string, or an array contai
 
 When body is a base64 string , this string will be converted into byte array in native code, and the request body will be sent as `application/octet-stream`.
 
+#### `base64`
+
+A helper object simply uses [base-64](https://github.com/mathiasbynens/base64) for decode and encode BASE64 data.
+
+```js
+RNFetchBlob.base64.encode(data)
+RNFetchBlob.base64.decode(data)
+```
+
 ### FetchBlobResponse
 
 When `fetch` success, it resolve a `FetchBlobResponse` object as first argument. `FetchBlobResponse` object has the following methods (these method are synchronous, so you might take quite a performance impact if the file is big)
@@ -141,11 +150,9 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
   returns json parsed object (done in js context)
 #### text():string
   returns decoded base64 string (done in js context)
-#### blob():Blob
-  returns Blob object (one in js context)
+
 
 ### TODO
 
 * Save file to storage
 * Custom MIME type in form data
-

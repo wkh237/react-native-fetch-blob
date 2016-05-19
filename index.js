@@ -3,7 +3,8 @@
  * @version 0.3.3
  */
 
-import { NativeModules } from 'react-native';
+import { NativeModules } from 'react-native'
+import base64 from 'base-64'
 
 const RNFetchBlob = NativeModules.RNFetchBlob
 
@@ -51,21 +52,22 @@ class FetchBlobResponse {
      * @return {blob}             Return Blob object.
      */
     this.blob = (contentType, sliceSize) => {
-      return b64toBlob(this.data, contentType, sliceSize)
+      console.warn('FetchBlobResponse.blob() is deprecated and has no funtionality.')
+      return null
     }
     /**
      * Convert result to text.
      * @return {string} Decoded base64 string.
      */
     this.text = () => {
-      return atob(this.data)
+      return base64.decode(this.data)
     }
     /**
      * Convert result to JSON object.
      * @return {object} Parsed javascript object.
      */
     this.json = () => {
-      return JSON.parse(atob(this.data))
+      return JSON.parse(base64.decode(this.data))
     }
     /**
      * Return BASE64 string directly.
@@ -79,37 +81,6 @@ class FetchBlobResponse {
 
 }
 
-/**
- * Convert base64 string to blob, source {@link http://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript}
- * @param  {string} b64Data     Base64 string of data.
- * @param  {string} contentType MIME type of data.
- * @param  {number} sliceSize   Slice size, default to 512.
- * @return {blob}             Return Blob object.
- */
-function b64toBlob(b64Data, contentType, sliceSize) {
-  contentType = contentType || '';
-  sliceSize = sliceSize || 512;
-
-  var byteCharacters = atob(b64Data);
-  var byteArrays = [];
-
-  for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-    var slice = byteCharacters.slice(offset, offset + sliceSize);
-
-    var byteNumbers = new Array(slice.length);
-    for (var i = 0; i < slice.length; i++) {
-      byteNumbers[i] = slice.charCodeAt(i);
-    }
-
-    var byteArray = new Uint8Array(byteNumbers);
-
-    byteArrays.push(byteArray);
-  }
-
-  var blob = new Blob(byteArrays, {type: contentType});
-  return blob;
-}
-
 export default {
-  fetch, FetchBlobResponse
+  fetch, FetchBlobResponse, base64
 }

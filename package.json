@@ -1,10 +1,13 @@
 {
   "name": "react-native-fetch-blob",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "A react-native plugin for fetch blob data via HTTP.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "base-64": "0.1.0"
   },
   "keywords": [
     "react-native",
