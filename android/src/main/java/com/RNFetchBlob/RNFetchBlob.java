@@ -41,7 +41,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void fetchBlob(String method, String url, ReadableMap headers, String body, final Callback callback, final Callback progressEventHandler) {
+    public void fetchBlob(String method, String url, ReadableMap headers, String body, final Callback callback) {
 
         try {
             Uri uri = Uri.parse(url);
@@ -71,7 +71,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             }
 
             // create handler
-            AsyncHttpResponseHandler handler = new RNFetchBlobHandler(callback, progressEventHandler);
+            AsyncHttpResponseHandler handler = new RNFetchBlobHandler(callback);
 
             // send request
             switch(method.toLowerCase()) {
@@ -95,7 +95,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void fetchBlobForm(String method, String url, ReadableMap headers, ReadableArray body, final Callback callback, final Callback progressEventHandler) {
+    public void fetchBlobForm(String method, String url, ReadableMap headers, ReadableArray body, final Callback callback) {
 
         try {
             Uri uri = Uri.parse(url);
@@ -154,7 +154,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             }
 
             // create handler
-            AsyncHttpResponseHandler handler = new RNFetchBlobHandler(callback, progressEventHandler);
+            AsyncHttpResponseHandler handler = new RNFetchBlobHandler(callback);
 
             // send request
             switch(method.toLowerCase()) {

@@ -9,11 +9,9 @@ import cz.msebera.android.httpclient.Header;
 public class RNFetchBlobHandler extends AsyncHttpResponseHandler {
 
     Callback onResponse;
-    Callback onProgress;
 
-    RNFetchBlobHandler(Callback onResponse, Callback onProgress) {
+    RNFetchBlobHandler(Callback onResponse) {
         this.onResponse = onResponse;
-        this.onProgress = onProgress;
     }
 
     @Override
@@ -25,9 +23,6 @@ public class RNFetchBlobHandler extends AsyncHttpResponseHandler {
     @Override
     public void onProgress(long bytesWritten, long totalSize) {
         super.onProgress(bytesWritten, totalSize);
-        if(this.onProgress != null) {
-            this.onProgress.invoke(bytesWritten, totalSize);
-        }
     }
 
     @Override
