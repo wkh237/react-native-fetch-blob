@@ -15,8 +15,8 @@ import {
 
 const FILENAME = `${Platform.OS}-0.4.0-${Date.now()}.png`
 // paste your test config here
-const TEST_SERVER_URL = 'http://your-local-ip:8123'
-const DROPBOX_TOKEN = 'drop-box-api-token'
+const TEST_SERVER_URL = 'http://192.168.17.207:8123'
+const DROPBOX_TOKEN = 'fsXcpmKPrHgAAAAAAAAAEGxFXwhejXM_E8fznZoXPhHbhbNhA-Lytbe6etp1Jznz'
 
 const ctx = new RNTest.TestContext()
 const Assert = RNTest.Assert
@@ -88,8 +88,8 @@ ctx.describe('Upload multipart/form-data', async function(report, data) {
 
 ctx.describe('Compare uploaded multipart image', async function(report) {
   // try {
-    let resp = await RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/test-img.png`, {})
-    let resp2 = await RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/test-text.txt`, {})
+    let resp = await RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/test-img.png`)
+    let resp2 = await RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/test-text.txt`)
     console.log(resp)
     console.log(resp2)
     report({

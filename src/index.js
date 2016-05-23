@@ -25,7 +25,7 @@ const fetch = (...args) => {
     let [method, url, headers, body] = [...args]
     let nativeMethodName = Array.isArray(body) ? 'fetchBlobForm' : 'fetchBlob'
 
-    RNFetchBlob[nativeMethodName](method, url, headers, body, (err, ...data) => {
+    RNFetchBlob[nativeMethodName](method, url, headers || {}, body, (err, ...data) => {
       if(err)
         reject(new Error(err, ...data))
       else
