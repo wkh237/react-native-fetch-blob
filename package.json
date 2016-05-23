@@ -1,0 +1,17 @@
+{
+  "name": "fetchblob",
+  "version": "0.4.0",
+  "private": true,
+  "scripts": {
+    "start": "node node_modules/react-native/local-cli/cli.js start",
+    "test": "sh test.sh"
+  },
+  "devDependencies": {
+    "body-parser": "^1.15.0",
+    "express": "^4.13.4",
+    "multer": "^1.1.0"
+  },
+  "dependencies": {
+    "react-native-fetch-blob": "file:src"
+  }
+}

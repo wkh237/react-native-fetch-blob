@@ -1,0 +1,1 @@
+require('./index.test.js')
