@@ -4,6 +4,7 @@
  */
 
 import { NativeModules } from 'react-native'
+import { DeviceEventEmitter } from 'react-native';
 import base64 from 'base-64'
 
 const RNFetchBlob = NativeModules.RNFetchBlob
@@ -20,19 +21,36 @@ if(RNFetchBlob === void 0) {
 // Promise wrapper function
 const fetch = (...args) => {
 
+  // create task ID for receiving progress event
+  let taskId = getUUID()
   let promise = new Promise((resolve, reject) => {
 
     let [method, url, headers, body] = [...args]
     let nativeMethodName = Array.isArray(body) ? 'fetchBlobForm' : 'fetchBlob'
 
-    RNFetchBlob[nativeMethodName](method, url, headers || {}, body, (err, ...data) => {
+    let progressEventHandler = (e) => {
+      if(e.taskId === taskId && promise.onProgress) {
+        promise.onProgress(e.written, e.total)
+      }
+    }
+
+    DeviceEventEmitter.addListener('RNFetchBlobProgress' + taskId, progressEventHandler)
+
+    RNFetchBlob[nativeMethodName](taskId, method, url, headers || {}, body, (err, ...data) => {
+
+      // task done, remove event listener
+      DeviceEventEmitter.removeAllListeners('RNFetchBlobProgress'+taskId)
+
       if(err)
         reject(new Error(err, ...data))
       else
         resolve(new FetchBlobResponse(...data))
+
     })
 
   })
+
+  promise.onProgress = null
 
   return promise
 
@@ -79,6 +97,13 @@ class FetchBlobResponse {
 
   }
 
+}
+
+function getUUID(){
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    let r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+  });
 }
 
 export default {
