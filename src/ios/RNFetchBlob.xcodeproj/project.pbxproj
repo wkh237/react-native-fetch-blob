@@ -5,10 +5,21 @@
 	};
 	objectVersion = 46;
 	objects = {
+
 /* Begin PBXBuildFile section */
 		A15C30141CD25C330074CB35 /* RNFetchBlob.m in Sources */ = {isa = PBXBuildFile; fileRef = A15C30131CD25C330074CB35 /* RNFetchBlob.m */; };
 		A166D1AA1CE0647A00273590 /* RNFetchBlob.h in Sources */ = {isa = PBXBuildFile; fileRef = A15C30111CD25C330074CB35 /* RNFetchBlob.h */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A1BAA89E1CF415DF003A9374 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ADC1D945EE804D3DA47CF622 /* RNFetchBlob.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A15C300E1CD25C330074CB35;
+			remoteInfo = RNFetchBlob;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		A15C300C1CD25C330074CB35 /* CopyFiles */ = {
@@ -26,7 +37,7 @@
 		A15C300E1CD25C330074CB35 /* libRNFetchBlob.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNFetchBlob.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		A15C30111CD25C330074CB35 /* RNFetchBlob.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RNFetchBlob.h; path = RNFetchBlob/RNFetchBlob.h; sourceTree = "<group>"; };
 		A15C30131CD25C330074CB35 /* RNFetchBlob.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = RNFetchBlob.m; path = RNFetchBlob/RNFetchBlob.m; sourceTree = "<group>"; };
-		ADC1D945EE804D3DA47CF622 /* RNFetchBlob.xcodeproj */ = {isa = PBXFileReference; name = "RNFetchBlob.xcodeproj"; path = "../../node_modules/react-native-fetch-blob/ios/RNFetchBlob.xcodeproj"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = wrapper.pb-project; explicitFileType = undefined; includeInIndex = 0; };
+		ADC1D945EE804D3DA47CF622 /* RNFetchBlob.xcodeproj */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = "wrapper.pb-project"; name = RNFetchBlob.xcodeproj; path = "../../node_modules/react-native-fetch-blob/ios/RNFetchBlob.xcodeproj"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -40,6 +51,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8BD9ABDFAF76406291A798F2 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				ADC1D945EE804D3DA47CF622 /* RNFetchBlob.xcodeproj */,
+			);
+			name = Libraries;
+			sourceTree = "<group>";
+		};
 		A15C30051CD25C330074CB35 = {
 			isa = PBXGroup;
 			children = (
@@ -58,13 +77,12 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		8BD9ABDFAF76406291A798F2 /* Libraries */ = {
+		A1BAA8981CF415DF003A9374 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				ADC1D945EE804D3DA47CF622 /* RNFetchBlob.xcodeproj */,
+				A1BAA89F1CF415DF003A9374 /* libRNFetchBlob.a */,
 			);
-			name = Libraries;
-			path = "";
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -111,12 +129,28 @@
 			mainGroup = A15C30051CD25C330074CB35;
 			productRefGroup = A15C300F1CD25C330074CB35 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = A1BAA8981CF415DF003A9374 /* Products */;
+					ProjectRef = ADC1D945EE804D3DA47CF622 /* RNFetchBlob.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				A15C300D1CD25C330074CB35 /* RNFetchBlob */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		A1BAA89F1CF415DF003A9374 /* libRNFetchBlob.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libRNFetchBlob.a;
+			remoteRef = A1BAA89E1CF415DF003A9374 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXSourcesBuildPhase section */
 		A15C300A1CD25C330074CB35 /* Sources */ = {
@@ -225,6 +259,7 @@
 					"$(SRCROOT)/../../react-native/React/**",
 					"$(SRCROOT)/../../node_modules/react-native/React/**",
 					"$(SRCROOT)/../../node_modules/react-native-fetch-blob/ios/RNFetchBlob",
+					"$(SRCROOT)/../../RNFetchBlobTest/node_modules/react-native/**",
 				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -244,6 +279,7 @@
 					"$(SRCROOT)/../../react-native/React/**",
 					"$(SRCROOT)/../../node_modules/react-native/React/**",
 					"$(SRCROOT)/../../node_modules/react-native-fetch-blob/ios/RNFetchBlob",
+					"$(SRCROOT)/../../RNFetchBlobTest/node_modules/react-native/**",
 				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";

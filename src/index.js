@@ -3,10 +3,15 @@
  * @version 0.3.3
  */
 
-import { NativeModules } from 'react-native'
-import { DeviceEventEmitter } from 'react-native';
-import base64 from 'base-64'
+import {
+  NativeModules,
+  DeviceEventEmitter,
+  NativeAppEventEmitter,
+  Platform,
+} from 'react-native'
 
+import base64 from 'base-64'
+const emitter = (Platform.OS === 'android' ? DeviceEventEmitter : NativeAppEventEmitter)
 const RNFetchBlob = NativeModules.RNFetchBlob
 
 // Show warning if native module not detected
@@ -27,7 +32,7 @@ const fetch = (...args) => {
 
     let [method, url, headers, body] = [...args]
     let nativeMethodName = Array.isArray(body) ? 'fetchBlobForm' : 'fetchBlob'
-    let handle = DeviceEventEmitter.addListener('RNFetchBlobProgress', (e) => {
+    let subscription = emitter.addListener('RNFetchBlobProgress', (e) => {
       if(e.taskId === taskId && promise.onProgress) {
         promise.onProgress(e.written, e.total)
       }
@@ -36,7 +41,7 @@ const fetch = (...args) => {
     RNFetchBlob[nativeMethodName](taskId, method, url, headers || {}, body, (err, ...data) => {
 
       // task done, remove event listener
-      handle.remove()
+      subscription.remove()
 
       if(err)
         reject(new Error(err, ...data))

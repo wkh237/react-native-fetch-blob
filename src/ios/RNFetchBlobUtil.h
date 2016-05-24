@@ -1,33 +1,33 @@
 //
-//  RNFetchBlob.h
+//  RNFetchBlobUtil.h
+//  RNFetchBlob
 //
-//  Created by wkh237 on 2016/4/28.
+//  Created by Ben Hsieh on 2016/5/24.
+//  Copyright © 2016年 suzuri04x2. All rights reserved.
 //
 
-#ifndef RNFetchBlob_h
-#define RNFetchBlob_h
 #import <Foundation/Foundation.h>
 #import "RCTBridgeModule.h"
 
-@interface RNFetchBlob : NSObject <RCTBridgeModule> 
+#ifndef RNFetchBlobUtil_h
+#define RNFetchBlobUtil_h
 
-@end
+@class FetchBlobUtils;
 
-@interface FetchBlobUtils : NSObject  <NSURLConnectionDelegate, NSURLConnectionDataDelegate> {
 
+@interface FetchBlobUtils : NSObject  <RCTBridgeModule, NSURLConnectionDelegate, NSURLConnectionDataDelegate> {
+    
     NSString * taskId;
     int expectedBytes;
     int receivedBytes;
     NSMutableData * respData;
     RCTResponseSenderBlock callback;
-    RCTBridge * bridge;
 }
 @property (nonatomic) NSString * taskId;
 @property (nonatomic) int expectedBytes;
 @property (nonatomic) int receivedBytes;
 @property (nonatomic) NSMutableData * respData;
 @property (nonatomic) RCTResponseSenderBlock callback;
-@property (nonatomic) RCTBridge * bridge;
 
 
 - (id) init;
@@ -40,4 +40,5 @@
 @end
 
 
-#endif /* RNFetchBlob_h */
+
+#endif /* RNFetchBlobUtil_h */
