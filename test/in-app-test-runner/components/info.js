@@ -1,4 +1,3 @@
-// @flow
 import React, {Component} from 'react';
 import {
   AppRegistry,
@@ -10,8 +9,8 @@ import {
 export default class Info extends Component {
 
   props : {
-    description : string,
-  }
+    desc : string,
+  };
 
   render() {
     return (
@@ -22,10 +21,10 @@ export default class Info extends Component {
       }}>
         <View style={{ alignSelf : 'stretch'}}>
           <Text style={{color : '#777', alignSelf : 'stretch', textAlign : 'center', margin : 8}}>
-            {this.props.description}
+            {this.props.desc}
           </Text>
         </View>
-        <View style={{alignSelf : 'stretch'}}>{this.props.children}</View>
+        <View style={{margin : 8, alignSelf : 'stretch'}}>{this.props.children}</View>
       </View>
     )
   }

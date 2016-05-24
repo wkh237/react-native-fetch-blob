@@ -15,8 +15,8 @@ import {
 
 const FILENAME = `${Platform.OS}-0.4.0-${Date.now()}.png`
 // paste your test config here
-const TEST_SERVER_URL = 'http://192.168.17.207:8123'
-const DROPBOX_TOKEN = 'fsXcpmKPrHgAAAAAAAAAEGxFXwhejXM_E8fznZoXPhHbhbNhA-Lytbe6etp1Jznz'
+const TEST_SERVER_URL = 'http://192.168.17.193:8123'
+const DROPBOX_TOKEN = 'fsXcpmKPrHgAAAAAAAAAoXZhcXYWdgLpQMan6Tb_bzJ237DXhgQSev12hA-gUXt4'
 
 const ctx = new RNTest.TestContext()
 const Assert = RNTest.Assert
@@ -31,17 +31,25 @@ ctx.describe('GET image from server', async function(report) {
     })
 
   image = resp.base64()
-  report({
-    status : 'pass',
-    result : [
-      <Info key="11" description="Response image">
-        <Image key="1"
+  report(
+      <Info key="Response image">
+        <Image
           style={{width:Dimensions.get('window').width*0.9, height : Dimensions.get('window').width*0.9,margin :16}}
           source={{uri : `data:image/png;base64, ${image}`}}/>
-      </Info>
-    ]
-  })
-  return image
+      </Info>)
+
+})
+
+ctx.describe('The check if it follows 301/302 redirection', async function(report) {
+
+  let resp = await RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/redirect`)
+  report(
+    <Assert key="check image size" expect={image.length} actual={resp.base64().length}/>,
+      <Info key="Response image">
+        <Image
+          style={{width:Dimensions.get('window').width*0.9, height : Dimensions.get('window').width*0.9,margin :16}}
+          source={{uri : `data:image/png;base64, ${image}`}}/>
+      </Info>)
 
 })
 
@@ -53,12 +61,9 @@ ctx.describe('Upload octet-stream image to Dropbox', async function(report) {
     'Content-Type' : 'application/octet-stream',
   }, image)
   resp = resp.json()
-  report({
-    status : 'pass',
-    result : [
-      <Assert key="1" expect={FILENAME} actual={resp.name}/>
-    ],
-  })
+  report(
+      <Assert key="confirm the file has been uploaded" expect={FILENAME} actual={resp.name}/>
+  )
 
 })
 
@@ -76,39 +81,21 @@ ctx.describe('Upload multipart/form-data', async function(report, data) {
 
   resp = resp.json()
 
-  report({
-    status : 'pass',
-    result : [
-      <Assert key="1" expect="hello !!" actual={resp.fields.field1}/>,
-      <Assert key="2" expect="hello2 !!" actual={resp.fields.field2}/>,
-    ],
-  })
+  report(
+      <Assert key="check posted form data #1" expect="hello !!" actual={resp.fields.field1}/>,
+      <Assert key="check posted form data #2" expect="hello2 !!" actual={resp.fields.field2}/>,
+  )
 
 })
 
 ctx.describe('Compare uploaded multipart image', async function(report) {
-  // try {
-    let resp = await RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/test-img.png`)
-    let resp2 = await RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/test-text.txt`)
-    console.log(resp)
-    console.log(resp2)
-    report({
-      status : 'pass',
-      result : [
-        <Assert key="1" expect={image.length} actual={resp.base64().length}/>,
-        <Assert key="2" expect={'hello.txt'} actual={resp2.text()}/>
-      ]
-    })
-  // } catch(err) {
-  //
-  //   report({
-  //     status : 'fail',
-  //     result :[
-  //       <Info key="a" description="Detail">
-  //         <Text>{JSON.stringify(err)}</Text>
-  //       </Info>]
-  //   })
-  // }
+  let resp = await RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/test-img.png`)
+  let resp2 = await RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/test-text.txt`)
+
+  report(
+      <Assert key="check file length" expect={image.length} actual={resp.base64().length}/>,
+      <Assert key="check file content" expect={'hello.txt'} actual={resp2.text()}/>
+  )
 
 })
 

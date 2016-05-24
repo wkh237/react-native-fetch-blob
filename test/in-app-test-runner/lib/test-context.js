@@ -1,4 +1,4 @@
-export default class RNAppTest {
+export default class TestContext {
 
   constructor() {
     this.tests = []
@@ -30,8 +30,8 @@ export default class RNAppTest {
     return promise
   }
 
-  update(i, data) {
-    Object.assign(this.tests[i], data)
+  update(i, ...data) {
+    Object.assign(this.tests[i], {result : [...data]})
     this.context.forceUpdate()
   }
 

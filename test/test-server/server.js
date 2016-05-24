@@ -18,6 +18,10 @@ app.use(upload.any())
 
 app.use('/public', express.static('./public'))
 
+app.get('/redirect', function(req, res) {
+  res.redirect('/public/github.png')
+})
+
 app.post('/upload', function(req, res){
 
   console.log(req.headers)
