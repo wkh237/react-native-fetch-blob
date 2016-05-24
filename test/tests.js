@@ -99,5 +99,22 @@ ctx.describe('Compare uploaded multipart image', async function(report) {
 
 })
 
+ctx.describe('Progress report test', (report) => new Promise((resolve) => {
+
+  let p1 = RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/github.png`, {
+      Authorization : 'Bearer abde123eqweje'
+    })
+  let log = []
+
+  p1.onProgress = (written, total) => {
+    log.push(<Info key={`progress = ${written} bytes / ${total} bytes`}></Info>)
+    if(written === total)
+      log.push(<Assert key="progress goes to 100%" expect={written} actual={total}/>)
+    report(...log)
+    resolve()
+  }
+
+}))
+
 
 export default ctx
