@@ -41,7 +41,7 @@ public class RNFetchBlobHandler extends AsyncHttpResponseHandler {
 
         // emit event to js context
         this.mCtx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                 .emit("RNFetchBlobProgress" + this.mTaskId, args);
+                 .emit("RNFetchBlobProgress", args);
     }
 
     @Override

@@ -27,19 +27,16 @@ const fetch = (...args) => {
 
     let [method, url, headers, body] = [...args]
     let nativeMethodName = Array.isArray(body) ? 'fetchBlobForm' : 'fetchBlob'
-
-    let progressEventHandler = (e) => {
+    let handle = DeviceEventEmitter.addListener('RNFetchBlobProgress', (e) => {
       if(e.taskId === taskId && promise.onProgress) {
         promise.onProgress(e.written, e.total)
       }
-    }
-
-    DeviceEventEmitter.addListener('RNFetchBlobProgress' + taskId, progressEventHandler)
+    })
 
     RNFetchBlob[nativeMethodName](taskId, method, url, headers || {}, body, (err, ...data) => {
 
       // task done, remove event listener
-      DeviceEventEmitter.removeAllListeners('RNFetchBlobProgress'+taskId)
+      handle.remove()
 
       if(err)
         reject(new Error(err, ...data))
