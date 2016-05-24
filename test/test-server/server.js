@@ -14,6 +14,13 @@ app.listen(8123, function(err){
 
 // app.use(bodyParser.raw())
 
+app.use(function(req,res,next){
+
+  console.log(req.headers)
+
+  next()
+})
+
 app.use(upload.any())
 
 app.use('/public', express.static('./public'))

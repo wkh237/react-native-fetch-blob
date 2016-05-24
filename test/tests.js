@@ -15,7 +15,7 @@ import {
 
 const FILENAME = `${Platform.OS}-0.4.0-${Date.now()}.png`
 // paste your test config here
-const TEST_SERVER_URL = 'http://192.168.17.193:8123'
+const TEST_SERVER_URL = 'http://192.168.0.14:8123'
 const DROPBOX_TOKEN = 'fsXcpmKPrHgAAAAAAAAAoXZhcXYWdgLpQMan6Tb_bzJ237DXhgQSev12hA-gUXt4'
 
 const ctx = new RNTest.TestContext()
