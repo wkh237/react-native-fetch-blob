@@ -18,6 +18,7 @@ The source code is very simple, just an implementation of native HTTP request, s
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
 * [API](#user-content-api)
+* [Test and Development](#user-content-test-and-development)
 
 ## Installation
 
@@ -152,7 +153,12 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
   returns decoded base64 string (done in js context)
 
 
+### Test and Development
+
+TODO
+
 ### TODO
 
-* Save file to storage
+* Save file to storage directly
 * Custom MIME type in form data
+* Upload/Download progress report
