@@ -54,6 +54,8 @@
     self.respData = [[NSMutableData alloc] initWithLength:0];
     self.callback = callback;
     self.bridge = bridgeRef;
+    self.expectedBytes = 0;
+    self.receivedBytes = 0;
     // Call long-running code on background thread
     NSURLConnection *conn = [[NSURLConnection alloc] initWithRequest:req delegate:self startImmediately:NO];
     [conn scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
@@ -74,7 +76,7 @@
 }
 
 - (void) connection:(NSURLConnection *)connection didReceiveData:(nonnull NSData *)data {
-    receivedBytes = data.length;
+    receivedBytes += data.length;
     [respData appendData:data];
     
     [self.bridge.eventDispatcher
@@ -90,7 +92,7 @@
 - (void) connection:(NSURLConnection *)connection didSendBodyData:(NSInteger)bytesWritten totalBytesWritten:(NSInteger)totalBytesWritten totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite {
     
     expectedBytes = totalBytesExpectedToWrite;
-    receivedBytes = totalBytesWritten;
+    receivedBytes += totalBytesWritten;
     [self.bridge.eventDispatcher
         sendAppEventWithName:@"RNFetchBlobProgress"
             body:@{
