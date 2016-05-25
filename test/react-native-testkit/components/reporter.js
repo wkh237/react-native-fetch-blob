@@ -25,23 +25,30 @@ export default class Reporter extends Component {
   }
 
   renderTests() {
-    return this.props.context.tests.map((t, i) => {
+    let tests = this.props.context.tests
+    return tests.map((t, i) => {
 
       let pass = true
-      let foundAssertions = false
+      let foundActions = false
 
-      if(Array.isArray(t.result)) {
+      if(Array.isArray(t.result) && !t.expired) {
         t.result = t.result.map((r) => {
-          if(r.type.name === 'Assert') {
-            foundAssertions = true
+          if(r.type.name === 'Assert' || r.type.name === 'Info') {
+            foundActions = true
             let comp = r.props.comparer ? r.props.comparer(r.props.expect, r.props.actual) : (r.props.actual === r.props.expect)
             pass = pass && comp
           }
           return React.cloneElement(r, {desc : r.key})
         })
       }
-
-      t.status = foundAssertions ? (pass ? 'pass' : 'fail') : 'pass'
+      if(tests[i].running)
+        t.status = 'running'
+      else if(this.props.context.tests[i].executed) {
+        t.status = foundActions ? (pass ? 'pass' : 'fail') : 'skipped'
+        t.status = t.expired ? 'timeout' : t.status
+      }
+      else
+        t.status = 'waiting'
 
       return (<View key={'rn-test-' + t.desc} style={{
         borderBottomWidth : 1.5,
@@ -52,7 +59,7 @@ export default class Reporter extends Component {
           flexDirection : 'row'
         }}>
           <Text style={[styles.badge, {flex : 1, borderWidth : 0, textAlign : 'left'}]}>{t.desc}</Text>
-          <Text style={[styles.badge, this.getBadge(t.status)]}>{t.status ? 'pass' : 'fail'}</Text>
+          <Text style={[styles.badge, this.getBadge(t.status)]}>{t.status}</Text>
         </View>
         <View key={t.desc + '-result'} style={{backgroundColor : '#F4F4F4'}}>
           {t.result}
@@ -61,13 +68,8 @@ export default class Reporter extends Component {
     })
   }
 
-  getBadge(status: 'running' | 'pass' | 'fail') {
-    if(status === 'running')
-      return styles.badgeWaiting
-    else if(status === 'pass')
-      return styles.badgePass
-    else
-      return styles.badgeFail
+  getBadge(status: 'waiting' | 'running' | 'pass' | 'fail' | 'timeout') {
+    return styles[status]
   }
 
 }
@@ -84,15 +86,27 @@ const styles = StyleSheet.create({
     borderWidth : 2,
     textAlign : 'center'
   },
-  badgePass: {
+  skipped: {
+    borderColor : '#AAAAAA',
+    color : '#AAAAAA'
+  },
+  waiting: {
+    borderColor : '#AAAAAA',
+    color : '#AAAAAA'
+  },
+  pass: {
     borderColor : '#00a825',
     color : '#00a825'
   },
-  badgeWaiting: {
+  running: {
     borderColor : '#e3c423',
     color : '#e3c423'
   },
-  badgeFail: {
+  fail: {
+    borderColor : '#ff0d0d',
+    color : '#ff0d0d'
+  },
+  timeout: {
     borderColor : '#ff0d0d',
     color : '#ff0d0d'
   }
