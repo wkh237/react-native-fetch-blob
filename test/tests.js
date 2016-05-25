@@ -107,10 +107,9 @@ ctx.describe('Progress report test', (report) => new Promise((resolve) => {
   let log = []
 
   p1.onProgress = (written, total) => {
-    log.push(<Info key={`progress = ${written} bytes / ${total} bytes`}/>)
+    report(<Info key={`progress = ${written} bytes / ${total} bytes`}/>)
     if(written === total)
-      log.push(<Assert key="progress goes to 100%" expect={written} actual={total}/>)
-    report(...log)
+      report(<Assert key="progress goes to 100%" expect={written} actual={total}/>)
     resolve()
   }
 
