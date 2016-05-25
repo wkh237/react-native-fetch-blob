@@ -155,9 +155,11 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
 
 ### Test and Development
 
-TODO
+Check our [development guide](https://github.com/wkh237/react-native-fetch-blob/wiki/Development-Guide)
 
 ### TODO
+
+V0.5 [milestone](https://github.com/wkh237/react-native-fetch-blob/milestones/v0.5)
 
 * Save file to storage directly
 * Custom MIME type in form data
