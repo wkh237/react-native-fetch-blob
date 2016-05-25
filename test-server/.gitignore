@@ -1,2 +1,4 @@
 uploads/*
+public/*
+!public/github.png
 !uploads/readme
