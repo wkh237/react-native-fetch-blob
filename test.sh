@@ -28,6 +28,7 @@ if [ "$#" -eq 1 ]; then
   rm -rf "${TEST_APP_NAME}"
   react-native init "${TEST_APP_NAME}"
 fi
+# copy js files to test app folder
 cp -R test/ "${TEST_APP_PATH}/"
 
 # install module
