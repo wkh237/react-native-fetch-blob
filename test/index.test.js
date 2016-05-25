@@ -14,7 +14,7 @@ import {
   Image,
 } from 'react-native';
 
-import RNTest from './in-app-test-runner'
+import RNTest from './react-native-testkit/'
 import TestContext from './tests'
 
 

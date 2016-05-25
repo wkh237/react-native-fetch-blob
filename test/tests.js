@@ -1,4 +1,4 @@
-import RNTest from './in-app-test-runner'
+import RNTest from './react-native-testkit/'
 import React from 'react'
 import RNFetchBlob from 'react-native-fetch-blob'
 
