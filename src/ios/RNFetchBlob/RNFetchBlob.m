@@ -122,7 +122,13 @@
 
 // request complete
 - (void) connectionDidFinishLoading:(NSURLConnection *)connection {
-    NSData * data = [NSData dataWithData:respData];
+    
+    NSData * data;
+    if(respData != nil)
+        data = [NSData dataWithData:respData];
+    else
+        data = [[NSData alloc] init];
+    
     callback(@[[NSNull null], [data base64EncodedStringWithOptions:0]]);
 }
 
@@ -168,7 +174,7 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSString *)taskId method:(NSString *)method url
             NSString * name = [field valueForKey:@"name"];
             NSString * content = [field valueForKey:@"data"];
             // field is a text field
-            if([field valueForKey:@"filename"] == nil) {
+            if([field valueForKey:@"filename"] == nil || content == [NSNull null]) {
                 [postData appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
                 [postData appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"\r\n", name] dataUsingEncoding:NSUTF8StringEncoding]];
                 [postData appendData:[[NSString stringWithFormat:@"Content-Type: text/plain\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
@@ -225,13 +231,14 @@ RCT_EXPORT_METHOD(fetchBlob:(NSString *)taskId method:(NSString *)method url:(NS
     // if method is POST or PUT, convert data string format
     if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
         
-        // generate octet-stream body
-        NSData* blobData = [[NSData alloc] initWithBase64EncodedString:body options:0];
-        NSMutableData* postBody = [[NSMutableData alloc] init];
-        [postBody appendData:[NSData dataWithData:blobData]];
-        [request setHTTPBody:postBody];
-        [mheaders setValue:@"application/octet-stream" forKey:@"content-type"];
-        
+        if(body != nil) {
+            // generate octet-stream body
+            NSData* blobData = [[NSData alloc] initWithBase64EncodedString:body options:0];
+            NSMutableData* postBody = [[NSMutableData alloc] init];
+            [postBody appendData:[NSData dataWithData:blobData]];
+            [request setHTTPBody:postBody];
+            [mheaders setValue:@"application/octet-stream" forKey:@"content-type"];
+        }
     }
     
     [request setHTTPMethod: method];
