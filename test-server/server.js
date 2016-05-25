@@ -12,6 +12,7 @@ var fs = require('fs');
 var JS_SOURCE_PATH = '../test/',
     APP_SOURCE_PATH = '../RNFetchBlobTest/';
 
+// watch index.js in src folder
 chokidar
   .watch('../src/index.js')
   .on('change', function(path) {
@@ -23,6 +24,7 @@ chokidar
     });
   })
 
+// watch files in  test folder
 chokidar
   .watch(JS_SOURCE_PATH)
   .on('add', function(path) {
