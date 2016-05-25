@@ -19,6 +19,7 @@ The source code is very simple, just an implementation of native HTTP request, s
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
 * [API](#user-content-api)
 * [Test and Development](#user-content-test-and-development)
+* [Milestones](#user-content-milestones)
 
 ## Installation
 
@@ -157,9 +158,9 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
 
 Check our [development guide](https://github.com/wkh237/react-native-fetch-blob/wiki/Development-Guide)
 
-### TODO
+### Milestones
 
-V0.5 [milestone](https://github.com/wkh237/react-native-fetch-blob/milestones/v0.5)
+[V0.5 milestone](https://github.com/wkh237/react-native-fetch-blob/milestones/v0.5)
 
 * Save file to storage directly
 * Custom MIME type in form data
