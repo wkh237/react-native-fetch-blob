@@ -1,6 +1,6 @@
 /**
  * @author wkh237
- * @version 0.3.3
+ * @version 0.4.2
  */
 
 import {
@@ -15,34 +15,43 @@ const emitter = (Platform.OS === 'android' ? DeviceEventEmitter : NativeAppEvent
 const RNFetchBlob = NativeModules.RNFetchBlob
 
 // Show warning if native module not detected
-if(RNFetchBlob === void 0) {
+if(!RNFetchBlob || !RNFetchBlob.fetchBlobForm || !RNFetchBlob.fetchBlob) {
   console.warn(
-    'react-native-fetch-blob could not find native module.',
+    'react-native-fetch-blob could not find valid native module.',
     'please make sure you have linked native modules using `rnpm link`,',
     'and restart RN packager or manually compile IOS/Android project.'
   )
 }
 
+const config = function(options) {
+  return { fetch : fetch.bind(options) }
+}
+
 // Promise wrapper function
-const fetch = (...args) => {
+const fetch = function(...args) {
+
+  let options = this || {}
 
   // create task ID for receiving progress event
   let taskId = getUUID()
+
   let promise = new Promise((resolve, reject) => {
 
     let [method, url, headers, body] = [...args]
     let nativeMethodName = Array.isArray(body) ? 'fetchBlobForm' : 'fetchBlob'
+
+    // on progress event listener
     let subscription = emitter.addListener('RNFetchBlobProgress', (e) => {
       if(e.taskId === taskId && promise.onProgress) {
         promise.onProgress(e.written, e.total)
       }
     })
 
-    RNFetchBlob[nativeMethodName](taskId, method, url, headers || {}, body, (err, ...data) => {
+    let req = RNFetchBlob[nativeMethodName]
+    req(taskId, method, url, headers || {}, body, (err, ...data) => {
 
       // task done, remove event listener
       subscription.remove()
-
       if(err)
         reject(new Error(err, ...data))
       else
@@ -52,7 +61,10 @@ const fetch = (...args) => {
 
   })
 
-  promise.onProgress = null
+  promise.progress = (fn) => {
+    promise.onProgress = fn
+    return promise
+  }
 
   return promise
 
