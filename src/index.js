@@ -1,6 +1,7 @@
 /**
  * @author wkh237
- * @version 0.4.2
+ * @version 0.5.0
+ * @flow
  */
 
 import {
@@ -14,6 +15,20 @@ import base64 from 'base-64'
 const emitter = (Platform.OS === 'android' ? DeviceEventEmitter : NativeAppEventEmitter)
 const RNFetchBlob = NativeModules.RNFetchBlob
 
+emitter.addListener("RNFetchBlobMessage", (e) => {
+
+  if(e.event === 'warn') {
+    console.warn(e.detail)
+  }
+  else if (e.event === 'error') {
+    throw e.detail
+  }
+  else {
+    console.log("RNFetchBlob native message", e.detail)
+  }
+
+})
+
 // Show warning if native module not detected
 if(!RNFetchBlob || !RNFetchBlob.fetchBlobForm || !RNFetchBlob.fetchBlob) {
   console.warn(
@@ -23,12 +38,17 @@ if(!RNFetchBlob || !RNFetchBlob.fetchBlobForm || !RNFetchBlob.fetchBlob) {
   )
 }
 
+type fetchConfig = {
+  fileCache : bool,
+  path : string,
+}
+
 const config = function(options) {
   return { fetch : fetch.bind(options) }
 }
 
 // Promise wrapper function
-const fetch = function(...args) {
+const fetch = function(...args:any) {
 
   let options = this || {}
 
@@ -48,14 +68,18 @@ const fetch = function(...args) {
     })
 
     let req = RNFetchBlob[nativeMethodName]
-    req(taskId, method, url, headers || {}, body, (err, ...data) => {
+    req(options, taskId, method, url, headers || {}, body, (err, ...data) => {
 
       // task done, remove event listener
       subscription.remove()
       if(err)
         reject(new Error(err, ...data))
-      else
-        resolve(new FetchBlobResponse(...data))
+      else {
+        let respType = 'base64'
+        if(options.fileCache || options.path)
+          respType = 'path'
+        resolve(new FetchBlobResponse(taskId, respType,...data))
+      }
 
     })
 
@@ -75,15 +99,29 @@ const fetch = function(...args) {
  */
 class FetchBlobResponse {
 
-  constructor(data) {
+  taskId : string;
+  type : 'base64' | 'path';
+  data : any;
+  blob : (contentType:string, sliceSize:number) => null;
+  text : () => string;
+  json : () => any;
+  base64 : () => any;
+  flush : () => void;
+  readStream : (
+    encode: 'utf8' | 'ascii' | 'base64',
+    fn:(event : 'data' | 'end', chunk:any) => void
+  ) => void;
+
+  constructor(taskId:string, type:'base64' | 'path',data:any) {
     this.data = data
+    this.taskId = taskId
     /**
      * Convert result to javascript Blob object.
      * @param  {string} contentType MIME type of the blob object.
      * @param  {number} sliceSize   Slice size.
      * @return {blob}             Return Blob object.
      */
-    this.blob = (contentType, sliceSize) => {
+    this.blob = (contentType:string, sliceSize:number) => {
       console.warn('FetchBlobResponse.blob() is deprecated and has no funtionality.')
       return null
     }
@@ -91,22 +129,48 @@ class FetchBlobResponse {
      * Convert result to text.
      * @return {string} Decoded base64 string.
      */
-    this.text = () => {
+    this.text = ():string => {
       return base64.decode(this.data)
     }
     /**
      * Convert result to JSON object.
      * @return {object} Parsed javascript object.
      */
-    this.json = () => {
+    this.json = ():any => {
       return JSON.parse(base64.decode(this.data))
     }
     /**
      * Return BASE64 string directly.
      * @return {string} BASE64 string of response body.
      */
-    this.base64 = () => {
+    this.base64 = ():string => {
       return this.data
+    }
+    /**
+     * Remove cahced file
+     * @return {void}
+     */
+    this.flush = () => {
+      RNFetchBlob.flush(this.taskId)
+    }
+
+    /**
+     * Start read stream from cached file
+     * @param  {String} encoding Encode type, should be one of `base64`, `ascrii`, `utf8`.
+     * @param  {Function} fn On data event handler
+     * @return {void}
+     */
+    this.readStream = (encode: 'base64' | 'utf8' | 'ascii', fn) => {
+
+      // register for file stream event
+      let subscription = emitter.addListener(`RNFetchBlobStream${this.taskId}`, (event, chunk) => {
+        fn(event, chunk)
+        // when stream closed, remove event handler
+        if(event === 'end')
+          subscription()
+      })
+
+      RNFetchBlob.readStream(this.taskId, encode)
     }
 
   }
