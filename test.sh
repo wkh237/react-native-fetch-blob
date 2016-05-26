@@ -43,6 +43,9 @@ if [ "$#" == 4 ]; then
 fi
 react-native "run-${TARGET}"
 
+# install dev packages
+cd ${CWD}
+npm install
 # start test server
 cd "${CWD}/test-server"
 # kill existing server
