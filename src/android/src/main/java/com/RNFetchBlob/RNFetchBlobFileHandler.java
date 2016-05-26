@@ -2,6 +2,7 @@ package com.RNFetchBlob;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -20,9 +21,9 @@ public class RNFetchBlobFileHandler extends FileAsyncHttpResponseHandler {
     ReactContext mCtx;
     String mTaskId;
 
-    RNFetchBlobFileHandler(ReactContext ctx, String taskId, Callback onResponse) {
-        // save temp file to RNFetchBlobCache/dltmp${taskId}
-        super(new File(RNFetchBlobFS.TempFilePath + taskId), false, false);
+    RNFetchBlobFileHandler(ReactApplicationContext ctx, String taskId, Callback onResponse) {
+        // save temp file to application storage
+        super(new File(RNFetchBlobFS.getTmpPath(ctx, taskId)), false, false);
         this.onResponse = onResponse;
         this.mTaskId = taskId;
         this.mCtx = ctx;

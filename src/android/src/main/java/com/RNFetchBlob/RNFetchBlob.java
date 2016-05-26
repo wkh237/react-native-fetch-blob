@@ -37,7 +37,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     @ReactMethod
     public void flush(String taskId) {
         try {
-            new File(RNFetchBlobFS.TempFilePath + taskId).delete();
+            new File(RNFetchBlobFS.getTmpPath(this.getReactApplicationContext(), taskId)).delete();
         } catch(Exception err) {
             WritableMap args = Arguments.createMap();
             args.putString("event", "error");

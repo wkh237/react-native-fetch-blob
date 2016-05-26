@@ -17,11 +17,12 @@ import cz.msebera.android.httpclient.util.EncodingUtils;
  */
 public class RNFetchBlobFS {
 
-    static String DocumentDir = Environment.getExternalStorageDirectory().toString();
-    static String TempFilePath = Environment.getExternalStorageDirectory().toString() + "/RNFetchBlobCache/dltmp";
-
     ReactApplicationContext mCtx;
     DeviceEventManagerModule.RCTDeviceEventEmitter emitter;
+
+    static public String getTmpPath(ReactApplicationContext ctx, String taskId) {
+        return ctx.getFilesDir() + "/RNFetchBlobTmp_" + taskId;
+    }
 
 
     RNFetchBlobFS(ReactApplicationContext ctx) {
@@ -32,7 +33,7 @@ public class RNFetchBlobFS {
     public void readStream(String taskId, String encoding) {
         try {
 
-            FileInputStream fs = mCtx.openFileInput(RNFetchBlobFS.TempFilePath + taskId);
+            FileInputStream fs = mCtx.openFileInput(mCtx.getFilesDir() + "/fetchblobtmp_"+ taskId);
             byte[] buffer = new byte[1024];
             int cursor = 0;
             boolean error = false;
