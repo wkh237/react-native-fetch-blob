@@ -7,16 +7,19 @@ import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.Base64;
+import com.loopj.android.http.FileAsyncHttpResponseHandler;
+
+import java.io.File;
 
 import cz.msebera.android.httpclient.Header;
 
-public class RNFetchBlobHandler extends AsyncHttpResponseHandler {
+public class RNFetchBlobBinaryHandler extends AsyncHttpResponseHandler {
 
     Callback onResponse;
     ReactContext mCtx;
     String mTaskId;
 
-    RNFetchBlobHandler(ReactContext ctx, String taskId, Callback onResponse) {
+    RNFetchBlobBinaryHandler(ReactContext ctx, String taskId, Callback onResponse) {
 
         this.onResponse = onResponse;
         this.mTaskId = taskId;
@@ -41,11 +44,12 @@ public class RNFetchBlobHandler extends AsyncHttpResponseHandler {
 
         // emit event to js context
         this.mCtx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                 .emit("RNFetchBlobProgress", args);
+                .emit("RNFetchBlobProgress", args);
     }
 
     @Override
     public void onFailure(final int statusCode, final Header[] headers, byte[] binaryData, final Throwable error) {
         this.onResponse.invoke(statusCode, error.getMessage()+ ", "+ error.getCause());
     }
+
 }

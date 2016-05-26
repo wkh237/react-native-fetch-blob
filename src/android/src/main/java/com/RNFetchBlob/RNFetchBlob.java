@@ -1,8 +1,8 @@
 package com.RNFetchBlob;
 
 import android.net.Uri;
-import android.text.style.AlignmentSpan;
 
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -10,23 +10,17 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.Base64;
-import com.loopj.android.http.BinaryHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
 
-import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.entity.BufferedHttpEntity;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
-import cz.msebera.android.httpclient.entity.ContentType;
-import cz.msebera.android.httpclient.entity.StringEntity;
-import cz.msebera.android.httpclient.message.BasicHeader;
-import cz.msebera.android.httpclient.protocol.HTTP;
 
 public class RNFetchBlob extends ReactContextBaseJavaModule {
 
@@ -41,7 +35,27 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void fetchBlob(String taskId, String method, String url, ReadableMap headers, String body, final Callback callback) {
+    public void flush(String taskId) {
+        try {
+            new File(RNFetchBlobFS.TempFilePath + taskId).delete();
+        } catch(Exception err) {
+            WritableMap args = Arguments.createMap();
+            args.putString("event", "error");
+            args.putString("detail", err.getMessage());
+            this.getReactApplicationContext()
+                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit("RNFetchBlobMessage", args);
+        }
+    }
+
+    @ReactMethod
+    public void readStream(String taskId, String encoding) {
+        RNFetchBlobFS fs = new RNFetchBlobFS(this.getReactApplicationContext());
+        fs.readStream(taskId, encoding);
+    }
+
+    @ReactMethod
+    public void fetchBlob(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, final Callback callback) {
 
         try {
             Uri uri = Uri.parse(url);
@@ -70,8 +84,13 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                 entity.setContentType(headers.getString("Content-Type"));
             }
 
+            AsyncHttpResponseHandler handler;
+
             // create handler
-            AsyncHttpResponseHandler handler = new RNFetchBlobHandler(this.getReactApplicationContext(), taskId, callback);
+            if(options.getBoolean("fileCache") || options.getString("path") != null)
+                handler = new RNFetchBlobFileHandler(this.getReactApplicationContext(), taskId, callback);
+            else
+                handler = new RNFetchBlobBinaryHandler(this.getReactApplicationContext(), taskId, callback);
 
             // send request
             switch(method.toLowerCase()) {
@@ -95,7 +114,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void fetchBlobForm(String taskId, String method, String url, ReadableMap headers, ReadableArray body, final Callback callback) {
+    public void fetchBlobForm(ReadableMap options, String taskId, String method, String url, ReadableMap headers, ReadableArray body, final Callback callback) {
 
         try {
             Uri uri = Uri.parse(url);
@@ -155,8 +174,13 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                 req.addHeader("Content-Type", headers.getString("Content-Type") + "; charset=utf8; boundary=" + boundary);
             }
 
+            AsyncHttpResponseHandler handler;
+
             // create handler
-            AsyncHttpResponseHandler handler = new RNFetchBlobHandler(this.getReactApplicationContext(), taskId, callback);
+            if(options.getBoolean("fileCache") || options.getString("path") != null)
+                handler = new RNFetchBlobFileHandler(this.getReactApplicationContext(), taskId, callback);
+            else
+                handler = new RNFetchBlobBinaryHandler(this.getReactApplicationContext(), taskId, callback);
 
             // send request
             switch(method.toLowerCase()) {
