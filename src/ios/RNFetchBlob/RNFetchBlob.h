@@ -9,18 +9,47 @@
 #import <Foundation/Foundation.h>
 #import "RCTBridgeModule.h"
 
-@interface RNFetchBlob : NSObject <RCTBridgeModule> 
+@interface FetchBlobFS : NSObject <NSStreamDelegate>  {
+    NSOutputStream * outStream;
+    NSInputStream * inStream;
+    RCTResponseSenderBlock callback;
+    RCTBridge * bridge;
+    Boolean isOpen;
+    NSString * encoding;
+    NSString * taskId;
+    NSString * path;
+}
+
+@property (nonatomic) NSOutputStream * outStream;
+@property (nonatomic) NSInputStream * inStream;
+@property (nonatomic) RCTResponseSenderBlock callback;
+@property (nonatomic) RCTBridge * bridge;
+@property (nonatomic) NSString * encoding;
+@property (nonatomic) NSString * taskId;
+@property (nonatomic) NSString * path;
+
++ (NSString *) getTempPath;
+- (void) initWithCallback;
+- (void) initWithBridgeRef;
+- (void) openWithDestination;
+- (void) openWithId;
+- (void) write;
+- (void) read;
+- (void) closeInStream;
+- (void) closeOutStream;
 
 @end
 
 @interface FetchBlobUtils : NSObject  <NSURLConnectionDelegate, NSURLConnectionDataDelegate> {
-
+    
     NSString * taskId;
     int expectedBytes;
     int receivedBytes;
     NSMutableData * respData;
     RCTResponseSenderBlock callback;
     RCTBridge * bridge;
+    NSDictionary * options;
+    FetchBlobFS * fileStream;
 }
 @property (nonatomic) NSString * taskId;
 @property (nonatomic) int expectedBytes;
@@ -28,7 +57,8 @@
 @property (nonatomic) NSMutableData * respData;
 @property (nonatomic) RCTResponseSenderBlock callback;
 @property (nonatomic) RCTBridge * bridge;
-
+@property (nonatomic) NSDictionary * options;
+@property (nonatomic) FetchBlobFS * fileStream;
 
 - (id) init;
 - (id) delegate;
@@ -39,5 +69,9 @@
 
 @end
 
+
+@interface RNFetchBlob : NSObject <RCTBridgeModule>
+
+@end
 
 #endif /* RNFetchBlob_h */

@@ -14,7 +14,172 @@
 
 ////////////////////////////////////////
 //
-//  Util functions
+//  File system access methods
+//
+////////////////////////////////////////
+
+@implementation FetchBlobFS
+
+@synthesize outStream;
+@synthesize inStream;
+@synthesize encoding;
+@synthesize callback;
+@synthesize taskId;
+@synthesize path;
+
++ (NSString *) getTempPath:(NSString*)taskId {
+
+    NSString * documentDir = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    NSString * filename = [NSString stringWithFormat:@"RNFetchBlobTmp_%s", taskId];
+    NSString * tempPath = [documentDir stringByAppendingString: filename];
+    return tempPath;
+}
+
+- (id)initWithCallback:(RCTResponseSenderBlock)callback {
+    self = [super init];
+    self.callback = callback;
+    return self;
+}
+
+- (id)initWithBridgeRef:(RCTBridge *)bridgeRef {
+    self = [super init];
+    self.callback = callback;
+    return self;
+}
+
+- (void)openWithPath:(NSString *)destPath {
+    self.outStream = [[NSOutputStream alloc]init];
+    [self.outStream initToFileAtPath:destPath append:NO];
+}
+
+
+- (void)openWithId:(NSString *)taskId {
+    
+    NSString * tmpPath = [[self class ]getTempPath: taskId];
+    // create a file stream
+    [self openWithPath:tmpPath];
+    
+}
+
+// Write file chunk into an opened stream
+- (void)write:(NSString *) chunk {
+    [self.outStream write:[chunk cStringUsingEncoding:NSASCIIStringEncoding] maxLength:chunk.length];
+}
+
+- (void)readWithPath:(NSString *)path useEncoding:(NSString *)encoding {
+    self.inStream = [[NSInputStream alloc]init];
+    self.encoding = encoding;
+    [self.inStream setDelegate:self];
+    
+}
+
+- (void)readWithTaskId:(NSString *)taskId withPath:(NSString *)path useEncoding:(NSString *)encoding {
+    self.taskId = taskId;
+    self.path = path;
+    if(path == nil)
+        [self readWithPath:[[self class]getTempPath:taskId] useEncoding:encoding];
+    else
+        [self readWithPath:path useEncoding:encoding];
+}
+
+// close file stream
+- (void)closeOutStream {
+    if(self.outStream != nil) {
+        [self.outStream close];
+        self.outStream = nil;
+    }
+
+}
+
+- (void)closeInStream {
+    if(self.inStream != nil) {
+        [self.inStream close];
+        [self.inStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+    }
+    
+}
+
+- (void)stream:(NSStream *)stream handleEvent:(NSStreamEvent)eventCode {
+
+    switch(eventCode) {
+    
+        case NSStreamEventHasBytesAvailable:
+        {
+            
+            
+            NSMutableData * chunkData = [[NSMutableData data] init];
+            
+            uint8_t buf[1024];
+            unsigned int len = 0;
+            len = [(NSInputStream *)stream read:buf maxLength:1024];
+            // still have data in stream
+            if(len) {
+                [chunkData appendBytes:(const void *)buf length:len];
+                // TODO : read file progress ?
+//                [bytesRead setIntValue:[bytesRead intValue]+len];
+                
+                // dispatch data event
+                NSString * encodedChunk = [NSString alloc];
+                if( [self.encoding caseInsensitiveCompare:@"utf8"] ) {
+                    encodedChunk = [encodedChunk initWithData:chunkData encoding:NSUTF8StringEncoding];
+                }
+                else if ( [self.encoding caseInsensitiveCompare:@"ascii"] ) {
+                    encodedChunk = [encodedChunk initWithData:chunkData encoding:NSASCIIStringEncoding];
+                }
+                else if ( [self.encoding caseInsensitiveCompare:@"base64"] ) {
+                    encodedChunk = [chunkData base64EncodedStringWithOptions:0];
+                }
+                else {
+                    [self.bridge.eventDispatcher
+                     sendAppEventWithName: [NSString stringWithFormat:@"RNFetchBlobStream%s", self.taskId]
+                     body:@{
+                            @"event": @"error",
+                            @"detail": @"unrecognized encoding"
+                        }
+                     ];
+                    return;
+                }
+                [self.bridge.eventDispatcher
+                 sendAppEventWithName: [NSString stringWithFormat:@"RNFetchBlobStream%s", self.taskId]
+                 body:@{
+                        @"event": @"data",
+                        @"detail": encodedChunk
+                    }
+                 ];
+            }
+            // end of stream
+            else {
+                [self.bridge.eventDispatcher
+                sendAppEventWithName: [NSString stringWithFormat:@"RNFetchBlobStream%s", self.taskId]
+                body:@{
+                       @"event": @"end",
+                       @"detail": @""
+                    }
+                ];
+            }
+            break;
+        }
+        case NSStreamEventErrorOccurred:
+        {
+            [self.bridge.eventDispatcher
+             sendAppEventWithName: [NSString stringWithFormat:@"RNFetchBlobStream%s", self.taskId]
+             body:@{
+                    @"event": @"error",
+                    @"detail": @"error when read file with stream"
+                    }
+             ];
+            break;
+        }
+    
+    }
+
+}
+
+@end
+
+////////////////////////////////////////
+//
+//  HTTP request handler
 //
 ////////////////////////////////////////
 
@@ -27,9 +192,10 @@
 @synthesize respData;
 @synthesize callback;
 @synthesize bridge;
+@synthesize options;
 
 
-// removing case of headers
+// removing case from headers
 + (NSMutableDictionary *) normalizeHeaders:(NSDictionary *)headers {
     
     NSMutableDictionary * mheaders = [[NSMutableDictionary alloc]init];
@@ -45,18 +211,28 @@
     return self;
 }
 
-- (id)delegate:(id)delegate {
-    return delegate;
-}
 
-- (void) sendRequest:(RCTBridge *)bridgeRef taskId:(NSString *)taskId withRequest:(NSURLRequest *)req callback:(RCTResponseSenderBlock) callback {
+- (void) sendRequest:(NSDictionary *)options bridge:(RCTBridge *)bridgeRef taskId:(NSString *)taskId withRequest:(NSURLRequest *)req callback:(RCTResponseSenderBlock) callback {
     self.taskId = taskId;
     self.respData = [[NSMutableData alloc] initWithLength:0];
     self.callback = callback;
     self.bridge = bridgeRef;
     self.expectedBytes = 0;
     self.receivedBytes = 0;
-    // Call long-running code on background thread
+    self.options = options;
+    
+    NSString * path = [self.options valueForKey:@"path"];
+    
+    // open file stream for write
+    if( path != nil) {
+        self.fileStream = [[FetchBlobFS alloc]initWithCallback:self.callback];
+        [self.fileStream openWithPath:path];
+    }
+    else if ( [self.options valueForKey:@"fileCache"] == YES ) {
+        self.fileStream = [[FetchBlobFS alloc]initWithCallback:self.callback];
+        [self.fileStream openWithId:taskId];
+    }
+    
     NSURLConnection *conn = [[NSURLConnection alloc] initWithRequest:req delegate:self startImmediately:NO];
     [conn scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
     [conn start];
@@ -75,9 +251,21 @@
     expectedBytes = [response expectedContentLength];
 }
 
+
 - (void) connection:(NSURLConnection *)connection didReceiveData:(nonnull NSData *)data {
     receivedBytes += data.length;
-    [respData appendData:data];
+    
+    Boolean fileCache = [self.options valueForKey:@"fileCache"];
+    NSString * path = [self.options valueForKey:@"path"];
+    
+    // write to tmp file
+    if( fileCache == YES || path != nil ) {
+        [self.fileStream write:data];
+    }
+    // cache data in memory
+    else {
+        [respData appendData:data];
+    }
     
     [self.bridge.eventDispatcher
         sendAppEventWithName:@"RNFetchBlobProgress"
@@ -105,7 +293,12 @@
 }
 
 - (void) connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
+    
     [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+    
+    [self.fileStream closeInStream];
+    [self.fileStream closeOutStream];
+    
     callback(@[[error localizedDescription], [NSNull null]]);
 }
 
@@ -116,7 +309,6 @@
 
 // handle 301 and 302 responses
 - (NSURLRequest *)connection:(NSURLConnection *)connection willSendRequest:(NSURLRequest *)request redirectResponse:response {
-    
     return request;
 }
 
@@ -129,7 +321,23 @@
     else
         data = [[NSData alloc] init];
     
-    callback(@[[NSNull null], [data base64EncodedStringWithOptions:0]]);
+    NSString * path = [NSString stringWithString:[self.options valueForKey:@"path"]];
+    
+    [self.fileStream closeInStream];
+    
+    // if fileCache is true or file path is given, return a path
+    if( path != nil ) {
+        callback(@[[NSNull null], path]);
+    }
+    // when fileCache option is set but no path specified, save to tmp path
+    else if( [self.options valueForKey:@"fileCache"] == YES || path != nil ) {
+        NSString * tmpPath = [FetchBlobFS getTempPath:taskId];
+        callback(@[[NSNull null], tmpPath]);
+    }
+    // otherwise return base64 string
+    else {
+        callback(@[[NSNull null], [data base64EncodedStringWithOptions:0]]);
+    }
 }
 
 @end
@@ -141,6 +349,8 @@
 //
 ////////////////////////////////////////
 
+#pragma mark RNFetchBlob exported methods
+
 @implementation RNFetchBlob
 
 @synthesize bridge = _bridge;
@@ -148,7 +358,7 @@
 RCT_EXPORT_MODULE();
 
 // Fetch blob data request
-RCT_EXPORT_METHOD(fetchBlobForm:(NSString *)taskId method:(NSString *)method url:(NSString *)url headers:(NSDictionary *)headers form:(NSArray *)form callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options taskId:(NSString *)taskId method:(NSString *)method url:(NSString *)url headers:(NSDictionary *)headers form:(NSArray *)form callback:(RCTResponseSenderBlock)callback)
 {
     
     // send request
@@ -206,20 +416,15 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSString *)taskId method:(NSString *)method url
     [request setHTTPMethod: method];
     [request setAllHTTPHeaderFields:mheaders];
     
-    [[[FetchBlobUtils alloc] init] sendRequest:self.bridge taskId:taskId withRequest:request callback:callback];
     
-    // create thread for http request
-//    NSOperationQueue *queue = [[NSOperationQueue alloc] init];
-//    [NSURLConnection sendAsynchronousRequest:request queue:queue completionHandler:^(NSURLResponse * _Nullable response, NSData * _Nullable data, NSError * _Nullable connectionError) {
-//        
-//        [FetchBlobUtils onBlobResponse:response withData:data withError: connectionError withCallback: callback];
-//        
-//    }];
+    // send HTTP request
+    FetchBlobUtils * utils = [[FetchBlobUtils alloc] init];
+    [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
     
 }
 
 // Fetch blob data request
-RCT_EXPORT_METHOD(fetchBlob:(NSString *)taskId method:(NSString *)method url:(NSString *)url headers:(NSDictionary *)headers body:(NSString *)body callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options taskId:(NSString *)taskId method:(NSString *)method url:(NSString *)url headers:(NSDictionary *)headers body:(NSString *)body callback:(RCTResponseSenderBlock)callback)
 {
     // send request
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
@@ -244,18 +449,19 @@ RCT_EXPORT_METHOD(fetchBlob:(NSString *)taskId method:(NSString *)method url:(NS
     [request setHTTPMethod: method];
     [request setAllHTTPHeaderFields:mheaders];
     
-    [[[FetchBlobUtils alloc] init] sendRequest:self.bridge taskId:taskId withRequest:request callback:callback];
+    // send HTTP request
+    FetchBlobUtils * utils = [[FetchBlobUtils alloc] init];
+    [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
     
-    // create thread for http request
-//    NSOperationQueue *queue = [[NSOperationQueue alloc] init];
-//    
-//    
-//    [NSURLConnection sendAsynchronousRequest:request queue:queue completionHandler:^(NSURLResponse * _Nullable response, NSData * _Nullable data, NSError * _Nullable connectionError) {
-//        
-//        [FetchBlobUtils onBlobResponse:response withData:data withError: connectionError withCallback: callback];
-//        
-//    }];
-    
+}
+
+RCT_EXPORT_METHOD(readStream:(NSString *)taskId withPath:(NSString *)path withEncoding:(NSString *)encoding) {
+    FetchBlobFS *fileStream = [[FetchBlobFS alloc] initWithBridgeRef:self.bridge];
+    [fileStream readWithTaskId:taskId withPath:path useEncoding:encoding];
+}
+
+RCT_EXPORT_METHOD(flush:(NSString *)taskId withPath:(NSString *)path) {
+    // TODO : remove file
 }
 
 @end

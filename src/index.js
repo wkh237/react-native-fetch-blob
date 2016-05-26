@@ -78,7 +78,7 @@ const fetch = function(...args:any) {
         let respType = 'base64'
         if(options.fileCache || options.path)
           respType = 'path'
-        resolve(new FetchBlobResponse(taskId, respType,...data))
+        resolve(new FetchBlobResponse(taskId, options.path, respType,...data))
       }
 
     })
@@ -100,6 +100,7 @@ const fetch = function(...args:any) {
 class FetchBlobResponse {
 
   taskId : string;
+  path : string;
   type : 'base64' | 'path';
   data : any;
   blob : (contentType:string, sliceSize:number) => null;
@@ -112,8 +113,9 @@ class FetchBlobResponse {
     fn:(event : 'data' | 'end', chunk:any) => void
   ) => void;
 
-  constructor(taskId:string, type:'base64' | 'path',data:any) {
+  constructor(taskId:string, path:string, type:'base64' | 'path',data:any) {
     this.data = data
+    this.path = path
     this.taskId = taskId
     /**
      * Convert result to javascript Blob object.
@@ -151,7 +153,7 @@ class FetchBlobResponse {
      * @return {void}
      */
     this.flush = () => {
-      RNFetchBlob.flush(this.taskId)
+      RNFetchBlob.flush(this.taskId, this.path)
     }
 
     /**
@@ -170,7 +172,7 @@ class FetchBlobResponse {
           subscription()
       })
 
-      RNFetchBlob.readStream(this.taskId, encode)
+      RNFetchBlob.readStream(this.taskId, this.path, encode)
     }
 
   }
