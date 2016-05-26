@@ -1,6 +1,6 @@
 # react-native-fetch-blob [![npm version](https://badge.fury.io/js/react-native-fetch-blob.svg)](https://badge.fury.io/js/react-native-fetch-blob)
 
-A react-native module for fetch file/image with custom headers, supports blob response data.
+A react-native module for fetch file/image with custom headers, supports blob response data, and upload/download progress.
 
 If you're dealing with image or file server that requires an `Authorization` token in the header, or you're having problem with `fetch` API when receiving blob data, you might try this module (this is also the reason why I made this).
 
@@ -10,6 +10,15 @@ This module enables you upload/download binary data in js, see [Examples](#user-
 
 The source code is very simple, just an implementation of native HTTP request, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
 
+## Major Changes
+
+| Version | |
+|---|---|
+| 0.3 | Upload/Download octet-stream and form-data |
+| 0.4 | Add base-64 encode/decode library and API |
+| 0.4.1 | Fixe upload form-data missing file extension problem on Android |
+| 0.4.2 | Supports upload/download progress |
+
 ## Usage
 
 * [Installation](#user-content-installation)
@@ -17,9 +26,8 @@ The source code is very simple, just an implementation of native HTTP request, s
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
+ * [Upload/Download progress](#user-content-uploaaddownload-progress)
 * [API](#user-content-api)
-* [Test and Development](#user-content-test-and-development)
-* [Milestones](#user-content-milestones)
 
 ## Installation
 
@@ -116,9 +124,30 @@ Elements have property `filename` will be transformed into binary format, otherw
   })
 ```
 
+#### Upload/Download progress
+
+In `version >= 0.4.2` it is possible to know the upload/download progress.
+
+```js
+  RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
+      ... some headers,
+      'Content-Type' : 'octet-stream'
+    }, base64DataString)
+    .progress((received, total) => {
+        console.log('progress', received / total)
+    })
+    .then((resp) => {
+      // ...
+    })
+    .catch((err) => {
+      // ...
+    })
+```
+
+
 ## API
 
-#### `fetch(method, url, headers, body):Promise<FetchBlobResponse> `
+#### `fetch(method, url, headers, body):Promise<FetchBlobResponse>`
 
 Send a HTTP request uses given headers and body, and return a Promise.
 
@@ -130,8 +159,15 @@ HTTP request destination url.
 Headers of HTTP request, value of headers should be `stringified`, if you're uploading binary files, content-type should be `application/octet-stream` or `multipart/form-data`(see examples above).
 #### body:`string | Array<Object>` (Optional)
 Body of the HTTP request, body can either be a BASE64 string, or an array contains object elements, each element have 2  required property `name`, and `data`, and 1 optional property `filename`, once `filename` is set, content in `data` property will be consider as BASE64 string that will be converted into byte array later.
-
 When body is a base64 string , this string will be converted into byte array in native code, and the request body will be sent as `application/octet-stream`.
+
+### `fetch(...).progress(eventListener):Promise<FetchBlobResponse>` added in `0.4.2`
+
+Register on progress event handler for a fetch request.
+
+#### eventListener:`(sendOrReceivedBytes:number, totalBytes:number)`
+
+A function that triggers when there's data received/sent, first argument is the number of sent/received bytes, and second argument is expected total bytes number.
 
 #### `base64`
 
@@ -154,14 +190,8 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
   returns decoded base64 string (done in js context)
 
 
-### Test and Development
-
-Check our [development guide](https://github.com/wkh237/react-native-fetch-blob/wiki/Development-Guide)
-
-### Milestones
-
-[V0.5 milestone](https://github.com/wkh237/react-native-fetch-blob/milestones/v0.5)
+### Upcoming Features
 
 * Save file to storage directly
+* Upload file from storage directly
 * Custom MIME type in form data
-* Upload/Download progress report
