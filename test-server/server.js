@@ -1,3 +1,8 @@
+/**
+ * @author wkh237
+ * @description react-native-fetch-blob test & dev server
+ */
+
 var express = require('express');
 var bodyParser = require('body-parser');
 var chokidar = require('chokidar');
@@ -74,10 +79,12 @@ app.use(upload.any())
 
 app.use('/public', express.static('./public'))
 
+// for redirect test
 app.get('/redirect', function(req, res) {
   res.redirect('/public/github.png')
 })
 
+// handle octet-stream request
 app.post('/upload', function(req, res){
 
   console.log(req.headers)
@@ -91,6 +98,12 @@ app.post('/upload', function(req, res){
 
 })
 
+// return an empty response
+app.all('/empty', function(req, res) {
+  res.send('')
+})
+
+// handle multipart/form-data request
 app.post('/upload-form', function(req, res) {
   console.log(req.headers)
   console.log(req.body)
