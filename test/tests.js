@@ -13,7 +13,7 @@ import {
   Image,
 } from 'react-native';
 
-const FILENAME = `${Platform.OS}-0.4.2-${Date.now()}.png`
+const FILENAME = `${Platform.OS}-0.5.0-${Date.now()}.png`
 // paste your test config here
 const TEST_SERVER_URL = 'http://192.168.17.193:8123'
 const DROPBOX_TOKEN = 'fsXcpmKPrHgAAAAAAAAAoXZhcXYWdgLpQMan6Tb_bzJ237DXhgQSev12hA-gUXt4'
@@ -99,16 +99,18 @@ ctx.describe('Compare uploaded multipart image', async function(report) {
 
 })
 
+// added after 0.4.2
+
 ctx.describe('Progress report test', (report) => new Promise((resolve) => {
   let received = 0
-  let p1 = RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`, {
+  let p1 = RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/1mb-dummy`, {
       Authorization : 'Bearer abde123eqweje'
     })
-    // .progress((written, total) => {
-    //   // report(<Info key={`progress = ${written} bytes / ${total} bytes`}/>)
-    //   if(written === total)
-    //     report(<Assert key="progress goes to 100%" expect={written} actual={total}/>)
-    // })
+    .progress((written, total) => {
+      report(<Info key={`progress = ${written} bytes / ${total} bytes`}/>)
+      if(written === total)
+        report(<Assert key="progress goes to 100%" expect={written} actual={total}/>)
+    })
     .then((resp) => {
       report(<Assert key="response data should be correct event with progress listener"
         expect={resp.text().substr(0,10)} actual={"1234567890"}/>)
@@ -116,6 +118,22 @@ ctx.describe('Progress report test', (report) => new Promise((resolve) => {
     })
 
 }))
+
+// FIXME : not yet supported
+ctx.describe('Large file download test', (report) => new Promise((resolve) => {
+  let received = 0
+  let p1 = RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`, {
+      Authorization : 'Bearer abde123eqweje'
+    })
+    .then((resp) => {
+      report(<Assert key="not supported"
+        expect={true} actual={false}/>)
+      resolve()
+    })
+
+}))
+
+// added after 0.5.0
 
 
 export default ctx
