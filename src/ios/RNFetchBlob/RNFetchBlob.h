@@ -9,6 +9,22 @@
 #import <Foundation/Foundation.h>
 #import "RCTBridgeModule.h"
 
+// lib event
+extern NSString *const MSG_EVENT;
+extern NSString *const MSG_EVENT_LOG;
+extern NSString *const MSG_EVENT_WARN;
+extern NSString *const MSG_EVENT_ERROR;
+
+// config
+extern NSString *const CONFIG_USE_TEMP;
+extern NSString *const CONFIG_FILE_PATH;
+
+// fs events
+extern NSString *const FS_EVENT_DATA;
+extern NSString *const FS_EVENT_END;
+extern NSString *const FS_EVENT_WARN;
+extern NSString *const FS_EVENT_ERROR;
+
 @interface FetchBlobFS : NSObject <NSStreamDelegate>  {
     NSOutputStream * outStream;
     NSInputStream * inStream;
