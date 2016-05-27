@@ -70,7 +70,7 @@ app.listen(8123, function(err){
 
 app.use(function(req,res,next){
 
-  console.log(req.headers)
+  console.log(chalk.green('request url=') + chalk.magenta(req.url));
 
   next()
 })
