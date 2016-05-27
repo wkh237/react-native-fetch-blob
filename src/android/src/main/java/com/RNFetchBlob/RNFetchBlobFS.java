@@ -29,7 +29,8 @@ public class RNFetchBlobFS {
         this.mCtx = ctx;
         this.emitter = ctx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
     }
-
+    
+    // TODO : make it an AsyncTask
     public void readStream(String taskId, String encoding) {
         try {
 
