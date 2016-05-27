@@ -47,25 +47,25 @@ NSString *const FS_EVENT_ERROR = @"error";
 
 + (NSString *) getDocumentDir {
 
-    return NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    return [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
 }
 
 + (NSString *) getMusicDir {
-    return NSSearchPathForDirectoriesInDomains(NSMusicDirectory, NSUserDomainMask, YES);
+    return [NSSearchPathForDirectoriesInDomains(NSMusicDirectory, NSUserDomainMask, YES) firstObject];
 }
 
 + (NSString *) getMovieDir {
-    return NSSearchPathForDirectoriesInDomains(NSMoviesDirectory, NSUserDomainMask, YES);
+    return [NSSearchPathForDirectoriesInDomains(NSMoviesDirectory, NSUserDomainMask, YES) firstObject];
 }
 
 + (NSString *) getPictureDir {
-    return NSSearchPathForDirectoriesInDomains(NSPicturesDirectory, NSUserDomainMask, YES);
+    return [NSSearchPathForDirectoriesInDomains(NSPicturesDirectory, NSUserDomainMask, YES) firstObject];
 }
 
 + (NSString *) getTempPath:(NSString*)taskId {
 
-    NSString * documentDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
-    NSString * filename = [NSString stringWithFormat:@"RNFetchBlobTmp_%s", taskId];
+    NSString * documentDir = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    NSString * filename = [NSString stringWithFormat:@"/RNFetchBlobTmp_%@", taskId];
     NSString * tempPath = [documentDir stringByAppendingString: filename];
     return tempPath;
 }
@@ -83,8 +83,8 @@ NSString *const FS_EVENT_ERROR = @"error";
 }
 
 - (void)openWithPath:(NSString *)destPath {
-    self.outStream = [[NSOutputStream alloc]init];
-    [self.outStream initToFileAtPath:destPath append:NO];
+    self.outStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:YES];
+    [self.outStream open];
 }
 
 
@@ -97,8 +97,17 @@ NSString *const FS_EVENT_ERROR = @"error";
 }
 
 // Write file chunk into an opened stream
-- (void)write:(NSString *) chunk {
-    [self.outStream write:[chunk cStringUsingEncoding:NSASCIIStringEncoding] maxLength:chunk.length];
+- (void)write:(NSData *) chunk toPath:(NSString *) path{
+    NSUInteger left = [chunk length];
+    NSUInteger nwr = 0;
+    do {
+        nwr = [self.outStream write:[chunk bytes] maxLength:left];
+        if (-1 == nwr) break;
+        left -= nwr;
+    } while (left > 0);
+    if (left) {
+        NSLog(@"stream error: %@", [self.outStream streamError]);
+    }
 }
 
 - (void)readWithPath:(NSString *)path useEncoding:(NSString *)encoding {
@@ -117,7 +126,7 @@ NSString *const FS_EVENT_ERROR = @"error";
         [self readWithPath:path useEncoding:encoding];
 }
 
-// close file stream
+// close file write stream
 - (void)closeOutStream {
     if(self.outStream != nil) {
         [self.outStream close];
@@ -126,6 +135,7 @@ NSString *const FS_EVENT_ERROR = @"error";
 
 }
 
+// close file read stream
 - (void)closeInStream {
     if(self.inStream != nil) {
         [self.inStream close];
@@ -139,7 +149,15 @@ NSString *const FS_EVENT_ERROR = @"error";
 - (void)stream:(NSStream *)stream handleEvent:(NSStreamEvent)eventCode {
 
     switch(eventCode) {
-    
+            
+        // write stream event
+        case NSStreamEventHasSpaceAvailable:
+        {
+            
+        
+        }
+        
+        // read stream incoming chunk
         case NSStreamEventHasBytesAvailable:
         {
             
@@ -196,6 +214,8 @@ NSString *const FS_EVENT_ERROR = @"error";
             }
             break;
         }
+            
+        // stream error
         case NSStreamEventErrorOccurred:
         {
             [self.bridge.eventDispatcher
@@ -265,7 +285,7 @@ NSString *const FS_EVENT_ERROR = @"error";
         self.fileStream = [[FetchBlobFS alloc]initWithCallback:self.callback];
         [self.fileStream openWithPath:path];
     }
-    else if ( [self.options valueForKey:CONFIG_USE_TEMP] == YES ) {
+    else if ( [self.options valueForKey:CONFIG_USE_TEMP]!= nil ) {
         self.fileStream = [[FetchBlobFS alloc]initWithCallback:self.callback];
         [self.fileStream openWithId:taskId];
     }
@@ -284,7 +304,7 @@ NSString *const FS_EVENT_ERROR = @"error";
 
 
 - (void) connection:(NSURLConnection *)connection didReceiveResponse:(nonnull NSURLResponse *)response {
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
+//    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
     expectedBytes = [response expectedContentLength];
 }
 
@@ -294,10 +314,12 @@ NSString *const FS_EVENT_ERROR = @"error";
     
     Boolean fileCache = [self.options valueForKey:CONFIG_USE_TEMP];
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
-    
+    if(path != nil) {
+        [self.fileStream write:data toPath:path];
+    }
     // write to tmp file
-    if( fileCache == YES || path != nil ) {
-        [self.fileStream write:data];
+    else if( fileCache != nil) {
+        [self.fileStream write:data toPath:[FetchBlobFS getTempPath:self.taskId ]];
     }
     // cache data in memory
     else {
@@ -331,7 +353,7 @@ NSString *const FS_EVENT_ERROR = @"error";
 
 - (void) connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
     
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+//    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
     
     [self.fileStream closeInStream];
     [self.fileStream closeOutStream];
@@ -358,7 +380,8 @@ NSString *const FS_EVENT_ERROR = @"error";
     else
         data = [[NSData alloc] init];
     
-    NSString * path = [NSString stringWithString:[self.options valueForKey:CONFIG_FILE_PATH]];
+    NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
+    Boolean useCache = [self.options valueForKey:CONFIG_USE_TEMP];
     
     [self.fileStream closeInStream];
     
@@ -367,7 +390,7 @@ NSString *const FS_EVENT_ERROR = @"error";
         callback(@[[NSNull null], path]);
     }
     // when fileCache option is set but no path specified, save to tmp path
-    else if( [self.options valueForKey:CONFIG_USE_TEMP] == YES || path != nil ) {
+    else if( [self.options valueForKey:CONFIG_USE_TEMP] != nil) {
         NSString * tmpPath = [FetchBlobFS getTempPath:taskId];
         callback(@[[NSNull null], tmpPath]);
     }
@@ -395,7 +418,13 @@ NSString *const FS_EVENT_ERROR = @"error";
 RCT_EXPORT_MODULE();
 
 // Fetch blob data request
-RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options taskId:(NSString *)taskId method:(NSString *)method url:(NSString *)url headers:(NSDictionary *)headers form:(NSArray *)form callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
+                  taskId:(NSString *)taskId
+                  method:(NSString *)method
+                  url:(NSString *)url
+                  headers:(NSDictionary *)headers
+                  form:(NSArray *)form
+                  callback:(RCTResponseSenderBlock)callback)
 {
     
     // send request
@@ -461,7 +490,12 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options taskId:(NSString *)taskI
 }
 
 // Fetch blob data request
-RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options taskId:(NSString *)taskId method:(NSString *)method url:(NSString *)url headers:(NSDictionary *)headers body:(NSString *)body callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
+                  taskId:(NSString *)taskId
+                  method:(NSString *)method
+                  url:(NSString *)url
+                  headers:(NSDictionary *)headers
+                  body:(NSString *)body callback:(RCTResponseSenderBlock)callback)
 {
     // send request
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
@@ -505,6 +539,16 @@ RCT_EXPORT_METHOD(flush:(NSString *)taskId withPath:(NSString *)path) {
     else
         tmpPath = [FetchBlobFS getTempPath:taskId];
     [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
+}
+
+RCT_EXPORT_METHOD(getEnvironmentDirs:(RCTResponseSenderBlock) callback) {
+    
+    callback(@[
+               [FetchBlobFS getPictureDir],
+               [FetchBlobFS getMovieDir],
+               [FetchBlobFS getDocumentDir],
+               [FetchBlobFS getCacheDir],
+            ]);
 }
 
 @end

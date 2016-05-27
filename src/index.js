@@ -11,9 +11,37 @@ import {
   Platform,
 } from 'react-native'
 
+type RNFetchBlobNative = {
+  fetchBlob : (
+    options:fetchConfig,
+    taskId:string,
+    method:string,
+    url:string,
+    headers:any,
+    body:any,
+    callback:(err:any, ...data:any) => void
+  ) => void,
+  fetchBlobForm : (
+    options:fetchConfig,
+    taskId:string,
+    method:string,
+    url:string,
+    headers:any,
+    form:Array<any>,
+    callback:(err:any, ...data:any) => void
+  ) => void,
+  readStream : (
+    taskId:string,
+    path:string,
+    encode: 'utf8' | 'ascii' | 'base64'
+  ) => void,
+  getEnvironmentDirs : (dirs:any) => void,
+  flush : () => void
+};
+
 import base64 from 'base-64'
 const emitter = (Platform.OS === 'android' ? DeviceEventEmitter : NativeAppEventEmitter)
-const RNFetchBlob = NativeModules.RNFetchBlob
+const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
 
 emitter.addListener("RNFetchBlobMessage", (e) => {
 
@@ -41,14 +69,29 @@ if(!RNFetchBlob || !RNFetchBlob.fetchBlobForm || !RNFetchBlob.fetchBlob) {
 type fetchConfig = {
   fileCache : bool,
   path : string,
+};
+
+function getSystemDirs() {
+  return new Promise((resolve, reject) => {
+    try {
+      RNFetchBlob.getEnvironmentDirs((...dirs) => {
+        console.log('##',...dirs)
+        let [PictureDir, MovieDir, DocumentDir, CacheDir] = [...dirs]
+        resolve({PictureDir, MovieDir, DocumentDir, CacheDir})
+      })
+    } catch(err) {
+      reject(err)
+    }
+  })
+
 }
 
-const config = function(options) {
+function config (options:fetchConfig) {
   return { fetch : fetch.bind(options) }
 }
 
 // Promise wrapper function
-const fetch = function(...args:any) {
+function fetch(...args:any) {
 
   let options = this || {}
 
@@ -76,9 +119,9 @@ const fetch = function(...args:any) {
         reject(new Error(err, ...data))
       else {
         let respType = 'base64'
-        if(options.fileCache || options.path)
+        if(options.path || options.fileCache)
           respType = 'path'
-        resolve(new FetchBlobResponse(taskId, options.path, respType,...data))
+        resolve(new FetchBlobResponse(taskId, respType, ...data))
       }
 
     })
@@ -100,7 +143,7 @@ const fetch = function(...args:any) {
 class FetchBlobResponse {
 
   taskId : string;
-  path : string;
+  path : () => string | null;
   type : 'base64' | 'path';
   data : any;
   blob : (contentType:string, sliceSize:number) => null;
@@ -113,10 +156,10 @@ class FetchBlobResponse {
     fn:(event : 'data' | 'end', chunk:any) => void
   ) => void;
 
-  constructor(taskId:string, path:string, type:'base64' | 'path',data:any) {
+  constructor(taskId:string, type:'base64' | 'path', data:any) {
     this.data = data
-    this.path = path
     this.taskId = taskId
+    this.type = type
     /**
      * Convert result to javascript Blob object.
      * @param  {string} contentType MIME type of the blob object.
@@ -156,6 +199,12 @@ class FetchBlobResponse {
       RNFetchBlob.flush(this.taskId, this.path)
     }
 
+    this.path = () => {
+      if(this.type === 'path')
+        return this.data
+      return null
+    }
+
     /**
      * Start read stream from cached file
      * @param  {String} encoding Encode type, should be one of `base64`, `ascrii`, `utf8`.
@@ -172,7 +221,13 @@ class FetchBlobResponse {
           subscription()
       })
 
-      RNFetchBlob.readStream(this.taskId, this.path, encode)
+      if(this.type === 'path') {
+        RNFetchBlob.readStream(this.taskId, this.data, encode)
+      }
+      else {
+        console.warn('RNFetchblob', 'this response data does not contains any available stream')
+      }
+
     }
 
   }
@@ -187,5 +242,5 @@ function getUUID(){
 }
 
 export default {
-  fetch, FetchBlobResponse, base64
+  fetch, base64, config, getSystemDirs
 }
