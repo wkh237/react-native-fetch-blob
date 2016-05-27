@@ -7,4 +7,18 @@ export default {
   exists : (a, b) => a,
   hasValue : (a, b) => (a !== void 0) && (Array.isArray(a) ? a.length !==0 : true),
   isArray : (a, b) => Array.isArray(a),
+  hasProperties : (a, b) => {
+    let res = true
+    for(let i in a) {
+      let found = false
+      for(let j in b) {
+        if(b[j] === i) {
+          found = true
+          break;
+        }
+      }
+      res = res && found
+    }
+    return res
+  }
 }

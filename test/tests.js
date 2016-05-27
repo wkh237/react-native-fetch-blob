@@ -127,36 +127,36 @@ ctx.describe('Compare uploaded multipart image', (report, done) => {
 
 // added after 0.4.2
 
-ctx.describe('Progress report test', (report, done) => {
-  let received = 0
-  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/1mb-dummy`, {
-      Authorization : 'Bearer abde123eqweje'
-    })
-    .progress((written, total) => {
-      report(<Info key={`progress = ${written} bytes / ${total} bytes`}/>)
-      if(written === total)
-        report(<Assert key="progress goes to 100%" expect={written} actual={total}/>)
-    })
-    .then((resp) => {
-      report(<Assert key="response data should be correct event with progress listener"
-        expect={resp.text().substr(0,10)} actual={"1234567890"}/>)
-      done()
-    })
-
-})
+// ctx.describe('Progress report test', (report, done) => {
+//   let received = 0
+//   RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/1mb-dummy`, {
+//       Authorization : 'Bearer abde123eqweje'
+//     })
+//     .progress((written, total) => {
+//       report(<Info key={`progress = ${written} bytes / ${total} bytes`}/>)
+//       if(written === total)
+//         report(<Assert key="progress goes to 100%" expect={written} actual={total}/>)
+//     })
+//     .then((resp) => {
+//       report(<Assert key="response data should be correct event with progress listener"
+//         expect={resp.text().substr(0,10)} actual={"1234567890"}/>)
+//       done()
+//     })
+//
+// })
 
 // FIXME : not yet supported
-ctx.describe('Large file download test', (report, done) => {
-  let received = 0
-  // RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`, {
-  //   Authorization : 'Bearer abde123eqweje'
-  // })
-  // .then((resp) => {
-    report(<Assert key="not supported" expect={true} actual={false}/>)
-    done()
-  // })
-
-})
+// ctx.describe('Large file download test', (report, done) => {
+//   let received = 0
+//   // RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`, {
+//   //   Authorization : 'Bearer abde123eqweje'
+//   // })
+//   // .then((resp) => {
+//     report(<Assert key="not supported" expect={true} actual={false}/>)
+//     done()
+//   // })
+//
+// })
 
 // added after 0.5.0
 
@@ -165,21 +165,30 @@ ctx.describe('Get storage folders', (report, done) => {
   RNFetchBlob.getSystemDirs().then((dirs) => {
     report(
       <Assert key="system folders should exists" expect={dirs} comparer={Comparer.exists} />,
+      <Assert key="check properties"
+        expect={dirs}
+        comparer={Comparer.hasProperties}
+        actual={['PictureDir', 'MovieDir', 'DocumentDir', 'CacheDir']}
+      />,
       <Info key="System Folders">
         <Text>{`${JSON.stringify(dirs)}`}</Text>
       </Info>
     )
+    done()
   })
 
 })
 
 ctx.describe('Download file to storage', (report, done) => {
 
-  RNFetchBlob.config({fileCache : true})
+  RNFetchBlob.config({
+      fileCache : true,
+      appendExt : 'png'
+    })
     .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
     .then((resp) => {
       report(<Info key={`image from ${resp.path()}`}>
-        <Image ssource={{ uri : 'file://' + resp.path()}} style={styles.image}/>
+        <Image source={{ uri : resp.path()}} style={styles.image}/>
       </Info>)
       done()
     })
