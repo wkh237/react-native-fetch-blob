@@ -66,7 +66,10 @@ export default class TestContext {
           }, this.timeout)
 
           // run test body
-          this.fn.bind(this)(update, data).then((...res) => {
+          new Promise((done) => {
+            this.fn.bind(this)(update, done)
+          })
+          .then((...res) => {
             if(!expired) {
               clearTimeout(tm)
               updateInternal({
