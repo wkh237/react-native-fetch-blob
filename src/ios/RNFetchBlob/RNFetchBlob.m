@@ -11,13 +11,15 @@
 #import "RCTBridge.h"
 #import "RCTEventDispatcher.h"
 
-// lib event
+// fetch configs
+NSString *const CONFIG_USE_TEMP = @"fileCache";
+NSString *const CONFIG_FILE_PATH = @"path";
+NSString *const CONFIG_FILE_EXT = @"appendExt";
+
 NSString *const MSG_EVENT = @"RNFetchBlobMessage";
 NSString *const MSG_EVENT_LOG = @"log";
 NSString *const MSG_EVENT_WARN = @"warn";
 NSString *const MSG_EVENT_ERROR = @"error";
-NSString *const CONFIG_USE_TEMP = @"fileCache";
-NSString *const CONFIG_FILE_PATH = @"path";
 NSString *const FS_EVENT_DATA = @"data";
 NSString *const FS_EVENT_END = @"end";
 NSString *const FS_EVENT_WARN = @"warn";
@@ -62,10 +64,13 @@ NSString *const FS_EVENT_ERROR = @"error";
     return [NSSearchPathForDirectoriesInDomains(NSPicturesDirectory, NSUserDomainMask, YES) firstObject];
 }
 
-+ (NSString *) getTempPath:(NSString*)taskId {
 
++ (NSString *) getTempPath:(NSString*)taskId withExtension:(NSString *)ext {
+    
     NSString * documentDir = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
     NSString * filename = [NSString stringWithFormat:@"/RNFetchBlobTmp_%@", taskId];
+    if(ext != nil)
+        filename = [filename stringByAppendingString: [NSString stringWithFormat:@".%@", ext]];
     NSString * tempPath = [documentDir stringByAppendingString: filename];
     return tempPath;
 }
@@ -88,14 +93,6 @@ NSString *const FS_EVENT_ERROR = @"error";
 }
 
 
-- (void)openWithId:(NSString *)taskId {
-    
-    NSString * tmpPath = [[self class ]getTempPath: taskId];
-    // create a file stream
-    [self openWithPath:tmpPath];
-    
-}
-
 // Write file chunk into an opened stream
 - (void)write:(NSData *) chunk toPath:(NSString *) path{
     NSUInteger left = [chunk length];
@@ -117,14 +114,6 @@ NSString *const FS_EVENT_ERROR = @"error";
     
 }
 
-- (void)readWithTaskId:(NSString *)taskId withPath:(NSString *)path useEncoding:(NSString *)encoding {
-    self.taskId = taskId;
-    self.path = path;
-    if(path == nil)
-        [self readWithPath:[[self class]getTempPath:taskId] useEncoding:encoding];
-    else
-        [self readWithPath:path useEncoding:encoding];
-}
 
 // close file write stream
 - (void)closeOutStream {
@@ -279,6 +268,7 @@ NSString *const FS_EVENT_ERROR = @"error";
     self.options = options;
     
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
+    NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
     
     // open file stream for write
     if( path != nil) {
@@ -287,7 +277,7 @@ NSString *const FS_EVENT_ERROR = @"error";
     }
     else if ( [self.options valueForKey:CONFIG_USE_TEMP]!= nil ) {
         self.fileStream = [[FetchBlobFS alloc]initWithCallback:self.callback];
-        [self.fileStream openWithId:taskId];
+        [self.fileStream openWithPath:[FetchBlobFS getTempPath:taskId withExtension:ext]];
     }
     
     NSURLConnection *conn = [[NSURLConnection alloc] initWithRequest:req delegate:self startImmediately:NO];
@@ -319,7 +309,8 @@ NSString *const FS_EVENT_ERROR = @"error";
     }
     // write to tmp file
     else if( fileCache != nil) {
-        [self.fileStream write:data toPath:[FetchBlobFS getTempPath:self.taskId ]];
+        NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
+        [self.fileStream write:data toPath:[FetchBlobFS getTempPath:self.taskId withExtension:ext]];
     }
     // cache data in memory
     else {
@@ -381,6 +372,7 @@ NSString *const FS_EVENT_ERROR = @"error";
         data = [[NSData alloc] init];
     
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
+    NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
     Boolean useCache = [self.options valueForKey:CONFIG_USE_TEMP];
     
     [self.fileStream closeInStream];
@@ -391,7 +383,7 @@ NSString *const FS_EVENT_ERROR = @"error";
     }
     // when fileCache option is set but no path specified, save to tmp path
     else if( [self.options valueForKey:CONFIG_USE_TEMP] != nil) {
-        NSString * tmpPath = [FetchBlobFS getTempPath:taskId];
+        NSString * tmpPath = [FetchBlobFS getTempPath:taskId withExtension:ext];
         callback(@[[NSNull null], tmpPath]);
     }
     // otherwise return base64 string
@@ -526,18 +518,14 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
     
 }
 
-RCT_EXPORT_METHOD(readStream:(NSString *)taskId withPath:(NSString *)path withEncoding:(NSString *)encoding) {
+RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding) {
     FetchBlobFS *fileStream = [[FetchBlobFS alloc] initWithBridgeRef:self.bridge];
-    [fileStream readWithTaskId:taskId withPath:path useEncoding:encoding];
+    [fileStream readWithPath:path useEncoding:encoding];
 }
 
-RCT_EXPORT_METHOD(flush:(NSString *)taskId withPath:(NSString *)path) {
+RCT_EXPORT_METHOD(flush:(NSString *)path) {
     NSError * error = nil;
     NSString * tmpPath = nil;
-    if(path != nil)
-        tmpPath = path;
-    else
-        tmpPath = [FetchBlobFS getTempPath:taskId];
     [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
 }
 

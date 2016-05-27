@@ -11,6 +11,13 @@ import {
   Platform,
 } from 'react-native'
 
+
+type fetchConfig = {
+  fileCache : bool,
+  path : string,
+  appendExt : string
+};
+
 type RNFetchBlobNative = {
   fetchBlob : (
     options:fetchConfig,
@@ -31,7 +38,6 @@ type RNFetchBlobNative = {
     callback:(err:any, ...data:any) => void
   ) => void,
   readStream : (
-    taskId:string,
     path:string,
     encode: 'utf8' | 'ascii' | 'base64'
   ) => void,
@@ -66,16 +72,10 @@ if(!RNFetchBlob || !RNFetchBlob.fetchBlobForm || !RNFetchBlob.fetchBlob) {
   )
 }
 
-type fetchConfig = {
-  fileCache : bool,
-  path : string,
-};
-
 function getSystemDirs() {
   return new Promise((resolve, reject) => {
     try {
       RNFetchBlob.getEnvironmentDirs((...dirs) => {
-        console.log('##',...dirs)
         let [PictureDir, MovieDir, DocumentDir, CacheDir] = [...dirs]
         resolve({PictureDir, MovieDir, DocumentDir, CacheDir})
       })
@@ -196,7 +196,7 @@ class FetchBlobResponse {
      * @return {void}
      */
     this.flush = () => {
-      RNFetchBlob.flush(this.taskId, this.path)
+      RNFetchBlob.flush(this.path())
     }
 
     this.path = () => {
@@ -222,7 +222,7 @@ class FetchBlobResponse {
       })
 
       if(this.type === 'path') {
-        RNFetchBlob.readStream(this.taskId, this.data, encode)
+        RNFetchBlob.readStream(this.data, encode)
       }
       else {
         console.warn('RNFetchblob', 'this response data does not contains any available stream')
