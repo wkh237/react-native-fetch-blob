@@ -15,7 +15,7 @@ import {
 
 const FILENAME = `${Platform.OS}-0.5.0-${Date.now()}.png`
 // paste your test config here
-const TEST_SERVER_URL = 'http://192.168.17.193:8123'
+const TEST_SERVER_URL = 'http://192.168.0.14:8123'
 const DROPBOX_TOKEN = 'fsXcpmKPrHgAAAAAAAAAoXZhcXYWdgLpQMan6Tb_bzJ237DXhgQSev12hA-gUXt4'
 
 const ctx = new RNTest.TestContext()
@@ -51,6 +51,8 @@ ctx.describe('GET image from server', (report, done) => {
 
 
 })
+
+// FIXME : discard these test cases in feature branch
 //
 // ctx.describe('The check if it follows 301/302 redirection', (report, done) => {
 //
@@ -108,42 +110,42 @@ ctx.describe('GET image from server', (report, done) => {
 //
 // })
 
-ctx.describe('Compare uploaded multipart image', (report, done) => {
-  let r1 = null
-  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/test-img.png`)
-    .then((resp) => {
-      r1 = resp
-      return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/test-text.txt`)
-    })
-    .then((resp) => {
-      report(
-        <Assert key="check file length" expect={image.length} actual={r1.base64().length}/>,
-        <Assert key="check file content" expect={'hello.txt'} actual={resp.text()}/>
-      )
-      done()
-    })
-
-})
-
-// added after 0.4.2
-
-// ctx.describe('Progress report test', (report, done) => {
-//   let received = 0
-//   RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/1mb-dummy`, {
-//       Authorization : 'Bearer abde123eqweje'
-//     })
-//     .progress((written, total) => {
-//       report(<Info key={`progress = ${written} bytes / ${total} bytes`}/>)
-//       if(written === total)
-//         report(<Assert key="progress goes to 100%" expect={written} actual={total}/>)
+// ctx.describe('Compare uploaded multipart image', (report, done) => {
+//   let r1 = null
+//   RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/test-img.png`)
+//     .then((resp) => {
+//       r1 = resp
+//       return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/test-text.txt`)
 //     })
 //     .then((resp) => {
-//       report(<Assert key="response data should be correct event with progress listener"
-//         expect={resp.text().substr(0,10)} actual={"1234567890"}/>)
+//       report(
+//         <Assert key="check file length" expect={image.length} actual={r1.base64().length}/>,
+//         <Assert key="check file content" expect={'hello.txt'} actual={resp.text()}/>
+//       )
 //       done()
 //     })
 //
 // })
+
+// added after 0.4.2
+
+ctx.describe('Progress report test', (report, done) => {
+  let received = 0
+  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/1mb-dummy`, {
+      Authorization : 'Bearer abde123eqweje'
+    })
+    .progress((written, total) => {
+      report(<Info key={`progress = ${written} bytes / ${total} bytes`}/>)
+      if(written === total)
+        report(<Assert key="progress goes to 100%" expect={written} actual={total}/>)
+    })
+    .then((resp) => {
+      report(<Assert key="response data should be correct event with progress listener"
+        expect={resp.text().substr(0,10)} actual={"1234567890"}/>)
+      done()
+    })
+
+})
 
 // FIXME : not yet supported
 // ctx.describe('Large file download test', (report, done) => {
@@ -179,7 +181,9 @@ ctx.describe('Get storage folders', (report, done) => {
 
 })
 
-ctx.describe('Download file to storage', (report, done) => {
+let tmpFilePath = null
+
+ctx.describe('Download file to storage with custom file extension', (report, done) => {
 
   RNFetchBlob.config({
       fileCache : true,
@@ -187,11 +191,32 @@ ctx.describe('Download file to storage', (report, done) => {
     })
     .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
     .then((resp) => {
-      report(<Info key={`image from ${resp.path()}`}>
-        <Image source={{ uri : resp.path()}} style={styles.image}/>
+      tmpFilePath = resp.path()
+      report(<Info key={`image from ${tmpFilePath}`}>
+        <Image source={{ uri : tmpFilePath}} style={styles.image}/>
       </Info>)
       done()
     })
+})
+
+ctx.describe('Read cache file with file stream', (report, done) => {
+  let data = 'data:image/png;base64, '
+  let stream = RNFetchBlob.openReadStream(tmpFilePath, 'base64')
+  stream.onData((chunk) => {
+    data += chunk
+  })
+  stream.onEnd(() => {
+    report(
+      <Assert key="image should have value" expect={0} comparer={Comparer.smaller} actual={data.length}/>,
+      <Info key="image from read stream">
+        <Image source={{uri : data}} style={styles.image}/>
+      </Info>)
+    done()
+  })
+  stream.onError((err) => {
+    console.log('stream err', err)
+  })
+
 })
 
 export default ctx
