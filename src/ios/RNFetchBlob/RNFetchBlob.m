@@ -11,6 +11,8 @@
 #import "RCTBridge.h"
 #import "RCTEventDispatcher.h"
 
+NSString *const FILE_PREFIX = @"RNFetchBlob-file://";
+
 // fetch configs
 NSString *const CONFIG_USE_TEMP = @"fileCache";
 NSString *const CONFIG_FILE_PATH = @"path";
@@ -241,7 +243,7 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
              sendDeviceEventWithName:streamEventCode
              body:@{
                     @"event": FS_EVENT_ERROR,
-                    @"detail": @"error when read file with stream"
+                    @"detail": @"RNFetchBlob error when read file with stream, file may not exists"
                 }
              ];
             break;
@@ -330,7 +332,7 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
 
 
 - (void) connection:(NSURLConnection *)connection didReceiveData:(nonnull NSData *)data {
-    receivedBytes += data.length;
+    receivedBytes += [data length];
     
     Boolean fileCache = [self.options valueForKey:CONFIG_USE_TEMP];
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
@@ -435,9 +437,16 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
 
 @implementation RNFetchBlob
 
+@synthesize filePathPrefix;
 @synthesize bridge = _bridge;
 
 RCT_EXPORT_MODULE();
+
+- (id) init {
+    self = [super init];
+    self.filePathPrefix = FILE_PREFIX;
+    return self;
+}
 
 // Fetch blob data request
 RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
@@ -462,53 +471,62 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
     
     // generate boundary
     NSString * boundary = [NSString stringWithFormat:@"RNFetchBlob%d", timeStampObj];
-    
-    // if method is POST or PUT, convert data string format
-    if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // if method is POST or PUT, convert data string format
+        if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
         NSMutableData * postData = [[NSMutableData alloc] init];
         
-        // combine multipart/form-data body
-        for(id field in form) {
-            NSString * name = [field valueForKey:@"name"];
-            NSString * content = [field valueForKey:@"data"];
-            // field is a text field
-            if([field valueForKey:@"filename"] == nil || content == [NSNull null]) {
-                [postData appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-                [postData appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"\r\n", name] dataUsingEncoding:NSUTF8StringEncoding]];
-                [postData appendData:[[NSString stringWithFormat:@"Content-Type: text/plain\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
-                [postData appendData:[[NSString stringWithFormat:@"%@\r\n", content] dataUsingEncoding:NSUTF8StringEncoding]];
+            // combine multipart/form-data body
+            for(id field in form) {
+                NSString * name = [field valueForKey:@"name"];
+                NSString * content = [field valueForKey:@"data"];
+                // field is a text field
+                if([field valueForKey:@"filename"] == nil || content == [NSNull null]) {
+                    [postData appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+                    [postData appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"\r\n", name] dataUsingEncoding:NSUTF8StringEncoding]];
+                    [postData appendData:[[NSString stringWithFormat:@"Content-Type: text/plain\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+                    [postData appendData:[[NSString stringWithFormat:@"%@\r\n", content] dataUsingEncoding:NSUTF8StringEncoding]];
+                }
+                // field contains a file
+                else {
+                    NSMutableData * blobData = [NSMutableData alloc];
+                    if(content != nil) {
+                        if([content hasPrefix:self.filePathPrefix]) {
+                            NSString * orgPath = [content substringFromIndex:[self.filePathPrefix length]];
+                            [blobData initWithContentsOfFile:orgPath];
+                        }
+                        else
+                            [blobData initWithBase64EncodedString:content options:0];
+                    }
+                    NSString * filename = [field valueForKey:@"filename"];
+                    [postData appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+                    [postData appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"; filename=\"%@\"\r\n", name, filename] dataUsingEncoding:NSUTF8StringEncoding]];
+                    [postData appendData:[[NSString stringWithFormat:@"Content-Type: application/octet-stream\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+                    [postData appendData:blobData];
+                    [postData appendData:[[NSString stringWithFormat:@"\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+                }
+                
             }
-            // field contains a file
-            else {
-                NSData* blobData = [[NSData alloc] initWithBase64EncodedString:content options:0];
-                NSString * filename = [field valueForKey:@"filename"];
-                [postData appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-                [postData appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"; filename=\"%@\"\r\n", name, filename] dataUsingEncoding:NSUTF8StringEncoding]];
-                [postData appendData:[[NSString stringWithFormat:@"Content-Type: application/octet-stream\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
-                [postData appendData:blobData];
-                [postData appendData:[[NSString stringWithFormat:@"\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
-            }
-            
-        }
-        // close form data
-        [postData appendData: [[NSString stringWithFormat:@"--%@--\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-        [request setHTTPBody:postData];
-        // set content-length
-        [mheaders setValue:[NSString stringWithFormat:@"%d",[postData length]] forKey:@"Content-Length"];
-        [mheaders setValue:[NSString stringWithFormat:@"100-continue",[postData length]] forKey:@"Expect"];
-        // appaned boundary to content-type
-        [mheaders setValue:[NSString stringWithFormat:@"multipart/form-data; charset=utf-8; boundary=%@", boundary] forKey:@"content-type"];
         
-    }
-    
-    [request setHTTPMethod: method];
-    [request setAllHTTPHeaderFields:mheaders];
-    
-    
-    // send HTTP request
-    FetchBlobUtils * utils = [[FetchBlobUtils alloc] init];
-    [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
-    
+            // close form data
+            [postData appendData: [[NSString stringWithFormat:@"--%@--\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+            [request setHTTPBody:postData];
+            // set content-length
+            [mheaders setValue:[NSString stringWithFormat:@"%d",[postData length]] forKey:@"Content-Length"];
+            [mheaders setValue:[NSString stringWithFormat:@"100-continue",[postData length]] forKey:@"Expect"];
+            // appaned boundary to content-type
+            [mheaders setValue:[NSString stringWithFormat:@"multipart/form-data; charset=utf-8; boundary=%@", boundary] forKey:@"content-type"];
+        
+        }
+        
+        [request setHTTPMethod: method];
+        [request setAllHTTPHeaderFields:mheaders];
+        
+        
+        // send HTTP request
+        FetchBlobUtils * utils = [[FetchBlobUtils alloc] init];
+        [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
+    });
 }
 
 // Fetch blob data request
@@ -525,27 +543,35 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                                                  URLWithString: url]];
     
     NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[FetchBlobUtils normalizeHeaders:headers]];
-
-    // if method is POST or PUT, convert data string format
-    if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
-        
-        if(body != nil) {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // if method is POST or PUT, convert data string format
+        if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
             // generate octet-stream body
-            NSData* blobData = [[NSData alloc] initWithBase64EncodedString:body options:0];
-            NSMutableData* postBody = [[NSMutableData alloc] init];
-            [postBody appendData:[NSData dataWithData:blobData]];
-            [request setHTTPBody:postBody];
-            [mheaders setValue:@"application/octet-stream" forKey:@"content-type"];
+            if(body != nil) {
+                NSMutableData * blobData = [NSData alloc];
+                // move heavy task to another thread
+                
+                // when body is a string contains file path prefix, try load file from the path
+                if([body hasPrefix:self.filePathPrefix]) {
+                    NSString * orgPath = [body substringFromIndex:[self.filePathPrefix length]];
+                    [blobData initWithContentsOfFile: orgPath];
+                }
+                // otherwise convert it as BASE64 data string
+                else
+                    blobData = [[NSData alloc] initWithBase64EncodedString:body options:0];
+                [request setHTTPBody:blobData];
+                [mheaders setValue:@"application/octet-stream" forKey:@"content-type"];
+                
+            }
         }
-    }
-    
-    [request setHTTPMethod: method];
-    [request setAllHTTPHeaderFields:mheaders];
-    
-    // send HTTP request
-    FetchBlobUtils * utils = [[FetchBlobUtils alloc] init];
-    [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
-    
+        
+        [request setHTTPMethod: method];
+        [request setAllHTTPHeaderFields:mheaders];
+        
+        // send HTTP request
+        FetchBlobUtils * utils = [[FetchBlobUtils alloc] init];
+        [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
+    });
 }
 
 RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding) {
@@ -568,5 +594,8 @@ RCT_EXPORT_METHOD(getEnvironmentDirs:(RCTResponseSenderBlock) callback) {
                [FetchBlobFS getCacheDir],
             ]);
 }
+
+#pragma mark RNFetchBlob private methods
+
 
 @end

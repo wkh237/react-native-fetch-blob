@@ -14,6 +14,7 @@ extern NSString *const MSG_EVENT;
 extern NSString *const MSG_EVENT_LOG;
 extern NSString *const MSG_EVENT_WARN;
 extern NSString *const MSG_EVENT_ERROR;
+extern NSString *const FILE_PREFIX;
 
 // config
 extern NSString *const CONFIG_USE_TEMP;
@@ -87,7 +88,15 @@ extern NSString *const FS_EVENT_ERROR;
 @end
 
 
-@interface RNFetchBlob : NSObject <RCTBridgeModule>
+@interface RNFetchBlob : NSObject <RCTBridgeModule> {
+
+    NSString * filePathPrefix;
+
+}
+
+@property (nonatomic) NSString * filePathPrefix;
+
+
 
 @end
 
