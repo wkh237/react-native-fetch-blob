@@ -10,47 +10,19 @@ import {
   NativeAppEventEmitter,
   Platform,
 } from 'react-native'
-
-
-type fetchConfig = {
-  fileCache : bool,
-  path : string,
-  appendExt : string
-};
-
-type RNFetchBlobNative = {
-  fetchBlob : (
-    options:fetchConfig,
-    taskId:string,
-    method:string,
-    url:string,
-    headers:any,
-    body:any,
-    callback:(err:any, ...data:any) => void
-  ) => void,
-  fetchBlobForm : (
-    options:fetchConfig,
-    taskId:string,
-    method:string,
-    url:string,
-    headers:any,
-    form:Array<any>,
-    callback:(err:any, ...data:any) => void
-  ) => void,
-  readStream : (
-    path:string,
-    encode: 'utf8' | 'ascii' | 'base64'
-  ) => void,
-  getEnvironmentDirs : (dirs:any) => void,
-  flush : () => void
-};
-
+import type {
+  RNFetchBlobNative,
+  RNFetchBlobConfig,
+  RNFetchBlobStream
+}from './types'
 import base64 from 'base-64'
-const emitter = (Platform.OS === 'android' ? DeviceEventEmitter : NativeAppEventEmitter)
+
+// const emitter = (Platform.OS === 'android' ? DeviceEventEmitter : NativeAppEventEmitter)
+const emitter = DeviceEventEmitter
 const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
 
 emitter.addListener("RNFetchBlobMessage", (e) => {
-
+  console.log(e)
   if(e.event === 'warn') {
     console.warn(e.detail)
   }
@@ -86,17 +58,16 @@ function getSystemDirs() {
 
 }
 
-function config (options:fetchConfig) {
+function config (options:RNFetchBlobConfig) {
   return { fetch : fetch.bind(options) }
 }
 
 // Promise wrapper function
 function fetch(...args:any) {
 
-  let options = this || {}
-
   // create task ID for receiving progress event
   let taskId = getUUID()
+  let options = this || {}
 
   let promise = new Promise((resolve, reject) => {
 
@@ -123,7 +94,6 @@ function fetch(...args:any) {
           respType = 'path'
         resolve(new FetchBlobResponse(taskId, respType, ...data))
       }
-
     })
 
   })
@@ -134,6 +104,47 @@ function fetch(...args:any) {
   }
 
   return promise
+
+}
+
+function openReadStream(path:string, encoding:'utf8' | 'ascii' | 'base64'):RNFetchBlobStream {
+
+  if(!path)
+    throw Error('RNFetchBlob could not open file stream with empty `path`')
+
+  let stream:RNFetchBlobStream = {
+    onData : function(fn) {
+      this._onData = fn
+    },
+    onError : function(fn) {
+      this._onError = fn
+    },
+    onEnd : function(fn) {
+      this._onEnd = fn
+    },
+  }
+
+  // register for file stream event
+  let subscription = emitter.addListener(`RNFetchBlobStream+${path}`, (e) => {
+    let {event, detail} = e
+    if(stream._onData && event === 'data')
+      stream._onData(detail)
+    else if (stream._onEnd && event === 'end') {
+      stream._onEnd(detail)
+    }
+    else {
+      stream._onError(detail)
+    }
+    // when stream closed or error, remove event handler
+    if (event === 'error' || event === 'end') {
+      subscription.remove()
+    }
+
+  })
+
+  RNFetchBlob.readStream(path, encoding)
+
+  return stream
 
 }
 
@@ -153,8 +164,7 @@ class FetchBlobResponse {
   flush : () => void;
   readStream : (
     encode: 'utf8' | 'ascii' | 'base64',
-    fn:(event : 'data' | 'end', chunk:any) => void
-  ) => void;
+  ) => RNFetchBlobStream | null;
 
   constructor(taskId:string, type:'base64' | 'path', data:any) {
     this.data = data
@@ -198,43 +208,36 @@ class FetchBlobResponse {
     this.flush = () => {
       RNFetchBlob.flush(this.path())
     }
-
+    /**
+     * get path of response temp file
+     * @return {string} File path of temp file.
+     */
     this.path = () => {
       if(this.type === 'path')
         return this.data
       return null
     }
-
     /**
      * Start read stream from cached file
      * @param  {String} encoding Encode type, should be one of `base64`, `ascrii`, `utf8`.
      * @param  {Function} fn On data event handler
      * @return {void}
      */
-    this.readStream = (encode: 'base64' | 'utf8' | 'ascii', fn) => {
-
-      // register for file stream event
-      let subscription = emitter.addListener(`RNFetchBlobStream${this.taskId}`, (event, chunk) => {
-        fn(event, chunk)
-        // when stream closed, remove event handler
-        if(event === 'end')
-          subscription()
-      })
-
+    this.readStream = (encode: 'base64' | 'utf8' | 'ascii'):RNFetchBlobStream | null => {
       if(this.type === 'path') {
-        RNFetchBlob.readStream(this.data, encode)
+        return openReadStream(this.data, encode)
       }
       else {
         console.warn('RNFetchblob', 'this response data does not contains any available stream')
+        return null
       }
-
     }
 
   }
 
 }
 
-function getUUID(){
+function getUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     let r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
     return v.toString(16);
@@ -242,5 +245,5 @@ function getUUID(){
 }
 
 export default {
-  fetch, base64, config, getSystemDirs
+  fetch, base64, config, getSystemDirs, openReadStream
 }

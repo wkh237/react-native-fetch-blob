@@ -46,6 +46,7 @@ extern NSString *const FS_EVENT_ERROR;
 @property (nonatomic) NSString * path;
 
 + (NSString *) getTempPath;
+- (id) init;
 - (void) initWithCallback;
 - (void) initWithBridgeRef;
 - (void) openWithDestination;
@@ -78,7 +79,6 @@ extern NSString *const FS_EVENT_ERROR;
 @property (nonatomic) FetchBlobFS * fileStream;
 
 - (id) init;
-- (id) delegate;
 - (void) sendRequest;
 
 + (NSMutableDictionary *) normalizeHeaders;

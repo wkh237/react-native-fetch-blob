@@ -42,13 +42,12 @@ NSString *const FS_EVENT_ERROR = @"error";
 
 
 
-+ (NSString *) getCacheDir {
 
++ (NSString *) getCacheDir {
     return [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
 }
 
 + (NSString *) getDocumentDir {
-
     return [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
 }
 
@@ -75,6 +74,12 @@ NSString *const FS_EVENT_ERROR = @"error";
     return tempPath;
 }
 
+- (id)init {
+    self = [super init];
+    return self;
+}
+
+
 - (id)initWithCallback:(RCTResponseSenderBlock)callback {
     self = [super init];
     self.callback = callback;
@@ -83,12 +88,13 @@ NSString *const FS_EVENT_ERROR = @"error";
 
 - (id)initWithBridgeRef:(RCTBridge *)bridgeRef {
     self = [super init];
-    self.callback = callback;
+    self.bridge = bridgeRef;
     return self;
 }
 
 - (void)openWithPath:(NSString *)destPath {
     self.outStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:YES];
+    [self.outStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
     [self.outStream open];
 }
 
@@ -108,12 +114,24 @@ NSString *const FS_EVENT_ERROR = @"error";
 }
 
 - (void)readWithPath:(NSString *)path useEncoding:(NSString *)encoding {
-    self.inStream = [[NSInputStream alloc]init];
+    
+    self.inStream = [[NSInputStream alloc] initWithFileAtPath:path];
+    self.inStream.delegate = self;
     self.encoding = encoding;
-    [self.inStream setDelegate:self];
+    self.path = path;
+    
+    // NSStream needs a runloop so let's create a run loop for it
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0);
+    // start NSStream is a runloop
+    dispatch_async(queue, ^ {
+        [inStream scheduleInRunLoop:[NSRunLoop currentRunLoop]
+                             forMode:NSDefaultRunLoopMode];
+        [inStream open];
+        [[NSRunLoop currentRunLoop] run];
+    
+    });
     
 }
-
 
 // close file write stream
 - (void)closeOutStream {
@@ -133,10 +151,25 @@ NSString *const FS_EVENT_ERROR = @"error";
     
 }
 
+void runOnMainQueueWithoutDeadlocking(void (^block)(void))
+{
+    if ([NSThread isMainThread])
+    {
+        block();
+    }
+    else
+    {
+        dispatch_sync(dispatch_get_main_queue(), block);
+    }
+}
+
+
 #pragma mark RNFetchBlobFS read stream delegate
 
 - (void)stream:(NSStream *)stream handleEvent:(NSStreamEvent)eventCode {
 
+    NSString * streamEventCode = [NSString stringWithFormat:@"RNFetchBlobStream+%@", self.path];
+    
     switch(eventCode) {
             
         // write stream event
@@ -149,10 +182,7 @@ NSString *const FS_EVENT_ERROR = @"error";
         // read stream incoming chunk
         case NSStreamEventHasBytesAvailable:
         {
-            
-            
             NSMutableData * chunkData = [[NSMutableData data] init];
-            
             uint8_t buf[1024];
             unsigned int len = 0;
             len = [(NSInputStream *)stream read:buf maxLength:1024];
@@ -160,41 +190,41 @@ NSString *const FS_EVENT_ERROR = @"error";
             if(len) {
                 [chunkData appendBytes:(const void *)buf length:len];
                 // TODO : file read progress ?
-//                [bytesRead setIntValue:[bytesRead intValue]+len];
-                
                 // dispatch data event
-                NSString * encodedChunk = [NSString alloc];
-                if( [self.encoding caseInsensitiveCompare:@"utf8"] ) {
+                NSString * encodedChunk;
+                if( [[self.encoding lowercaseString] isEqualToString:@"utf8"] ) {
                     encodedChunk = [encodedChunk initWithData:chunkData encoding:NSUTF8StringEncoding];
                 }
-                else if ( [self.encoding caseInsensitiveCompare:@"ascii"] ) {
+                else if ( [[self.encoding lowercaseString] isEqualToString:@"ascii"] ) {
                     encodedChunk = [encodedChunk initWithData:chunkData encoding:NSASCIIStringEncoding];
                 }
-                else if ( [self.encoding caseInsensitiveCompare:@"base64"] ) {
+                else if ( [[self.encoding lowercaseString] isEqualToString:@"base64"] ) {
                     encodedChunk = [chunkData base64EncodedStringWithOptions:0];
                 }
                 else {
                     [self.bridge.eventDispatcher
-                     sendAppEventWithName: [NSString stringWithFormat:@"RNFetchBlobStream%s", self.taskId]
-                     body:@{
+                        sendDeviceEventWithName:streamEventCode
+                        body:@{
                             @"event": FS_EVENT_ERROR,
                             @"detail": @"unrecognized encoding"
                         }
                      ];
                     return;
                 }
-                [self.bridge.eventDispatcher
-                 sendAppEventWithName: [NSString stringWithFormat:@"RNFetchBlobStream%s", self.taskId]
-                 body:@{
-                        @"event": FS_EVENT_DATA,
-                        @"detail": encodedChunk
-                    }
-                 ];
+                runOnMainQueueWithoutDeadlocking(^{
+                    [self.bridge.eventDispatcher
+                     sendDeviceEventWithName:streamEventCode
+                     body:@{
+                            @"event": FS_EVENT_DATA,
+                            @"detail": encodedChunk
+                            }
+                     ];
+                });
             }
             // end of stream
             else {
                 [self.bridge.eventDispatcher
-                sendAppEventWithName: [NSString stringWithFormat:@"RNFetchBlobStream%s", self.taskId]
+                sendDeviceEventWithName:streamEventCode
                 body:@{
                        @"event": FS_EVENT_END,
                        @"detail": @""
@@ -208,7 +238,7 @@ NSString *const FS_EVENT_ERROR = @"error";
         case NSStreamEventErrorOccurred:
         {
             [self.bridge.eventDispatcher
-             sendAppEventWithName: [NSString stringWithFormat:@"RNFetchBlobStream%s", self.taskId]
+             sendDeviceEventWithName:streamEventCode
              body:@{
                     @"event": FS_EVENT_ERROR,
                     @"detail": @"error when read file with stream"
@@ -318,7 +348,7 @@ NSString *const FS_EVENT_ERROR = @"error";
     }
     
     [self.bridge.eventDispatcher
-        sendAppEventWithName:@"RNFetchBlobProgress"
+        sendDeviceEventWithName:@"RNFetchBlobProgress"
         body:@{
             @"taskId": taskId,
             @"written": [NSString stringWithFormat:@"%d", receivedBytes],
@@ -332,7 +362,7 @@ NSString *const FS_EVENT_ERROR = @"error";
     expectedBytes = totalBytesExpectedToWrite;
     receivedBytes += totalBytesWritten;
     [self.bridge.eventDispatcher
-        sendAppEventWithName:@"RNFetchBlobProgress"
+        sendDeviceEventWithName:@"RNFetchBlobProgress"
             body:@{
                     @"taskId": taskId,
                     @"written": [NSString stringWithFormat:@"%d", receivedBytes],
