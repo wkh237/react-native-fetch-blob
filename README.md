@@ -161,7 +161,7 @@ Headers of HTTP request, value of headers should be `stringified`, if you're upl
 Body of the HTTP request, body can either be a BASE64 string, or an array contains object elements, each element have 2  required property `name`, and `data`, and 1 optional property `filename`, once `filename` is set, content in `data` property will be consider as BASE64 string that will be converted into byte array later.
 When body is a base64 string , this string will be converted into byte array in native code, and the request body will be sent as `application/octet-stream`.
 
-### `fetch(...).progress(eventListener):Promise<FetchBlobResponse>` added in `0.4.2`
+#### `fetch(...).progress(eventListener):Promise<FetchBlobResponse>` added in `0.4.2`
 
 Register on progress event handler for a fetch request.
 
