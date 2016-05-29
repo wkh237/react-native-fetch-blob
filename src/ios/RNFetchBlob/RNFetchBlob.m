@@ -440,6 +440,10 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
 @synthesize filePathPrefix;
 @synthesize bridge = _bridge;
 
+- (dispatch_queue_t) methodQueue {
+    return dispatch_queue_create("RNFetchBlob.queue", DISPATCH_QUEUE_SERIAL);
+}
+
 RCT_EXPORT_MODULE();
 
 - (id) init {
@@ -489,14 +493,14 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
                 }
                 // field contains a file
                 else {
-                    NSMutableData * blobData = [NSMutableData alloc];
+                    NSMutableData * blobData;
                     if(content != nil) {
                         if([content hasPrefix:self.filePathPrefix]) {
                             NSString * orgPath = [content substringFromIndex:[self.filePathPrefix length]];
-                            [blobData initWithContentsOfFile:orgPath];
+                            blobData = [[NSData alloc] initWithContentsOfFile:orgPath];
                         }
                         else
-                            [blobData initWithBase64EncodedString:content options:0];
+                            blobData = [[NSData alloc] initWithBase64EncodedString:content options:0];
                     }
                     NSString * filename = [field valueForKey:@"filename"];
                     [postData appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
@@ -543,18 +547,18 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                                                  URLWithString: url]];
     
     NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[FetchBlobUtils normalizeHeaders:headers]];
+    // move heavy task to another thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         // if method is POST or PUT, convert data string format
         if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
             // generate octet-stream body
             if(body != nil) {
-                NSMutableData * blobData = [NSData alloc];
-                // move heavy task to another thread
+                NSMutableData * blobData;
                 
                 // when body is a string contains file path prefix, try load file from the path
                 if([body hasPrefix:self.filePathPrefix]) {
                     NSString * orgPath = [body substringFromIndex:[self.filePathPrefix length]];
-                    [blobData initWithContentsOfFile: orgPath];
+                    blobData = [[NSData alloc] initWithContentsOfFile:orgPath];
                 }
                 // otherwise convert it as BASE64 data string
                 else
