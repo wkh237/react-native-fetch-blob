@@ -1,6 +1,5 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
+ * Sample RNTestkit App
  * @flow
  */
 import React, {Component} from 'react';
@@ -15,8 +14,7 @@ import {
 } from 'react-native';
 
 import RNTest from './react-native-testkit/'
-import TestContext from './tests'
-
+import './test-init'
 
 class fetchblob extends Component {
 
@@ -25,14 +23,11 @@ class fetchblob extends Component {
   }
 
   componentDidMount() {
-    TestContext.run(this)
+    RNTest.run(this)
   }
 
   render() {
-
-    return (
-      <RNTest.Reporter key="test-container" context={TestContext}/>
-    )
+    return <RNTest.Reporter />
   }
 
 }
