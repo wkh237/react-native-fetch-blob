@@ -29,7 +29,7 @@ type RNFetchBlobNative = {
   // open file stream
   readStream : (
     path:string,
-    encode: 'utf8' | 'ascii' | 'base64'
+    encode:'utf8' | 'ascii' | 'base64'
   ) => void,
   // get system folders
   getEnvironmentDirs : (dirs:any) => void,

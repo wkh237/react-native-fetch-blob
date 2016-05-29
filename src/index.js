@@ -22,7 +22,7 @@ const emitter = DeviceEventEmitter
 const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
 
 emitter.addListener("RNFetchBlobMessage", (e) => {
-  console.log(e)
+
   if(e.event === 'warn') {
     console.warn(e.detail)
   }
