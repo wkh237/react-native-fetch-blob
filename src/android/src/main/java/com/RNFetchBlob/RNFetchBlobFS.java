@@ -1,5 +1,6 @@
 package com.RNFetchBlob;
 
+import android.os.AsyncTask;
 import android.os.Environment;
 
 import com.facebook.react.bridge.Arguments;
@@ -31,41 +32,49 @@ public class RNFetchBlobFS {
     }
     
     // TODO : make it an AsyncTask
-    public void readStream(String taskId, String encoding) {
-        try {
+    public void readStream(final String path, String encoding) {
+        AsyncTask<String, Integer, Integer> task = new AsyncTask<String, Integer, Integer>() {
+            @Override
+            protected Integer doInBackground(String ... args) {
+                String path = args[0];
+                String encoding = args[1];
+                String eventName = "RNFetchBlobStream+" + path;
+                try {
+                    FileInputStream fs = mCtx.openFileInput(mCtx.getFilesDir() + "/"+ path);
+                    byte[] buffer = new byte[1024];
+                    int cursor = 0;
+                    boolean error = false;
 
-            FileInputStream fs = mCtx.openFileInput(mCtx.getFilesDir() + "/fetchblobtmp_"+ taskId);
-            byte[] buffer = new byte[1024];
-            int cursor = 0;
-            boolean error = false;
+                    if (encoding.toLowerCase() == "utf8") {
+                        while ((cursor = fs.read(buffer)) != -1) {
+                            String chunk = new String(buffer, 0, cursor, "UTF-8");
+                            emitFSData(eventName, "data", chunk);
+                        }
+                    } else if (encoding.toLowerCase() == "ascii") {
+                        while ((cursor = fs.read(buffer)) != -1) {
+                            String chunk = EncodingUtils.getAsciiString(buffer, 0, cursor);
+                            emitFSData(eventName, "data", chunk);
+                        }
+                    } else if (encoding.toLowerCase() == "base64") {
+                        while ((cursor = fs.read(buffer)) != -1) {
+                            emitFSData(eventName, "data", Base64.encodeToString(buffer, Base64.NO_WRAP));
+                        }
+                    } else {
+                        String msg = "unrecognized encoding `" + encoding + "`";
+                        emitFSData(eventName, "error", msg);
+                        error = true;
+                    }
 
-            if (encoding.toLowerCase() == "utf8") {
-                while ((cursor = fs.read(buffer)) != -1) {
-                    String chunk = new String(buffer, 0, cursor, "UTF-8");
-                    emitFSData(taskId, "data", chunk);
+                    if(!error)
+                        emitFSData(eventName, "end", "");
+
+                } catch (Exception err) {
+                    emitFSData(eventName, "error", err.getLocalizedMessage());
                 }
-            } else if (encoding.toLowerCase() == "ascii") {
-                while ((cursor = fs.read(buffer)) != -1) {
-                    String chunk = EncodingUtils.getAsciiString(buffer, 0, cursor);
-                    emitFSData(taskId, "data", chunk);
-                }
-            } else if (encoding.toLowerCase() == "base64") {
-                while ((cursor = fs.read(buffer)) != -1) {
-                    emitFSData(taskId, "data", Base64.encodeToString(buffer, Base64.NO_WRAP));
-                }
-            } else {
-                String msg = "unrecognized encoding `" + encoding + "`";
-                emitFSData(taskId, "error", msg);
-                error = true;
+                return null;
             }
-
-            if(!error)
-                emitFSData(taskId, "end", "");
-
-        } catch (Exception err) {
-            emitFSData(taskId, "error", err.getLocalizedMessage());
-        }
-
+        };
+        task.execute(path, encoding);
     }
 
     void emitFSData(String taskId, String event, String data) {

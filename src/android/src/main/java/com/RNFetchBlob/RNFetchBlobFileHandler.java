@@ -20,13 +20,23 @@ public class RNFetchBlobFileHandler extends FileAsyncHttpResponseHandler {
     Callback onResponse;
     ReactContext mCtx;
     String mTaskId;
+    RNFetchBlobConfig mConfig;
 
-    RNFetchBlobFileHandler(ReactApplicationContext ctx, String taskId, Callback onResponse) {
-        // save temp file to application storage
-        super(new File(RNFetchBlobFS.getTmpPath(ctx, taskId)), false, false);
+    RNFetchBlobFileHandler(ReactApplicationContext ctx, String taskId, RNFetchBlobConfig config, Callback onResponse) {
+        super(new File( RNFetchBlobFileHandler.getFilePath(ctx, taskId, config)), false, false);
         this.onResponse = onResponse;
         this.mTaskId = taskId;
+        this.mConfig = config;
         this.mCtx = ctx;
+    }
+
+    static String getFilePath(ReactApplicationContext ctx, String taskId, RNFetchBlobConfig config) {
+        if(config.path != null)
+            return config.path;
+        else if(config.fileCache && config.appendExt != null)
+            return RNFetchBlobFS.getTmpPath(ctx, taskId) + "." + config.appendExt;
+        else
+            return RNFetchBlobFS.getTmpPath(ctx, taskId);
     }
 
     @Override
