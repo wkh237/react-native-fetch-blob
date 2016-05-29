@@ -52,8 +52,6 @@ ctx.describe('GET image from server', (report, done) => {
 
 })
 
-// FIXME : discard these test cases in feature branch
-//
 // ctx.describe('The check if it follows 301/302 redirection', (report, done) => {
 //
 //   RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/redirect`)
@@ -109,7 +107,7 @@ ctx.describe('GET image from server', (report, done) => {
 //
 //
 // })
-
+//
 // ctx.describe('Compare uploaded multipart image', (report, done) => {
 //   let r1 = null
 //   RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/test-img.png`)
@@ -129,36 +127,36 @@ ctx.describe('GET image from server', (report, done) => {
 
 // added after 0.4.2
 
-ctx.describe('Progress report test', (report, done) => {
-  let received = 0
-  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/1mb-dummy`, {
-      Authorization : 'Bearer abde123eqweje'
-    })
-    .progress((written, total) => {
-      report(<Info key={`progress = ${written} bytes / ${total} bytes`}/>)
-      if(written === total)
-        report(<Assert key="progress goes to 100%" expect={written} actual={total}/>)
-    })
-    .then((resp) => {
-      report(<Assert key="response data should be correct event with progress listener"
-        expect={resp.text().substr(0,10)} actual={"1234567890"}/>)
-      done()
-    })
-
-})
-
-// FIXME : not yet supported
-// ctx.describe('Large file download test', (report, done) => {
+// ctx.describe('Progress report test', (report, done) => {
 //   let received = 0
-//   // RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`, {
-//   //   Authorization : 'Bearer abde123eqweje'
-//   // })
-//   // .then((resp) => {
-//     report(<Assert key="not supported" expect={true} actual={false}/>)
-//     done()
-//   // })
+//   RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/1mb-dummy`, {
+//       Authorization : 'Bearer abde123eqweje'
+//     })
+//     .progress((written, total) => {
+//       report(<Info key={`progress = ${written} bytes / ${total} bytes`}/>)
+//       if(written === total)
+//         report(<Assert key="progress goes to 100%" expect={written} actual={total}/>)
+//     })
+//     .then((resp) => {
+//       report(<Assert key="response data should be correct event with progress listener"
+//         expect={resp.text().substr(0,10)} actual={"1234567890"}/>)
+//       done()
+//     })
 //
 // })
+
+// FIXME : not yet supported
+ctx.describe('Large file download test', (report, done) => {
+  let received = 0
+  // RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`, {
+  //   Authorization : 'Bearer abde123eqweje'
+  // })
+  // .then((resp) => {
+    report(<Assert key="not supported" expect={true} actual={false}/>)
+    done()
+  // })
+
+})
 
 // added after 0.5.0
 
@@ -199,7 +197,7 @@ ctx.describe('Download file to storage with custom file extension', (report, don
     })
 })
 
-ctx.describe('Read cache file with file stream', (report, done) => {
+ctx.describe('Read cached file via file stream', (report, done) => {
   let data = 'data:image/png;base64, '
   let stream = RNFetchBlob.openReadStream(tmpFilePath, 'base64')
   stream.onData((chunk) => {
@@ -215,6 +213,21 @@ ctx.describe('Read cache file with file stream', (report, done) => {
   })
   stream.onError((err) => {
     console.log('stream err', err)
+  })
+
+})
+
+ctx.describe('File stream reader error should be able to handled', (report, done) => {
+
+  let stream = RNFetchBlob.openReadStream('^_^ not exists', 'base64')
+  stream.onError((err) => {
+    report(<Info key="error message">
+      <Text>
+        {err}
+      </Text>
+    </Info>)
+    done()
+
   })
 
 })

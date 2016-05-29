@@ -10,12 +10,9 @@ import {
 } from 'react-native';
 
 import Assert from './assert.js'
+import RNTEST from '../index.js'
 
 export default class Reporter extends Component {
-
-  props : {
-    context : TestContext
-  };
 
   render() {
     return (
@@ -25,7 +22,7 @@ export default class Reporter extends Component {
   }
 
   renderTests() {
-    let tests = this.props.context.tests
+    let tests = RNTEST.TestContext.getTests()
     return tests.map((t, i) => {
 
       let pass = true
@@ -43,7 +40,7 @@ export default class Reporter extends Component {
       }
       if(tests[i].running)
         t.status = 'running'
-      else if(this.props.context.tests[i].executed) {
+      else if(tests[i].executed) {
         t.status = foundActions ? (pass ? 'pass' : 'fail') : 'skipped'
         t.status = t.expired ? 'timeout' : t.status
       }

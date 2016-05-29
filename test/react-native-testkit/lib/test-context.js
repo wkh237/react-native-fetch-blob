@@ -1,18 +1,14 @@
 //@flow
+
+let tests: Array<TestCase> = []
+let RCTContext: ReactElement = null
+let props:any = {}
+let timeout = 3000
+
 export default class TestContext {
 
-  test: Array<TestCase>;
-  context: ReactElement;
-
-  static timeout = 3000;
-
   static setTimeout (val) {
-    this.timeout  = val
-  }
-
-  constructor() {
-    this.tests = []
-    this.context = null
+    timeout = val
   }
 
   /**
@@ -22,9 +18,9 @@ export default class TestContext {
    *         should return a promise.
    * @return {void}
    */
-  describe (desc:string, fn:() => Promise<any>) {
+  static describe (desc:string, fn:Promise<any>) {
 
-    this.tests.push({
+    tests.push({
       status : 'waiting',
       result : null,
       asserts : [],
@@ -37,16 +33,25 @@ export default class TestContext {
 
   }
 
+  static prop (name:string, val:any):TestContext {
+    if(name === undefined && val === undefined)
+      return props
+    if(val === undefined)
+      return props[name]
+    props[name] = val
+    return TestContext
+  }
+
   /**
    * Run test cases in sequence.
    * @param  {ReactElement} context ReactElement instance context.
    * @return {void}
    */
-  run (context:ReactElement) {
-    this.context = context
+  static run (context:ReactElement) {
+    RCTContext = context
     let promise = Promise.resolve()
     // run test case sequently
-    for(let i in this.tests) {
+    for(let i in tests) {
       promise = promise.then(function(update, updateInternal, data) {
         return new Promise((resolve, reject) => {
 
@@ -88,9 +93,9 @@ export default class TestContext {
         })
       }
       .bind(
-        this.tests[i],
-        this.update.bind(this, i),
-        this.updateInternal.bind(this, i)
+        tests[i],
+        TestContext.update.bind(TestContext, i),
+        TestContext.updateInternal.bind(TestContext, i)
       ))
     }
     return promise
@@ -102,11 +107,15 @@ export default class TestContext {
    * @param  {ReactElement<Info | Assert>} ...data Assertion or Info of test.
    * @return {void}
    */
-  update(i, ...data) {
-    let test = this.tests[i]
+  static update(i, ...data) {
+    let test = tests[i]
     let result = test.result || []
     Object.assign(test, {result : [...result, ...data]})
-    this.context.forceUpdate()
+    RCTContext.forceUpdate()
+  }
+
+  static getTests() {
+    return tests
   }
 
   /**
@@ -115,9 +124,9 @@ export default class TestContext {
    * @param  {TestCaseContext} result Test case object
    * @return {void}
    */
-  updateInternal(i, result) {
-    Object.assign(this.tests[i], result)
-    this.context.forceUpdate()
+  static updateInternal(i, result) {
+    Object.assign(tests[i], result)
+    RCTContext.forceUpdate()
   }
 
 }
