@@ -1,6 +1,7 @@
 package com.RNFetchBlob;
 
 import android.net.Uri;
+import android.os.Environment;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
@@ -10,6 +11,7 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.loopj.android.http.AsyncHttpClient;
@@ -35,6 +37,20 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public ReadableArray getSystemDirs() {
+
+        WritableArray results = Arguments.createArray();
+        ReactApplicationContext ctx = this.getReactApplicationContext();
+        results.pushString(String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)));
+        results.pushString(String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)));
+        results.pushString(String.valueOf(ctx.getFilesDir()));
+        results.pushString(String.valueOf(ctx.getCacheDir()));
+        results.pushString(String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)));
+        results.pushString(String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)));
+        return results;
+    }
+
+    @ReactMethod
     public void flush(String taskId) {
         try {
             new File(RNFetchBlobFS.getTmpPath(this.getReactApplicationContext(), taskId)).delete();
@@ -49,14 +65,14 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void readStream(String taskId, String encoding) {
+    public void readStream(String path, String encoding) {
         RNFetchBlobFS fs = new RNFetchBlobFS(this.getReactApplicationContext());
-        fs.readStream(taskId, encoding);
+        fs.readStream(path, encoding);
     }
 
     @ReactMethod
     public void fetchBlob(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, final Callback callback) {
-
+        RNFetchBlobConfig config = new RNFetchBlobConfig(options);
         try {
             Uri uri = Uri.parse(url);
             AsyncHttpClient req = new AsyncHttpClient();
@@ -87,8 +103,8 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             AsyncHttpResponseHandler handler;
 
             // create handler
-            if(options.getBoolean("fileCache") || options.getString("path") != null)
-                handler = new RNFetchBlobFileHandler(this.getReactApplicationContext(), taskId, callback);
+            if(config.fileCache || config.path != null)
+                handler = new RNFetchBlobFileHandler(this.getReactApplicationContext(), taskId, config, callback);
             else
                 handler = new RNFetchBlobBinaryHandler(this.getReactApplicationContext(), taskId, callback);
 
@@ -116,6 +132,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     @ReactMethod
     public void fetchBlobForm(ReadableMap options, String taskId, String method, String url, ReadableMap headers, ReadableArray body, final Callback callback) {
 
+        RNFetchBlobConfig config = new RNFetchBlobConfig(options);
         try {
             Uri uri = Uri.parse(url);
             AsyncHttpClient req = new AsyncHttpClient();
@@ -177,8 +194,8 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             AsyncHttpResponseHandler handler;
 
             // create handler
-            if(options.getBoolean("fileCache") || options.getString("path") != null)
-                handler = new RNFetchBlobFileHandler(this.getReactApplicationContext(), taskId, callback);
+            if(config.fileCache || config.path != null)
+                handler = new RNFetchBlobFileHandler(this.getReactApplicationContext(), taskId, config, callback);
             else
                 handler = new RNFetchBlobBinaryHandler(this.getReactApplicationContext(), taskId, callback);
 
