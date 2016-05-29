@@ -200,6 +200,5 @@ We are now working on v0.5.0, there will be some new features.
 
 ### Development
 
-If you're insteresting in improving this module, check our [development guide](https://github.com/wkh237/react-native-fetch-blob/wiki/Development-Guide). 
-
+If you're insterested in hacking this module, check our [development guide](https://github.com/wkh237/react-native-fetch-blob/wiki/Development-Guide), there might be something helpful. 
 Please feel free to make a PR or file an issue.
