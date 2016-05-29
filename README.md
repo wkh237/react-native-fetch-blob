@@ -192,6 +192,14 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
 
 ### Upcoming Features
 
+We are now working on v0.5.0, there will be some new features.
+
 * Save file to storage directly
 * Upload file from storage directly
 * Custom MIME type in form data
+
+### Development
+
+If you're insteresting in improving this module, check our [development guide](https://github.com/wkh237/react-native-fetch-blob/wiki/Development-Guide). 
+
+Please feel free to make a PR or file an issue.
