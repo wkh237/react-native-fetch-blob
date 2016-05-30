@@ -1,4 +1,5 @@
 /**
+ * @name react-native-fetch-blob
  * @author wkh237
  * @version 0.5.0
  * @flow
@@ -14,16 +15,15 @@ import type {
   RNFetchBlobNative,
   RNFetchBlobConfig,
   RNFetchBlobStream
-}from './types'
+} from './types'
 import base64 from 'base-64'
 
-// const emitter = (Platform.OS === 'android' ? DeviceEventEmitter : NativeAppEventEmitter)
 const emitter = DeviceEventEmitter
 const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
 const pathPrefix = Platform.OS === 'android' ? 'file://' : ''
 
+// register message channel event handler.
 emitter.addListener("RNFetchBlobMessage", (e) => {
-
   if(e.event === 'warn') {
     console.warn(e.detail)
   }
@@ -33,7 +33,6 @@ emitter.addListener("RNFetchBlobMessage", (e) => {
   else {
     console.log("RNFetchBlob native message", e.detail)
   }
-
 })
 
 // Show warning if native module not detected
@@ -45,6 +44,11 @@ if(!RNFetchBlob || !RNFetchBlob.fetchBlobForm || !RNFetchBlob.fetchBlob) {
   )
 }
 
+/**
+ * Get path of system directories.
+ * @return {object} Map contains PictureDir, MovieDir, DocumentDir, CacheDir,
+ * MusicDir, and DCIMDir, some directory might not be supported by platform.
+ */
 function getSystemDirs() {
   return new Promise((resolve, reject) => {
     try {
@@ -60,12 +64,41 @@ function getSystemDirs() {
 
 }
 
+/**
+ * Calling this method will inject configurations into followed `fetch` method.
+ * @param  {RNFetchBlobConfig} options
+ *         Fetch API configurations, contains the following options :
+ *         @property {boolean} fileCache
+ *                   When fileCache is `true`, response data will be saved in
+ *                   storage with a random generated file name, rather than
+ *                   a BASE64 encoded string.
+ *         @property {string} appendExt
+ *                   Set this property to change file extension of random-
+ *                   generated file name.
+ *         @property {string} path
+ *                   If this property has a valid string format, resonse data
+ *                   will be saved to specific file path. Default string format
+ *                   is : `RNFetchBlob-file://path-to-file`
+ *
+ * @return {function} This method returns a `fetch` method instance.
+ */
 function config (options:RNFetchBlobConfig) {
   return { fetch : fetch.bind(options) }
 }
 
-// Promise wrapper function
-function fetch(...args:any) {
+/**
+ * Create a HTTP request by settings, the `this` context is a `RNFetchBlobConfig` object.
+ * @param  {string} method HTTP method, should be `GET`, `POST`, `PUT`, `DELETE`
+ * @param  {string} url Request target url string.
+ * @param  {object} headers HTTP request headers.
+ * @param  {string} body
+ *         Request body, can be either a BASE64 encoded data string,
+ *         or a file path with prefix `RNFetchBlob-file://` (can be changed)
+ * @return {Promise}
+ *         This promise instance also contains a Customized method `progress`for
+ *         register progress event handler.
+ */
+function fetch(...args:any):Promise {
 
   // create task ID for receiving progress event
   let taskId = getUUID()
@@ -100,6 +133,8 @@ function fetch(...args:any) {
 
   })
 
+  // extend Promise object, add a `progress` method for register progress event
+  // handler.
   promise.progress = (fn) => {
     promise.onProgress = fn
     return promise
@@ -109,6 +144,13 @@ function fetch(...args:any) {
 
 }
 
+/**
+ * Create file stream from file at `path`.
+ * @param  {String} path   The file path.
+ * @param  {String} encoding Data encoding, should be one of `base64`, `utf8`, `ascii`
+ * @param  {String} bufferSize Size of stream buffer.
+ * @return {RNFetchBlobStream} RNFetchBlobStream stream instance.
+ */
 function openReadStream(
   path:string,
   encoding:'utf8' | 'ascii' | 'base64',
@@ -146,12 +188,27 @@ function openReadStream(
     if (event === 'error' || event === 'end') {
       subscription.remove()
     }
-
   })
 
   RNFetchBlob.readStream(path, encoding, bufferSize || 0)
   return stream
 
+}
+
+/**
+ * Remove file at path.
+ * @param  {string}   path:string Path of target file.
+ * @return {Promise}
+ */
+function unlink(path:string):Promise {
+  return new Promise((resolve, reject) => {
+    RNFetchBlob.unlink(path, (err) => {
+      if(err)
+        reject(err)
+      else
+        resolve()
+    })
+  })
 }
 
 /**
@@ -209,10 +266,10 @@ class FetchBlobResponse {
     }
     /**
      * Remove cahced file
-     * @return {void}
+     * @return {Promise}
      */
     this.flush = () => {
-      RNFetchBlob.flush(this.path())
+      return unlink(this.path())
     }
     /**
      * get path of response temp file
@@ -238,7 +295,6 @@ class FetchBlobResponse {
         return null
       }
     }
-
   }
 
 }
@@ -251,5 +307,5 @@ function getUUID() {
 }
 
 export default {
-  fetch, base64, config, getSystemDirs, openReadStream
+  fetch, base64, config, getSystemDirs, readStream, unlink
 }

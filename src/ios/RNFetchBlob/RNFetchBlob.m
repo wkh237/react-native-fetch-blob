@@ -591,10 +591,14 @@ RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding 
     [fileStream readWithPath:path useEncoding:encoding bufferSize:bufferSize];
 }
 
-RCT_EXPORT_METHOD(flush:(NSString *)path) {
+RCT_EXPORT_METHOD(unlink:(NSString *)path callback:(RCTResponseSenderBlock) callback) {
     NSError * error = nil;
     NSString * tmpPath = nil;
     [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
+    if(error == nil)
+        callback(@[[NSNull null]]);
+    else
+        callback(@[[NSString stringWithFormat:@"failed to unlink file or path at %@", path]]);
 }
 
 RCT_EXPORT_METHOD(getEnvironmentDirs:(RCTResponseSenderBlock) callback) {

@@ -59,16 +59,12 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void flush(String taskId) {
+    public void unlink(String path, Callback callback) {
         try {
-            new File(RNFetchBlobFS.getTmpPath(this.getReactApplicationContext(), taskId)).delete();
+            new File(RNFetchBlobFS.getTmpPath(this.getReactApplicationContext(), path)).delete();
+            callback.invoke(null);
         } catch(Exception err) {
-            WritableMap args = Arguments.createMap();
-            args.putString("event", "error");
-            args.putString("detail", err.getMessage());
-            this.getReactApplicationContext()
-                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                    .emit("RNFetchBlobMessage", args);
+            callback.invoke("Failed to remove file or directory at " + path);
         }
     }
 
@@ -163,7 +159,6 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
             // set params
             RequestParams params = new RequestParams();
-//            ByteArrayEntity entity = null;
             HttpEntity entity = null;
             // set params
             for (String paramName : uri.getQueryParameterNames()) {
