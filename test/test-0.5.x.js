@@ -7,12 +7,15 @@ import {
   Text,
   View,
   ScrollView,
+  Platform,
   Dimensions,
   Image,
 } from 'react-native';
 
 const { Assert, Comparer, Info, describe, prop } = RNTest
 const { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles } = prop()
+
+let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
 // added after 0.5.0
 
@@ -47,7 +50,9 @@ describe('Download file to storage with custom file extension', (report, done) =
     .then((resp) => {
       tmpFilePath = resp.path()
       report(<Info key={`image from ${tmpFilePath}`}>
-        <Image source={{ uri : tmpFilePath}} style={styles.image}/>
+        <Image
+          source={{ uri : prefix + tmpFilePath}}
+          style={styles.image}/>
       </Info>)
       done()
     })
@@ -60,8 +65,13 @@ describe('Read cached file via file stream', (report, done) => {
     data += chunk
   })
   stream.onEnd(() => {
+    console.log(prop('image').length, data.length)
+    console.log(data)
     report(
-      <Assert key="image should have value" expect={0} comparer={Comparer.smaller} actual={data.length}/>,
+      <Assert key="image should have value"
+        expect={0}
+        comparer={Comparer.smaller}
+        actual={data.length}/>,
       <Info key="image from read stream">
         <Image source={{uri : data}} style={styles.image}/>
       </Info>)
@@ -85,32 +95,33 @@ describe('File stream reader error should be able to handled', (report, done) =>
   })
 })
 
-describe('Upload from file storage', (report, done) => {
-  let filename = ''
-  let filepath = ''
-  RNFetchBlob.getSystemDirs().then((dirs) => {
-    filename = 'ios.5.0-' + Date.now() + '-from-storage.png'
-    filepath = dirs.DocumentDir + '/' + filename
-    return RNFetchBlob.config({ path : filepath })
-                      .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
-  })
-  .then((resp) => {
-      let path = resp.path()
-      return RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
-        Authorization : `Bearer ${DROPBOX_TOKEN}`,
-        'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
-        'Content-Type' : 'application/octet-stream',
-      }, 'RNFetchBlob-file://' + path)
-      .then((resp) => {
-        console.log(resp.text())
-        resp = resp.json()
-        report(
-          <Assert key="confirm the file has been uploaded" expect={filename} actual={resp.name}/>
-        )
-        done()
-      })
-  })
-
-
-
-})
+//
+// describe('Upload from file storage', (report, done) => {
+//   let filename = ''
+//   let filepath = ''
+//   RNFetchBlob.getSystemDirs().then((dirs) => {
+//     filename = 'ios.5.0-' + Date.now() + '-from-storage.png'
+//     filepath = dirs.DocumentDir + '/' + filename
+//     return RNFetchBlob.config({ path : filepath })
+//                       .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+//   })
+//   .then((resp) => {
+//       let path = resp.path()
+//       return RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+//         Authorization : `Bearer ${DROPBOX_TOKEN}`,
+//         'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
+//         'Content-Type' : 'application/octet-stream',
+//       }, 'RNFetchBlob-file://' + path)
+//       .then((resp) => {
+//         console.log(resp.text())
+//         resp = resp.json()
+//         report(
+//           <Assert key="confirm the file has been uploaded" expect={filename} actual={resp.name}/>
+//         )
+//         done()
+//       })
+//   })
+//
+//
+//
+// })
