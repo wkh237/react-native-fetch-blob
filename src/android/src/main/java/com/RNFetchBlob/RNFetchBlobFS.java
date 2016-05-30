@@ -31,8 +31,8 @@ public class RNFetchBlobFS {
         this.mCtx = ctx;
         this.emitter = ctx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
     }
-    
-    public void readStream( String path, String encoding, String bufferSize) {
+
+    public void readStream( String path, String encoding, int bufferSize) {
         AsyncTask<String, Integer, Integer> task = new AsyncTask<String, Integer, Integer>() {
             @Override
             protected Integer doInBackground(String ... args) {
@@ -81,7 +81,7 @@ public class RNFetchBlobFS {
                 return null;
             }
         };
-        task.execute(path, encoding, bufferSize);
+        task.execute(path, encoding, String.valueOf(bufferSize));
     }
 
     void emitStreamEvent(String streamName, String event, String data) {

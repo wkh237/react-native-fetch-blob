@@ -15,7 +15,7 @@ public class RNFetchBlobConfig {
         if(options == null)
             return;
         this.fileCache = options.hasKey("fileCache") ? options.getBoolean("fileCache") : false;
-            this.path = options.hasKey("path") ? options.getString("path") : null;
+        this.path = options.hasKey("path") ? options.getString("path") : null;
         this.appendExt = options.hasKey("appendExt") ? options.getString("appendExt") : "";
 
     }

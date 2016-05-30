@@ -22,10 +22,17 @@ import com.loopj.android.http.RequestParams;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 
+import cz.msebera.android.httpclient.HttpEntity;
+import cz.msebera.android.httpclient.entity.AbstractHttpEntity;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
+import cz.msebera.android.httpclient.entity.ContentType;
+import cz.msebera.android.httpclient.entity.FileEntity;
+import cz.msebera.android.httpclient.entity.mime.MultipartEntityBuilder;
+import cz.msebera.android.httpclient.entity.mime.content.ContentBody;
 
 public class RNFetchBlob extends ReactContextBaseJavaModule {
 
+    String filePathPrefix = "RNFetchBlob-file://";
 
     public RNFetchBlob(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -41,13 +48,14 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
         WritableArray results = Arguments.createArray();
         ReactApplicationContext ctx = this.getReactApplicationContext();
-        results.pushString(String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)));
-        results.pushString(String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)));
-        results.pushString(String.valueOf(ctx.getFilesDir()));
-        results.pushString(String.valueOf(ctx.getCacheDir()));
-        results.pushString(String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)));
-        results.pushString(String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)));
-        callback.invoke(results);
+        callback.invoke(
+                String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)),
+                String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)),
+                String.valueOf(ctx.getFilesDir()),
+                String.valueOf(ctx.getCacheDir()),
+                String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)),
+                String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM))
+        );
     }
 
     @ReactMethod
@@ -70,7 +78,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
      * @param encoding Stream encoding, should be one of `base64`, `ascii`, and `utf8`
      * @param bufferSize Stream buffer size, default to 1024 or 1026(base64).
      */
-    public void readStream(String path, String encoding, String bufferSize) {
+    public void readStream(String path, String encoding, int bufferSize) {
         RNFetchBlobFS fs = new RNFetchBlobFS(this.getReactApplicationContext());
         fs.readStream(path, encoding, bufferSize);
     }
@@ -86,7 +94,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
             // set params
             RequestParams params = new RequestParams();
-            ByteArrayEntity entity = null;
+            AbstractHttpEntity entity = null;
 
             // set params
             for (String paramName : uri.getQueryParameterNames()) {
@@ -102,8 +110,17 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
             // set body for POST and PUT
             if(body != null && method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put")) {
-                byte [] blob = Base64.decode(body, 0);
-                entity = new ByteArrayEntity(blob);
+
+                byte [] blob;
+                // upload from storage
+                if(body.startsWith(filePathPrefix)) {
+                    String filePath = body.substring(filePathPrefix.length());
+                    entity = new FileEntity(new File(filePath));
+                }
+                else {
+                    blob = Base64.decode(body, 0);
+                    entity = new ByteArrayEntity(blob);
+                }
                 entity.setContentType(headers.getString("Content-Type"));
             }
 
@@ -146,8 +163,8 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
             // set params
             RequestParams params = new RequestParams();
-            ByteArrayEntity entity = null;
-
+//            ByteArrayEntity entity = null;
+            HttpEntity entity = null;
             // set params
             for (String paramName : uri.getQueryParameterNames()) {
                 params.put(paramName, uri.getQueryParameter(paramName));
@@ -164,37 +181,36 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
             // set body for POST and PUT
             if(body != null && method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put")) {
-
                 Long tsLong = System.currentTimeMillis()/1000;
                 String ts = tsLong.toString();
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
                 String boundary = "RNFetchBlob".concat(ts);
-                for(int i =0; i<body.size() ; i++) {
+                MultipartEntityBuilder form = MultipartEntityBuilder.create();
+                form.setBoundary(boundary);
+                for( int i = 0; i< body.size(); i++) {
                     ReadableMap map = body.getMap(i);
                     String name = map.getString("name");
+                    if(!map.hasKey("data"))
+                        continue;
+                    String data = map.getString("data");
                     // file field
                     if(map.hasKey("filename")) {
                         String filename = map.getString("filename");
-                        byte [] file = Base64.decode(map.getString("data"), 0);
-                        outputStream.write(String.format("--%s\r\n", boundary).getBytes("UTF-8"));
-                        outputStream.write(("Content-Disposition: form-data; name=\""+name+"\"; filename=\""+filename+"\"\r\n").getBytes("UTF-8"));
-                        outputStream.write(String.format("Content-Type: application/octet-stream\r\n\r\n").getBytes());
-                        outputStream.write(file);
-                        outputStream.write("\r\n".getBytes());
+                        // upload from storage
+                        if(data.startsWith(filePathPrefix)) {
+                            File file = new File(data.substring(filePathPrefix.length()));
+                            form.addBinaryBody(name, file, ContentType.APPLICATION_OCTET_STREAM, filename);
+                        }
+                        // base64 embedded file content
+                        else {
+                            form.addBinaryBody(name, Base64.decode(data, 0), ContentType.APPLICATION_OCTET_STREAM, filename);
+                        }
                     }
                     // data field
                     else {
-                        String data = map.getString("data");
-                        outputStream.write(String.format("--%s\r\n", boundary).getBytes("UTF-8"));
-                        outputStream.write(String.format("Content-Disposition: form-data; name=\""+name+"\"; \r\n").getBytes("UTF-8"));
-                        outputStream.write(String.format("Content-Type: text/plain\r\n\r\n").getBytes());
-                        outputStream.write((data+"\r\n").getBytes());
+                        form.addTextBody(name, map.getString("data"));
                     }
                 }
-                outputStream.write(String.format("--%s--\r\n", boundary).getBytes());
-                byte bodyBytes[] = outputStream.toByteArray( );
-                entity = new ByteArrayEntity(bodyBytes);
-                entity.setContentType(headers.getString("Content-Type") + "; charset=utf8; boundary=" + boundary);
+                entity = form.build();
                 req.addHeader("Content-Type", headers.getString("Content-Type") + "; charset=utf8; boundary=" + boundary);
             }
 
