@@ -1,4 +1,4 @@
-# react-native-fetch-blob [![npm version](https://badge.fury.io/js/react-native-fetch-blob.svg)](https://badge.fury.io/js/react-native-fetch-blob)
+# react-native-fetch-blob [![npm version](https://badge.fury.io/js/react-native-fetch-blob.svg)](https://badge.fury.io/js/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg)
 
 A react-native module for fetch file/image with custom headers, supports blob response data, and upload/download progress.
 
@@ -9,15 +9,6 @@ See [[fetch] Does fetch with blob() marshal data across the bridge?](https://git
 This module enables you upload/download binary data in js, see [Examples](#user-content-usage) bellow.
 
 The source code is very simple, just an implementation of native HTTP request, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
-
-## Major Changes
-
-| Version | |
-|---|---|
-| 0.3 | Upload/Download octet-stream and form-data |
-| 0.4 | Add base-64 encode/decode library and API |
-| 0.4.1 | Fixe upload form-data missing file extension problem on Android |
-| 0.4.2 | Supports upload/download progress |
 
 ## Usage
 
@@ -161,7 +152,7 @@ Headers of HTTP request, value of headers should be `stringified`, if you're upl
 Body of the HTTP request, body can either be a BASE64 string, or an array contains object elements, each element have 2  required property `name`, and `data`, and 1 optional property `filename`, once `filename` is set, content in `data` property will be consider as BASE64 string that will be converted into byte array later.
 When body is a base64 string , this string will be converted into byte array in native code, and the request body will be sent as `application/octet-stream`.
 
-### `fetch(...).progress(eventListener):Promise<FetchBlobResponse>` added in `0.4.2`
+#### `fetch(...).progress(eventListener):Promise<FetchBlobResponse>` added in `0.4.2`
 
 Register on progress event handler for a fetch request.
 
@@ -189,9 +180,24 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
 #### text():string
   returns decoded base64 string (done in js context)
 
+## Major Changes
+
+| Version | |
+|---|---|
+| 0.3 | Upload/Download octet-stream and form-data |
+| 0.4 | Add base-64 encode/decode library and API |
+| 0.4.1 | Fixe upload form-data missing file extension problem on Android |
+| 0.4.2 | Supports upload/download progress |
 
 ### Upcoming Features
+
+We are now working on v0.5.0, there will be some new features.
 
 * Save file to storage directly
 * Upload file from storage directly
 * Custom MIME type in form data
+
+### Development
+
+If you're insterested in hacking this module, check our [development guide](https://github.com/wkh237/react-native-fetch-blob/wiki/Development-Guide), there might be something helpful. 
+Please feel free to make a PR or file an issue.
