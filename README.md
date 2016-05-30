@@ -69,10 +69,6 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
 
 #### Download to storage directly
 
-If you want to save the response data directly into file storage rather than convert response data into base64 for some reason.
-
-Put a `config` before calling `fetch`. There're three options which are `path`, `fileCache`, and `appendExt` that let you decide how and where to save the file.
-
 The simplest way is give a `fileCach` option to config, and set it to `true`. This will let the incoming response data stored in a temporary path **wihout** any file extension.
 
 ```js
@@ -90,6 +86,8 @@ RNFetchBlob
     console.log('The file saved to ', res.path())
   })
 ```
+
+**Set Temp File Extension**
 
 But in some cases, you might need a file extension even the file is temporary cached. For instance, when use the file path as source of `Image` element the path should end with something like .png or .jpg, you can do this by put one more option in to `config`.
 
@@ -111,6 +109,7 @@ RNFetchBlob
     imageView = <Image source={{ uri : Platform.OS === 'android' ? 'file://' : '' + res.path() }}/>
   })
 ```
+**Use Specific File Path**
 
 What's more, if you prefer a specific path, rather a random generated path, you can use `path` option. We've added a [getSystemDirs](#user-content-getsysdirs) API in v0.5.0 that lists several common used directories.
 
@@ -266,9 +265,9 @@ let stream = RNFetchBlob.readStream(
     'base64',
     // file path
     PATH_TO_THE_FILE,
-    // (optional) buffer size, default to 1024 (1026 for BASE64 encoded data)
+    // (optional) buffer size, default to 4096 (4098 for BASE64 encoded data)
     // when reading file in BASE64 encoding, buffer size must be multiples of 3.
-    1026)
+    4098)
 stream.onData((chunk) => {
   data += chunk
 })
@@ -282,8 +281,17 @@ stream.onEnd(() => {
 
 #### Release cache files
 
+TODO
 
 ## API
+
+#### `getSystemDirs`
+
+TODO
+
+#### `config`
+
+TODO
 
 #### `fetch(method, url, headers, body):Promise<FetchBlobResponse>`
 
@@ -316,7 +324,15 @@ RNFetchBlob.base64.encode(data)
 RNFetchBlob.base64.decode(data)
 ```
 
-### FetchBlobResponse
+#### `unlink`
+
+TODO
+
+#### `readStream`
+
+TODO
+
+#### FetchBlobResponse
 
 When `fetch` success, it resolve a `FetchBlobResponse` object as first argument. `FetchBlobResponse` object has the following methods (these method are synchronous, so you might take quite a performance impact if the file is big)
 
