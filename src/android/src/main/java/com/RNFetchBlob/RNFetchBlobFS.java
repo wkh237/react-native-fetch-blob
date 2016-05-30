@@ -42,7 +42,7 @@ public class RNFetchBlobFS {
                 String eventName = "RNFetchBlobStream+" + path;
                 try {
 
-                    int chunkSize = encoding.equalsIgnoreCase("base64") ? 1026 : 1024;
+                    int chunkSize = encoding.equalsIgnoreCase("base64") ? 4098 : 4096;
                     if(bufferSize > 0)
                         chunkSize = bufferSize;
                     FileInputStream fs = new FileInputStream(new File(path));

@@ -187,9 +187,9 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
         case NSStreamEventHasBytesAvailable:
         {
             NSMutableData * chunkData = [[NSMutableData data] init];
-            NSInteger chunkSize = 1024;
+            NSInteger chunkSize = 4096;
             if([[self.encoding lowercaseString] isEqualToString:@"base64"])
-                chunkSize = 1026;
+                chunkSize = 4098;
             if(self.bufferSize > 0)
                 chunkSize = self.bufferSize;
             uint8_t buf[chunkSize];
