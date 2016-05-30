@@ -34,6 +34,7 @@ extern NSString *const FS_EVENT_ERROR;
     RCTBridge * bridge;
     Boolean isOpen;
     NSString * encoding;
+    int bufferSize;
     NSString * taskId;
     NSString * path;
 }
@@ -45,6 +46,7 @@ extern NSString *const FS_EVENT_ERROR;
 @property (nonatomic) NSString * encoding;
 @property (nonatomic) NSString * taskId;
 @property (nonatomic) NSString * path;
+@property (nonatomic) int bufferSize;
 
 + (NSString *) getTempPath;
 - (id) init;

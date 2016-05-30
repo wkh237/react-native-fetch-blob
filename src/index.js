@@ -20,6 +20,7 @@ import base64 from 'base-64'
 // const emitter = (Platform.OS === 'android' ? DeviceEventEmitter : NativeAppEventEmitter)
 const emitter = DeviceEventEmitter
 const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
+const pathPrefix = Platform.OS === 'android' ? 'file://' : ''
 
 emitter.addListener("RNFetchBlobMessage", (e) => {
 
@@ -107,7 +108,11 @@ function fetch(...args:any) {
 
 }
 
-function openReadStream(path:string, encoding:'utf8' | 'ascii' | 'base64'):RNFetchBlobStream {
+function openReadStream(
+  path:string,
+  encoding:'utf8' | 'ascii' | 'base64',
+  bufferSize?:?number
+):RNFetchBlobStream {
 
   if(!path)
     throw Error('RNFetchBlob could not open file stream with empty `path`')
@@ -126,6 +131,7 @@ function openReadStream(path:string, encoding:'utf8' | 'ascii' | 'base64'):RNFet
 
   // register for file stream event
   let subscription = emitter.addListener(`RNFetchBlobStream+${path}`, (e) => {
+
     let {event, detail} = e
     if(stream._onData && event === 'data')
       stream._onData(detail)
@@ -142,8 +148,7 @@ function openReadStream(path:string, encoding:'utf8' | 'ascii' | 'base64'):RNFet
 
   })
 
-  RNFetchBlob.readStream(path, encoding)
-
+  RNFetchBlob.readStream(path, encoding, (bufferSize || "0").toString())
   return stream
 
 }

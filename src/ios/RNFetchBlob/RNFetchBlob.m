@@ -41,6 +41,7 @@ NSString *const FS_EVENT_ERROR = @"error";
 @synthesize callback;
 @synthesize taskId;
 @synthesize path;
+@synthesize bufferSize;
 
 
 
@@ -115,12 +116,13 @@ NSString *const FS_EVENT_ERROR = @"error";
     }
 }
 
-- (void)readWithPath:(NSString *)path useEncoding:(NSString *)encoding {
+- (void)readWithPath:(NSString *)path useEncoding:(NSString *)encoding bufferSize:(int) bufferSize{
     
     self.inStream = [[NSInputStream alloc] initWithFileAtPath:path];
     self.inStream.delegate = self;
     self.encoding = encoding;
     self.path = path;
+    self.bufferSize = bufferSize;
     
     // NSStream needs a runloop so let's create a run loop for it
     dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0);
@@ -185,9 +187,15 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
         case NSStreamEventHasBytesAvailable:
         {
             NSMutableData * chunkData = [[NSMutableData data] init];
-            uint8_t buf[1024];
+            NSInteger chunkSize = 1024;
+            if([[self.encoding lowercaseString] isEqualToString:@"base64"])
+                chunkSize = 1026;
+            if(self.bufferSize > 0)
+                chunkSize = self.bufferSize;
+            uint8_t buf[chunkSize];
             unsigned int len = 0;
-            len = [(NSInputStream *)stream read:buf maxLength:1024];
+
+            len = [(NSInputStream *)stream read:buf maxLength:chunkSize];
             // still have data in stream
             if(len) {
                 [chunkData appendBytes:(const void *)buf length:len];
@@ -578,9 +586,9 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
     });
 }
 
-RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding) {
+RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding bufferSize:(int)bufferSize) {
     FetchBlobFS *fileStream = [[FetchBlobFS alloc] initWithBridgeRef:self.bridge];
-    [fileStream readWithPath:path useEncoding:encoding];
+    [fileStream readWithPath:path useEncoding:encoding bufferSize:bufferSize];
 }
 
 RCT_EXPORT_METHOD(flush:(NSString *)path) {
