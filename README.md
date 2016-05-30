@@ -2,7 +2,7 @@
 
 ## v0.5.0 Work In Progress README.md
 
-A react-native module for upload, and download file with custom headers. Supports blob response data, upload/download progress, and file reader API that enables you process file content in js context (such as display image data, string or image process).
+A react-native module for upload, and download files with custom headers. Supports blob response data, upload/download progress, and file reader API that enables you process file content in js context (such as display image data, string or image process).
 
 If you're dealing with image or file server that requires special field in the header, or you're having problem with `fetch` API when receiving blob data, you might try this module.
 
@@ -20,7 +20,7 @@ This module implements native HTTP request, supports both Android (uses awesome 
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
  * [Upload/Download progress](#user-content-uploaaddownload-progress)
- * [Deal with files in storage](#user-content-deal-with-files-in-storage)
+ * [File stream reader](#user-content-file-stream-reader)
  * [Release cache files](#user-content-release-cache-files)
 * [API](#user-content-api)
 
@@ -78,6 +78,8 @@ The simplest way is give a `fileCach` option to config, and set it to `true`. Th
 ```js
 RNFetchBlob
   .config({
+    // add this option that makes response data to be stored as a file,
+    // this is much more performant.
     fileCache : true,
   })
   .fetch('GET', 'http://www.example.com/file/example.zip', {
@@ -95,6 +97,7 @@ But in some cases, you might need a file extension even the file is temporary ca
 RNFetchBlob
   .config({
     fileCache : true,
+    // by adding this option, the temp files will have a file extension
     appendExt : 'png'
   })
   .fetch('GET', 'http://www.example.com/file/example.zip', {
@@ -115,10 +118,11 @@ What's more, if you prefer a specific path, rather a random generated path, you 
 RNFetchBlob.getSystemDirs().then((dirs) => {
   RNFetchBlob
     .config({
+      // response data will be saved to this path if it has access right.
       path : dirs.DocumentDir + 'path-to-file.anything'
     })
     .fetch('GET', 'http://www.example.com/file/example.zip', {
-      some headers ..
+      //some headers ..
     })
     .then((res) => {
       // the path should be dirs.DocumentDir + 'path-to-file.anything'
@@ -165,6 +169,7 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
       mute : false
     }),
     'Content-Type' : 'application/octet-stream',
+    // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://` when the data comes from a file
   }, 'RNFetchBlob-file://' + PATH_TO_THE_FILE)
   .then((res) => {
     console.log(res.text())
@@ -212,7 +217,11 @@ What if some fields contains a file in file storage ? Just like [upload a file f
     'Content-Type' : 'multipart/form-data',
   }, [
     // append field data from file path
-    { name : 'avatar', filename : 'avatar.png', data: 'RNFetchBlob-file://' + PATH_TO_THE_FILE},
+    { name : 'avatar',
+      filename : 'avatar.png',
+      // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://` when the data comes from a file
+      data: 'RNFetchBlob-file://' + PATH_TO_THE_FILE
+    },
     // elements without property `filename` will be sent as plain text
     { name : 'name', data : 'user'},
     { name : 'info', data : JSON.stringify({
@@ -245,6 +254,33 @@ In `version >= 0.4.2` it is possible to know the upload/download progress.
       // ...
     })
 ```
+
+#### Handle files in storage
+
+In v0.5.0 we've added a `readStream` API, which allows you read data from file directly. This API creates a file stream, rather than a BASE64 encoded data of the file, so that you won't have to worry if large files explodes the memory.
+
+```js
+let data = ''
+let stream = RNFetchBlob.readStream(
+    // encoding, should be one of `base64`, `utf8`, `ascii`
+    'base64',
+    // file path
+    PATH_TO_THE_FILE,
+    // (optional) buffer size, default to 1024 (1026 for BASE64 encoded data)
+    // when reading file in BASE64 encoding, buffer size must be multiples of 3.
+    1026)
+stream.onData((chunk) => {
+  data += chunk
+})
+stream.onError((err) => {
+  console.log('oops', err)
+})
+stream.onEnd(() => {  
+  <Image source={{ uri : 'data:image/png,base64' + data }}
+})
+```
+
+#### Release cache files
 
 
 ## API
@@ -301,15 +337,12 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
 | 0.4.2 | Supports upload/download progress |
 | 0.5.0 | Upload/download with direct access to file storage, and also supports read file with file stream |
 
-### Upcoming Features
+### TODOs
 
-We are now working on v0.5.0, there will be some new features.
-
-* Save file to storage directly
-* Upload file from storage directly
-* Custom MIME type in form data
+* Customizable Multipart MIME type
+* Improvement of file cache management API
 
 ### Development
 
-If you're insterested in hacking this module, check our [development guide](https://github.com/wkh237/react-native-fetch-blob/wiki/Development-Guide), there might be something helpful.
+If you're interested in hacking this module, check our [development guide](https://github.com/wkh237/react-native-fetch-blob/wiki/Development-Guide), there might be some helpful information.
 Please feel free to make a PR or file an issue.
