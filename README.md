@@ -10,15 +10,6 @@ This module enables you upload/download binary data in js, see [Examples](#user-
 
 The source code is very simple, just an implementation of native HTTP request, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
 
-## Major Changes
-
-| Version | |
-|---|---|
-| 0.3 | Upload/Download octet-stream and form-data |
-| 0.4 | Add base-64 encode/decode library and API |
-| 0.4.1 | Fixe upload form-data missing file extension problem on Android |
-| 0.4.2 | Supports upload/download progress |
-
 ## Usage
 
 * [Installation](#user-content-installation)
@@ -189,6 +180,14 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
 #### text():string
   returns decoded base64 string (done in js context)
 
+## Major Changes
+
+| Version | |
+|---|---|
+| 0.3 | Upload/Download octet-stream and form-data |
+| 0.4 | Add base-64 encode/decode library and API |
+| 0.4.1 | Fixe upload form-data missing file extension problem on Android |
+| 0.4.2 | Supports upload/download progress |
 
 ### Upcoming Features
 
