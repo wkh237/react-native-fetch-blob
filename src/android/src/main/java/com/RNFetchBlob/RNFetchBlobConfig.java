@@ -12,10 +12,11 @@ public class RNFetchBlobConfig {
     public String appendExt;
 
     RNFetchBlobConfig(ReadableMap options) {
-
-        this.fileCache = options.getBoolean("fileCache");
-        this.path = options.getString("path");
-        this.appendExt = options.getString("appendExt");
+        if(options == null)
+            return;
+        this.fileCache = options.hasKey("fileCache") ? options.getBoolean("fileCache") : false;
+            this.path = options.hasKey("path") ? options.getString("path") : null;
+        this.appendExt = options.hasKey("appendExt") ? options.getString("appendExt") : "";
 
     }
 

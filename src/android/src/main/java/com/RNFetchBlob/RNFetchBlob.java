@@ -37,7 +37,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public ReadableArray getSystemDirs() {
+    public void getEnvironmentDirs(Callback callback) {
 
         WritableArray results = Arguments.createArray();
         ReactApplicationContext ctx = this.getReactApplicationContext();
@@ -47,7 +47,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
         results.pushString(String.valueOf(ctx.getCacheDir()));
         results.pushString(String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)));
         results.pushString(String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)));
-        return results;
+        callback.invoke(results);
     }
 
     @ReactMethod
@@ -65,14 +65,21 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void readStream(String path, String encoding) {
+    /**
+     * @param path Stream file path
+     * @param encoding Stream encoding, should be one of `base64`, `ascii`, and `utf8`
+     * @param bufferSize Stream buffer size, default to 1024 or 1026(base64).
+     */
+    public void readStream(String path, String encoding, String bufferSize) {
         RNFetchBlobFS fs = new RNFetchBlobFS(this.getReactApplicationContext());
-        fs.readStream(path, encoding);
+        fs.readStream(path, encoding, bufferSize);
     }
 
     @ReactMethod
     public void fetchBlob(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, final Callback callback) {
+
         RNFetchBlobConfig config = new RNFetchBlobConfig(options);
+
         try {
             Uri uri = Uri.parse(url);
             AsyncHttpClient req = new AsyncHttpClient();

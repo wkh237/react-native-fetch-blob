@@ -9,6 +9,7 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.loopj.android.http.Base64;
 
+import java.io.File;
 import java.io.FileInputStream;
 
 import cz.msebera.android.httpclient.util.EncodingUtils;
@@ -31,50 +32,63 @@ public class RNFetchBlobFS {
         this.emitter = ctx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
     }
     
-    // TODO : make it an AsyncTask
-    public void readStream(final String path, String encoding) {
+    public void readStream( String path, String encoding, String bufferSize) {
         AsyncTask<String, Integer, Integer> task = new AsyncTask<String, Integer, Integer>() {
             @Override
             protected Integer doInBackground(String ... args) {
                 String path = args[0];
                 String encoding = args[1];
+                int bufferSize = Integer.parseInt(args[2]);
                 String eventName = "RNFetchBlobStream+" + path;
                 try {
-                    FileInputStream fs = mCtx.openFileInput(mCtx.getFilesDir() + "/"+ path);
-                    byte[] buffer = new byte[1024];
+
+                    int chunkSize = encoding.equalsIgnoreCase("base64") ? 1026 : 1024;
+                    if(bufferSize > 0)
+                        chunkSize = bufferSize;
+                    FileInputStream fs = new FileInputStream(new File(path));
+                    byte[] buffer = new byte[chunkSize];
                     int cursor = 0;
                     boolean error = false;
 
-                    if (encoding.toLowerCase() == "utf8") {
+                    if (encoding.equalsIgnoreCase("utf8")) {
                         while ((cursor = fs.read(buffer)) != -1) {
                             String chunk = new String(buffer, 0, cursor, "UTF-8");
-                            emitFSData(eventName, "data", chunk);
+                            emitStreamEvent(eventName, "data", chunk);
                         }
-                    } else if (encoding.toLowerCase() == "ascii") {
+                    } else if (encoding.equalsIgnoreCase("ascii")) {
                         while ((cursor = fs.read(buffer)) != -1) {
                             String chunk = EncodingUtils.getAsciiString(buffer, 0, cursor);
-                            emitFSData(eventName, "data", chunk);
+                            emitStreamEvent(eventName, "data", chunk);
                         }
-                    } else if (encoding.toLowerCase() == "base64") {
+                    } else if (encoding.equalsIgnoreCase("base64")) {
                         while ((cursor = fs.read(buffer)) != -1) {
-                            emitFSData(eventName, "data", Base64.encodeToString(buffer, Base64.NO_WRAP));
+                            emitStreamEvent(eventName, "data", Base64.encodeToString(buffer, Base64.NO_WRAP));
                         }
                     } else {
                         String msg = "unrecognized encoding `" + encoding + "`";
-                        emitFSData(eventName, "error", msg);
+                        emitStreamEvent(eventName, "error", msg);
                         error = true;
                     }
 
                     if(!error)
-                        emitFSData(eventName, "end", "");
+                        emitStreamEvent(eventName, "end", "");
+                    fs.close();
+
 
                 } catch (Exception err) {
-                    emitFSData(eventName, "error", err.getLocalizedMessage());
+                    emitStreamEvent(eventName, "error", err.getLocalizedMessage());
                 }
                 return null;
             }
         };
-        task.execute(path, encoding);
+        task.execute(path, encoding, bufferSize);
+    }
+
+    void emitStreamEvent(String streamName, String event, String data) {
+        WritableMap eventData = Arguments.createMap();
+        eventData.putString("event", event);
+        eventData.putString("detail", data);
+        this.emitter.emit(streamName, eventData);
     }
 
     void emitFSData(String taskId, String event, String data) {
