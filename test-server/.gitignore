@@ -2,4 +2,5 @@ uploads/*
 public/*
 !public/github.png
 !public/22mb-dummy
+!public/1mb-dummy
 !uploads/readme
