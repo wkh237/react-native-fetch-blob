@@ -49,8 +49,9 @@ function getSystemDirs() {
   return new Promise((resolve, reject) => {
     try {
       RNFetchBlob.getEnvironmentDirs((...dirs) => {
-        let [PictureDir, MovieDir, DocumentDir, CacheDir] = [...dirs]
-        resolve({PictureDir, MovieDir, DocumentDir, CacheDir})
+        let [PictureDir, MovieDir, DocumentDir, CacheDir, MusicDir, DCIMDir] = [...dirs]
+        console.log({PictureDir, MovieDir, DocumentDir, CacheDir, MusicDir, DCIMDir})
+        resolve({PictureDir, MovieDir, DocumentDir, CacheDir, MusicDir, DCIMDir})
       })
     } catch(err) {
       reject(err)
@@ -148,7 +149,7 @@ function openReadStream(
 
   })
 
-  RNFetchBlob.readStream(path, encoding, (bufferSize || "0").toString())
+  RNFetchBlob.readStream(path, encoding, bufferSize || 0)
   return stream
 
 }
