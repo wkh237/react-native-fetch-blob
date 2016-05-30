@@ -93,11 +93,12 @@ describe('Compare uploaded multipart image', (report, done) => {
 
 describe('Progress report test', (report, done) => {
   let received = 0
-  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/1mb-dummy`, {
+  RNFetchBlob
+    .fetch('GET', `${TEST_SERVER_URL}/public/1mb-dummy`, {
       Authorization : 'Bearer abde123eqweje'
     })
     .progress((written, total) => {
-      report(<Info key={`progress = ${written} bytes / ${total} bytes`}/>)
+      // report(<Info key={`progress = ${written} bytes / ${total} bytes`}/>)
       if(written === total)
         report(<Assert key="progress goes to 100%" expect={written} actual={total}/>)
     })
@@ -110,14 +111,14 @@ describe('Progress report test', (report, done) => {
 })
 
 // FIXME : not yet supported
-describe('Large file download test', (report, done) => {
-  let received = 0
+// describe('Large file download test', (report, done) => {
+  // let received = 0
   // RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`, {
   //   Authorization : 'Bearer abde123eqweje'
   // })
   // .then((resp) => {
-    report(<Assert key="not supported" expect={true} actual={false}/>)
-    done()
+    // report(<Assert key="not supported" expect={true} actual={false}/>)
+    // done()
   // })
 
-})
+// })

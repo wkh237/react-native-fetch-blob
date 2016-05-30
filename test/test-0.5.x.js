@@ -27,7 +27,7 @@ describe('Get storage folders', (report, done) => {
       <Assert key="check properties"
         expect={dirs}
         comparer={Comparer.hasProperties}
-        actual={['PictureDir', 'MovieDir', 'DocumentDir', 'CacheDir']}
+        actual={['PictureDir', 'MovieDir', 'DocumentDir', 'CacheDir', 'MusicDir', 'DCIMDir']}
       />,
       <Info key="System Folders">
         <Text>{`${JSON.stringify(dirs)}`}</Text>
@@ -46,7 +46,7 @@ describe('Download file to storage with custom file extension', (report, done) =
       fileCache : true,
       appendExt : 'png'
     })
-    .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+    .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
     .then((resp) => {
       tmpFilePath = resp.path()
       report(<Info key={`image from ${tmpFilePath}`}>
@@ -65,8 +65,6 @@ describe('Read cached file via file stream', (report, done) => {
     data += chunk
   })
   stream.onEnd(() => {
-    console.log(prop('image').length, data.length)
-    console.log(data)
     report(
       <Assert key="image should have value"
         expect={0}
@@ -95,33 +93,60 @@ describe('File stream reader error should be able to handled', (report, done) =>
   })
 })
 
-//
-// describe('Upload from file storage', (report, done) => {
-//   let filename = ''
-//   let filepath = ''
-//   RNFetchBlob.getSystemDirs().then((dirs) => {
-//     filename = 'ios.5.0-' + Date.now() + '-from-storage.png'
-//     filepath = dirs.DocumentDir + '/' + filename
-//     return RNFetchBlob.config({ path : filepath })
-//                       .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
-//   })
-//   .then((resp) => {
-//       let path = resp.path()
-//       return RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
-//         Authorization : `Bearer ${DROPBOX_TOKEN}`,
-//         'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
-//         'Content-Type' : 'application/octet-stream',
-//       }, 'RNFetchBlob-file://' + path)
-//       .then((resp) => {
-//         console.log(resp.text())
-//         resp = resp.json()
-//         report(
-//           <Assert key="confirm the file has been uploaded" expect={filename} actual={resp.name}/>
-//         )
-//         done()
-//       })
-//   })
-//
-//
-//
-// })
+let localFile = null
+
+describe('Upload from file storage', (report, done) => {
+  let filename = ''
+  let filepath = ''
+  RNFetchBlob.getSystemDirs().then((dirs) => {
+    filename = Platform.OS + '0.5.0-' + Date.now() + '-from-storage.png'
+    filepath = dirs.DocumentDir + '/' + filename
+    return RNFetchBlob.config({ path : filepath })
+                      .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
+  })
+  .then((resp) => {
+      let path = resp.path()
+      localFile = path
+      return RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+        Authorization : `Bearer ${DROPBOX_TOKEN}`,
+        'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
+        'Content-Type' : 'application/octet-stream',
+      }, 'RNFetchBlob-file://' + path)
+      .then((resp) => {
+        resp = resp.json()
+        report(
+          <Assert key="confirm the file has been uploaded" expect={filename} actual={resp.name}/>
+        )
+        done()
+      })
+  })
+})
+
+describe('Upload multipart data with file from storage', (report, done) => {
+    let filename = 'test-from-storage-img-'+Date.now()+'.png'
+    RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload-form`, {
+        'Content-Type' : 'multipart/form-data',
+      }, [
+        { name : 'test-img', filename : filename, data: 'RNFetchBlob-file://' + localFile},
+        { name : 'test-text', filename : 'test-text.txt', data: RNFetchBlob.base64.encode('hello.txt')},
+        { name : 'field1', data : 'hello !!'},
+        { name : 'field2', data : 'hello2 !!'}
+      ])
+    .then((resp) => {
+      resp = resp.json()
+      report(
+        <Assert key="check posted form data #1" expect="hello !!" actual={resp.fields.field1}/>,
+        <Assert key="check posted form data #2" expect="hello2 !!" actual={resp.fields.field2}/>,
+      )
+      return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/${filename}`)
+    })
+    .then((resp) => {
+      report(<Info key="uploaded image">
+        <Image
+          style={styles.image}
+          source={{ uri : 'data:image/png;base64, '+ resp.base64()}}/>
+      </Info>)
+      done()
+    })
+
+})
