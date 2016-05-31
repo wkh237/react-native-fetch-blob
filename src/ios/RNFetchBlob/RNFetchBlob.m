@@ -35,6 +35,7 @@ NSString *const FS_EVENT_ERROR = @"error";
 
 @implementation FetchBlobFS
 
+
 @synthesize outStream;
 @synthesize inStream;
 @synthesize encoding;
@@ -43,8 +44,14 @@ NSString *const FS_EVENT_ERROR = @"error";
 @synthesize path;
 @synthesize bufferSize;
 
-
-
+// static member getter
++ (NSArray *) getFileStreams {
+    
+    static NSMutableData *fileStreams = nil;
+    if(fileStreams == nil)
+        fileStreams = [[NSArray alloc] init];
+    return fileStreams;
+}
 
 + (NSString *) getCacheDir {
     return [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
@@ -67,21 +74,39 @@ NSString *const FS_EVENT_ERROR = @"error";
 }
 
 
++ (NSString *) getTempPath {
+    
+    return [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingString:@"/RNFetchBlob_tmp"];
+}
+
 + (NSString *) getTempPath:(NSString*)taskId withExtension:(NSString *)ext {
     
     NSString * documentDir = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
-    NSString * filename = [NSString stringWithFormat:@"/RNFetchBlobTmp_%@", taskId];
+    NSString * filename = [NSString stringWithFormat:@"/RNFetchBlob_tmp/RNFetchBlobTmp_%@", taskId];
     if(ext != nil)
         filename = [filename stringByAppendingString: [NSString stringWithFormat:@".%@", ext]];
     NSString * tempPath = [documentDir stringByAppendingString: filename];
     return tempPath;
 }
 
++ (BOOL) mkdir:(NSString *) path {
+    BOOL isDir;
+    NSError * err = nil;
+    // if temp folder not exists, create one
+    if(![[NSFileManager defaultManager] fileExistsAtPath: path isDirectory:&isDir]) {
+        [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&err];
+    }
+    return err == nil;
+}
+
++ (BOOL) exists:(NSString *) path {
+    return [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:NULL];
+}
+
 - (id)init {
     self = [super init];
     return self;
 }
-
 
 - (id)initWithCallback:(RCTResponseSenderBlock)callback {
     self = [super init];
@@ -95,15 +120,18 @@ NSString *const FS_EVENT_ERROR = @"error";
     return self;
 }
 
-- (void)openWithPath:(NSString *)destPath {
+- (NSString *)openWithPath:(NSString *)destPath {
     self.outStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:YES];
     [self.outStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
     [self.outStream open];
+    NSString *uuid = [[NSUUID UUID] UUIDString];
+    self.streamId = uuid;
+    [[FetchBlobFS getFileStreams] setValue:self forKey:uuid];
+    return uuid;
 }
 
-
 // Write file chunk into an opened stream
-- (void)write:(NSData *) chunk toPath:(NSString *) path{
+- (void)write:(NSData *) chunk {
     NSUInteger left = [chunk length];
     NSUInteger nwr = 0;
     do {
@@ -134,7 +162,6 @@ NSString *const FS_EVENT_ERROR = @"error";
         [[NSRunLoop currentRunLoop] run];
     
     });
-    
 }
 
 // close file write stream
@@ -151,6 +178,8 @@ NSString *const FS_EVENT_ERROR = @"error";
     if(self.inStream != nil) {
         [self.inStream close];
         [self.inStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+        [[FetchBlobFS getFileStreams] setValue:nil forKey:self.streamId];
+        self.streamId = nil;
     }
     
 }
@@ -345,12 +374,12 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
     Boolean fileCache = [self.options valueForKey:CONFIG_USE_TEMP];
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
     if(path != nil) {
-        [self.fileStream write:data toPath:path];
+        [self.fileStream write:data];
     }
     // write to tmp file
     else if( fileCache != nil) {
         NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
-        [self.fileStream write:data toPath:[FetchBlobFS getTempPath:self.taskId withExtension:ext]];
+        [self.fileStream write:data];
     }
     // cache data in memory
     else {
@@ -457,6 +486,11 @@ RCT_EXPORT_MODULE();
 - (id) init {
     self = [super init];
     self.filePathPrefix = FILE_PREFIX;
+    BOOL isDir;
+    // if temp folder not exists, create one
+    if(![[NSFileManager defaultManager] fileExistsAtPath: [FetchBlobFS getTempPath] isDirectory:&isDir]) {
+        [[NSFileManager defaultManager] createDirectoryAtPath:[FetchBlobFS getTempPath] withIntermediateDirectories:YES attributes:nil error:NULL];
+    }
     return self;
 }
 
@@ -591,6 +625,32 @@ RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding 
     [fileStream readWithPath:path useEncoding:encoding bufferSize:bufferSize];
 }
 
+RCT_EXPORT_METHOD(writeStream:(NSString *)path withEncoding:(NSString *)encoding callback:(RCTResponseSenderBlock)callback) {
+    FetchBlobFS *fileStream = [[FetchBlobFS alloc] initWithBridgeRef:self.bridge];
+    NSString * streamId = [fileStream openWithPath:path];
+    callback(@[streamId]);
+}
+
+RCT_EXPORT_METHOD(writeChunk:(NSString *)streamId withData:(NSString *)data encoding:(NSString *)encode callback:(RCTResponseSenderBlock) callback) {
+    FetchBlobFS *fs = [[FetchBlobFS getFileStreams] valueForKey:streamId];
+    NSMutableData * decodedData = [NSData alloc];
+    if([[encode lowercaseString] isEqualToString:@"base64"]) {
+        [fs write:[data dataUsingEncoding:NSUTF8StringEncoding]];
+    }
+    if([[encode lowercaseString] isEqualToString:@"utf8"]) {
+        [fs write:[data dataUsingEncoding:NSUTF8StringEncoding]];
+    }
+    else if([[encode lowercaseString] isEqualToString:@"ascii"]) {
+        [fs write:[data dataUsingEncoding:NSASCIIStringEncoding]];
+    }
+}
+
+RCT_EXPORT_METHOD(closeStream:(NSString *)streamId callback:(RCTResponseSenderBlock) callback) {
+    FetchBlobFS *fs = [[FetchBlobFS getFileStreams] valueForKey:streamId];
+    [fs closeOutStream];
+    callback(@[[NSNull null], @YES]);
+}
+
 RCT_EXPORT_METHOD(unlink:(NSString *)path callback:(RCTResponseSenderBlock) callback) {
     NSError * error = nil;
     NSString * tmpPath = nil;
@@ -599,6 +659,62 @@ RCT_EXPORT_METHOD(unlink:(NSString *)path callback:(RCTResponseSenderBlock) call
         callback(@[[NSNull null]]);
     else
         callback(@[[NSString stringWithFormat:@"failed to unlink file or path at %@", path]]);
+}
+
+RCT_EXPORT_METHOD(removeSession:(NSArray *)paths callback:(RCTResponseSenderBlock) callback) {
+    NSError * error = nil;
+    NSString * tmpPath = nil;
+    
+    for(NSString * path in paths) {
+        [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
+        if(error != nil) {
+            callback(@[[NSString stringWithFormat:@"failed to remove session path at %@", path]]);
+            return;
+        }
+    }
+    callback(@[[NSNull null]]);
+    
+}
+
+RCT_EXPORT_METHOD(ls:(NSString *)path callback:(RCTResponseSenderBlock) callback) {
+    NSError * error = nil;
+    NSArray * result = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
+    
+    if(error == nil)
+        callback(@[[NSNull null], result == nil ? [NSNull null] :result ]);
+    else
+        callback(@[[error localizedDescription], [NSNull null]]);
+    
+}
+
+RCT_EXPORT_METHOD(cp:(NSString *)path toPath:(NSString *)dest callback:(RCTResponseSenderBlock) callback) {
+    NSError * error = nil;
+    BOOL result = [[NSFileManager defaultManager] copyItemAtURL:path toURL:dest error:&error];
+    
+    if(error == nil)
+        callback(@[[NSNull null], @YES]);
+    else
+        callback(@[[error localizedDescription], @NO]);
+    
+}
+
+RCT_EXPORT_METHOD(mv:(NSString *)path toPath:(NSString *)dest callback:(RCTResponseSenderBlock) callback) {
+    NSError * error = nil;
+    BOOL result = [[NSFileManager defaultManager] moveItemAtURL:path toURL:dest error:&error];
+    
+    if(error == nil)
+        callback(@[[NSNull null], @YES]);
+    else
+        callback(@[[error localizedDescription], @NO]);
+    
+}
+
+RCT_EXPORT_METHOD(mkdir:(NSString *)path callback:(RCTResponseSenderBlock) callback) {
+    if([FetchBlobFS exists:path])
+        callback(@[@"file path exists"]);
+    else
+        [FetchBlobFS mkdir:path];
+    callback(@[[NSNull null]]);
 }
 
 RCT_EXPORT_METHOD(getEnvironmentDirs:(RCTResponseSenderBlock) callback) {

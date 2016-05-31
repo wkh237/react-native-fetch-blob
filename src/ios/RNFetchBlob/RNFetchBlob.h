@@ -37,6 +37,7 @@ extern NSString *const FS_EVENT_ERROR;
     int bufferSize;
     NSString * taskId;
     NSString * path;
+    NSString * streamId;
 }
 
 @property (nonatomic) NSOutputStream * outStream;
@@ -47,13 +48,16 @@ extern NSString *const FS_EVENT_ERROR;
 @property (nonatomic) NSString * taskId;
 @property (nonatomic) NSString * path;
 @property (nonatomic) int bufferSize;
+@property (nonatomic) NSString * streamId;
 
 + (NSString *) getTempPath;
++ (FetchBlobFS *) getFileStreams;
 - (id) init;
 - (void) initWithCallback;
 - (void) initWithBridgeRef;
 - (void) openWithDestination;
 - (void) openWithId;
+- (NSString *) openWithPath;
 - (void) write;
 - (void) read;
 - (void) closeInStream;
