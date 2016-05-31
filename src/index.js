@@ -10,17 +10,29 @@ import {
   DeviceEventEmitter,
   NativeAppEventEmitter,
   Platform,
+  AsyncStorage,
 } from 'react-native'
 import type {
   RNFetchBlobNative,
   RNFetchBlobConfig,
   RNFetchBlobStream
 } from './types'
+import fs from './fs'
 import base64 from 'base-64'
+const {
+  RNFetchBlobSession,
+  getSystemDirs,
+  readStream,
+  unlink,
+  mkdir,
+  session,
+  ls,
+  mv,
+  cp
+} = fs
 
 const emitter = DeviceEventEmitter
 const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
-const pathPrefix = Platform.OS === 'android' ? 'file://' : ''
 
 // register message channel event handler.
 emitter.addListener("RNFetchBlobMessage", (e) => {
@@ -42,26 +54,6 @@ if(!RNFetchBlob || !RNFetchBlob.fetchBlobForm || !RNFetchBlob.fetchBlob) {
     'please make sure you have linked native modules using `rnpm link`,',
     'and restart RN packager or manually compile IOS/Android project.'
   )
-}
-
-/**
- * Get path of system directories.
- * @return {object} Map contains PictureDir, MovieDir, DocumentDir, CacheDir,
- * MusicDir, and DCIMDir, some directory might not be supported by platform.
- */
-function getSystemDirs() {
-  return new Promise((resolve, reject) => {
-    try {
-      RNFetchBlob.getEnvironmentDirs((...dirs) => {
-        let [PictureDir, MovieDir, DocumentDir, CacheDir, MusicDir, DCIMDir] = [...dirs]
-        console.log({PictureDir, MovieDir, DocumentDir, CacheDir, MusicDir, DCIMDir})
-        resolve({PictureDir, MovieDir, DocumentDir, CacheDir, MusicDir, DCIMDir})
-      })
-    } catch(err) {
-      reject(err)
-    }
-  })
-
 }
 
 /**
@@ -117,17 +109,21 @@ function fetch(...args:any):Promise {
     })
 
     let req = RNFetchBlob[nativeMethodName]
-    req(options, taskId, method, url, headers || {}, body, (err, ...data) => {
+    req(options, taskId, method, url, headers || {}, body, (err, data) => {
 
       // task done, remove event listener
       subscription.remove()
       if(err)
-        reject(new Error(err, ...data))
+        reject(new Error(err, data))
       else {
         let respType = 'base64'
-        if(options.path || options.fileCache)
+        // response data is saved to storage
+        if(options.path || options.fileCache) {
           respType = 'path'
-        resolve(new FetchBlobResponse(taskId, respType, ...data))
+          if(options.session)
+            session(options.session).add(data)
+        }
+        resolve(new FetchBlobResponse(taskId, respType, data))
       }
     })
 
@@ -142,73 +138,6 @@ function fetch(...args:any):Promise {
 
   return promise
 
-}
-
-/**
- * Create file stream from file at `path`.
- * @param  {String} path   The file path.
- * @param  {String} encoding Data encoding, should be one of `base64`, `utf8`, `ascii`
- * @param  {String} bufferSize Size of stream buffer.
- * @return {RNFetchBlobStream} RNFetchBlobStream stream instance.
- */
-function openReadStream(
-  path:string,
-  encoding:'utf8' | 'ascii' | 'base64',
-  bufferSize?:?number
-):RNFetchBlobStream {
-
-  if(!path)
-    throw Error('RNFetchBlob could not open file stream with empty `path`')
-
-  let stream:RNFetchBlobStream = {
-    onData : function(fn) {
-      this._onData = fn
-    },
-    onError : function(fn) {
-      this._onError = fn
-    },
-    onEnd : function(fn) {
-      this._onEnd = fn
-    },
-  }
-
-  // register for file stream event
-  let subscription = emitter.addListener(`RNFetchBlobStream+${path}`, (e) => {
-
-    let {event, detail} = e
-    if(stream._onData && event === 'data')
-      stream._onData(detail)
-    else if (stream._onEnd && event === 'end') {
-      stream._onEnd(detail)
-    }
-    else {
-      stream._onError(detail)
-    }
-    // when stream closed or error, remove event handler
-    if (event === 'error' || event === 'end') {
-      subscription.remove()
-    }
-  })
-
-  RNFetchBlob.readStream(path, encoding, bufferSize || 0)
-  return stream
-
-}
-
-/**
- * Remove file at path.
- * @param  {string}   path:string Path of target file.
- * @return {Promise}
- */
-function unlink(path:string):Promise {
-  return new Promise((resolve, reject) => {
-    RNFetchBlob.unlink(path, (err) => {
-      if(err)
-        reject(err)
-      else
-        resolve()
-    })
-  })
 }
 
 /**
@@ -280,6 +209,14 @@ class FetchBlobResponse {
         return this.data
       return null
     }
+    this.session = (name) => {
+      if(this.type === 'path')
+        return session(name).add(this.data)
+      else {
+        console.warn('only file paths can be add into session.')
+        return null
+      }
+    }
     /**
      * Start read stream from cached file
      * @param  {String} encoding Encode type, should be one of `base64`, `ascrii`, `utf8`.
@@ -288,7 +225,7 @@ class FetchBlobResponse {
      */
     this.readStream = (encode: 'base64' | 'utf8' | 'ascii'):RNFetchBlobStream | null => {
       if(this.type === 'path') {
-        return openReadStream(this.data, encode)
+        return readStream(this.data, encode)
       }
       else {
         console.warn('RNFetchblob', 'this response data does not contains any available stream')
@@ -307,5 +244,5 @@ function getUUID() {
 }
 
 export default {
-  fetch, base64, config, getSystemDirs, readStream, unlink
+  fetch, base64, config, getSystemDirs, readStream, unlink, session, ls, mkdir, mv, cp
 }

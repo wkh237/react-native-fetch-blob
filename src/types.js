@@ -2,7 +2,8 @@
 type RNFetchBlobConfig = {
   fileCache : bool,
   path : string,
-  appendExt : string
+  appendExt : string,
+  session : string
 };
 
 type RNFetchBlobNative = {
@@ -34,7 +35,9 @@ type RNFetchBlobNative = {
   // get system folders
   getEnvironmentDirs : (dirs:any) => void,
   // unlink file by path
-  flush : (path:string) => void
+  unlink : (path:string, callback: (err:any) => void) => void,
+  removeSession : (paths:Array<string>, callback: (err:any) => void) => void,
+  ls : (path:string, callback: (err:any) => void) => void,
 };
 
 type RNFetchBlobStream = {
