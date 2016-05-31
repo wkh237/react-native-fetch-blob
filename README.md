@@ -2,15 +2,15 @@
 
 ## v0.5.0 Work In Progress README.md
 
-A react-native module for upload, and download files with custom headers. Supports blob response data, upload/download progress, and file reader API that enables you process file content in js context (such as display image data, string or image process).
+A react-native module for upload, and download files with customizable headers. Supports binary response/request data, upload/download progress. It also has a file stream reader API that enables you to handle files in JS context (such as display image data, and process string or data).
 
-If you're dealing with image or file server that requires special field in the header, or you're having problem with `fetch` API when receiving blob data, you might try this module.
+If you're getting into trouble with image or file server that requires specific fields in the header, or you're having problem with `fetch` API when sending/receiving binary data, you might try this module as well.
 
 See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854) for the reason why we made this module.
 
-In latest version (v0.5.0), you can upload/download files directly with file path. We've also introduced `file stream` API for reading **large files** from storage, see [Examples](#user-content-usage) bellow.
+In latest version (v0.5.0), you can either `upload` or `download` files simply using a file path. We've also introduced `file stream` API in this version for reading files (especially for **large ones**) from storage, see [Examples](#user-content-usage) bellow.
 
-This module implements native HTTP request, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
+This module implements native HTTP request methods, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
 
 ## Usage
 
@@ -23,6 +23,7 @@ This module implements native HTTP request, supports both Android (uses awesome 
  * [File stream reader](#user-content-file-stream-reader)
  * [Release cache files](#user-content-release-cache-files)
 * [API](#user-content-api)
+* [Development](#user-content-development)
 
 ## Installation
 
@@ -36,6 +37,25 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 
 ```sh
 rnpm link
+```
+
+**Android Access Permission to External storage (Optional)**
+
+If you're going to access external storage (say, SD card storage), you might have to add the following line to `AndroidManifetst.xml`.
+
+```diff
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.rnfetchblobtest"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
++   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />                                               
++   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />                                              
+
+    ...
+
 ```
 
 ## Usage
@@ -281,7 +301,60 @@ stream.onEnd(() => {
 
 #### Release cache files
 
-TODO
+When using `fileCache` or `path` options along with `fetch` API, response data will automatically stored into file system. The files will **NOT** removed unless you `unlink` it. There're several way to remove the files
+
+```js
+
+  // remove file using RNFetchblobResponse.flush() object method
+  RNFetchblob.config({
+      fileCache : true
+    })
+    .fetch('GET', 'http://example.com/download/file')
+    .then((res) => {
+      // remove cached file from storage
+      res.flush()
+    })
+
+  // remove file by specifying a path
+  RNFetchBlob.unlink('some-file-path').then(() => {
+    // ...
+  })
+
+```
+
+You can also group the requests by using `session` API, and use `dispose` to remove them all when needed.
+
+```js
+
+  RNFetchblob.config({
+    fileCache : true
+  })
+  .fetch('GET', 'http://example.com/download/file')
+  .then((res) => {
+    // set session of a response
+    res.session('foo')
+  })  
+
+  RNFetchblob.config({
+    // you can also set session before hand
+    session : 'foo'
+    fileCache : true
+  })
+  .fetch('GET', 'http://example.com/download/file')
+  .then((res) => {
+    // ...
+  })  
+
+  // or put an existing file path to the session
+  RNFetchBlob.session('foo').add('some-file-path')
+  // remove a file path from the session
+  RNFetchBlob.session('foo').remove('some-file-path')
+  // list paths of a session
+  RNFetchBlob.session('foo').list()
+  // remove all files in a session
+  RNFetchBlob.session('foo').dispose().then(() => { ... })
+
+```
 
 ## API
 
