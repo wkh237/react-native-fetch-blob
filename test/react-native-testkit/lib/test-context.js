@@ -11,6 +11,10 @@ export default class TestContext {
     timeout = val
   }
 
+  static config(config) {
+    return TestContext.describe.bind(config)
+  }
+
   /**
    * Calling this method will push a test case into task queue.
    * @param  {String}   desc Description of test case.
@@ -19,17 +23,31 @@ export default class TestContext {
    * @return {void}
    */
   static describe (desc:string, fn:Promise<any>) {
+    let { group, timeout, expand, run } = this || {}
 
-    tests.push({
+    let ctx = {
+      group : group || 'common',
       status : 'waiting',
+      run : run === false ? false : true,
       result : null,
       asserts : [],
-      timeout : 3000,
+      timeout : timeout || 3000,
       expired : false,
       running : false,
       executed : false,
-      desc, fn,
-    })
+      expand : expand || false,
+      desc,
+      fn,
+      sn : tests.length,
+      start : (i) => {
+        TestContext.startTest.bind(
+          tests[i],
+          TestContext.update.bind(TestContext, i),
+          TestContext.updateInternal.bind(TestContext, i)
+        )()
+      }
+    }
+    tests.push(ctx)
 
   }
 
@@ -52,53 +70,61 @@ export default class TestContext {
     let promise = Promise.resolve()
     // run test case sequently
     for(let i in tests) {
-      promise = promise.then(function(update, updateInternal, data) {
-        return new Promise((resolve, reject) => {
-
-          let expired = false
-          updateInternal({
-            running : true,
-          })
-
-          // set timeout timer
-          let tm = setTimeout(() => {
-            updateInternal({
-              expired : true,
-              executed : true,
-              running : false
-            })
-            resolve('ETIMEOUT')
-          }, this.timeout)
-
-          // run test body
-          new Promise((done) => {
-            this.fn.bind(this)(update, done)
-          })
-          .then((...res) => {
-            if(!expired) {
-              clearTimeout(tm)
-              updateInternal({
-                executed : true,
-                running : false
-              })
-              resolve(...res)
-            }
-          }).catch((err) => {
-            updateInternal({
-              executed : true,
-              running : false
-            })
-          })
-
-        })
+      if(tests[i].run === false) {
+        tests[i].status = 'skipped'
+        tests[i].executed = true
+        promise = Promise.resolve()
+        continue
       }
-      .bind(
-        tests[i],
-        TestContext.update.bind(TestContext, i),
-        TestContext.updateInternal.bind(TestContext, i)
+      promise = promise.then(
+        TestContext.startTest.bind(
+          tests[i],
+          TestContext.update.bind(TestContext, i),
+          TestContext.updateInternal.bind(TestContext, i)
       ))
     }
     return promise
+  }
+
+  static startTest(update, updateInternal, data) {
+    return new Promise((resolve, reject) => {
+
+      let expired = false
+      updateInternal({
+        running : true,
+      })
+
+      // set timeout timer
+      let tm = setTimeout(() => {
+        updateInternal({
+          expired : true,
+          executed : true,
+          running : false
+        })
+        resolve('ETIMEOUT')
+      }, this.timeout)
+
+      // run test body
+      new Promise((done) => {
+        this.fn.bind(this)(update, done)
+      })
+      .then((...res) => {
+        if(!expired) {
+          clearTimeout(tm)
+          updateInternal({
+            executed : true,
+            running : false
+          })
+          resolve(...res)
+        }
+      }).catch((err) => {
+        updateInternal({
+          executed : true,
+          running : false
+        })
+      })
+
+    })
   }
 
   /**

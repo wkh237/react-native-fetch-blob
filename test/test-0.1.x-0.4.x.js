@@ -10,7 +10,12 @@ import {
   Dimensions,
   Image,
 } from 'react-native';
-const { Assert, Comparer, Info, describe, prop } = RNTest
+const { Assert, Comparer, Info, prop } = RNTest
+const describe = RNTest.config({
+  group : '0.1.x - 0.4.x',
+  expand : false,
+  run : false
+})
 
 let { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles, image } = prop()
 

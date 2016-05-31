@@ -12,7 +12,11 @@ import {
   Image,
 } from 'react-native';
 
-const { Assert, Comparer, Info, describe, prop } = RNTest
+const { Assert, Comparer, Info, prop } = RNTest
+const describe = RNTest.config({
+  group : '0.5.x',
+  expand : false,
+})
 const { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles } = prop()
 
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
@@ -60,7 +64,7 @@ describe('Download file to storage with custom file extension', (report, done) =
 
 describe('Read cached file via file stream', (report, done) => {
   let data = 'data:image/png;base64, '
-  let stream = RNFetchBlob.openReadStream(tmpFilePath, 'base64')
+  let stream = RNFetchBlob.readStream(tmpFilePath, 'base64')
   stream.onData((chunk) => {
     data += chunk
   })
@@ -81,7 +85,7 @@ describe('Read cached file via file stream', (report, done) => {
 })
 
 describe('File stream reader error should be able to handled', (report, done) => {
-  let stream = RNFetchBlob.openReadStream('^_^ not exists', 'base64')
+  let stream = RNFetchBlob.readStream('^_^ not exists', 'base64')
   stream.onError((err) => {
     report(<Info key="error message">
       <Text>
@@ -94,11 +98,13 @@ describe('File stream reader error should be able to handled', (report, done) =>
 })
 
 let localFile = null
+let sysDirs = null
 
 describe('Upload from file storage', (report, done) => {
   let filename = ''
   let filepath = ''
   RNFetchBlob.getSystemDirs().then((dirs) => {
+    sysDirs = dirs
     filename = Platform.OS + '0.5.0-' + Date.now() + '-from-storage.png'
     filepath = dirs.DocumentDir + '/' + filename
     return RNFetchBlob.config({ path : filepath })
@@ -148,5 +154,98 @@ describe('Upload multipart data with file from storage', (report, done) => {
       </Info>)
       done()
     })
+})
+
+describe('Session create mechanism test', (report, done) => {
+  let sessionName = 'foo-' + Date.now()
+  testSessionName = sessionName
+  let p1 = RNFetchBlob.config({
+      session : sessionName,
+      fileCache : true
+    })
+    .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
+  let p2 = RNFetchBlob.config({
+      fileCache : true
+    })
+    .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+  let p3 = RNFetchBlob.config({
+      path : sysDirs.DocumentDir + '/session-test.png'
+    })
+    .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+
+  let promises = [p1, p2, p3]
+  Promise.all(promises).then((resp) => {
+    let session = RNFetchBlob.session(sessionName).add(resp[1].path())
+    resp[2].session(sessionName)
+    let actual = session.list()
+    let expect = resp.map((p) => {
+      return p.path()
+    })
+    report(
+      <Assert key="check if session state correct"
+        expect={expect}
+        comparer={Comparer.equalToArray}
+        actual={actual} />)
+    done()
+  })
+
+})
+
+describe('Session API CRUD test', (report, done) => {
+
+  let sessionName = 'test-session-' + Date.now()
+  let baseDir = sysDirs.DocumentDir + '/' + sessionName
+  RNFetchBlob.mkdir(sysDirs.DocumentDir + '/' + sessionName).then(() => {
+    let promises = [0,1,2,3,4,5,6,7,8,9].map((p) => {
+      return RNFetchBlob.config({
+          session : sessionName,
+          path : baseDir + '/testfile' + p
+        })
+        .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
+    })
+    return Promise.all(promises)
+  })
+  .then((resps) => {
+    let s = RNFetchBlob.session(sessionName)
+    report(
+      <Assert
+        key="list() length validation"
+        expect={10}
+        actual={s.list().length}/>)
+    let modified = [
+      s.list()[2],
+      s.list()[3],
+      s.list()[4],
+      s.list()[5],
+      s.list()[6],
+      s.list()[7],
+      s.list()[8],
+      s.list()[9],
+    ]
+    let expect = [s.list()[0], s.list()[1]]
+    s.remove(s.list()[0])
+    s.remove(s.list()[0])
+    report(
+      <Assert
+        key="remove() should work correctly"
+        expect={modified}
+        comparer={Comparer.equalToArray}
+        actual={s.list()}/>)
+
+    s.dispose().then(() => {
+      RNFetchBlob.ls(baseDir).then((lsRes) => {
+        report(
+          <Assert
+            key="dispose() should work correctly"
+            expect={expect}
+            comparer={Comparer.equalToArray}
+            actual={lsRes.map((p) => {
+              return baseDir + '/' + p
+            })}/>)
+      })
+      done()
+    })
+
+  })
 
 })

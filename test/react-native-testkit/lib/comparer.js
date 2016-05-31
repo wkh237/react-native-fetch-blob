@@ -5,6 +5,13 @@ export default {
   typeof : (a, b) => typeof a === b,
   IsNull : (a, b) => a === null,
   exists : (a, b) => a,
+  equalToArray : (a, b) => {
+    if(!Array.isArray(a) && Array.isArray(b))
+      return false
+    return (a.length == b.length) && a.every(function(element, index) {
+      return element === b[index];
+    });
+  },
   hasValue : (a, b) => (a !== void 0) && (Array.isArray(a) ? a.length !==0 : true),
   isArray : (a, b) => Array.isArray(a),
   hasProperties : (a, b) => {
