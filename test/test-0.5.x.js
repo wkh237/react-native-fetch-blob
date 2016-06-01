@@ -16,7 +16,7 @@ const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
   group : '0.5.x',
-  run : false,
+  run : true,
   expand : false,
 })
 const { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles } = prop()

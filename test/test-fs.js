@@ -132,15 +132,19 @@ describe('create file API test', (report, done) => {
 
 describe('mkdir and isDir API test', (report, done) => {
   let p = dirs.DocumentDir + '/mkdir-test-' + Date.now()
-  fs.mkdir(p + '/mkdir').then((err) => {
+  fs.mkdir(p).then((err) => {
     report(<Assert key="folder should be created without error"
       expect={undefined}
       actual={err} />)
-    return fs.isDir(p + '/mkdir')
+    return fs.exists(p)
+  })
+  .then((exist) => {
+    report(<Assert key="mkdir should work correctly" expect={true} actual={exist} />)
+    return fs.isDir(p)
   })
   .then((isDir) => {
     report(<Assert key="isDir should work correctly" expect={true} actual={isDir} />)
-    return fs.mkdir(p + '/mkdir')
+    return fs.mkdir(p)
   })
   .then()
   .catch((err) => {
@@ -164,14 +168,14 @@ describe('unlink and mkdir API test', (report, done) => {
   })
   .then((exist) => {
     report(<Assert key="file removed" expect={false} actual={exist} />)
-    return fs.mkdir(p + '/dir')
+    return fs.mkdir(p + '-dir')
   })
-  .then((err) => fs.exists(p + '/dir'))
+  .then((err) => fs.exists(p + '-dir'))
   .then((exist) => {
     report(<Assert key="mkdir should success" expect={true} actual={exist} />)
-    return fs.unlink(p + '/dir')
+    return fs.unlink(p + '-dir')
   })
-  .then(() => fs.exists(p + '/dir'))
+  .then(() => fs.exists(p + '-dir'))
   .then((exist) => {
     report(<Assert key="folder should be removed" expect={false} actual={exist} />)
     done()
@@ -209,9 +213,9 @@ describe('write stream API test', (report, done) => {
     fs.writeStream(p, 'base64', false)
     .then((ws) => {
       for(let i = 0; i< 100; i++) {
-        expect += RNFetchBlob.base64.encode(i)
-        ws.write(RNFetchBlob.base64.encode(i))
+        expect += String(i)
       }
+      ws.write(RNFetchBlob.base64.encode(expect))
       return ws.close()
     })
     .then(() => {
@@ -221,10 +225,11 @@ describe('write stream API test', (report, done) => {
         d2 += chunk
       })
       rs.onEnd(() => {
+        console.log(RNFetchBlob.base64.encode(expect),d2)
         report(
           <Assert key="file should be overwritten by base64 encoded data"
-            expect={expect}
-            actual={RNFetchBlob.base64.decode(d2)} />)
+            expect={RNFetchBlob.base64.encode(expect)}
+            actual={d2} />)
         done()
       })
     })
