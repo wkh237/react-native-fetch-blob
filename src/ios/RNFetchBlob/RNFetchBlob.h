@@ -35,6 +35,7 @@ extern NSString *const FS_EVENT_ERROR;
     Boolean isOpen;
     NSString * encoding;
     int bufferSize;
+    BOOL appendData;
     NSString * taskId;
     NSString * path;
     NSString * streamId;
@@ -49,6 +50,7 @@ extern NSString *const FS_EVENT_ERROR;
 @property (nonatomic) NSString * path;
 @property (nonatomic) int bufferSize;
 @property (nonatomic) NSString * streamId;
+@property (nonatomic) BOOL appendData;
 
 + (NSString *) getTempPath;
 + (FetchBlobFS *) getFileStreams;
@@ -84,6 +86,7 @@ extern NSString *const FS_EVENT_ERROR;
 @property (nonatomic) RCTBridge * bridge;
 @property (nonatomic) NSDictionary * options;
 @property (nonatomic) FetchBlobFS * fileStream;
+
 
 - (id) init;
 - (void) sendRequest;

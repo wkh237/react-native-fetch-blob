@@ -26,6 +26,7 @@ const {
   unlink,
   mkdir,
   session,
+  writeStream,
   ls,
   mv,
   cp
@@ -244,5 +245,5 @@ function getUUID() {
 }
 
 export default {
-  fetch, base64, config, getSystemDirs, readStream, unlink, session, ls, mkdir, mv, cp
+  fetch, base64, config, getSystemDirs, readStream, unlink, session, ls, mkdir, mv, cp, writeStream
 }

@@ -24,15 +24,15 @@ let sessions = {}
 
 /**
  * Get path of system directories.
- * @return {object} Map contains PictureDir, MovieDir, DocumentDir, CacheDir,
- * MusicDir, and DCIMDir, some directory might not be supported by platform.
+ * @return {object} Map contains DocumentDir, CacheDir, DCIMDir, DownloadDir,
+ * , some directory might not be supported by platform.
  */
 function getSystemDirs() {
   return new Promise((resolve, reject) => {
     try {
       RNFetchBlob.getEnvironmentDirs((...dirs) => {
-        let [PictureDir, MovieDir, DocumentDir, CacheDir, MusicDir, DCIMDir] = [...dirs]
-        resolve({PictureDir, MovieDir, DocumentDir, CacheDir, MusicDir, DCIMDir})
+        let [DocumentDir, CacheDir, DCIMDir, DownloadDir] = [...dirs]
+        resolve({DocumentDir, CacheDir, DCIMDir, DownloadDir})
       })
     } catch(err) {
       reject(err)
@@ -55,32 +55,42 @@ function session(name:string):RNFetchBlobSession {
   }
 }
 
+/**
+ * Create write stream to a file.
+ * @param  {string} path Target path of file stream.
+ * @param  {string} encoding Encoding of input data.
+ * @param  {bool} append  A flag represent if data append to existing ones.
+ * @return {Promise<WriteStream>} A promise resolves a `WriteStream` object.
+ */
 function writeStream(
-  path:string,
-  encoding:'utf8' | 'ascii' | 'base64',
-  callback:(streamId:string) => void
+  path : string,
+  encoding : 'utf8' | 'ascii' | 'base64',
+  append? : ?bool,
 ):Promise<WriteStream> {
   if(!path)
     throw Error('RNFetchBlob could not open file stream with empty `path`')
   encoding = encoding || 'base64'
   return new Promise((resolve, reject) => {
-    RNFetchBlob.writeStream(path, encoding || 'base64', (streamId:string) => {
-      resolve(new WriteStream(streamId))
+    RNFetchBlob.writeStream(path, encoding || 'base64', append || false, (err, streamId:string) => {
+      if(err)
+        reject(err)
+      else
+        resolve(new WriteStream(streamId))
     })
   })
 }
 
 /**
  * Create file stream from file at `path`.
- * @param  {String} path   The file path.
- * @param  {String} encoding Data encoding, should be one of `base64`, `utf8`, `ascii`
- * @param  {String} bufferSize Size of stream buffer.
+ * @param  {string} path   The file path.
+ * @param  {string} encoding Data encoding, should be one of `base64`, `utf8`, `ascii`
+ * @param  {boolean} bufferSize Size of stream buffer.
  * @return {RNFetchBlobStream} RNFetchBlobStream stream instance.
  */
 function readStream(
-  path:string,
-  encoding:'utf8' | 'ascii' | 'base64',
-  bufferSize?:?number
+  path : string,
+  encoding : 'utf8' | 'ascii' | 'base64',
+  bufferSize? : ?number
 ):RNFetchBlobStream {
 
   if(!path)
@@ -184,6 +194,25 @@ function unlink(path:string):Promise {
 }
 
 /**
+ * Check if file exists and if it is a folder.
+ * @param  {string} path Path to check
+ * @return {Promise<bool, bool>}
+ */
+function exists(path:string):Promise<bool, bool> {
+
+  return new Promise((resolve, reject) => {
+    try {
+      RNFetchBlob.exists(path, (exist, isDir) => {
+        resolve(exist, isDir)
+      })
+    } catch(err) {
+      reject(err)
+    }
+  })
+
+}
+
+/**
  * Session class
  * @class RNFetchBlobSession
  */
@@ -244,17 +273,22 @@ class WriteStream {
 
   id : string;
   encoding : string;
+  append : bool;
 
-  constructor(streamId:string, encoding:string) {
+  constructor(streamId:string, encoding:string, append:string) {
     this.id = streamId
     this.encoding = encoding
+    this.append = append
   }
 
   write() {
     return new Promise((resolve, reject) => {
       try {
-        RNFetchBlob.writeChunk(this.id, data, this.encoding, () => {
-          resolve()
+        RNFetchBlob.writeChunk(this.id, data, (error) => {
+          if(error)
+            reject(error)
+          else
+            resolve()
         })
       } catch(err) {
         reject(err)
