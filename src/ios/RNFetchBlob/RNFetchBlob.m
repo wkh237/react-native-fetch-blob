@@ -26,6 +26,7 @@ NSString *const FS_EVENT_DATA = @"data";
 NSString *const FS_EVENT_END = @"end";
 NSString *const FS_EVENT_WARN = @"warn";
 NSString *const FS_EVENT_ERROR = @"error";
+NSMutableDictionary *fileStreams = nil;
 
 ////////////////////////////////////////
 //
@@ -48,10 +49,15 @@ NSString *const FS_EVENT_ERROR = @"error";
 // static member getter
 + (NSArray *) getFileStreams {
     
-    static NSMutableData *fileStreams = nil;
     if(fileStreams == nil)
-        fileStreams = [[NSArray alloc] init];
+        fileStreams = [[NSMutableDictionary alloc] init];
     return fileStreams;
+}
+
++(void) setFileStream:(FetchBlobFS *) instance withId:(NSString *) uuid {
+    if(fileStreams == nil)
+        fileStreams = [[NSMutableDictionary alloc] init];
+    [fileStreams setValue:instance forKey:uuid];
 }
 
 + (NSString *) getCacheDir {
@@ -129,7 +135,7 @@ NSString *const FS_EVENT_ERROR = @"error";
     [self.outStream open];
     NSString *uuid = [[NSUUID UUID] UUIDString];
     self.streamId = uuid;
-    [[FetchBlobFS getFileStreams] setValue:self forKey:uuid];
+    [FetchBlobFS setFileStream:self withId:uuid];
     return uuid;
 }
 
@@ -145,7 +151,7 @@ NSString *const FS_EVENT_ERROR = @"error";
     else if([[self.encoding lowercaseString] isEqualToString:@"ascii"]) {
         decodedData = [chunk dataUsingEncoding:NSASCIIStringEncoding];
     }
-    NSUInteger left = [chunk length];
+    NSUInteger left = [decodedData length];
     NSUInteger nwr = 0;
     do {
         nwr = [self.outStream write:[decodedData bytes] maxLength:left];
@@ -171,6 +177,15 @@ NSString *const FS_EVENT_ERROR = @"error";
     }
 }
 
+// close file write stream
+- (void)closeOutStream {
+    if(self.outStream != nil) {
+        [self.outStream close];
+        self.outStream = nil;
+    }
+
+}
+
 - (void)readWithPath:(NSString *)path useEncoding:(NSString *)encoding bufferSize:(int) bufferSize{
     
     self.inStream = [[NSInputStream alloc] initWithFileAtPath:path];
@@ -184,20 +199,11 @@ NSString *const FS_EVENT_ERROR = @"error";
     // start NSStream is a runloop
     dispatch_async(queue, ^ {
         [inStream scheduleInRunLoop:[NSRunLoop currentRunLoop]
-                             forMode:NSDefaultRunLoopMode];
+                            forMode:NSDefaultRunLoopMode];
         [inStream open];
         [[NSRunLoop currentRunLoop] run];
-    
+        
     });
-}
-
-// close file write stream
-- (void)closeOutStream {
-    if(self.outStream != nil) {
-        [self.outStream close];
-        self.outStream = nil;
-    }
-
 }
 
 // close file read stream
@@ -245,7 +251,7 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
             NSMutableData * chunkData = [[NSMutableData data] init];
             NSInteger chunkSize = 4096;
             if([[self.encoding lowercaseString] isEqualToString:@"base64"])
-                chunkSize = 4098;
+                chunkSize = 4095;
             if(self.bufferSize > 0)
                 chunkSize = self.bufferSize;
             uint8_t buf[chunkSize];
@@ -257,7 +263,7 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                 [chunkData appendBytes:(const void *)buf length:len];
                 // TODO : file read progress ?
                 // dispatch data event
-                NSString * encodedChunk;
+                NSString * encodedChunk = [NSString alloc];
                 if( [[self.encoding lowercaseString] isEqualToString:@"utf8"] ) {
                     encodedChunk = [encodedChunk initWithData:chunkData encoding:NSUTF8StringEncoding];
                 }
@@ -277,15 +283,15 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                      ];
                     return;
                 }
-                runOnMainQueueWithoutDeadlocking(^{
-                    [self.bridge.eventDispatcher
-                     sendDeviceEventWithName:streamEventCode
-                     body:@{
-                            @"event": FS_EVENT_DATA,
-                            @"detail": encodedChunk
-                            }
-                     ];
-                });
+
+                [self.bridge.eventDispatcher
+                 sendDeviceEventWithName:streamEventCode
+                 body:@{
+                        @"event": FS_EVENT_DATA,
+                        @"detail": encodedChunk
+                        }
+                 ];
+
             }
             // end of stream
             else {
@@ -647,6 +653,30 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
     });
 }
 
+RCT_EXPORT_METHOD(createFile:(NSString *)path data:(NSString *)data encoding:(NSString *)encoding callback:(RCTResponseSenderBlock)callback) {
+    
+    NSFileManager * fm = [NSFileManager defaultManager];
+    NSData * fileContent = nil;
+    
+    if([[encoding lowercaseString] isEqualToString:@"utf8"]) {
+        fileContent = [[NSData alloc] initWithData:[data dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES]];
+    }
+    else if([[encoding lowercaseString] isEqualToString:@"base64"]) {
+        fileContent = [[NSData alloc] initWithBase64EncodedData:data options:0];
+    }
+    else {
+        fileContent = [[NSData alloc] initWithData:[data dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES]];
+    }
+    
+    BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
+    if(success == YES)
+        callback(@[[NSNull null]]);
+    else
+        callback(@[[NSString stringWithFormat:@"failed to create new file at path %@ please ensure the folder exists"]]);
+
+}
+
+
 RCT_EXPORT_METHOD(exists:(NSString *)path callback:(RCTResponseSenderBlock)callback) {
     BOOL isDir = NO;
     BOOL exists = NO;
@@ -657,6 +687,12 @@ RCT_EXPORT_METHOD(exists:(NSString *)path callback:(RCTResponseSenderBlock)callb
 
 RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding bufferSize:(int)bufferSize) {
     FetchBlobFS *fileStream = [[FetchBlobFS alloc] initWithBridgeRef:self.bridge];
+    if(bufferSize == nil) {
+        if([[encoding lowercaseString] isEqualToString:@"base64"])
+            bufferSize = 4095;
+        else
+            bufferSize = 4096;
+    }
     [fileStream readWithPath:path useEncoding:encoding bufferSize:bufferSize];
 }
 
@@ -664,7 +700,7 @@ RCT_EXPORT_METHOD(writeStream:(NSString *)path withEncoding:(NSString *)encoding
     FetchBlobFS * fileStream = [[FetchBlobFS alloc] initWithBridgeRef:self.bridge];
     NSFileManager * fm = [NSFileManager defaultManager];
     BOOL isDir = nil;
-    BOOL exist = ![fm fileExistsAtPath:path isDirectory:&isDir];
+    BOOL exist = [fm fileExistsAtPath:path isDirectory:&isDir];
     if( exist == NO || isDir == YES) {
         callback(@[[NSString stringWithFormat:@"target path `%@` may not exists or it's a folder", path]]);
         return;
@@ -711,6 +747,14 @@ RCT_EXPORT_METHOD(removeSession:(NSArray *)paths callback:(RCTResponseSenderBloc
 }
 
 RCT_EXPORT_METHOD(ls:(NSString *)path callback:(RCTResponseSenderBlock) callback) {
+    NSFileManager* fm = [NSFileManager defaultManager];
+    BOOL exist = nil;
+    BOOL isDir = nil;
+    exist = [fm fileExistsAtPath:path isDirectory:&isDir];
+    if(exist == NO || isDir == NO) {
+        callback(@[[NSString stringWithFormat:@"failed to list path `%@` for it is not exist or it is not a folder", path]]);
+        return ;
+    }
     NSError * error = nil;
     NSArray * result = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
     
@@ -723,7 +767,7 @@ RCT_EXPORT_METHOD(ls:(NSString *)path callback:(RCTResponseSenderBlock) callback
 
 RCT_EXPORT_METHOD(cp:(NSString *)path toPath:(NSString *)dest callback:(RCTResponseSenderBlock) callback) {
     NSError * error = nil;
-    BOOL result = [[NSFileManager defaultManager] copyItemAtURL:path toURL:dest error:&error];
+    BOOL result = [[NSFileManager defaultManager] copyItemAtURL:[NSURL fileURLWithPath:path] toURL:[NSURL fileURLWithPath:dest] error:&error];
     
     if(error == nil)
         callback(@[[NSNull null], @YES]);
@@ -734,7 +778,7 @@ RCT_EXPORT_METHOD(cp:(NSString *)path toPath:(NSString *)dest callback:(RCTRespo
 
 RCT_EXPORT_METHOD(mv:(NSString *)path toPath:(NSString *)dest callback:(RCTResponseSenderBlock) callback) {
     NSError * error = nil;
-    BOOL result = [[NSFileManager defaultManager] moveItemAtURL:path toURL:dest error:&error];
+    BOOL result = [[NSFileManager defaultManager] moveItemAtURL:[NSURL fileURLWithPath:path] toURL:[NSURL fileURLWithPath:dest] error:&error];
     
     if(error == nil)
         callback(@[[NSNull null], @YES]);
@@ -744,8 +788,10 @@ RCT_EXPORT_METHOD(mv:(NSString *)path toPath:(NSString *)dest callback:(RCTRespo
 }
 
 RCT_EXPORT_METHOD(mkdir:(NSString *)path callback:(RCTResponseSenderBlock) callback) {
-    if([FetchBlobFS exists:path])
-        callback(@[@"file path exists"]);
+    if([FetchBlobFS exists:path]) {
+        callback(@[@"mkdir failed, folder already exists"]);
+        return;
+    }
     else
         [FetchBlobFS mkdir:path];
     callback(@[[NSNull null]]);

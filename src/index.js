@@ -23,11 +23,14 @@ const {
   RNFetchBlobSession,
   getSystemDirs,
   readStream,
+  createFile,
   unlink,
+  exists,
   mkdir,
   session,
   writeStream,
   ls,
+  isDir,
   mv,
   cp
 } = fs
@@ -245,5 +248,9 @@ function getUUID() {
 }
 
 export default {
-  fetch, base64, config, getSystemDirs, readStream, unlink, session, ls, mkdir, mv, cp, writeStream
+  fetch,
+  base64,
+  config,
+  session,
+  fs,
 }

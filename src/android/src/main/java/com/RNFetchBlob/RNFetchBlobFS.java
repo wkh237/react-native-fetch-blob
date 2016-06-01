@@ -16,6 +16,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -163,19 +164,8 @@ public class RNFetchBlobFS {
 
         RNFetchBlobFS fs = fileStreams.get(streamId);
         FileOutputStream stream = fs.writeStreamInstance;
-        byte [] chunk;
-        if(fs.encoding.equalsIgnoreCase("ascii")) {
-            chunk = data.getBytes(Charset.forName("US-ASCII"));
-        }
-        else if(fs.encoding.equalsIgnoreCase("base64")) {
-            chunk = Base64.decode(data, 0);
-        }
-        else if(fs.encoding.equalsIgnoreCase("utf8")) {
-            chunk = data.getBytes(Charset.forName("UTF-8"));
-        }
-        else {
-            chunk = data.getBytes(Charset.forName("US-ASCII"));
-        }
+        byte [] chunk = RNFetchBlobFS.stringToBytes(data, fs.encoding);
+
         try {
             stream.write(chunk);
             callback.invoke(null);
@@ -303,9 +293,51 @@ public class RNFetchBlobFS {
     static void ls(String path, Callback callback) {
         File src = new File(path);
         if(!src.exists() || !src.isDirectory())
-            callback.invoke(null);
+            callback.invoke("failed to list path `"+path+"` for it is not exist or it is not a folder");
         String [] files = new File(path).list();
-        callback.invoke(files);
+        callback.invoke(null, files);
+    }
+
+    /**
+     * Create new file at path
+     * @param path
+     * @param data
+     * @param encoding
+     * @param callback
+     */
+    static void createFile(String path, String data, String encoding, Callback callback) {
+        try {
+            File dest = new File(path);
+            boolean created = dest.createNewFile();
+            if(!created) {
+                callback.invoke("failed to create file at path `" + path + "` for its parent path may not exists");
+                return;
+            }
+            OutputStream ostream = new FileOutputStream(dest);
+            ostream.write(RNFetchBlobFS.stringToBytes(data, encoding));
+            callback.invoke(null, path);
+        } catch(Exception err) {
+            callback.invoke(err.getLocalizedMessage());
+        }
+    }
+
+    /**
+     * String to byte converter method
+     * @param data  Raw data in string format
+     * @param encoding Decoder name
+     * @return  Converted data byte array
+     */
+    private static byte[] stringToBytes(String data, String encoding) {
+        if(encoding.equalsIgnoreCase("ascii")) {
+            return data.getBytes(Charset.forName("US-ASCII"));
+        }
+        else if(encoding.equalsIgnoreCase("base64")) {
+            return Base64.decode(data, 0);
+        }
+        else if(encoding.equalsIgnoreCase("utf8")) {
+            return data.getBytes(Charset.forName("UTF-8"));
+        }
+        return data.getBytes(Charset.forName("US-ASCII"));
     }
 
     /**

@@ -55,6 +55,17 @@ function session(name:string):RNFetchBlobSession {
   }
 }
 
+function createFile(path:string, data:string, encoding: 'base64' | 'ascii' | 'utf8'):Promise {
+  return new Promise((resolve, reject) => {
+    RNFetchBlob.createFile(path, data, encoding, (err) => {
+      if(err)
+        reject(err)
+      else
+        resolve()
+    })
+  })
+}
+
 /**
  * Create write stream to a file.
  * @param  {string} path Target path of file stream.
@@ -95,7 +106,7 @@ function readStream(
 
   if(!path)
     throw Error('RNFetchBlob could not open file stream with empty `path`')
-
+  encoding = encoding || 'utf8'
   let stream:RNFetchBlobStream = {
     onData : function(fn) {
       this._onData = fn
@@ -118,7 +129,10 @@ function readStream(
       stream._onEnd(detail)
     }
     else {
-      stream._onError(detail)
+      if(stream._onError)
+        stream._onError(detail)
+      else
+        throw new Error(detail)
     }
     // when stream closed or error, remove event handler
     if (event === 'error' || event === 'end') {
@@ -157,7 +171,7 @@ function cp(path:string, dest:string):Promise<boolean> {
 
 function mv(path:string, dest:string):Promise<boolean> {
   return new Promise((resolve, reject) => {
-    RNFetchBlob.ls(path, dest, (err, res) => {
+    RNFetchBlob.mv(path, dest, (err, res) => {
       if(err)
         reject(err)
       else
@@ -211,6 +225,21 @@ function exists(path:string):Promise<bool, bool> {
   })
 
 }
+
+function isDir(path:string):Promise<bool, bool> {
+
+  return new Promise((resolve, reject) => {
+    try {
+      RNFetchBlob.exists(path, (exist, isDir) => {
+        resolve(isDir)
+      })
+    } catch(err) {
+      reject(err)
+    }
+  })
+
+}
+
 
 /**
  * Session class
@@ -281,7 +310,7 @@ class WriteStream {
     this.append = append
   }
 
-  write() {
+  write(data:string) {
     return new Promise((resolve, reject) => {
       try {
         RNFetchBlob.writeChunk(this.id, data, (error) => {
@@ -311,5 +340,17 @@ class WriteStream {
 }
 
 export default {
-  RNFetchBlobSession, unlink, mkdir, session, ls, readStream, getSystemDirs, mv, cp
+  RNFetchBlobSession,
+  unlink,
+  mkdir,
+  session,
+  ls,
+  readStream,
+  getSystemDirs,
+  mv,
+  cp,
+  writeStream,
+  exists,
+  createFile,
+  isDir
 }
