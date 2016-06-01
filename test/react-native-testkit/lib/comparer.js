@@ -4,7 +4,9 @@ export default {
   instanceOf : (a, b) => a instanceof b,
   typeof : (a, b) => typeof a === b,
   IsNull : (a, b) => a === null,
-  exists : (a, b) => a,
+  exists : (a, b) => {
+    return a !== null && a !== void 0
+  },
   equalToArray : (a, b) => {
     if(!Array.isArray(a) && Array.isArray(b))
       return false

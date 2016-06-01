@@ -12,9 +12,11 @@ import {
   Image,
 } from 'react-native';
 
+const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
   group : '0.5.x',
+  run : false,
   expand : false,
 })
 const { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles } = prop()
@@ -45,7 +47,7 @@ describe('Download file to storage with custom file extension', (report, done) =
 
 describe('Read cached file via file stream', (report, done) => {
   let data = 'data:image/png;base64, '
-  let stream = RNFetchBlob.readStream(tmpFilePath, 'base64')
+  let stream = fs.readStream(tmpFilePath, 'base64')
   stream.onData((chunk) => {
     data += chunk
   })
@@ -66,7 +68,7 @@ describe('Read cached file via file stream', (report, done) => {
 })
 
 describe('File stream reader error should be able to handled', (report, done) => {
-  let stream = RNFetchBlob.readStream('^_^ not exists', 'base64')
+  let stream = fs.readStream('^_^ not exists', 'base64')
   stream.onError((err) => {
     report(<Info key="error message">
       <Text>
@@ -84,7 +86,7 @@ let sysDirs = null
 describe('Upload from file storage', (report, done) => {
   let filename = ''
   let filepath = ''
-  RNFetchBlob.getSystemDirs().then((dirs) => {
+  fs.getSystemDirs().then((dirs) => {
     sysDirs = dirs
     filename = Platform.OS + '0.5.0-' + Date.now() + '-from-storage.png'
     filepath = dirs.DocumentDir + '/' + filename
@@ -176,7 +178,7 @@ describe('Session API CRUD test', (report, done) => {
 
   let sessionName = 'test-session-' + Date.now()
   let baseDir = sysDirs.DocumentDir + '/' + sessionName
-  RNFetchBlob.mkdir(sysDirs.DocumentDir + '/' + sessionName).then(() => {
+  fs.mkdir(sysDirs.DocumentDir + '/' + sessionName).then(() => {
     let promises = [0,1,2,3,4,5,6,7,8,9].map((p) => {
       return RNFetchBlob.config({
           session : sessionName,
@@ -214,7 +216,7 @@ describe('Session API CRUD test', (report, done) => {
         actual={s.list()}/>)
 
     s.dispose().then(() => {
-      RNFetchBlob.ls(baseDir).then((lsRes) => {
+      fs.ls(baseDir).then((lsRes) => {
         report(
           <Assert
             key="dispose() should work correctly"

@@ -22,9 +22,19 @@ export default class TestContext {
    *         should return a promise.
    * @return {void}
    */
-  static describe (desc:string, fn:Promise<any>) {
+  static describe (...args) {
     let { group, timeout, expand, run } = this || {}
-
+    let desc, config, fn
+    if([...args].length === 2) {
+      [desc, fn] = [...args]
+    }
+    else if ([...args].length === 3) {
+      [desc, config, fn] = [...args]
+      group = config.group || group
+      timeout = config.timeout || timeout
+      expand = config.expand || expand
+      run = config.run || run
+    }
     let ctx = {
       group : group || 'common',
       status : 'waiting',
