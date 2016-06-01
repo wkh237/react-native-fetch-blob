@@ -301,7 +301,7 @@ stream.onEnd(() => {
 
 #### Release cache files
 
-When using `fileCache` or `path` options along with `fetch` API, response data will automatically stored into file system. The files will **NOT** removed unless you `unlink` it. There're several way to remove the files
+When using `fileCache` or `path` options along with `fetch` API, response data will automatically stored into file system. The files will **NOT** removed unless you `unlink` it. There're several ways to remove the files
 
 ```js
 
@@ -336,7 +336,7 @@ You can also group the requests by using `session` API, and use `dispose` to rem
   })  
 
   RNFetchblob.config({
-    // you can also set session before hand
+    // you can also set session beforehand
     session : 'foo'
     fileCache : true
   })
@@ -358,11 +358,7 @@ You can also group the requests by using `session` API, and use `dispose` to rem
 
 ## API
 
-#### `getSystemDirs`
-
-TODO
-
-#### `config`
+#### `config(options:RNFetchBlobConfig):fetch`
 
 TODO
 
@@ -388,6 +384,10 @@ Register on progress event handler for a fetch request.
 
 A function that triggers when there's data received/sent, first argument is the number of sent/received bytes, and second argument is expected total bytes number.
 
+#### `session(name:string):RNFetchBlobSession`
+
+TODO
+
 #### `base64`
 
 A helper object simply uses [base-64](https://github.com/mathiasbynens/base64) for decode and encode BASE64 data.
@@ -397,15 +397,13 @@ RNFetchBlob.base64.encode(data)
 RNFetchBlob.base64.decode(data)
 ```
 
-#### `unlink`
+#### `fs`
 
 TODO
 
-#### `readStream`
+### Types
 
-TODO
-
-#### FetchBlobResponse
+#### RNFetchBlobResponse
 
 When `fetch` success, it resolve a `FetchBlobResponse` object as first argument. `FetchBlobResponse` object has the following methods (these method are synchronous, so you might take quite a performance impact if the file is big)
 
@@ -415,6 +413,23 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
   returns json parsed object (done in js context)
 #### text():string
   returns decoded base64 string (done in js context)
+#### path():string
+  returns file path if the response data is cached in file
+#### session(name:string):RNFetchBlobSession
+  when the response data is cached in a file, this method adds the file into the session. The following usages are equivalent.
+```js
+RNFetchBlob.session('session-name').add(resp.path())
+// or
+resp.session('session-name')
+```
+
+#### RNFetchBlobSession
+
+TODO
+
+#### RNFetchBlobStream
+
+TODO
 
 ## Major Changes
 
@@ -424,7 +439,7 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
 | 0.4.0 | Add base-64 encode/decode library and API |
 | 0.4.1 | Fixe upload form-data missing file extension problem on Android |
 | 0.4.2 | Supports upload/download progress |
-| 0.5.0 | Upload/download with direct access to file storage, and also supports read file with file stream |
+| 0.5.0 | Upload/download with direct access to file storage, and also added file access APIs |
 
 ### TODOs
 
