@@ -152,7 +152,7 @@ function mkdir(path:string):Promise {
       if(err)
         reject(err)
       else
-        resolve(res)
+        resolve()
     })
   })
 
@@ -216,8 +216,8 @@ function exists(path:string):Promise<bool, bool> {
 
   return new Promise((resolve, reject) => {
     try {
-      RNFetchBlob.exists(path, (exist, isDir) => {
-        resolve(exist, isDir)
+      RNFetchBlob.exists(path, (exist) => {
+        resolve(exist)
       })
     } catch(err) {
       reject(err)
