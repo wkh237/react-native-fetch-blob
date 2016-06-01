@@ -6,6 +6,8 @@ import android.os.Environment;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReadableArray;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.loopj.android.http.Base64;
@@ -34,7 +36,7 @@ public class RNFetchBlobFS {
     DeviceEventManagerModule.RCTDeviceEventEmitter emitter;
     String encoding = "base64";
     boolean append = false;
-    FileOutputStream writeStreamInstance = null;
+    OutputStream writeStreamInstance = null;
     static HashMap<String, RNFetchBlobFS> fileStreams = new HashMap<>();
 
     RNFetchBlobFS(ReactApplicationContext ctx) {
@@ -50,13 +52,13 @@ public class RNFetchBlobFS {
     static public void getSystemfolders(ReactApplicationContext ctx, Callback callback) {
         callback.invoke(
                 // document folder
-                String.valueOf(ctx.getFilesDir()),
+                String.valueOf(ctx.getFilesDir().getAbsolutePath()),
                 // cache folder
-                String.valueOf(ctx.getCacheDir()),
+                String.valueOf(ctx.getCacheDir().getAbsolutePath()),
                 // SD card folder
-                String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)),
+                String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath()),
                 // Download folder
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath()
         );
     }
 
@@ -106,7 +108,15 @@ public class RNFetchBlobFS {
                         }
                     } else if (encoding.equalsIgnoreCase("base64")) {
                         while ((cursor = fs.read(buffer)) != -1) {
-                            emitStreamEvent(eventName, "data", Base64.encodeToString(buffer, Base64.NO_WRAP));
+                            if(cursor < chunkSize) {
+                                byte [] copy = new byte[cursor];
+                                for(int i =0;i<cursor;i++) {
+                                    copy[i] = buffer[i];
+                                }
+                                emitStreamEvent(eventName, "data", Base64.encodeToString(copy, Base64.NO_WRAP));
+                            }
+                            else
+                                emitStreamEvent(eventName, "data", Base64.encodeToString(buffer, Base64.NO_WRAP));
                         }
                     } else {
                         String msg = "unrecognized encoding `" + encoding + "`";
@@ -147,6 +157,7 @@ public class RNFetchBlobFS {
             this.append = append;
             String streamId = UUID.randomUUID().toString();
             RNFetchBlobFS.fileStreams.put(streamId, this);
+            this.writeStreamInstance = fs;
             callback.invoke(null, streamId);
         } catch(Exception err) {
             callback.invoke("failed to create write stream at path `"+path+"` "+ err.getLocalizedMessage());
@@ -163,13 +174,13 @@ public class RNFetchBlobFS {
     static void writeChunk(String streamId, String data, Callback callback) {
 
         RNFetchBlobFS fs = fileStreams.get(streamId);
-        FileOutputStream stream = fs.writeStreamInstance;
+        OutputStream stream = fs.writeStreamInstance;
         byte [] chunk = RNFetchBlobFS.stringToBytes(data, fs.encoding);
 
         try {
             stream.write(chunk);
-            callback.invoke(null);
-        } catch (IOException e) {
+            callback.invoke();
+        } catch (Exception e) {
             callback.invoke(e.getLocalizedMessage());
         }
     }
@@ -182,10 +193,10 @@ public class RNFetchBlobFS {
     static void closeStream(String streamId, Callback callback) {
         try {
             RNFetchBlobFS fs = fileStreams.get(streamId);
-            FileOutputStream stream = fs.writeStreamInstance;
-            stream.close();
-            stream = null;
+            OutputStream stream = fs.writeStreamInstance;
             fileStreams.remove(streamId);
+            stream.close();
+            callback.invoke();
         } catch(Exception err) {
             callback.invoke(err.getLocalizedMessage());
         }
@@ -199,13 +210,26 @@ public class RNFetchBlobFS {
     static void unlink(String path, Callback callback) {
         try {
             boolean success = new File(path).delete();
-            callback.invoke(success);
+            callback.invoke( null, success);
         } catch(Exception err) {
             if(err != null)
             callback.invoke(err.getLocalizedMessage());
         }
     }
-
+    /**
+     * Make a folder
+     * @param path Source path
+     * @param callback  JS context callback
+     */
+    static void mkdir(String path, Callback callback) {
+        File dest = new File(path);
+        if(dest.exists()) {
+            callback.invoke("failed to create folder at `" + path + "` folder already exists");
+            return;
+        }
+        dest.mkdirs();
+        callback.invoke();
+    }
     /**
      * Copy file to destination path
      * @param path Source path
@@ -223,8 +247,7 @@ public class RNFetchBlobFS {
                 callback.invoke("source file at path`" + path + "` not exists");
                 return;
             }
-            if(!new File(destFolder).exists())
-                new File(destFolder).mkdir();
+
             if(!new File(dest).exists())
                 new File(dest).createNewFile();
 
@@ -236,20 +259,15 @@ public class RNFetchBlobFS {
             while ((len = in.read(buf)) > 0) {
                 out.write(buf, 0, len);
             }
-            in.close();
-            out.close();
-            callback.invoke(null);
+
         } catch (Exception err) {
             if(err != null)
                 callback.invoke(err.getLocalizedMessage());
         } finally {
             try {
                 in.close();
-            } catch (IOException e) {
-                callback.invoke(e.getLocalizedMessage());
-            }
-            try {
                 out.close();
+                callback.invoke();
             } catch (IOException e) {
                 callback.invoke(e.getLocalizedMessage());
             }
@@ -269,7 +287,7 @@ public class RNFetchBlobFS {
             return;
         }
         src.renameTo(new File(dest));
-        callback.invoke(null);
+        callback.invoke();
     }
 
     /**
@@ -279,9 +297,7 @@ public class RNFetchBlobFS {
      */
     static void exists(String path, Callback callback) {
         boolean exist = new File(path).exists();
-        boolean isDir = false;
-        if(exist)
-         isDir = new File(path).isDirectory();
+        boolean isDir = new File(path).isDirectory();;
         callback.invoke(exist, isDir);
     }
 
@@ -292,10 +308,16 @@ public class RNFetchBlobFS {
      */
     static void ls(String path, Callback callback) {
         File src = new File(path);
-        if(!src.exists() || !src.isDirectory())
-            callback.invoke("failed to list path `"+path+"` for it is not exist or it is not a folder");
+        if(!src.exists() || !src.isDirectory()) {
+            callback.invoke("failed to list path `" + path + "` for it is not exist or it is not a folder");
+            return;
+        }
         String [] files = new File(path).list();
-        callback.invoke(null, files);
+        WritableArray arg = Arguments.createArray();
+        for(String i : files) {
+            arg.pushString(i);
+        }
+        callback.invoke(null, arg);
     }
 
     /**
@@ -319,6 +341,22 @@ public class RNFetchBlobFS {
         } catch(Exception err) {
             callback.invoke(err.getLocalizedMessage());
         }
+    }
+
+    static void removeSession(ReadableArray paths, Callback callback) {
+
+        AsyncTask<ReadableArray, Integer, Integer> task = new AsyncTask<ReadableArray, Integer, Integer>() {
+            @Override
+            protected Integer doInBackground(ReadableArray ...paths) {
+                for(int i =0; i< paths[0].size(); i++) {
+                    File f = new File(paths[0].getString(i));
+                    if(f.exists())
+                        f.delete();
+                }
+                return paths[0].size();
+            }
+        };
+        task.execute(paths);
     }
 
     /**

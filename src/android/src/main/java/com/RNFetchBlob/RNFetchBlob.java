@@ -45,15 +45,23 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void getEnvironmentDirs(Callback callback) {
-
         ReactApplicationContext ctx = this.getReactApplicationContext();
         RNFetchBlobFS.getSystemfolders(ctx, callback);
+    }
 
+    @ReactMethod
+    public void createFile(String path, String content, String encode, Callback callback) {
+        RNFetchBlobFS.createFile(path, content, encode, callback);
     }
 
     @ReactMethod
     public void unlink(String path, Callback callback) {
         RNFetchBlobFS.unlink(path, callback);
+    }
+
+    @ReactMethod
+    public void mkdir(String path, Callback callback) {
+        RNFetchBlobFS.mkdir(path, callback);
     }
 
     @ReactMethod
@@ -84,6 +92,16 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     @ReactMethod
     public void writeChunk(String streamId, String data, Callback callback) {
         RNFetchBlobFS.writeChunk(streamId, data, callback);
+    }
+
+    @ReactMethod
+    public void closeStream(String streamId, Callback callback) {
+        RNFetchBlobFS.closeStream(streamId, callback);
+    }
+
+    @ReactMethod
+    public void removeSession(ReadableArray paths, Callback callback) {
+        RNFetchBlobFS.removeSession(paths, callback);
     }
 
     @ReactMethod
