@@ -46,26 +46,44 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     @ReactMethod
     public void getEnvironmentDirs(Callback callback) {
 
-        WritableArray results = Arguments.createArray();
         ReactApplicationContext ctx = this.getReactApplicationContext();
-        callback.invoke(
-                String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)),
-                String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)),
-                String.valueOf(ctx.getFilesDir()),
-                String.valueOf(ctx.getCacheDir()),
-                String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)),
-                String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM))
-        );
+        RNFetchBlobFS.getSystemfolders(ctx, callback);
+
     }
 
     @ReactMethod
     public void unlink(String path, Callback callback) {
-        try {
-            new File(RNFetchBlobFS.getTmpPath(this.getReactApplicationContext(), path)).delete();
-            callback.invoke(null);
-        } catch(Exception err) {
-            callback.invoke("Failed to remove file or directory at " + path);
-        }
+        RNFetchBlobFS.unlink(path, callback);
+    }
+
+    @ReactMethod
+    public void exists(String path, Callback callback) {
+        RNFetchBlobFS.exists(path, callback);
+    }
+
+    @ReactMethod
+    public void cp(String path, String dest, Callback callback) {
+        RNFetchBlobFS.cp(path, dest, callback);
+    }
+
+    @ReactMethod
+    public void mv(String path, String dest, Callback callback) {
+        RNFetchBlobFS.mv(path, dest, callback);
+    }
+
+    @ReactMethod
+    public void ls(String path, Callback callback) {
+        RNFetchBlobFS.ls(path, callback);
+    }
+
+    @ReactMethod
+    public void writeStream(String path, String encode, boolean append, Callback callback) {
+        new RNFetchBlobFS(this.getReactApplicationContext()).writeStream(path, encode, append, callback);
+    }
+
+    @ReactMethod
+    public void writeChunk(String streamId, String data, Callback callback) {
+        RNFetchBlobFS.writeChunk(streamId, data, callback);
     }
 
     @ReactMethod
