@@ -143,7 +143,7 @@ NSMutableDictionary *fileStreams = nil;
 - (void)writeEncodeChunk:(NSString *) chunk {
     NSMutableData * decodedData = [NSData alloc];
     if([[self.encoding lowercaseString] isEqualToString:@"base64"]) {
-        decodedData = [chunk dataUsingEncoding:NSUTF8StringEncoding];
+        decodedData = [[NSData alloc] initWithBase64EncodedData:chunk options:0];
     }
     if([[self.encoding lowercaseString] isEqualToString:@"utf8"]) {
         decodedData = [chunk dataUsingEncoding:NSUTF8StringEncoding];
