@@ -23,25 +23,6 @@ let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
 // added after 0.5.0
 
-describe('Get storage folders', (report, done) => {
-
-  RNFetchBlob.getSystemDirs().then((dirs) => {
-    report(
-      <Assert key="system folders should exists" expect={dirs} comparer={Comparer.exists} />,
-      <Assert key="check properties"
-        expect={dirs}
-        comparer={Comparer.hasProperties}
-        actual={['PictureDir', 'MovieDir', 'DocumentDir', 'CacheDir', 'MusicDir', 'DCIMDir']}
-      />,
-      <Info key="System Folders">
-        <Text>{`${JSON.stringify(dirs)}`}</Text>
-      </Info>
-    )
-    done()
-  })
-
-})
-
 let tmpFilePath = null
 
 describe('Download file to storage with custom file extension', (report, done) => {
