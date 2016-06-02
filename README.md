@@ -2,17 +2,17 @@
 
 ## v0.5.0 Work In Progress README.md
 
-A react-native module for upload, and download files with customizable headers. Supports binary response/request data, upload/download progress. It also has a file stream reader API that enables you to handle files in JS context (such as display image data, and process string or data).
+Upload, and download files with customzable headers. Supports binary response/request data, upload/download progress, also has file stream, and CRUD APIs which enables you process file content in JS context. (such as display image data, and process string or data).
 
 If you're getting into trouble with image or file server that requires specific fields in the header, or you're having problem with `fetch` API when sending/receiving binary data, you might try this module as well.
 
-See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854) for the reason why we made this module.
+See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854) for the reason why I made this module.
 
-In latest version (v0.5.0), you can either `upload` or `download` files simply using a file path. We've also introduced `file stream` API in this version for reading files (especially for **large ones**) from storage, see [Examples](#user-content-usage) bellow.
+In latest version (v0.5.0), you can either `upload` or `download` files simply using a file path. We've also introduced `fs` APIs for access files, and `file stream` API that helps you read/write files (especially for **large ones**), see [Examples](#user-content-usage) bellow.
 
-This module implements native HTTP request methods, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
+This module implements native methods, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
 
-## Usage
+## TOC
 
 * [Installation](#user-content-installation)
 * [Examples](#user-content-usage)
@@ -20,9 +20,13 @@ This module implements native HTTP request methods, supports both Android (uses 
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
  * [Upload/Download progress](#user-content-uploaaddownload-progress)
- * [File stream reader](#user-content-file-stream-reader)
- * [Release cache files](#user-content-release-cache-files)
+ * [File stream](#user-content-file-stream)
+ * [Manage cached files](#user-content-manage-cached-files)
 * [API](#user-content-api)
+ * [fetch](#user-content-fetchmethod-url-headers-bodypromisefetchblobresponse)
+ * [session](#user-content-sessionnamestringrnfetchblobsession)
+ * [base64](#user-content-base64)
+ * [fs](#user-content-fs)
 * [Development](#user-content-development)
 
 ## Installation
