@@ -20,6 +20,7 @@ This module implements native methods, supports both Android (uses awesome nativ
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
  * [Upload/Download progress](#user-content-uploaaddownload-progress)
+ * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-manage-cached-files)
 * [API](#user-content-api)
@@ -93,7 +94,9 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
 
 #### Download to storage directly
 
-The simplest way is give a `fileCach` option to config, and set it to `true`. This will let the incoming response data stored in a temporary path **wihout** any file extension.
+The simplest way is give a `fileCach` option to config, and set it to `true`. This will let the incoming response data stored in a temporary path **wihout** any file extension. 
+
+**These files won't be removed automatically, please refer to [Cache File Management](#user-content-cache-file-management)**
 
 ```js
 RNFetchBlob
@@ -113,7 +116,7 @@ RNFetchBlob
 
 **Set Temp File Extension**
 
-But in some cases, you might need a file extension even the file is temporary cached. For instance, when use the file path as source of `Image` element the path should end with something like .png or .jpg, you can do this by put one more option in to `config`.
+Sometimes you might need a file extension for some reason. For instance, when using file path as source of `Image` component, the path should end with something like .png or .jpg, you can do this by add `appendExt` option to `config`.
 
 ```js
 RNFetchBlob
@@ -133,16 +136,17 @@ RNFetchBlob
     imageView = <Image source={{ uri : Platform.OS === 'android' ? 'file://' : '' + res.path() }}/>
   })
 ```
+
 **Use Specific File Path**
 
-What's more, if you prefer a specific path, rather a random generated path, you can use `path` option. We've added a [getSystemDirs](#user-content-getsysdirs) API in v0.5.0 that lists several common used directories.
+If you prefer a specific path rather than random generated one, you can use `path` option. We've added a [getSystemDirs](#user-content-getsysdirs) API in v0.5.0 that lists several common used directories.
 
 ```js
 RNFetchBlob.getSystemDirs().then((dirs) => {
   RNFetchBlob
     .config({
       // response data will be saved to this path if it has access right.
-      path : dirs.DocumentDir + 'path-to-file.anything'
+      path : dirs.DocumentDir + '/path-to-file.anything'
     })
     .fetch('GET', 'http://www.example.com/file/example.zip', {
       //some headers ..
@@ -153,6 +157,8 @@ RNFetchBlob.getSystemDirs().then((dirs) => {
     })
 })
 ```
+
+**These files won't be removed automatically, please refer to [Cache File Management](#user-content-cache-file-management)**
 
 ####  Upload example : Dropbox [files-upload](https://www.dropbox.com/developers/documentation/http/documentation#files-upload) API
 
@@ -169,6 +175,9 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
       mute : false
     }),
     'Content-Type' : 'application/octet-stream',
+    // here's the body you're going to send, should be a BASE64 encoded string 
+    // (you can use "base64" APIs to make one). 
+    // The data will be converted to "byte array"(say, blob) before request sent.  
   }, base64ImageString)
   .then((res) => {
     console.log(res.text())
@@ -180,10 +189,11 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
 
 #### Upload a file from storage
 
-If you're going to use a `file` in file system as request body, just push the path with prefix `RNFetchBlob-file://`.
+If you're going to use a `file` request body, just push the path with prefix `RNFetchBlob-file://`. (We're planning to add an API to customize this prefix)
 
 ```js
 RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+    // dropbox upload headers
     Authorization : "Bearer access-token...",
     'Dropbox-API-Arg': JSON.stringify({
       path : '/img-from-react-native.png',
@@ -192,7 +202,7 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
       mute : false
     }),
     'Content-Type' : 'application/octet-stream',
-    // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://` when the data comes from a file
+    // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://` when the data comes from a file.
   }, 'RNFetchBlob-file://' + PATH_TO_THE_FILE)
   .then((res) => {
     console.log(res.text())
@@ -204,7 +214,7 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
 
 #### Multipart/form-data example : Post form data with file and data
 
-In `version >= 0.3.0` you can also post files with form data,  just put an array in `body`, with object elements with property `name`, `data`, and `filename`(optional).
+In `version >= 0.3.0` you can also post files with form data, just put an array in `body`, with elements have property `name`, `data`, and `filename`(optional).
 
 Elements have property `filename` will be transformed into binary format, otherwise it turns into utf8 string.
 
@@ -230,19 +240,21 @@ Elements have property `filename` will be transformed into binary format, otherw
   })
 ```
 
-What if some fields contains a file in file storage ? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, change the `data` to path of the file with a prefix `RNFetchBlob-file://`
+What if you want to upload a file in some field ? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, change `data` to path of the file with a prefix `RNFetchBlob-file://` (this feature is only available for `version >= v0.5.0`)
 
 ```js
 
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload-form', {
     Authorization : "Bearer access-token",
     otherHeader : "foo",
+    // this is required, otherwise it won't be process as a multipart/form-data request
     'Content-Type' : 'multipart/form-data',
   }, [
     // append field data from file path
-    { name : 'avatar',
+    { 
+      name : 'avatar',
       filename : 'avatar.png',
-      // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://` when the data comes from a file
+      // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://` when the data comes from a file path
       data: 'RNFetchBlob-file://' + PATH_TO_THE_FILE
     },
     // elements without property `filename` will be sent as plain text
@@ -278,20 +290,43 @@ In `version >= 0.4.2` it is possible to know the upload/download progress.
     })
 ```
 
-#### Handle files in storage
+#### File Access
 
-In v0.5.0 we've added a `readStream` API, which allows you read data from file directly. This API creates a file stream, rather than a BASE64 encoded data of the file, so that you won't have to worry if large files explodes the memory.
+File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However I realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need those APIs for there cases. 
+
+Here's the list of `fs` APIs
+
+- getSystemDirs
+- createFile
+- readStream
+- writeStream
+- unlink
+- mkdir
+- ls
+- mv
+- cp
+- exists
+- isDir
+
+
+
+
+#### File Stream
+
+In `v0.5.0` we've added  `writeStream` and `readStream` in `fs`, which allows you read/write data from file path. This API creates a file stream, rather than a BASE64 encoded data of the file, it's handy when deal with **large files**.
+
+But there're some differences on usage of `readStream` and `writeStream`. When calling `readStream` method, the file stream is opened immediately, and start to read data. 
 
 ```js
 let data = ''
 let stream = RNFetchBlob.readStream(
-    // encoding, should be one of `base64`, `utf8`, `ascii`
+    // encoding, should be one of `base64`, `utf8`
     'base64',
     // file path
     PATH_TO_THE_FILE,
-    // (optional) buffer size, default to 4096 (4098 for BASE64 encoded data)
+    // (optional) buffer size, default to 4096 (4095 for BASE64 encoded data)
     // when reading file in BASE64 encoding, buffer size must be multiples of 3.
-    4098)
+    4095)
 stream.onData((chunk) => {
   data += chunk
 })
@@ -303,7 +338,7 @@ stream.onEnd(() => {
 })
 ```
 
-#### Release cache files
+#### Cache File Management
 
 When using `fileCache` or `path` options along with `fetch` API, response data will automatically stored into file system. The files will **NOT** removed unless you `unlink` it. There're several ways to remove the files
 
