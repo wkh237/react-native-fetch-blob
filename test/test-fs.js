@@ -291,3 +291,24 @@ describe('cp API test', {timeout : 10000},(report, done) => {
     })
   })
 })
+
+describe('Download file to `download` folder', (report, done) => {
+  RNFetchBlob.fs
+    .getSystemDirs()
+    .then((dirs) => {
+      return RNFetchBlob.config({
+        path : dirs.DownloadDir + '/download-test.png'
+      })
+      .fetch('GET', `${TEST_SERVER_URL}/public/github.png`, {
+        Authorization : 'Bearer abde123eqweje'
+      })
+    })
+    .then((resp) => {
+      report(<Info key="image in download path">
+        <Image
+          style={styles.image}
+          source={{uri : 'file://' + dirs.DownloadDir + '/download-test.png'}}/>
+      </Info>)
+      done()
+    })
+})
