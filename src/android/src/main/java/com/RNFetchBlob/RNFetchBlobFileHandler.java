@@ -1,9 +1,13 @@
 package com.RNFetchBlob;
 
+import android.app.DownloadManager;
+import android.content.Context;
+
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.loopj.android.http.FileAsyncHttpResponseHandler;
@@ -61,6 +65,26 @@ public class RNFetchBlobFileHandler extends FileAsyncHttpResponseHandler {
 
     @Override
     public void onSuccess(int statusCode, Header[] headers, File file) {
+        ReadableMap notifyConfig = mConfig.addAndroidDownloads;
+
+        // Download manager settings
+        if(notifyConfig != null ) {
+            String title = "", desc = "", mime = "text/plain";
+            boolean scannable = false, notification = false;
+            if(notifyConfig.hasKey("title"))
+                title = mConfig.addAndroidDownloads.getString("title");
+            if(notifyConfig.hasKey("description"))
+                desc = notifyConfig.getString("description");
+            if(notifyConfig.hasKey("mime"))
+                mime = notifyConfig.getString("mime");
+            if(notifyConfig.hasKey("mediaScannable"))
+                scannable = notifyConfig.getBoolean("mediaScannable");
+            if(notifyConfig.hasKey("notification"))
+                notification = notifyConfig.getBoolean("notification");
+            DownloadManager dm = (DownloadManager)mCtx.getSystemService(mCtx.DOWNLOAD_SERVICE);
+            dm.addCompletedDownload(title, desc, scannable, mime, file.getAbsolutePath(), file.length(), notification);
+        }
+
         this.onResponse.invoke(null, file.getAbsolutePath());
     }
 }
