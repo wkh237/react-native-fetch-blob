@@ -492,7 +492,7 @@ RNFetchBlob.base64.decode(data)
 
 `0.5.0`
 
-#### `getSystemDirs()`
+#### `getSystemDirs():Promise<object>`
 
 This method returns common used folders:
 
@@ -504,6 +504,12 @@ This method returns common used folders:
 example 
 
 ```js
+RNFetchBlob.getSystemDirs().then((dirs) => {
+    console.log(dirs.DocumentDir)
+    console.log(dirs.CacheDir)
+    console.log(dirs.DCIMDir)
+    console.log(dirs.DownloadDir)
+})
 ```
 
 If you're going to make downloaded file visible in Android `Downloads` app, please see [Show Downloaded File and Notification in Android Downloads App](#user-content-show-downloaded-file-in-android-downloads-app).
@@ -512,7 +518,41 @@ If you're going to make downloaded file visible in Android `Downloads` app, plea
 
 TODO
 
+#### writeStream(path:string, encoding:string, append:boolean):Promise<WriteStream>
 
+TODO
+
+#### readStream(path:string, encoding:string, append:boolean):Promise<ReadStream>
+
+TODO
+
+#### mkdir(path:string):Promise
+
+TODO
+
+#### ls(path:string):Promise
+
+TODO
+
+#### mv(from:string, to:string):Promise
+
+TODO
+
+#### cp(path:string):Promise
+
+TODO
+
+#### exists(path:string):Promise<boolean>
+
+TODO
+
+#### isDir(path:string):Promise<boolean>
+
+TODO
+
+#### unlink(path:string):Promise<boolean>
+
+TODO
 
 ### Types
 
