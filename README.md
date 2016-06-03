@@ -10,16 +10,12 @@ See [[fetch] Does fetch with blob() marshal data across the bridge?](https://git
 
 **Pre v0.5.0 Users**
 
-This update is `backward-compatible` generally you don't have to change existing code unless you're going to use new APIs.
-
-In latest version (v0.5.0), new APIs can either `upload` or `download` files simply using a file path. It's much more memory efficent in some use case. We've also introduced `fs` APIs for access files, and `file stream` API that helps you read/write files (especially for **large ones**), see [Examples](#user-content-usage) bellow.
-
-This module implements native methods, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
+This update is `backward-compatible` generally you don't have to change existing code unless you're going to use new APIs. In latest version (v0.5.0), new APIs can either `upload` or `download` files simply using a file path. It's much more memory efficent in some use case. We've also introduced `fs` APIs for access files, and `file stream` API that helps you read/write files (especially for **large ones**), see [Examples](#user-content-usage) bellow. This module implements native methods, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
 
 ## TOC
 
 * [Installation](#user-content-installation)
-* [Examples](#user-content-usage)
+* [Usages](#user-content-usage)
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
