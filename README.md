@@ -24,7 +24,7 @@ This module implements native methods, supports both Android (uses awesome nativ
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
  * [Upload/Download progress](#user-content-uploaaddownload-progress)
- * [Show Downloaded File in Android Downloads App](#user-content-show-downloaded-file-in-android-downloads-app)
+ * [Show Downloaded File and Notification in Android Downloads App](#user-content-show-downloaded-file-in-android-downloads-app)
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-manage-cached-files)
@@ -296,7 +296,7 @@ In `version >= 0.4.2` it is possible to know the upload/download progress.
     })
 ```
 
-#### Show Downloaded File in Android Downloads App
+#### Show Downloaded File and Notifiction in Android Downloads App
 
 When you use `config` API to store response data to file, the file won't be visible in Andoird's "Download" app, if you want to do this, some extra options in `config` is required.
 
@@ -342,7 +342,7 @@ See [fs](#user-content-fs) chapter for more information
 
 #### File Stream
 
-In `v0.5.0` we've added  `writeStream` and `readStream`, which allows you read/write data from file path. This API creates a file stream, rather than convert whole data into BASE64 encoded string, it's handy when processing **large files**.
+In `v0.5.0` we've added  `writeStream` and `readStream`, which allows your app read/write data from file path. This API creates a file stream, rather than convert whole data into BASE64 encoded string, it's handy when processing **large files**.
 
 But there're some differences between `readStream` and `writeStream` API. When calling `readStream` method, the file stream is opened immediately, and start to read data. 
 
@@ -369,7 +369,7 @@ ifstream.onEnd(() => {
 
 When use `writeStream`, the stream is also opened immediately, but you have to `write`, and `close` by yourself.
 
-```
+```js
 let ofstream = RNFetchBlob.writeStream(
     PATH_TO_FILE, 
     // encoding, should be one of `base64`, `utf8`, `ascii`
@@ -443,9 +443,13 @@ You can also group the requests by using `session` API, and use `dispose` to rem
 
 #### `config(options:RNFetchBlobConfig):fetch`
 
+`0.5.0`
+
 Config API was introduced in `v0.5.0` which provides some options for the `fetch` task. 
 
 #### `fetch(method, url, headers, body):Promise<FetchBlobResponse>`
+
+`legacy`
 
 Send a HTTP request uses given headers and body, and return a Promise.
 
@@ -459,7 +463,9 @@ Headers of HTTP request, value of headers should be `stringified`, if you're upl
 Body of the HTTP request, body can either be a BASE64 string, or an array contains object elements, each element have 2  required property `name`, and `data`, and 1 optional property `filename`, once `filename` is set, content in `data` property will be consider as BASE64 string that will be converted into byte array later.
 When body is a base64 string , this string will be converted into byte array in native code, and the request body will be sent as `application/octet-stream`.
 
-#### `fetch(...).progress(eventListener):Promise<FetchBlobResponse>` added in `0.4.2`
+#### `fetch(...).progress(eventListener):Promise<FetchBlobResponse>`
+
+`0.4.2`
 
 Register on progress event handler for a fetch request.
 
@@ -473,6 +479,8 @@ TODO
 
 #### `base64`
 
+`0.4.2`
+
 A helper object simply uses [base-64](https://github.com/mathiasbynens/base64) for decode and encode BASE64 data.
 
 ```js
@@ -482,7 +490,29 @@ RNFetchBlob.base64.decode(data)
 
 #### `fs`
 
+`0.5.0`
+
+#### `getSystemDirs()`
+
+This method returns common used folders:
+
+- DocumentDir 
+- CacheDir
+- DCIMDir (Android Only)
+- DownloadDir (Android Only)
+
+example 
+
+```js
+```
+
+If you're going to make downloaded file visible in Android `Downloads` app, please see [Show Downloaded File and Notification in Android Downloads App](#user-content-show-downloaded-file-in-android-downloads-app).
+
+#### createFile(path:string, data:string, encoding:string ):Promise
+
 TODO
+
+
 
 ### Types
 
