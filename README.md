@@ -8,7 +8,7 @@ If you're getting into trouble with image or file server that requires specific 
 
 See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854) for the reason why I made this module.
 
-** Pre v0.5.0 Users**
+**Pre v0.5.0 Users**
 
 This update is `backward-compatible` generally you don't have to change existing code unless you're going to use new APIs.
 
