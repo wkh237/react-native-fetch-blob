@@ -56,13 +56,23 @@ function session(name:string):RNFetchBlobSession {
 }
 
 function createFile(path:string, data:string, encoding: 'base64' | 'ascii' | 'utf8'):Promise {
+  encoding = encoding || 'utf8'
   return new Promise((resolve, reject) => {
-    RNFetchBlob.createFile(path, data, encoding, (err) => {
+    let handler = (err) => {
       if(err)
-        reject(err)
+      reject(err)
       else
-        resolve()
-    })
+      resolve()
+    }
+    if(encoding.toLowerCase() === 'ascii') {
+      if(Array.isArray(data))
+        RNFetchBlob.createFileASCII(path, data, handler)
+      else
+        reject('`data` of ASCII file must be an array contains numbers')
+    }
+    else {
+      RNFetchBlob.createFile(path, data, encoding, handler)
+    }
   })
 }
 
@@ -80,13 +90,13 @@ function writeStream(
 ):Promise<WriteStream> {
   if(!path)
     throw Error('RNFetchBlob could not open file stream with empty `path`')
-  encoding = encoding || 'base64'
+
   return new Promise((resolve, reject) => {
     RNFetchBlob.writeStream(path, encoding || 'base64', append || false, (err, streamId:string) => {
       if(err)
         reject(err)
       else
-        resolve(new WriteStream(streamId))
+        resolve(new WriteStream(streamId, encoding))
     })
   })
 }
@@ -108,8 +118,14 @@ function readStream(
     throw Error('RNFetchBlob could not open file stream with empty `path`')
   encoding = encoding || 'utf8'
   let stream:RNFetchBlobStream = {
+    // parse JSON array when encoding is ASCII
     onData : function(fn) {
-      this._onData = fn
+      if(encoding.toLowerCase() === 'ascii')
+        this._onData = (data) => {
+          fn(JSON.parse(data))
+        }
+      else
+        this._onData = fn
     },
     onError : function(fn) {
       this._onError = fn
@@ -313,7 +329,12 @@ class WriteStream {
   write(data:string) {
     return new Promise((resolve, reject) => {
       try {
-        RNFetchBlob.writeChunk(this.id, data, (error) => {
+        let method = this.encoding === 'ascii' ? 'writeArrayChunk' : 'writeChunk'
+        if(this.encoding.toLocaleLowerCase() === 'ascii' && !Array.isArray(data)) {
+            reject('ascii input data must be an Array')
+            return
+        }
+        RNFetchBlob[method](this.id, data, (error) => {
           if(error)
             reject(error)
           else

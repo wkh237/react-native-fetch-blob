@@ -261,18 +261,44 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
             // still have data in stream
             if(len) {
                 [chunkData appendBytes:(const void *)buf length:len];
-                // TODO : file read progress ?
                 // dispatch data event
                 NSString * encodedChunk = [NSString alloc];
                 if( [[self.encoding lowercaseString] isEqualToString:@"utf8"] ) {
                     encodedChunk = [encodedChunk initWithData:chunkData encoding:NSUTF8StringEncoding];
                 }
+                // when encoding is ASCII, send byte array data
                 else if ( [[self.encoding lowercaseString] isEqualToString:@"ascii"] ) {
-                    encodedChunk = [encodedChunk initWithData:chunkData encoding:NSASCIIStringEncoding];
+                    // RCTBridge only emits string data, so we have to create JSON byte array string
+                    NSString * asciiStr = @"[";
+                    if (chunkData.length > 0)
+                    {
+                        unsigned char *bytePtr = (unsigned char *)[chunkData bytes];
+                        NSInteger byteLen = chunkData.length/sizeof(uint8_t);
+                        for (int i = 0; i < byteLen; i++)
+                        {
+                            uint8_t * byteFromArray = chunkData.bytes;
+                            NSInteger val = bytePtr[i];
+                            if(i+1 < byteLen)
+                                asciiStr = [asciiStr stringByAppendingFormat:@"%d,", val];
+                            else
+                                asciiStr = [asciiStr stringByAppendingFormat:@"%d", val];
+                        }
+                    }
+                    asciiStr = [asciiStr stringByAppendingString:@"]"];
+                    [self.bridge.eventDispatcher
+                     sendDeviceEventWithName:streamEventCode
+                     body:@{
+                            @"event": FS_EVENT_DATA,
+                            @"detail": asciiStr
+                        }
+                     ];
+                    return;
                 }
+                // convert byte array to base64 data chunks
                 else if ( [[self.encoding lowercaseString] isEqualToString:@"base64"] ) {
                     encodedChunk = [chunkData base64EncodedStringWithOptions:0];
                 }
+                // unknown encoding, send erro event
                 else {
                     [self.bridge.eventDispatcher
                         sendDeviceEventWithName:streamEventCode
@@ -676,6 +702,26 @@ RCT_EXPORT_METHOD(createFile:(NSString *)path data:(NSString *)data encoding:(NS
 
 }
 
+// method for create file with ASCII content
+RCT_EXPORT_METHOD(createFileASCII:(NSString *)path data:(NSArray *)dataArray callback:(RCTResponseSenderBlock)callback) {
+    
+    NSFileManager * fm = [NSFileManager defaultManager];
+    NSMutableData * fileContent = [NSMutableData alloc];
+    
+    char bytes[[dataArray count]];
+    for(int i = 0; i < dataArray.count; i++) {
+        bytes[i] = [[dataArray objectAtIndex:i] charValue];
+    }
+    [fileContent appendBytes:bytes length:dataArray.count];
+    BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
+    
+    if(success == YES)
+        callback(@[[NSNull null]]);
+    else
+        callback(@[[NSString stringWithFormat:@"failed to create new file at path %@ please ensure the folder exists"]]);
+    
+}
+
 
 RCT_EXPORT_METHOD(exists:(NSString *)path callback:(RCTResponseSenderBlock)callback) {
     BOOL isDir = NO;
@@ -707,6 +753,18 @@ RCT_EXPORT_METHOD(writeStream:(NSString *)path withEncoding:(NSString *)encoding
     }
     NSString * streamId = [fileStream openWithPath:path encode:encoding appendData:append];
     callback(@[[NSNull null], streamId]);
+}
+
+RCT_EXPORT_METHOD(writeArrayChunk:(NSString *)streamId withArray:(NSArray *)dataArray callback:(RCTResponseSenderBlock) callback) {
+    FetchBlobFS *fs = [[FetchBlobFS getFileStreams] valueForKey:streamId];
+    char bytes[[dataArray count]];
+    for(int i = 0; i < dataArray.count; i++) {
+        bytes[i] = [[dataArray objectAtIndex:i] charValue];
+    }
+    NSMutableData * data = [NSMutableData alloc];
+    [data appendBytes:bytes length:dataArray.count];
+    [fs write:data];
+    callback(@[[NSNull null]]);
 }
 
 RCT_EXPORT_METHOD(writeChunk:(NSString *)streamId withData:(NSString *)data callback:(RCTResponseSenderBlock) callback) {
