@@ -100,7 +100,8 @@ describe('create file API test', (report, done) => {
             key="base64 content test"
             expect={raw}
             actual={d}/>)
-          testASCII()
+          // testASCII()
+          done()
         })
       })
       .catch((err) => {
@@ -225,7 +226,6 @@ describe('write stream API test', (report, done) => {
         d2 += chunk
       })
       rs.onEnd(() => {
-        console.log(RNFetchBlob.base64.encode(expect),d2)
         report(
           <Assert key="file should be overwritten by base64 encoded data"
             expect={RNFetchBlob.base64.encode(expect)}
@@ -292,23 +292,76 @@ describe('cp API test', {timeout : 10000},(report, done) => {
   })
 })
 
-describe('Download file to `download` folder', (report, done) => {
-  RNFetchBlob.fs
-    .getSystemDirs()
+describe('ASCII data test', (report, done) => {
+  let p = null
+  let expect = 'fetch-blob-'+Date.now()
+  fs.getSystemDirs()
     .then((dirs) => {
-      return RNFetchBlob.config({
-        path : dirs.DownloadDir + '/download-test.png'
-      })
-      .fetch('GET', `${TEST_SERVER_URL}/public/github.png`, {
-        Authorization : 'Bearer abde123eqweje'
-      })
+      p = dirs.DocumentDir + '/ASCII-test-' + Date.now()
+      return fs.createFile(p, 'utf8')
     })
-    .then((resp) => {
-      report(<Info key="image in download path">
-        <Image
-          style={styles.image}
-          source={{uri : 'file://' + dirs.DownloadDir + '/download-test.png'}}/>
-      </Info>)
-      done()
+    .then(() => {
+      return fs.writeStream(p, 'ascii', false)
+    })
+    .then((ofstream) => {
+      let qq = []
+      for(let i=0;i<expect.length;i++) {
+        qq.push(expect[i].charCodeAt(0))
+        ofstream.write([expect[i].charCodeAt(0)])
+      }
+      ofstream.write(['g'.charCodeAt(0), 'g'.charCodeAt(0)])
+      return ofstream.close()
+    })
+    .then(() => {
+      let ifstream = fs.readStream(p, 'ascii')
+      let res = []
+      ifstream.onData((chunk) => {
+        res = res.concat(chunk)
+      })
+      ifstream.onEnd(() => {
+        res = res.map((byte) => {
+          return String.fromCharCode(byte)
+        }).join('')
+        report(
+          <Assert key="data written in ASCII format should correct"
+            expect={expect + 'gg'}
+            actual={res}
+          />)
+        done()
+      })
     })
 })
+
+describe('ASCII file test', (report, done) => {
+  let p = ''
+  let filename = ''
+  let expect = []
+  let base64 = RNFetchBlob.base64
+  fs.getSystemDirs().then((dirs) => {
+    p = dirs.DocumentDir + '/'
+    filename = 'ASCII-file-test' + Date.now() + '.txt'
+    expect = 'ascii test ' + Date.now()
+    return fs.createFile(p + filename, getASCIIArray(expect), 'ascii')
+  })
+  .then(() => {
+    let rs = fs.readStream(p + filename, 'base64')
+    let actual = ''
+    rs.onData((chunk) => {
+      actual += chunk
+    })
+    rs.onEnd(() => {
+      report(<Assert key="written data verify"
+        expect={expect}
+        actual={base64.decode(actual)}/>)
+      done()
+    })
+  })
+})
+
+function getASCIIArray(str) {
+  let r = []
+  for(let i=0;i<str.length;i++) {
+    r.push(str[i].charCodeAt(0))
+  }
+  return r
+}

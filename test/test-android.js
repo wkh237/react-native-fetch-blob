@@ -16,7 +16,7 @@ const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
   group : 'Android only functions',
-  run : true,
+  run : Platform.OS === 'android',
   expand : false,
 })
 const { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles } = prop()
