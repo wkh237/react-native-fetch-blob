@@ -60,6 +60,10 @@ if(!RNFetchBlob || !RNFetchBlob.fetchBlobForm || !RNFetchBlob.fetchBlob) {
   )
 }
 
+function wrap(path:string):string {
+  return 'RNFetchBlob-file://' + path
+}
+
 /**
  * Calling this method will inject configurations into followed `fetch` method.
  * @param  {RNFetchBlobConfig} options
@@ -253,4 +257,5 @@ export default {
   config,
   session,
   fs,
+  wrap,
 }
