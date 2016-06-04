@@ -2,11 +2,15 @@
 
 ## v0.5.0 Work In Progress README.md
 
-Module for upload, download, and access files in JS context. Also has file stream API for read/write large files.
+Module for upload, download, and files access in JS context. Supports file stream read/write for process large files.
 
-If you're getting into trouble with image or file server that requires specific fields in the header, or you're having problem with `fetch` API when sending/receiving binary data, you might try this module as well.
+**Why do we need this**
 
-See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854) for the reason why I made this module.
+At this moment, React Native does not support `Blob` object yet, so if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854). 
+
+Therefore you may getting into trouble sometime. For example, you're going to display an image but the file server requires a specific field(for example, "Authorization") in headers or body, you can't just pass the image uri to `Image` component because that will probably returns a 401 response. With help of this module, you can send a HTTP request with any headers, and decide how to handle the response data. It can be just simply converted into BASE64 string, or store to a file directly so that you can read it by file stream or use it's path. 
+
+This module is designed for these kind of purpose, and also be a substitution of `blob`, so there's a set of file access API added after `v0.5.0`, including basic CRUD method, and file stream reader and writer.
 
 **Pre v0.5.0 Users**
 
