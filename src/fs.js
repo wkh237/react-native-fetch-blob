@@ -163,7 +163,14 @@ function mkdir(path:string):Promise {
  * @return {RNFetchBlobFile}
  */
 function stat(path:string):Promise<RNFetchBlobFile> {
-
+  return new Promise((resolve, reject) => {
+    RNFetchBlob.stat(path, (err, stat) => {
+      if(err)
+        reject(err)
+      else
+        resolve(stat)
+    })
+  })
 }
 
 /**
@@ -175,7 +182,14 @@ function stat(path:string):Promise<RNFetchBlobFile> {
  * @return {Promise}
  */
 function scanFile(paths:Array<string>, mimes: Array<string>):Promise {
-
+  return new Promise((resolve, reject) => {
+    RNFetchBlob.scanFile(path, (err) => {
+      if(err)
+        reject(err)
+      else
+        resolve()
+    })
+  })
 }
 
 function cp(path:string, dest:string):Promise<boolean> {
@@ -201,7 +215,14 @@ function mv(path:string, dest:string):Promise<boolean> {
 }
 
 function lstat(path:string):Promise<Array<RNFetchBlobFile>> {
-
+  return new Promise((resolve, reject) => {
+    RNFetchBlob.lstat(path, (err, stat) => {
+      if(err)
+        reject(err)
+      else
+        resolve(stat)
+    })
+  })
 }
 
 function ls(path:string):Promise<Array<String>> {

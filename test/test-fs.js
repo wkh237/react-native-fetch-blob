@@ -24,12 +24,13 @@ let dirs = null
 describe('Get storage folders', (report, done) => {
   fs.getSystemDirs().then((resp) => {
     dirs = resp
+    console.log(dirs)
     report(
       <Assert key="system folders should exists" expect={resp} comparer={Comparer.exists} />,
       <Assert key="check properties"
-        expect={resp}
+        expect={['DocumentDir', 'CacheDir']}
         comparer={Comparer.hasProperties}
-        actual={['DocumentDir', 'CacheDir', 'DCIMDir', 'DownloadDir']}
+        actual={dirs}
       />,
       <Info key="System Folders">
         <Text>{`${JSON.stringify(dirs)}`}</Text>
@@ -374,6 +375,36 @@ describe('format conversion', (report, done) => {
       })
     })
   })
+})
+
+describe('stat and lstat test', (report, done) => {
+  let p = ''
+  let dirs = null
+  let file = null
+  fs.getSystemDirs().then((resp) => {
+    dirs = resp
+    p = dirs.DocumentDir + '/' + 'ls-stat-test' + Date.now()
+    return fs.lstat(dirs.DocumentDir)
+  })
+  // stat a folder
+  .then((stat) => {
+    report(
+      <Assert key="result should be an array"
+        expect={true}
+        actual={Array.isArray(stat)}/>)
+    file = stat[0].path
+    return fs.stat(file)
+  })
+  .then((stat) => {
+    console.log(stat)
+    report(
+      <Assert key="should have properties"
+        expect={['size', 'type', 'lastModified', 'filename', 'path']}
+        comparer={Comparer.hasProperties}
+        actual={stat}/>)
+    done()
+  })
+
 })
 
 function getASCIIArray(str) {

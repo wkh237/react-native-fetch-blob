@@ -18,10 +18,12 @@ export default {
   isArray : (a, b) => Array.isArray(a),
   hasProperties : (a, b) => {
     let res = true
+    let c = 0
     for(let i in a) {
       let found = false
       for(let j in b) {
-        if(b[j] === i) {
+        c++
+        if(j === a[i]) {
           found = true
           break;
         }
