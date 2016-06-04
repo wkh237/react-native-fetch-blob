@@ -344,7 +344,7 @@ When calling `readStream` method, you have to `open` the stream, and start to re
 
 ```js
 let data = ''
-let ifstream = RNFetchBlob.readStream(
+RNFetchBlob.readStream(
     // encoding, should be one of `base64`, `utf8`, `ascii`
     'base64',
     // file path
@@ -352,16 +352,19 @@ let ifstream = RNFetchBlob.readStream(
     // (optional) buffer size, default to 4096 (4095 for BASE64 encoded data)
     // when reading file in BASE64 encoding, buffer size must be multiples of 3.
     4095)
-ifstream.onData((chunk) => {
-  // when encoding is `ascii`, chunk will be an array contains numbers
-  // otherwise it will be a string
-  data += chunk
-})
-ifstream.onError((err) => {
-  console.log('oops', err)
-})
-ifstream.onEnd(() => {  
-  <Image source={{ uri : 'data:image/png,base64' + data }}
+.then((ifstream) => {
+    ifstream.open()
+    ifstream.onData((chunk) => {
+      // when encoding is `ascii`, chunk will be an array contains numbers
+      // otherwise it will be a string
+      data += chunk
+    })
+    ifstream.onError((err) => {
+      console.log('oops', err)
+    })
+    ifstream.onEnd(() => {  
+      <Image source={{ uri : 'data:image/png,base64' + data }}
+    })
 })
 ```
 
@@ -496,10 +499,10 @@ RNFetchBlob.base64.decode(data)
 
 This method returns common used folders:
 
-- DocumentDir 
-- CacheDir
-- DCIMDir (Android Only)
-- DownloadDir (Android Only)
+* DocumentDir 
+* CacheDir
+* DCIMDir (Android Only)
+* DownloadDir (Android Only)
 
 example 
 
@@ -580,6 +583,44 @@ Buffer size of read stream, default to `4096` and `4095`(when encoding is `base6
 
 `readStream` returns a promise which will resolve `RNFetchBlobReadStream`.
 
+```js
+// read using `utf8` 
+RNFetchBlob.fs.readStream(PATH_TO_READ, 'utf8')
+    .then((stream) => {
+        let data = ''
+        stream.open()
+        stream.onData((chunk) => {
+            chunk += data
+        })
+        stream.onEnd(() => {
+            console.log(data)
+        })
+    })
+// read using `ascii` 
+RNFetchBlob.fs.readStream(PATH_TO_READ, 'ascii')
+    .then((stream) => {
+        let data = []
+        stream.open()
+        stream.onData((chunk) => {
+            data = data.concat(data)
+        })
+        stream.onEnd(() => {
+            console.log(data)
+        })
+    })
+// read using `base64` 
+RNFetchBlob.fs.readStream(PATH_TO_READ, 'base64')
+    .then((stream) => {
+        let data = ''
+        stream.open()
+        stream.onData((chunk) => {
+            data += chunk
+        })
+        stream.onEnd(() => {
+            console.log(data)
+        })
+    })
+```
 
 #### mkdir(path:string):Promise
 
