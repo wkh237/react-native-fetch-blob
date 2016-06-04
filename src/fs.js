@@ -10,6 +10,10 @@ import {
   DeviceEventEmitter,
   NativeAppEventEmitter,
 } from 'react-native'
+import RNFetchBlobSession from './class/RNFetchBlobSession'
+import RNFetchBlobWriteStream from './class/RNFetchBlobWriteStream'
+import RNFetchBlobReadStream from './class/RNFetchBlobReadStream'
+import RNFetchBlobFile from './class/RNFetchBlobFile'
 import type {
   RNFetchBlobNative,
   RNFetchBlobConfig,
@@ -87,16 +91,17 @@ function writeStream(
   path : string,
   encoding : 'utf8' | 'ascii' | 'base64',
   append? : ?bool,
-):Promise<WriteStream> {
+):Promise<RNFetchBlobWriteStream> {
   if(!path)
     throw Error('RNFetchBlob could not open file stream with empty `path`')
-
+  encoding = encoding || 'utf8'
+  append = append || false
   return new Promise((resolve, reject) => {
     RNFetchBlob.writeStream(path, encoding || 'base64', append || false, (err, streamId:string) => {
       if(err)
         reject(err)
       else
-        resolve(new WriteStream(streamId, encoding))
+        resolve(new RNFetchBlobWriteStream(streamId, encoding))
     })
   })
 }
@@ -112,55 +117,15 @@ function readStream(
   path : string,
   encoding : 'utf8' | 'ascii' | 'base64',
   bufferSize? : ?number
-):RNFetchBlobStream {
-
-  if(!path)
-    throw Error('RNFetchBlob could not open file stream with empty `path`')
-  encoding = encoding || 'utf8'
-  let stream:RNFetchBlobStream = {
-    // parse JSON array when encoding is ASCII
-    onData : function(fn) {
-      if(encoding.toLowerCase() === 'ascii')
-        this._onData = (data) => {
-          fn(JSON.parse(data))
-        }
-      else
-        this._onData = fn
-    },
-    onError : function(fn) {
-      this._onError = fn
-    },
-    onEnd : function(fn) {
-      this._onEnd = fn
-    },
-  }
-
-  // register for file stream event
-  let subscription = emitter.addListener(`RNFetchBlobStream+${path}`, (e) => {
-
-    let {event, detail} = e
-    if(stream._onData && event === 'data')
-      stream._onData(detail)
-    else if (stream._onEnd && event === 'end') {
-      stream._onEnd(detail)
-    }
-    else {
-      if(stream._onError)
-        stream._onError(detail)
-      else
-        throw new Error(detail)
-    }
-    // when stream closed or error, remove event handler
-    if (event === 'error' || event === 'end') {
-      subscription.remove()
-    }
-  })
-
-  RNFetchBlob.readStream(path, encoding, bufferSize || 0)
-  return stream
-
+):Promise<RNFetchBlobReadStream> {
+  return Promise.resolve(new RNFetchBlobReadStream(path, encoding, bufferSize))
 }
 
+/**
+ * Create a directory.
+ * @param  {string} path Path of directory to be created
+ * @return {Promise}
+ */
 function mkdir(path:string):Promise {
 
   return new Promise((resolve, reject) => {
@@ -171,6 +136,27 @@ function mkdir(path:string):Promise {
         resolve()
     })
   })
+
+}
+
+/**
+ * Show statistic data of a path.
+ * @param  {string} path Target path
+ * @return {RNFetchBlobFile}
+ */
+function stat(path:string):Promise<RNFetchBlobFile> {
+
+}
+
+/**
+ * Android only method, request media scanner to scan the file.
+ * @param  {Array<string>} paths Paths of files to be scanned.
+ * @param  {Array<string>} mimes Optional array of MIME types for each path.
+ *                               If mimeType is null, then the mimeType will be
+ *                               inferred from the file extension.
+ * @return {Promise}
+ */
+function scanFile(paths:Array<string>, mimes: Array<string>):Promise {
 
 }
 
@@ -253,110 +239,6 @@ function isDir(path:string):Promise<bool, bool> {
       reject(err)
     }
   })
-
-}
-
-
-/**
- * Session class
- * @class RNFetchBlobSession
- */
-class RNFetchBlobSession {
-
-  add : (path:string) => RNFetchBlobSession;
-  remove : (path:string) => RNFetchBlobSession;
-  dispose : () => Promise;
-  list : () => Array<string>;
-  name : string;
-
-  constructor(name:string, list:Array<string>) {
-    this.name = name
-    if(!sessions[name]) {
-      if(Array.isArray(list))
-      sessions[name] = list
-      else
-      sessions[name] = []
-    }
-  }
-
-  add(path:string):RNFetchBlobSession {
-    sessions[this.name].push(path)
-    return this
-  }
-
-  remove(path:string):RNFetchBlobSession {
-    let list = sessions[this.name]
-    for(let i in list) {
-      if(list[i] === path) {
-        sessions[this.name].splice(i, 1)
-        break;
-      }
-    }
-    return this
-  }
-
-  list():Array<string> {
-    return sessions[this.name]
-  }
-
-  dispose():Promise {
-    return new Promise((resolve, reject) => {
-      RNFetchBlob.removeSession(sessions[this.name], (err) => {
-        if(err)
-          reject(err)
-        else {
-          delete sessions[this.name]
-          resolve()
-        }
-      })
-    })
-  }
-
-}
-
-class WriteStream {
-
-  id : string;
-  encoding : string;
-  append : bool;
-
-  constructor(streamId:string, encoding:string, append:string) {
-    this.id = streamId
-    this.encoding = encoding
-    this.append = append
-  }
-
-  write(data:string) {
-    return new Promise((resolve, reject) => {
-      try {
-        let method = this.encoding === 'ascii' ? 'writeArrayChunk' : 'writeChunk'
-        if(this.encoding.toLocaleLowerCase() === 'ascii' && !Array.isArray(data)) {
-            reject('ascii input data must be an Array')
-            return
-        }
-        RNFetchBlob[method](this.id, data, (error) => {
-          if(error)
-            reject(error)
-          else
-            resolve()
-        })
-      } catch(err) {
-        reject(err)
-      }
-    })
-  }
-
-  close() {
-    return new Promise((resolve, reject) => {
-      try {
-        RNFetchBlob.closeStream(this.id, () => {
-          resolve()
-        })
-      } catch (err) {
-        reject(err)
-      }
-    })
-  }
 
 }
 

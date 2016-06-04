@@ -47,37 +47,43 @@ describe('Download file to storage with custom file extension', (report, done) =
 
 describe('Read cached file via file stream', (report, done) => {
   let data = 'data:image/png;base64, '
-  let stream = fs.readStream(tmpFilePath, 'base64')
-  stream.onData((chunk) => {
-    data += chunk
-  })
-  stream.onEnd(() => {
-    report(
-      <Assert key="image should have value"
-        expect={0}
-        comparer={Comparer.smaller}
-        actual={data.length}/>,
-      <Info key="image from read stream">
-        <Image source={{uri : data}} style={styles.image}/>
-      </Info>)
-    done()
-  })
-  stream.onError((err) => {
-    console.log('stream err', err)
-  })
+  fs.readStream(tmpFilePath, 'base64')
+    .then((stream) => {
+      stream.open()
+      stream.onData((chunk) => {
+        data += chunk
+      })
+      stream.onEnd(() => {
+        report(
+          <Assert key="image should have value"
+            expect={0}
+            comparer={Comparer.smaller}
+            actual={data.length}/>,
+          <Info key="image from read stream">
+            <Image source={{uri : data}} style={styles.image}/>
+          </Info>)
+        done()
+      })
+      stream.onError((err) => {
+        console.log('stream err', err)
+      })
+    })
 })
 
 describe('File stream reader error should be able to handled', (report, done) => {
-  let stream = fs.readStream('^_^ not exists', 'base64')
-  stream.onError((err) => {
-    report(<Info key="error message">
-      <Text>
-        {err}
-      </Text>
-    </Info>)
-    done()
+  fs.readStream('^_^ not exists', 'base64')
+    .then((stream) => {
+      stream.open()
+      stream.onError((err) => {
+        report(<Info key="error message">
+          <Text>
+            {err}
+          </Text>
+        </Info>)
+        done()
 
-  })
+      })
+    })
 })
 
 let localFile = null

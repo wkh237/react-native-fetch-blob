@@ -77,51 +77,34 @@ describe('create file API test', (report, done) => {
 
   fs.createFile(p, raw, 'utf8')
     .then(() => {
-      let stream = fs.readStream(p, 'utf8')
       let d = ''
-      stream.onData((chunk) => {
-        d += chunk
-      })
-      stream.onEnd(() => {
-        report(<Assert key="utf8 content test"  expect={raw} actual={d}/>)
-        testBase64()
+      fs.readStream(p, 'utf8').then((stream) => {
+        stream.open()
+        stream.onData((chunk) => {
+          d += chunk
+        })
+        stream.onEnd(() => {
+          report(<Assert key="utf8 content test"  expect={raw} actual={d}/>)
+          testBase64()
+        })
       })
     })
   function testBase64() {
     fs.createFile(p + '-base64', RNFetchBlob.base64.encode(raw), 'base64')
       .then(() => {
-        let stream = fs.readStream(p + '-base64', 'utf8')
-        let d = ''
-        stream.onData((chunk) => {
-          d += chunk
-        })
-        stream.onEnd(() => {
-          report(<Assert
-            key="base64 content test"
-            expect={raw}
-            actual={d}/>)
-          // testASCII()
-          done()
-        })
-      })
-      .catch((err) => {
-        console.log(err)
-      })
-  }
-  function testASCII() {
-    fs.createFile(p + '-ascii', raw, 'ascii')
-      .then(() => {
-        let stream = fs.readStream(p + '-ascii', 'ascii')
-        let d = ''
-        stream.onData((chunk) => {
-          d += chunk
-        })
-        stream.onEnd(() => {
-          report(<Assert
-            key="ASCII content test"
-            expect={raw}
-            actual={d}/>)
-          done()
+        fs.readStream(p + '-base64', 'utf8').then((stream) => {
+            stream.open()
+            let d = ''
+            stream.onData((chunk) => {
+              d += chunk
+            })
+            stream.onEnd(() => {
+              report(<Assert
+                key="base64 content test"
+                expect={raw}
+                actual={d}/>)
+                done()
+              })
         })
       })
       .catch((err) => {
@@ -197,17 +180,19 @@ describe('write stream API test', (report, done) => {
       return ws.close()
     })
     .then(() => {
-      let rs = fs.readStream(p, 'utf8')
       let d1 = ''
-      rs.onData((chunk) => {
-        d1 += chunk
-      })
-      rs.onEnd(() => {
-        report(
-          <Assert key="write data async test"
-            expect={'123456789011121314'}
-            actual={d1}/>)
-          base64Test()
+      fs.readStream(p, 'utf8').then((stream) => {
+        stream.open()
+        stream.onData((chunk) => {
+          d1 += chunk
+        })
+        stream.onEnd(() => {
+          report(
+            <Assert key="write data async test"
+              expect={'123456789011121314'}
+              actual={d1}/>)
+            base64Test()
+        })
       })
     })
   function base64Test() {
@@ -220,12 +205,15 @@ describe('write stream API test', (report, done) => {
       return ws.close()
     })
     .then(() => {
-      let rs = fs.readStream(p, 'base64')
+      return fs.readStream(p, 'base64')
+    })
+    .then((stream) => {
       let d2 = ''
-      rs.onData((chunk) => {
+      stream.open()
+      stream.onData((chunk) => {
         d2 += chunk
       })
-      rs.onEnd(() => {
+      stream.onEnd(() => {
         report(
           <Assert key="file should be overwritten by base64 encoded data"
             expect={RNFetchBlob.base64.encode(expect)}
@@ -254,14 +242,16 @@ describe('mv API test', {timeout : 10000},(report, done) => {
   })
   .then((files) => {
     report(<Assert key="file name should be correct" expect={'moved'} actual={files[0]}/>)
-    let rs = fs.readStream(dest + '/moved')
-    let actual = ''
-    rs.onData((chunk) => {
-      actual += chunk
-    })
-    rs.onEnd(() => {
-      report(<Assert key="file content should be correct" expect={content} actual={actual}/>)
-      done()
+    fs.readStream(dest + '/moved').then((rs) => {
+      rs.open()
+      let actual = ''
+      rs.onData((chunk) => {
+        actual += chunk
+      })
+      rs.onEnd(() => {
+        report(<Assert key="file content should be correct" expect={content} actual={actual}/>)
+        done()
+      })
     })
   })
 })
@@ -280,14 +270,16 @@ describe('cp API test', {timeout : 10000},(report, done) => {
   })
   .then((files) => {
     report(<Assert key="file name should be correct" expect={'cp'} actual={files[0]}/>)
-    let rs = fs.readStream(dest + '/cp')
-    let actual = ''
-    rs.onData((chunk) => {
-      actual += chunk
-    })
-    rs.onEnd(() => {
-      report(<Assert key="file content should be correct" expect={content} actual={actual}/>)
-      done()
+    fs.readStream(dest + '/cp').then((rs) => {
+      rs.open()
+      let actual = ''
+      rs.onData((chunk) => {
+        actual += chunk
+      })
+      rs.onEnd(() => {
+        report(<Assert key="file content should be correct" expect={content} actual={actual}/>)
+        done()
+      })
     })
   })
 })
@@ -304,30 +296,30 @@ describe('ASCII data test', (report, done) => {
       return fs.writeStream(p, 'ascii', false)
     })
     .then((ofstream) => {
-      let qq = []
       for(let i=0;i<expect.length;i++) {
-        qq.push(expect[i].charCodeAt(0))
         ofstream.write([expect[i].charCodeAt(0)])
       }
       ofstream.write(['g'.charCodeAt(0), 'g'.charCodeAt(0)])
       return ofstream.close()
     })
     .then(() => {
-      let ifstream = fs.readStream(p, 'ascii')
-      let res = []
-      ifstream.onData((chunk) => {
-        res = res.concat(chunk)
-      })
-      ifstream.onEnd(() => {
-        res = res.map((byte) => {
-          return String.fromCharCode(byte)
-        }).join('')
-        report(
-          <Assert key="data written in ASCII format should correct"
-            expect={expect + 'gg'}
-            actual={res}
-          />)
-        done()
+      fs.readStream(p, 'ascii').then((ifstream) => {
+        let res = []
+        ifstream.open()
+        ifstream.onData((chunk) => {
+          res = res.concat(chunk)
+        })
+        ifstream.onEnd(() => {
+          res = res.map((byte) => {
+            return String.fromCharCode(byte)
+          }).join('')
+          report(
+            <Assert key="data written in ASCII format should correct"
+              expect={expect + 'gg'}
+              actual={res}
+            />)
+              done()
+            })
       })
     })
 })
@@ -344,16 +336,42 @@ describe('ASCII file test', (report, done) => {
     return fs.createFile(p + filename, getASCIIArray(expect), 'ascii')
   })
   .then(() => {
-    let rs = fs.readStream(p + filename, 'base64')
-    let actual = ''
-    rs.onData((chunk) => {
-      actual += chunk
+    fs.readStream(p + filename, 'base64').then((rs) => {
+      let actual = ''
+      rs.open()
+      rs.onData((chunk) => {
+        actual += chunk
+      })
+      rs.onEnd(() => {
+        report(<Assert key="written data verify"
+          expect={expect}
+          actual={base64.decode(actual)}/>)
+        done()
+      })
     })
-    rs.onEnd(() => {
-      report(<Assert key="written data verify"
-        expect={expect}
-        actual={base64.decode(actual)}/>)
-      done()
+  })
+})
+
+describe('format conversion', (report, done) => {
+  let p = ''
+  fs.getSystemDirs().then((dirs) => {
+    p = dirs.DocumentDir + '/foo'
+    return fs.createFile(p, [102, 111, 111], 'ascii')
+  })
+  .then(() => {
+    fs.readStream(p, 'utf8').then((stream) => {
+      let res = []
+      stream.open()
+      stream.onData((chunk) => {
+        res+=chunk
+      })
+      stream.onEnd(() => {
+        report(
+          <Assert key="write utf8 and read by ascii"
+            expect="foo"
+            actual={res}/>)
+            done()
+      })
     })
   })
 })
