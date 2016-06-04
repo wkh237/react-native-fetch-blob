@@ -2,7 +2,7 @@
 
 ## v0.5.0 Work In Progress README.md
 
-Module for upload, download, and access files in JS context. Also provides file stream API for read/write large files.
+Module for upload, download, and access files in JS context. Also has file stream API for read/write large files.
 
 If you're getting into trouble with image or file server that requires specific fields in the header, or you're having problem with `fetch` API when sending/receiving binary data, you might try this module as well.
 
@@ -623,11 +623,20 @@ RNFetchBlob.fs.readStream(PATH_TO_READ, 'base64')
 
 #### mkdir(path:string):Promise
 
-TODO
+Create a directory named `path`
 
-#### ls(path:string):Promise
+```js
+RNFetchBlob.fs.mkdir(PATH_TO_CREATE)
+.then(() => { ...})
+.catch((err) => { ...})
+```
 
-TODO
+#### ls(path:string):Promise<Array<String>>
+
+List files and directories in a `path`
+
+```js
+```
 
 #### mv(from:string, to:string):Promise
 
