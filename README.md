@@ -524,13 +524,13 @@ RNFetchBlob.getSystemDirs().then((dirs) => {
 ```
 > If you're going to make downloaded file visible in Android `Downloads` app, please see [Show Downloaded File and Notification in Android Downloads App](#user-content-show-downloaded-file-and-notifiction-in-android-downloads-app).
 
-#### createFile(path, data, encoding):Promise
+### createFile(path, data, encoding):Promise
 
-##### path:`string`
+#### path:`string`
 The path which this new file will be created.
-##### data:`string` | `Array<number>`
+#### data:`string` | `Array<number>`
 Content of the new file, when `encoding` is `ascii`, this argument shoud be an array contains number 0~255.
-##### encoding:`utf8` | `base64` | `ascii`
+#### encoding:`utf8` | `base64` | `ascii`
 Encoding of content.
 
 the following expressions are equivalent.
@@ -543,13 +543,13 @@ fs.createFile(NEW_FILE_PATH, [102, 111, 111], 'ascii')
 fs.createFile(NEW_FILE_PATH, base64.encode('foo'), 'base64')
 ```
 
-#### writeStream(path:string, encoding:string, append:boolean):Promise<WriteStream>
+### writeStream(path:string, encoding:string, append:boolean):Promise<WriteStream>
 
-##### path:`string`
+#### path:`string`
 The path to the file the stream is writing to.
-##### encoding:`utf8` | `base64` | `ascii`
+#### encoding:`utf8` | `base64` | `ascii`
 Encoding of input data.
-##### append:`boolean`(optional, default to `false`)
+#### append:`boolean`(optional, default to `false`)
 Will new data append after existing file or not.
 
 Calling `writeStream` method will returns a Promise, which resolves a `RNFetchBlobWriteSteam` instance when stream opened successfully.
@@ -679,13 +679,11 @@ RNFetchBlob.fs.unlink(path)
 .catch((err) => { ... })
 ```
 
-### Types
+## Types
 
 ---
 
-#### RNFetchBlobConfig
-
----
+### RNFetchBlobConfig
 
 A set of configurations that will be injected into a `fetch` method, with the following properties.
 
@@ -705,9 +703,7 @@ A set of configurations that will be injected into a `fetch` method, with the fo
 
 ---
 
-#### RNFetchBlobResponse
-
----
+### RNFetchBlobResponse
 
 When `fetch` success, it resolve a `FetchBlobResponse` object as first argument. `FetchBlobResponse` object has the following methods (these method are synchronous, so you might take quite a performance impact if the file is big)
 
@@ -729,9 +725,7 @@ resp.session('session-name')
 
 ---
 
-#### RNFetchBlobSession
-
----
+### RNFetchBlobSession
 
 A `session` is an object that helps you manage files. It simply main a list of file path and let you use `dispose()`to delete files in this session once and for all.
 
