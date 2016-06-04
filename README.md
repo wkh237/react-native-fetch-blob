@@ -442,9 +442,9 @@ You can also group the requests by using `session` API, and use `dispose` to rem
 
 ## API
 
-#### `config(options:RNFetchBlobConfig):fetch`
-
 ---
+
+### `config(options:RNFetchBlobConfig):fetch`
 
 `0.5.0`
 
@@ -452,9 +452,9 @@ Config API was introduced in `v0.5.0` which provides some options for the `fetch
 
 see [RNFetchBlobConfig](#user-content-rnfetchblobconfig)
 
-#### `fetch(method, url, headers, body):Promise<FetchBlobResponse>`
-
 ---
+
+### `fetch(method, url, headers, body):Promise<FetchBlobResponse>`
 
 `legacy`
 
@@ -470,9 +470,9 @@ Headers of HTTP request, value of headers should be `stringified`, if you're upl
 Body of the HTTP request, body can either be a BASE64 string, or an array contains object elements, each element have 2  required property `name`, and `data`, and 1 optional property `filename`, once `filename` is set, content in `data` property will be consider as BASE64 string that will be converted into byte array later.
 When body is a base64 string , this string will be converted into byte array in native code, and the request body will be sent as `application/octet-stream`.
 
-#### `fetch(...).progress(eventListener):Promise<FetchBlobResponse>`
-
 ---
+
+### `fetch(...).progress(eventListener):Promise<FetchBlobResponse>`
 
 `0.4.2`
 
@@ -486,9 +486,10 @@ A function that triggers when there's data received/sent, first argument is the 
 
 TODO
 
-#### `base64`
-
 ---
+
+### `base64`
+
 
 `0.4.2`
 
@@ -499,9 +500,9 @@ RNFetchBlob.base64.encode(data)
 RNFetchBlob.base64.decode(data)
 ```
 
-#### `fs`
-
 ---
+
+### `fs`
 
 `0.5.0`
 
@@ -525,11 +526,11 @@ RNFetchBlob.getSystemDirs().then((dirs) => {
 
 #### createFile(path, data, encoding):Promise
 
-#### path:`string`
+##### path:`string`
 The path which this new file will be created.
-#### data:`string` | `Array<number>`
+##### data:`string` | `Array<number>`
 Content of the new file, when `encoding` is `ascii`, this argument shoud be an array contains number 0~255.
-#### encoding:`utf8` | `base64` | `ascii`
+##### encoding:`utf8` | `base64` | `ascii`
 Encoding of content.
 
 the following expressions are equivalent.
@@ -544,11 +545,11 @@ fs.createFile(NEW_FILE_PATH, base64.encode('foo'), 'base64')
 
 #### writeStream(path:string, encoding:string, append:boolean):Promise<WriteStream>
 
-#### path:`string`
+##### path:`string`
 The path to the file the stream is writing to.
-#### encoding:`utf8` | `base64` | `ascii`
+##### encoding:`utf8` | `base64` | `ascii`
 Encoding of input data.
-#### append:`boolean`(optional, default to `false`)
+##### append:`boolean`(optional, default to `false`)
 Will new data append after existing file or not.
 
 Calling `writeStream` method will returns a Promise, which resolves a `RNFetchBlobWriteSteam` instance when stream opened successfully.
@@ -580,11 +581,11 @@ RNFetchBlob.fs.writeStream(PATH_TO_WRITE, 'base64')
 
 #### readStream(path, encoding, bufferSize):Promise<ReadStream>
 
-#### path:`string`
+##### path:`string`
 The path to the file the stream is reading from.
-#### encoding:`string`
+##### encoding:`string`
 Encoding of the data.
-#### bufferSize:`number`(optional)
+##### bufferSize:`number`(optional)
 Buffer size of read stream, default to `4096` and `4095`(when encoding is `base64`)
 
 `readStream` returns a promise which will resolve `RNFetchBlobReadStream`.
@@ -680,7 +681,11 @@ RNFetchBlob.fs.unlink(path)
 
 ### Types
 
+---
+
 #### RNFetchBlobConfig
+
+---
 
 A set of configurations that will be injected into a `fetch` method, with the following properties.
 
@@ -698,8 +703,11 @@ A set of configurations that will be injected into a `fetch` method, with the fo
   - mediaScannable : A `boolean` value, see [Officail Document](https://developer.android.com/reference/android/app/DownloadManager.html#addCompletedDownload(java.lang.String, java.lang.String, boolean, java.lang.String, java.lang.String, long, boolean))
   - notification : A `boolean` value decide whether show a notification when download complete.
 
+---
 
 #### RNFetchBlobResponse
+
+---
 
 When `fetch` success, it resolve a `FetchBlobResponse` object as first argument. `FetchBlobResponse` object has the following methods (these method are synchronous, so you might take quite a performance impact if the file is big)
 
@@ -719,7 +727,11 @@ RNFetchBlob.session('session-name').add(resp.path())
 resp.session('session-name')
 ```
 
+---
+
 #### RNFetchBlobSession
+
+---
 
 A `session` is an object that helps you manage files. It simply main a list of file path and let you use `dispose()`to delete files in this session once and for all.
 
@@ -736,11 +748,11 @@ A `session` is an object that helps you manage files. It simply main a list of f
 
 | Version | |
 |---|---|
-| ~0.3.0 | Upload/Download octet-stream and form-data |
-| 0.4.0 | Add base-64 encode/decode library and API |
-| 0.4.1 | Fixe upload form-data missing file extension problem on Android |
-| 0.4.2 | Supports upload/download progress |
 | 0.5.0 | Upload/download with direct access to file storage, and also added file access APIs |
+| 0.4.2 | Supports upload/download progress |
+| 0.4.1 | Fixe upload form-data missing file extension problem on Android |
+| 0.4.0 | Add base-64 encode/decode library and API |
+| ~0.3.0 | Upload/Download octet-stream and form-data |
 
 ### TODOs
 
