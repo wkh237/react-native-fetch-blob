@@ -106,17 +106,25 @@ NSMutableDictionary *fileStreams = nil;
     return err == nil;
 }
 
-+ (NSData *) stat:(NSString *) path error:(NSError **) error{
-    NSMutableData *stat = [[NSMutableData alloc]init];
++ (NSDictionary *) stat:(NSString *) path error:(NSError **) error{
+    NSMutableDictionary *stat = [[NSMutableDictionary alloc] init];
+    BOOL isDir = NO;
     NSFileManager * fm = [NSFileManager defaultManager];
-    NSData * info = [fm attributesOfItemAtPath:path error:&error];
-    [stat setValue:[info valueForKey:NSFileSystemSize] forKey:@"size"];
-    [stat setValue:path forKey:@"path"];
-    [stat setValue:[path stringByDeletingPathExtension] forKey:@"filename"];
+    if([fm fileExistsAtPath:path isDirectory:&isDir] == NO) {
+        return nil;
+    }
+    NSDictionary * info = [fm attributesOfItemAtPath:path error:&error];
+    NSString * size = [NSString stringWithFormat:@"%d", [info fileSize]];
+    NSString * filename = [path lastPathComponent];
     NSDate * lastModified;
     [[NSURL fileURLWithPath:path] getResourceValue:&lastModified forKey:NSURLContentModificationDateKey error:&error];
-    [stat setValue:lastModified forKey:@"lastModified"];
-    return stat;
+    return @{
+             @"size" : size,
+             @"filename" : filename,
+             @"path" : path,
+             @"lastModified" : [NSString stringWithFormat:@"%d", [lastModified timeIntervalSince1970]],
+             @"type" : isDir ? @"directory" : @"file"
+        };
 }
 
 + (BOOL) exists:(NSString *) path {
@@ -867,7 +875,7 @@ RCT_EXPORT_METHOD(lstat:(NSString *)path callback:(RCTResponseSenderBlock) callb
     NSError * error = nil;
     NSArray * files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
 
-    NSMutableArray * res = [NSMutableArray alloc];
+    NSMutableArray * res = [[NSMutableArray alloc] init];
     if(isDir == YES) {
         for(NSString * p in files) {
             NSString * filePath = [NSString stringWithFormat:@"%@/%@", path, p];
