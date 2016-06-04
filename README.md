@@ -497,7 +497,7 @@ TODO
 
 `0.4.2`
 
-A helper object simply uses [base-64](https://github.com/mathiasbynens/base64) for decode and encode BASE64 data.
+A helper class simply uses [base-64](https://github.com/mathiasbynens/base64) for decode and encode BASE64 data.
 
 ```js
 RNFetchBlob.base64.encode(data)
