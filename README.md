@@ -627,8 +627,8 @@ Create a directory named `path`
 
 ```js
 RNFetchBlob.fs.mkdir(PATH_TO_CREATE)
-.then(() => { ...})
-.catch((err) => { ...})
+.then(() => { ... })
+.catch((err) => { ... })
 ```
 
 #### ls(path:string):Promise<Array<String>>
@@ -636,27 +636,65 @@ RNFetchBlob.fs.mkdir(PATH_TO_CREATE)
 List files and directories in a `path`
 
 ```js
+RNFetchBlob.fs.ls(PATH_TO_LIST)
+    // files will an array contains filenames
+    .then((files) => {
+        console.log(files)
+    })
 ```
 
 #### mv(from:string, to:string):Promise
 
-TODO
+Move a file's location
 
-#### cp(path:string):Promise
+```js
+RNFetchBlob.fs.mv(FROM_PATH, TO_PATH)
+.then(() => { ... })
+.catch(() => { ... })
+```
 
-TODO
+#### cp(src:string, dest:string):Promise
+
+Copy a file.
+
+```js
+RNFetchBlob.fs.mv(SRC_PATH, DEST_PATH)
+.then(() => { ... })
+.catch(() => { ... })
+```
 
 #### exists(path:string):Promise<boolean>
 
-TODO
+Check if a file exist at `path`
+
+```js
+RNFetchBlob.fs.exists(PATH_OF_FILE)
+.then((exist) => { 
+    console.log(`file ${exist ? '' : 'not'} exists`)
+})
+.catch(() => { ... })
+```
 
 #### isDir(path:string):Promise<boolean>
 
-TODO
+Check the file at `path` is a directory or not. Resolves with `false` when the path is not a directory, or it does not exists.
+
+```js
+RNFetchBlob.fs.exists(PATH_OF_FILE)
+.then((isDir) => { 
+    console.log(`file is ${isDir ? '' : 'not'} a directory`)
+})
+```
 
 #### unlink(path:string):Promise<boolean>
 
-TODO
+Delete a file at `path`
+
+```js
+RNFetchBlob.fs.unlink(path)
+.then(() => { ... })
+.catch((err) => { ... })
+```
 
 ### Types
 
