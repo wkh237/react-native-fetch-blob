@@ -42,8 +42,8 @@ function getSystemDirs() {
 
 /**
  * Get a file cache session
- * @param  {[type]} name:string [description]
- * @return {[type]}             [description]
+ * @param  {string} name Stream ID
+ * @return {RNFetchBlobSession}
  */
 function session(name:string):RNFetchBlobSession {
   let s = sessions[name]
