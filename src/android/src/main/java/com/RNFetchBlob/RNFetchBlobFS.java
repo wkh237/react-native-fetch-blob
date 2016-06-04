@@ -1,5 +1,7 @@
 package com.RNFetchBlob;
 
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 
@@ -7,6 +9,7 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -52,13 +55,21 @@ public class RNFetchBlobFS {
     static public void getSystemfolders(ReactApplicationContext ctx, Callback callback) {
         callback.invoke(
                 // document folder
-                String.valueOf(ctx.getFilesDir().getAbsolutePath()),
+                ctx.getFilesDir().getAbsolutePath(),
                 // cache folder
-                String.valueOf(ctx.getCacheDir().getAbsolutePath()),
+                ctx.getCacheDir().getAbsolutePath(),
                 // SD card folder
-                String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath()),
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath(),
                 // Download folder
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath()
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath(),
+                // Picture
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(),
+                // Music
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).getAbsolutePath(),
+                // Movies
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getAbsolutePath(),
+                // Ringtones
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_RINGTONES).getAbsolutePath()
         );
     }
 
@@ -155,7 +166,7 @@ public class RNFetchBlobFS {
     public void writeStream(String path, String encoding, boolean append, Callback callback) {
         File dest = new File(path);
         if(!dest.exists() || dest.isDirectory()) {
-            callback.invoke("target path `" + path + "` may not exists or it's a folder");
+            callback.invoke("write stream error: target path `" + path + "` may not exists or it's a folder");
             return;
         }
         try {
@@ -167,7 +178,7 @@ public class RNFetchBlobFS {
             this.writeStreamInstance = fs;
             callback.invoke(null, streamId);
         } catch(Exception err) {
-            callback.invoke("failed to create write stream at path `"+path+"` "+ err.getLocalizedMessage());
+            callback.invoke("write stream error: failed to create write stream at path `"+path+"` "+ err.getLocalizedMessage());
         }
 
     }
@@ -255,7 +266,7 @@ public class RNFetchBlobFS {
     static void mkdir(String path, Callback callback) {
         File dest = new File(path);
         if(dest.exists()) {
-            callback.invoke("failed to create folder at `" + path + "` folder already exists");
+            callback.invoke("mkdir error: failed to create folder at `" + path + "` folder already exists");
             return;
         }
         dest.mkdirs();
@@ -275,7 +286,7 @@ public class RNFetchBlobFS {
 
             String destFolder = new File(dest).getPath();
             if(!new File(path).exists()) {
-                callback.invoke("source file at path`" + path + "` not exists");
+                callback.invoke("cp error: source file at path`" + path + "` not exists");
                 return;
             }
 
@@ -314,7 +325,7 @@ public class RNFetchBlobFS {
     static void mv(String path, String dest, Callback callback) {
         File src = new File(path);
         if(!src.exists()) {
-            callback.invoke("source file at path `" + path + "` does not exists");
+            callback.invoke("mv error: source file at path `" + path + "` does not exists");
             return;
         }
         src.renameTo(new File(dest));
@@ -340,7 +351,7 @@ public class RNFetchBlobFS {
     static void ls(String path, Callback callback) {
         File src = new File(path);
         if(!src.exists() || !src.isDirectory()) {
-            callback.invoke("failed to list path `" + path + "` for it is not exist or it is not a folder");
+            callback.invoke("ls error: failed to list path `" + path + "` for it is not exist or it is not a folder");
             return;
         }
         String [] files = new File(path).list();
@@ -349,6 +360,65 @@ public class RNFetchBlobFS {
             arg.pushString(i);
         }
         callback.invoke(null, arg);
+    }
+
+    static void lstat(String path, final Callback callback) {
+        File src = new File(path);
+        new AsyncTask<String, Integer, Integer>() {
+            @Override
+            protected Integer doInBackground(String ...args) {
+                WritableArray res = Arguments.createArray();
+                File src = new File(args[0]);
+                if(!src.exists()) {
+                    callback.invoke("lstat error: failed to list path `" + args[0] + "` for it is not exist or it is not a folder");
+                    return 0;
+                }
+                if(src.isDirectory()) {
+                    String [] files = src.list();
+                    for(String p : files) {
+                        res.pushMap(statFile ( src.getPath() + p));
+                    }
+                }
+                else {
+                    res.pushMap(statFile(src.getAbsolutePath()));
+                }
+                callback.invoke(null, res);
+                return 0;
+            }
+        }.execute(path);
+    }
+
+    /**
+     * show status of a file or directory
+     * @param path
+     * @param callback
+     */
+    static void stat(String path, Callback callback) {
+        File target = new File(path);
+        if(!target.exists()) {
+            callback.invoke("stat error: file "+path+" does not exists");
+            return;
+        }
+        WritableMap stat = Arguments.createMap();
+        stat.putString("filename", target.getName());
+        stat.putString("path", target.getPath());
+        stat.putString("type", target.isDirectory() ? "directory" : "file");
+        stat.putInt("size", (int)target.length());
+        stat.putInt("lastModified", (int)target.lastModified());
+        callback.invoke(null, stat);
+    }
+
+    void scanFile(String [] path, String[] mimes, final Callback callback) {
+        try {
+            MediaScannerConnection.scanFile(mCtx, path, mimes, new MediaScannerConnection.OnScanCompletedListener() {
+                @Override
+                public void onScanCompleted(String s, Uri uri) {
+                    callback.invoke(null, true);
+                }
+            });
+        } catch(Exception err) {
+            callback.invoke(err.getLocalizedMessage(), null);
+        }
     }
 
     /**
@@ -363,7 +433,7 @@ public class RNFetchBlobFS {
             File dest = new File(path);
             boolean created = dest.createNewFile();
             if(!created) {
-                callback.invoke("failed to create file at path `" + path + "` for its parent path may not exists");
+                callback.invoke("create file error: failed to create file at path `" + path + "` for its parent path may not exists");
                 return;
             }
             OutputStream ostream = new FileOutputStream(dest);
@@ -374,12 +444,18 @@ public class RNFetchBlobFS {
         }
     }
 
+    /**
+     * Create file for ASCII encoding
+     * @param path  Path of new file.
+     * @param data  Content of new file
+     * @param callback  JS context callback
+     */
     static void createFileASCII(String path, ReadableArray data, Callback callback) {
         try {
             File dest = new File(path);
             boolean created = dest.createNewFile();
             if(!created) {
-                callback.invoke("failed to create file at path `" + path + "` for its parent path may not exists");
+                callback.invoke("create file error: failed to create file at path `" + path + "` for its parent path may not exists");
                 return;
             }
             OutputStream ostream = new FileOutputStream(dest);
@@ -395,6 +471,11 @@ public class RNFetchBlobFS {
         }
     }
 
+    /**
+     * Remove files in session.
+     * @param paths An array of file paths.
+     * @param callback JS contest callback
+     */
     static void removeSession(ReadableArray paths, Callback callback) {
 
         AsyncTask<ReadableArray, Integer, Integer> task = new AsyncTask<ReadableArray, Integer, Integer>() {
@@ -450,6 +531,21 @@ public class RNFetchBlobFS {
         eventData.putString("detail", data);
         this.emitter.emit("RNFetchBlobStream" + taskId, eventData);
     }
+
+    static WritableMap statFile(String path) {
+        File target = new File(path);
+        if(!target.exists()) {
+            return null;
+        }
+        WritableMap stat = Arguments.createMap();
+        stat.putString("filename", target.getName());
+        stat.putString("path", target.getPath());
+        stat.putString("type", target.isDirectory() ? "directory" : "file");
+        stat.putInt("size", (int)target.length());
+        stat.putInt("lastModified", (int)target.lastModified());
+        return stat;
+    }
+
 }
 
 

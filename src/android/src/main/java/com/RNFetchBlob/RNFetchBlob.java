@@ -115,6 +115,36 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void lstat(String path, Callback callback) {
+        RNFetchBlobFS.ls(path, callback);
+    }
+
+    @ReactMethod
+    public void stat(String path, Callback callback) {
+        RNFetchBlobFS.stat(path, callback);
+    }
+
+    @ReactMethod
+    public void scanFile(ReadableMap pairs, Callback callback) {
+        ReadableMapKeySetIterator it = pairs.keySetIterator();
+        WritableArray path = Arguments.createArray();
+        WritableArray mimes = Arguments.createArray();
+        while(it.hasNextKey()) {
+            String key = pairs.keySetIterator().nextKey();
+            path.pushString(key);
+            String mime = pairs.getString(key);
+            mimes.pushString(mime);
+        }
+        String [] p = new String[path.size()];
+        String [] m = new String[path.size()];
+        for(int i =0;i<path.size();i++) {
+            p[i] = path.getString(i);
+            m[i] = mimes.getString(i);
+        }
+        new RNFetchBlobFS(this.getReactApplicationContext()).scanFile(p, m, callback);
+    }
+
+    @ReactMethod
     /**
      * @param path Stream file path
      * @param encoding Stream encoding, should be one of `base64`, `ascii`, and `utf8`

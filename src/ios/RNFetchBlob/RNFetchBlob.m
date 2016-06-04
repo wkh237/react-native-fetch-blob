@@ -106,6 +106,19 @@ NSMutableDictionary *fileStreams = nil;
     return err == nil;
 }
 
++ (NSData *) stat:(NSString *) path error:(NSError **) error{
+    NSMutableData *stat = [[NSMutableData alloc]init];
+    NSFileManager * fm = [NSFileManager defaultManager];
+    NSData * info = [fm attributesOfItemAtPath:path error:&error];
+    [stat setValue:[info valueForKey:NSFileSystemSize] forKey:@"size"];
+    [stat setValue:path forKey:@"path"];
+    [stat setValue:[path stringByDeletingPathExtension] forKey:@"filename"];
+    NSDate * lastModified;
+    [[NSURL fileURLWithPath:path] getResourceValue:&lastModified forKey:NSURLContentModificationDateKey error:&error];
+    [stat setValue:lastModified forKey:@"lastModified"];
+    return stat;
+}
+
 + (BOOL) exists:(NSString *) path {
     return [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:NULL];
 }
@@ -818,6 +831,55 @@ RCT_EXPORT_METHOD(ls:(NSString *)path callback:(RCTResponseSenderBlock) callback
     
     if(error == nil)
         callback(@[[NSNull null], result == nil ? [NSNull null] :result ]);
+    else
+        callback(@[[error localizedDescription], [NSNull null]]);
+    
+}
+
+RCT_EXPORT_METHOD(stat:(NSString *)path callback:(RCTResponseSenderBlock) callback) {
+    NSFileManager* fm = [NSFileManager defaultManager];
+    BOOL exist = nil;
+    BOOL isDir = nil;
+    NSError * error = nil;
+    exist = [fm fileExistsAtPath:path isDirectory:&isDir];
+    if(exist == NO) {
+        callback(@[[NSString stringWithFormat:@"failed to list path `%@` for it is not exist or it is not exist", path]]);
+        return ;
+    }
+    NSData * res = [FetchBlobFS stat:path error:&error];
+    
+    if(error == nil)
+        callback(@[[NSNull null], res]);
+    else
+        callback(@[[error localizedDescription], [NSNull null]]);
+    
+}
+
+RCT_EXPORT_METHOD(lstat:(NSString *)path callback:(RCTResponseSenderBlock) callback) {
+    NSFileManager* fm = [NSFileManager defaultManager];
+    BOOL exist = nil;
+    BOOL isDir = nil;
+    exist = [fm fileExistsAtPath:path isDirectory:&isDir];
+    if(exist == NO) {
+        callback(@[[NSString stringWithFormat:@"failed to list path `%@` for it is not exist or it is not exist", path]]);
+        return ;
+    }
+    NSError * error = nil;
+    NSArray * files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
+
+    NSMutableArray * res = [NSMutableArray alloc];
+    if(isDir == YES) {
+        for(NSString * p in files) {
+            NSString * filePath = [NSString stringWithFormat:@"%@/%@", path, p];
+            [res addObject:[FetchBlobFS stat:filePath error:&error]];
+        }
+    }
+    else {
+        [res addObject:[FetchBlobFS stat:path error:&error]];
+    }
+    
+    if(error == nil)
+        callback(@[[NSNull null], res == nil ? [NSNull null] :res ]);
     else
         callback(@[[error localizedDescription], [NSNull null]]);
     
