@@ -505,7 +505,7 @@ RNFetchBlob.base64.decode(data)
 
 `0.5.0`
 
-#### getSystemDirs():Promise<object>
+#### getSystemDirs():Promise
 
 This method returns common used folders:
 - DocumentDir
@@ -521,7 +521,7 @@ RNFetchBlob.getSystemDirs().then((dirs) => {
     console.log(dirs.DownloadDir)
 })
 ```
-If you're going to make downloaded file visible in Android `Downloads` app, please see [Show Downloaded File and Notification in Android Downloads App](#user-content-show-downloaded-file-and-notifiction-in-android-downloads-app).
+> If you're going to make downloaded file visible in Android `Downloads` app, please see [Show Downloaded File and Notification in Android Downloads App](#user-content-show-downloaded-file-and-notifiction-in-android-downloads-app).
 
 #### createFile(path, data, encoding):Promise
 
