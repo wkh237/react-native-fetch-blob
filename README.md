@@ -498,7 +498,6 @@ RNFetchBlob.base64.decode(data)
 #### getSystemDirs():Promise<object>
 
 This method returns common used folders:
-
 * DocumentDir 
 * CacheDir
 * DCIMDir (Android Only)
