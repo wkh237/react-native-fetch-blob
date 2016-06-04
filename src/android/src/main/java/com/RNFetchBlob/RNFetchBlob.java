@@ -55,6 +55,16 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void createFileASCII(String path, ReadableArray dataArray, Callback callback) {
+        RNFetchBlobFS.createFileASCII(path, dataArray, callback);
+    }
+
+    @ReactMethod
+    public void writeArrayChunk(String streamId, ReadableArray dataArray, Callback callback) {
+        RNFetchBlobFS.writeArrayChunk(streamId, dataArray, callback);
+    }
+
+    @ReactMethod
     public void unlink(String path, Callback callback) {
         RNFetchBlobFS.unlink(path, callback);
     }

@@ -103,7 +103,14 @@ public class RNFetchBlobFS {
                         }
                     } else if (encoding.equalsIgnoreCase("ascii")) {
                         while ((cursor = fs.read(buffer)) != -1) {
-                            String chunk = EncodingUtils.getAsciiString(buffer, 0, cursor);
+                            String chunk = "[";
+                            for(int i =0;i<cursor;i++)
+                            {
+                                chunk += (int)buffer[i];
+                                if(i+1 < cursor)
+                                    chunk += ",";
+                            }
+                            chunk = chunk + "]";
                             emitStreamEvent(eventName, "data", chunk);
                         }
                     } else if (encoding.equalsIgnoreCase("base64")) {
@@ -127,7 +134,7 @@ public class RNFetchBlobFS {
                     if(!error)
                         emitStreamEvent(eventName, "end", "");
                     fs.close();
-
+                    buffer = null;
 
                 } catch (Exception err) {
                     emitStreamEvent(eventName, "error", err.getLocalizedMessage());
@@ -180,6 +187,30 @@ public class RNFetchBlobFS {
         try {
             stream.write(chunk);
             callback.invoke();
+            chunk = null;
+        } catch (Exception e) {
+            callback.invoke(e.getLocalizedMessage());
+        }
+    }
+
+    /**
+     * Write data using ascii array
+     * @param streamId File stream ID
+     * @param data  Data chunk in ascii array format
+     * @param callback JS context callback
+     */
+    static void writeArrayChunk(String streamId, ReadableArray data, Callback callback) {
+
+        RNFetchBlobFS fs = fileStreams.get(streamId);
+        OutputStream stream = fs.writeStreamInstance;
+        byte [] chunk = new byte[data.size()];
+        for(int i =0; i< data.size();i++) {
+            chunk[i] = (byte) data.getInt(i);
+        }
+        try {
+            stream.write(chunk);
+            callback.invoke();
+            chunk = null;
         } catch (Exception e) {
             callback.invoke(e.getLocalizedMessage());
         }
@@ -337,6 +368,27 @@ public class RNFetchBlobFS {
             }
             OutputStream ostream = new FileOutputStream(dest);
             ostream.write(RNFetchBlobFS.stringToBytes(data, encoding));
+            callback.invoke(null, path);
+        } catch(Exception err) {
+            callback.invoke(err.getLocalizedMessage());
+        }
+    }
+
+    static void createFileASCII(String path, ReadableArray data, Callback callback) {
+        try {
+            File dest = new File(path);
+            boolean created = dest.createNewFile();
+            if(!created) {
+                callback.invoke("failed to create file at path `" + path + "` for its parent path may not exists");
+                return;
+            }
+            OutputStream ostream = new FileOutputStream(dest);
+            byte [] chunk = new byte[data.size()];
+            for(int i =0; i<data.size();i++) {
+                chunk[i] = (byte) data.getInt(i);
+            }
+            ostream.write(chunk);
+            chunk = null;
             callback.invoke(null, path);
         } catch(Exception err) {
             callback.invoke(err.getLocalizedMessage());
