@@ -35,8 +35,26 @@ function getSystemDirs() {
   return new Promise((resolve, reject) => {
     try {
       RNFetchBlob.getEnvironmentDirs((...dirs) => {
-        let [DocumentDir, CacheDir, DCIMDir, DownloadDir] = [...dirs]
-        resolve({DocumentDir, CacheDir, DCIMDir, DownloadDir})
+        let [
+          DocumentDir,
+          CacheDir,
+          // Android only
+          DCIMDir,
+          DownloadDir,
+          PictureDir,
+          MusicDir,
+          MovieDir,
+          RingToneDir] = [...dirs]
+        resolve({
+          DocumentDir,
+          CacheDir,
+          DCIMDir,
+          DownloadDir,
+          PictureDir,
+          MusicDir,
+          MovieDir,
+          RingToneDir
+        })
       })
     } catch(err) {
       reject(err)
@@ -182,6 +200,10 @@ function mv(path:string, dest:string):Promise<boolean> {
   })
 }
 
+function lstat(path:string):Promise<Array<RNFetchBlobFile>> {
+
+}
+
 function ls(path:string):Promise<Array<String>> {
   return new Promise((resolve, reject) => {
     RNFetchBlob.ls(path, (err, res) => {
@@ -255,5 +277,8 @@ export default {
   writeStream,
   exists,
   createFile,
-  isDir
+  isDir,
+  stat,
+  lstat,
+  scanFile
 }
