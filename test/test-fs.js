@@ -396,12 +396,27 @@ describe('stat and lstat test', (report, done) => {
     return fs.stat(file)
   })
   .then((stat) => {
-    console.log(stat)
     report(
       <Assert key="should have properties"
         expect={['size', 'type', 'lastModified', 'filename', 'path']}
         comparer={Comparer.hasProperties}
         actual={stat}/>)
+    return fs.stat('13123132')
+  })
+  .then(()=>{})
+  .catch((err) => {
+    console.log(err)
+    report(<Assert key="stat error catacable"
+      expect={true}
+      actual={true}/>)
+    done()
+  })
+  .then(()=>{})
+  .catch((err) => {
+    console.log(err)
+    report(<Assert key="lstat error catacable"
+      expect={true}
+      actual={true}/>)
     done()
   })
 
