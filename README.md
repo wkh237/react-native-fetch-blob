@@ -96,7 +96,7 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
 
 #### Download to storage directly
 
-The simplest way is give a `fileCach` option to config, and set it to `true`. This will let the incoming response data stored in a temporary path **wihout** any file extension. 
+The simplest way is give a `fileCach` option to config, and set it to `true`. This will let the incoming response data stored in a temporary path **wihout** any file extension.
 
 **These files won't be removed automatically, please refer to [Cache File Management](#user-content-cache-file-management)**
 
@@ -177,8 +177,8 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
       mute : false
     }),
     'Content-Type' : 'application/octet-stream',
-    // here's the body you're going to send, should be a BASE64 encoded string 
-    // (you can use "base64" APIs to make one). 
+    // here's the body you're going to send, should be a BASE64 encoded string
+    // (you can use "base64" APIs to make one).
     // The data will be converted to "byte array"(say, blob) before request sent.  
   }, base64ImageString)
   .then((res) => {
@@ -253,7 +253,7 @@ What if you want to upload a file in some field ? Just like [upload a file from 
     'Content-Type' : 'multipart/form-data',
   }, [
     // append field data from file path
-    { 
+    {
       name : 'avatar',
       filename : 'avatar.png',
       // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://` when the data comes from a file path
@@ -318,7 +318,7 @@ RNFetchBlob.config({
 
 #### File Access
 
-File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However I realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need those APIs for there cases. 
+File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However I realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need those APIs for there cases.
 
 Here's the list of `fs` APIs
 
@@ -340,7 +340,7 @@ See [fs](#user-content-fs) chapter for more information
 
 In `v0.5.0` we've added  `writeStream` and `readStream`, which allows your app read/write data from file path. This API creates a file stream, rather than convert whole data into BASE64 encoded string, it's handy when processing **large files**.
 
-When calling `readStream` method, you have to `open` the stream, and start to read data. 
+When calling `readStream` method, you have to `open` the stream, and start to read data.
 
 ```js
 let data = ''
@@ -372,7 +372,7 @@ When use `writeStream`, the stream is also opened immediately, but you have to `
 
 ```js
 let ofstream = RNFetchBlob.writeStream(
-    PATH_TO_FILE, 
+    PATH_TO_FILE,
     // encoding, should be one of `base64`, `utf8`, `ascii`
     'utf8',
     // should data append to existing content ?
@@ -444,13 +444,17 @@ You can also group the requests by using `session` API, and use `dispose` to rem
 
 #### `config(options:RNFetchBlobConfig):fetch`
 
+---
+
 `0.5.0`
 
-Config API was introduced in `v0.5.0` which provides some options for the `fetch` task. 
+Config API was introduced in `v0.5.0` which provides some options for the `fetch` task.
 
 see [RNFetchBlobConfig](#user-content-rnfetchblobconfig)
 
 #### `fetch(method, url, headers, body):Promise<FetchBlobResponse>`
+
+---
 
 `legacy`
 
@@ -468,6 +472,8 @@ When body is a base64 string , this string will be converted into byte array in 
 
 #### `fetch(...).progress(eventListener):Promise<FetchBlobResponse>`
 
+---
+
 `0.4.2`
 
 Register on progress event handler for a fetch request.
@@ -482,6 +488,8 @@ TODO
 
 #### `base64`
 
+---
+
 `0.4.2`
 
 A helper object simply uses [base-64](https://github.com/mathiasbynens/base64) for decode and encode BASE64 data.
@@ -493,17 +501,17 @@ RNFetchBlob.base64.decode(data)
 
 #### `fs`
 
+---
+
 `0.5.0`
 
 #### getSystemDirs():Promise<object>
 
 This method returns common used folders:
-* DocumentDir 
-* CacheDir
-* DCIMDir (Android Only)
-* DownloadDir (Android Only)
-
-example 
+- DocumentDir
+- CacheDir
+- DCIMDir (Android Only)
+- DownloadDir (Android Only)
 
 ```js
 RNFetchBlob.getSystemDirs().then((dirs) => {
@@ -513,8 +521,7 @@ RNFetchBlob.getSystemDirs().then((dirs) => {
     console.log(dirs.DownloadDir)
 })
 ```
-
-If you're going to make downloaded file visible in Android `Downloads` app, please see [Show Downloaded File and Notification in Android Downloads App](#user-content-show-downloaded-file-in-android-downloads-app).
+If you're going to make downloaded file visible in Android `Downloads` app, please see [Show Downloaded File and Notification in Android Downloads App](#user-content-show-downloaded-file-and-notifiction-in-android-downloads-app).
 
 #### createFile(path, data, encoding):Promise
 
@@ -544,7 +551,7 @@ Encoding of input data.
 #### append:`boolean`(optional, default to `false`)
 Will new data append after existing file or not.
 
-Calling `writeStream` method will returns a Promise, which resolves a `RNFetchBlobWriteSteam` instance when stream opened successfully. 
+Calling `writeStream` method will returns a Promise, which resolves a `RNFetchBlobWriteSteam` instance when stream opened successfully.
 
 ```js
 // write utf8 data
@@ -568,7 +575,7 @@ RNFetchBlob.fs.writeStream(PATH_TO_WRITE, 'base64')
         stream.write(RNFetchBlob.base64.encode('foo'))
         return stream.close()
     })
-    
+
 ```
 
 #### readStream(path, encoding, bufferSize):Promise<ReadStream>
@@ -583,37 +590,12 @@ Buffer size of read stream, default to `4096` and `4095`(when encoding is `base6
 `readStream` returns a promise which will resolve `RNFetchBlobReadStream`.
 
 ```js
-// read using `utf8` 
 RNFetchBlob.fs.readStream(PATH_TO_READ, 'utf8')
     .then((stream) => {
         let data = ''
         stream.open()
         stream.onData((chunk) => {
             chunk += data
-        })
-        stream.onEnd(() => {
-            console.log(data)
-        })
-    })
-// read using `ascii` 
-RNFetchBlob.fs.readStream(PATH_TO_READ, 'ascii')
-    .then((stream) => {
-        let data = []
-        stream.open()
-        stream.onData((chunk) => {
-            data = data.concat(data)
-        })
-        stream.onEnd(() => {
-            console.log(data)
-        })
-    })
-// read using `base64` 
-RNFetchBlob.fs.readStream(PATH_TO_READ, 'base64')
-    .then((stream) => {
-        let data = ''
-        stream.open()
-        stream.onData((chunk) => {
-            data += chunk
         })
         stream.onEnd(() => {
             console.log(data)
@@ -669,7 +651,7 @@ Check if a file exist at `path`
 
 ```js
 RNFetchBlob.fs.exists(PATH_OF_FILE)
-.then((exist) => { 
+.then((exist) => {
     console.log(`file ${exist ? '' : 'not'} exists`)
 })
 .catch(() => { ... })
@@ -681,7 +663,7 @@ Check the file at `path` is a directory or not. Resolves with `false` when the p
 
 ```js
 RNFetchBlob.fs.exists(PATH_OF_FILE)
-.then((isDir) => { 
+.then((isDir) => {
     console.log(`file is ${isDir ? '' : 'not'} a directory`)
 })
 ```
@@ -715,7 +697,7 @@ A set of configurations that will be injected into a `fetch` method, with the fo
   - mime : MIME type of the file. By default is `text/plain`
   - mediaScannable : A `boolean` value, see [Officail Document](https://developer.android.com/reference/android/app/DownloadManager.html#addCompletedDownload(java.lang.String, java.lang.String, boolean, java.lang.String, java.lang.String, long, boolean))
   - notification : A `boolean` value decide whether show a notification when download complete.
-  
+
 
 #### RNFetchBlobResponse
 
