@@ -340,12 +340,12 @@ See [fs](#user-content-fs) chapter for more information
 
 In `v0.5.0` we've added  `writeStream` and `readStream`, which allows your app read/write data from file path. This API creates a file stream, rather than convert whole data into BASE64 encoded string, it's handy when processing **large files**.
 
-But there're some differences between `readStream` and `writeStream` API. When calling `readStream` method, the file stream is opened immediately, and start to read data. 
+When calling `readStream` method, you have to `open` the stream, and start to read data. 
 
 ```js
 let data = ''
 let ifstream = RNFetchBlob.readStream(
-    // encoding, should be one of `base64`, `utf8`
+    // encoding, should be one of `base64`, `utf8`, `ascii`
     'base64',
     // file path
     PATH_TO_THE_FILE,
@@ -353,6 +353,8 @@ let ifstream = RNFetchBlob.readStream(
     // when reading file in BASE64 encoding, buffer size must be multiples of 3.
     4095)
 ifstream.onData((chunk) => {
+  // when encoding is `ascii`, chunk will be an array contains numbers
+  // otherwise it will be a string
   data += chunk
 })
 ifstream.onError((err) => {
@@ -443,6 +445,8 @@ You can also group the requests by using `session` API, and use `dispose` to rem
 
 Config API was introduced in `v0.5.0` which provides some options for the `fetch` task. 
 
+see [RNFetchBlobConfig](#user-content-rnfetchblobconfig)
+
 #### `fetch(method, url, headers, body):Promise<FetchBlobResponse>`
 
 `legacy`
@@ -488,7 +492,7 @@ RNFetchBlob.base64.decode(data)
 
 `0.5.0`
 
-#### `getSystemDirs():Promise<object>`
+#### getSystemDirs():Promise<object>
 
 This method returns common used folders:
 
@@ -510,17 +514,72 @@ RNFetchBlob.getSystemDirs().then((dirs) => {
 
 If you're going to make downloaded file visible in Android `Downloads` app, please see [Show Downloaded File and Notification in Android Downloads App](#user-content-show-downloaded-file-in-android-downloads-app).
 
-#### createFile(path:string, data:string, encoding:string ):Promise
+#### createFile(path, data, encoding):Promise
 
-TODO
+#### path:`string`
+The path which this new file will be created.
+#### data:`string` | `Array<number>`
+Content of the new file, when `encoding` is `ascii`, this argument shoud be an array contains number 0~255.
+#### encoding:`utf8` | `base64` | `ascii`
+Encoding of content.
+
+the following expressions are equivalent.
+
+```js
+const fs = RNFetchBlob.fs
+const base64 = RNFetchBlob.base64
+fs.createFile(NEW_FILE_PATH, 'foo', 'utf8')
+fs.createFile(NEW_FILE_PATH, [102, 111, 111], 'ascii')
+fs.createFile(NEW_FILE_PATH, base64.encode('foo'), 'base64')
+```
 
 #### writeStream(path:string, encoding:string, append:boolean):Promise<WriteStream>
 
-TODO
+#### path:`string`
+The path to the file the stream is writing to.
+#### encoding:`utf8` | `base64` | `ascii`
+Encoding of input data.
+#### append:`boolean`(optional, default to `false`)
+Will new data append after existing file or not.
 
-#### readStream(path:string, encoding:string, append:boolean):Promise<ReadStream>
+Calling `writeStream` method will returns a Promise, which resolves a `RNFetchBlobWriteSteam` instance when stream opened successfully. 
 
-TODO
+```js
+// write utf8 data
+RNFetchBlob.fs.writeStream(PATH_TO_WRITE, 'utf8')
+    .then((stream) => {
+        stream.write('foo')
+        return stream.close()
+    })
+// write ASCII data
+RNFetchBlob.fs.writeStream(PATH_TO_WRITE, 'ascii')
+    .then((stream) => {
+        // write char `f`
+        stream.write([102])
+        // write char `o`, `o`
+        stream.write([111,111])
+        return stream.close()
+    })
+// write BASE64
+RNFetchBlob.fs.writeStream(PATH_TO_WRITE, 'base64')
+    .then((stream) => {
+        stream.write(RNFetchBlob.base64.encode('foo'))
+        return stream.close()
+    })
+    
+```
+
+#### readStream(path, encoding, bufferSize):Promise<ReadStream>
+
+#### path:`string`
+The path to the file the stream is reading from.
+#### encoding:`string`
+Encoding of the data.
+#### bufferSize:`number`(optional)
+Buffer size of read stream, default to `4096` and `4095`(when encoding is `base64`)
+
+`readStream` returns a promise which will resolve `RNFetchBlobReadStream`.
+
 
 #### mkdir(path:string):Promise
 
