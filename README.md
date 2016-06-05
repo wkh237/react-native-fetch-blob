@@ -146,19 +146,18 @@ RNFetchBlob
 If you prefer a specific path rather than random generated one, you can use `path` option. We've added a [getSystemDirs](#user-content-getsysdirs) API in v0.5.0 that lists several common used directories.
 
 ```js
-RNFetchBlob.getSystemDirs().then((dirs) => {
-  RNFetchBlob
-    .config({
-      // response data will be saved to this path if it has access right.
-      path : dirs.DocumentDir + '/path-to-file.anything'
-    })
-    .fetch('GET', 'http://www.example.com/file/example.zip', {
-      //some headers ..
-    })
-    .then((res) => {
-      // the path should be dirs.DocumentDir + 'path-to-file.anything'
-      console.log('The file saved to ', res.path())
-    })
+let dirs = RNFetchBlob.fs.dirs
+RNFetchBlob
+.config({
+  // response data will be saved to this path if it has access right.
+  path : dirs.DocumentDir + '/path-to-file.anything'
+})
+.fetch('GET', 'http://www.example.com/file/example.zip', {
+  //some headers ..
+})
+.then((res) => {
+  // the path should be dirs.DocumentDir + 'path-to-file.anything'
+  console.log('The file saved to ', res.path())
 })
 ```
 
@@ -537,24 +536,24 @@ RNFetchBlob.base64.decode(data)
 
 `0.5.0`
 
-#### getSystemDirs():Promise
+#### getSystemDirs():Map<String, String>
 
 This method returns common used folders:
 - DocumentDir
 - CacheDir
 - DCIMDir (Android Only)
 - DownloadDir (Android Only)
-- MisucDir (Android Only)
+- MusicDir (Android Only)
 - PictureDir (Android Only)
 - MovieDir (Android Only)
+- RingtoneDir (Android Only)
 
 ```js
-RNFetchBlob.getSystemDirs().then((dirs) => {
-    console.log(dirs.DocumentDir)
-    console.log(dirs.CacheDir)
-    console.log(dirs.DCIMDir)
-    console.log(dirs.DownloadDir)
-})
+const dirs = RNFetchBlob.fs.dirs
+console.log(dirs.DocumentDir)
+console.log(dirs.CacheDir)
+console.log(dirs.DCIMDir)
+console.log(dirs.DownloadDir)
 ```
 > If you're going to make downloaded file visible in Android `Downloads` app, please see [Show Downloaded File and Notification in Android Downloads App](#user-content-show-downloaded-file-and-notifiction-in-android-downloads-app).
 
