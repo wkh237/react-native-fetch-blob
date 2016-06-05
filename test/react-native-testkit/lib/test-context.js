@@ -3,7 +3,7 @@
 let tests: Array<TestCase> = []
 let RCTContext: ReactElement = null
 let props:any = {}
-let timeout = 3000
+let timeout = 8000
 
 export default class TestContext {
 

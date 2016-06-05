@@ -221,8 +221,11 @@ describe('Session API CRUD test', (report, done) => {
         comparer={Comparer.equalToArray}
         actual={s.list()}/>)
 
-    s.dispose().then(() => {
-      fs.ls(baseDir).then((lsRes) => {
+    s.dispose()
+      .then(() => {
+        return fs.ls(baseDir)
+      })
+      .then((lsRes) => {
         report(
           <Assert
             key="dispose() should work correctly"
@@ -231,9 +234,8 @@ describe('Session API CRUD test', (report, done) => {
             actual={lsRes.map((p) => {
               return baseDir + '/' + p
             })}/>)
+        done()
       })
-      done()
-    })
 
   })
 

@@ -356,7 +356,7 @@ describe('ASCII file test', (report, done) => {
 describe('format conversion', (report, done) => {
   let p = ''
   fs.getSystemDirs().then((dirs) => {
-    p = dirs.DocumentDir + '/foo'
+    p = dirs.DocumentDir + '/foo-' + Date.now()
     return fs.createFile(p, [102, 111, 111], 'ascii')
   })
   .then(() => {
