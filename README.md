@@ -361,8 +361,11 @@ Here's the list of `fs` APIs
 - cp
 - exists
 - isDir
+- lstat
+- stat
+- scanFile (Android Only)
 
-See [fs](#user-content-fs) chapter for more information
+See [fs chapter](#user-content-fs) for more information
 
 #### File Stream
 
@@ -399,15 +402,17 @@ RNFetchBlob.readStream(
 When use `writeStream`, the stream is also opened immediately, but you have to `write`, and `close` by yourself.
 
 ```js
-let ofstream = RNFetchBlob.writeStream(
+RNFetchBlob.writeStream(
     PATH_TO_FILE,
     // encoding, should be one of `base64`, `utf8`, `ascii`
     'utf8',
     // should data append to existing content ?
     true)
-ofstream.write('foo')
-ofstream.write('bar')
-ofstream.close()
+.then((ofstream) => {
+    ofstream.write('foo')
+    ofstream.write('bar')
+    ofstream.close()
+})
 
 ```
 
@@ -428,13 +433,13 @@ When using `fileCache` or `path` options along with `fetch` API, response data w
     })
 
   // remove file by specifying a path
-  RNFetchBlob.unlink('some-file-path').then(() => {
+  RNFetchBlob.fs.unlink('some-file-path').then(() => {
     // ...
   })
 
 ```
 
-You can also group the requests by using `session` API, and use `dispose` to remove them all when needed.
+You can also grouping requests by using `session` API, and use `dispose` to remove them all when needed.
 
 ```js
 
@@ -541,6 +546,9 @@ This method returns common used folders:
 - CacheDir
 - DCIMDir (Android Only)
 - DownloadDir (Android Only)
+- MisucDir (Android Only)
+- PictureDir (Android Only)
+- MovieDir (Android Only)
 
 ```js
 RNFetchBlob.getSystemDirs().then((dirs) => {
@@ -707,6 +715,17 @@ RNFetchBlob.fs.unlink(path)
 .catch((err) => { ... })
 ```
 
+#### lstat(path:string):Promise
+
+Get statistic data of a path, the result data will be an array contains objects like this :
+
+{
+    filename : 'foo.png',
+    path : '/path/to/the/file/wihout/file/name/',
+    size : 4901,
+    type : 'file'
+}
+
 ## Types
 
 ---
@@ -723,7 +742,7 @@ A set of configurations that will be injected into a `fetch` method, with the fo
   When this property has value, `fetch` API will try to store response data in the path ignoring `fileCache` and `appendExt` property.
 #### addAndroidDownloads:object (Android only)
   This is an Android only property, it should be an object with the following properties :
-  - title : title of the file download success notification
+  - title : title of the file
   - description : File description of the file.
   - mime : MIME type of the file. By default is `text/plain`
   - mediaScannable : A `boolean` value, see [Officail Document](https://developer.android.com/reference/android/app/DownloadManager.html#addCompletedDownload(java.lang.String, java.lang.String, boolean, java.lang.String, java.lang.String, long, boolean))
