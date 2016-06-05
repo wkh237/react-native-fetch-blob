@@ -2,15 +2,15 @@
 
 ## v0.5.0 Work In Progress README.md
 
-Module for upload, download, and files access in JS context. Supports file stream read/write for process large files.
+A module provides upload, download, and files access API. Supports file stream read/write for process large files.
 
 **Why do we need this**
 
 At this moment, React Native does not support `Blob` object yet, so if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854). 
 
-Therefore you may getting into trouble sometime. For example, you're going to display an image but the file server requires a specific field(for example, "Authorization") in headers or body, you can't just pass the image uri to `Image` component because that will probably returns a 401 response. With help of this module, you can send a HTTP request with any headers, and decide how to handle the response data. It can be just simply converted into BASE64 string, or store to a file directly so that you can read it by file stream or use it's path. 
+Hence you may getting into trouble in some use cases. For example, displaying an image on image server but the server requires a specific field(such as "Authorization") in headers or body, so you can't just pass the image uri to `Image` component because that will probably returns a 401 response. With help of this module, you can send a HTTP request with any headers, and decide how to handle the response/reqeust data. It can be just simply converted into BASE64 string, or store to a file directly so that you can read it by file stream or use it's path. 
 
-This module is designed for these kind of purpose, and also be a substitution of `blob`, so there's a set of file access API added after `v0.5.0`, including basic CRUD method, and file stream reader and writer.
+This module is designed to be a substitution of `blob`, there's a set of file access API including basic CRUD method, and file stream reader/writer. Also it has a special `fetch` implementation that supports binary request/response body.
 
 **Pre v0.5.0 Users**
 
@@ -19,12 +19,12 @@ This update is `backward-compatible` generally you don't have to change existing
 ## TOC
 
 * [Installation](#user-content-installation)
-* [Usages](#user-content-usage)
+* [Guide](#user-content-guide)
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
  * [Upload/Download progress](#user-content-uploaaddownload-progress)
- * [Show Downloaded File and Notification in Android Downloads App](#user-content-show-downloaded-file-in-android-downloads-app)
+ * [Android Media Scanner, and Downloads App Support](#user-content-android-media-scanner-and-downloads-app-support)
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-manage-cached-files)
@@ -69,7 +69,7 @@ If you're going to access external storage (say, SD card storage), you might hav
 
 ```
 
-## Usage
+## Guide
 
 ```js
 import RNFetchBlob from 'react-native-fetch-blob'
@@ -296,9 +296,29 @@ In `version >= 0.4.2` it is possible to know the upload/download progress.
     })
 ```
 
-#### Show Downloaded File and Notifiction in Android Downloads App
+#### Android Media Scanner, and Downloads App Support
 
-When you use `config` API to store response data to file, the file won't be visible in Andoird's "Download" app, if you want to do this, some extra options in `config` is required.
+If you want to make a file in `External Storage` becomes visible in Picture, Misuc, or other built-in apps, you will have to use `Media Scanner`. To make this happend, use `scanFile` method in `fs`.
+
+
+```js
+
+RNFetchBlog
+    .fetch('GET', 'http://example.com/music.mp3')
+    .then((res) => RNFetchBlob.fs.scanFile([ { path : res.path(), mime : 'audio/mpeg' } ]))
+    .then(() => {
+        // scan file success
+    })
+    .catch((err) => {
+        // scan file error
+    })
+```
+
+If mime is null or undefined, then the mime type will be inferred from the file extension.
+
+**Download Notification and Visibiliy in Download App**
+
+Generally, when you store a file into 
 
 ```js
 RNFetchBlob.config({
@@ -319,6 +339,7 @@ RNFetchBlob.config({
 .fetch('GET', 'http://example.com/image1.png')
 .then(...)
 ```
+
 
 #### File Access
 
