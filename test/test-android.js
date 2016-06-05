@@ -55,3 +55,26 @@ describe('Download with notification', (report, done) => {
   })
 
 })
+
+describe('MediaScanner tests ', (report, done) => {
+  let filePath = null
+  let filename = `scannable-test-${Date.now()}.png`
+  RNFetchBlob.fs.getSystemDirs().then((dirs) => {
+    filePath = `${dirs.DownloadDir}/${filename}`
+    return RNFetchBlob.config({
+        path : filePath,
+      })
+      .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
+  })
+  .then((resp) => {
+    tmpFilePath = resp.path()
+    RNFetchBlob.fs.scanFile([
+      { path:resp.path() }
+    ])
+    .then(() => {
+      report(<Assert key="scan success" expect={true} actual={true}/>)
+      done()
+    })
+  })
+
+})
