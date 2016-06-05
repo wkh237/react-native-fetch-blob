@@ -125,21 +125,19 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void scanFile(ReadableMap pairs, Callback callback) {
-        ReadableMapKeySetIterator it = pairs.keySetIterator();
-        WritableArray path = Arguments.createArray();
-        WritableArray mimes = Arguments.createArray();
-        while(it.hasNextKey()) {
-            String key = pairs.keySetIterator().nextKey();
-            path.pushString(key);
-            String mime = pairs.getString(key);
-            mimes.pushString(mime);
-        }
-        String [] p = new String[path.size()];
-        String [] m = new String[path.size()];
-        for(int i =0;i<path.size();i++) {
-            p[i] = path.getString(i);
-            m[i] = mimes.getString(i);
+    public void scanFile(ReadableArray pairs, Callback callback) {
+        int size = pairs.size();
+        String [] p = new String[size];
+        String [] m = new String[size];
+        for(int i=0;i<size;i++) {
+            ReadableMap pair = pairs.getMap(i);
+            if(pair.hasKey("path")) {
+                p[i] = pair.getString("path");
+                if(pair.hasKey("mime"))
+                    m[i] = pair.getString("mime");
+                else
+                    m[i] = null;
+            }
         }
         new RNFetchBlobFS(this.getReactApplicationContext()).scanFile(p, m, callback);
     }

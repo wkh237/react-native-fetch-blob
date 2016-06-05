@@ -175,15 +175,12 @@ function stat(path:string):Promise<RNFetchBlobFile> {
 
 /**
  * Android only method, request media scanner to scan the file.
- * @param  {Array<string>} paths Paths of files to be scanned.
- * @param  {Array<string>} mimes Optional array of MIME types for each path.
- *                               If mimeType is null, then the mimeType will be
- *                               inferred from the file extension.
+ * @param  {Array<Object<string, string>>} Array contains Key value pairs with key `path` and `mime`.
  * @return {Promise}
  */
-function scanFile(paths:Array<string>, mimes: Array<string>):Promise {
+function scanFile(pairs:any):Promise {
   return new Promise((resolve, reject) => {
-    RNFetchBlob.scanFile(path, (err) => {
+    RNFetchBlob.scanFile(pairs, (err) => {
       if(err)
         reject(err)
       else
