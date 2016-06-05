@@ -376,7 +376,7 @@ public class RNFetchBlobFS {
                 if(src.isDirectory()) {
                     String [] files = src.list();
                     for(String p : files) {
-                        res.pushMap(statFile ( src.getPath() + p));
+                        res.pushMap(statFile ( src.getPath() + "/" + p));
                     }
                 }
                 else {
@@ -394,18 +394,23 @@ public class RNFetchBlobFS {
      * @param callback
      */
     static void stat(String path, Callback callback) {
-        File target = new File(path);
-        if(!target.exists()) {
-            callback.invoke("stat error: file "+path+" does not exists");
-            return;
+        try {
+            File target = new File(path);
+            if (!target.exists()) {
+                callback.invoke("stat error: file " + path + " does not exists");
+                return;
+            }
+            WritableMap stat = Arguments.createMap();
+            stat.putString("filename", target.getName());
+            stat.putString("path", target.getPath());
+            stat.putString("type", target.isDirectory() ? "directory" : "file");
+            stat.putString("size", String.valueOf(target.length()));
+            String lastModified = String.valueOf(target.lastModified());
+            stat.putString("lastModified", lastModified);
+            callback.invoke(null, stat);
+        } catch(Exception err) {
+            callback.invoke(err.getLocalizedMessage());
         }
-        WritableMap stat = Arguments.createMap();
-        stat.putString("filename", target.getName());
-        stat.putString("path", target.getPath());
-        stat.putString("type", target.isDirectory() ? "directory" : "file");
-        stat.putInt("size", (int)target.length());
-        stat.putInt("lastModified", (int)target.lastModified());
-        callback.invoke(null, stat);
     }
 
     void scanFile(String [] path, String[] mimes, final Callback callback) {
@@ -453,6 +458,10 @@ public class RNFetchBlobFS {
     static void createFileASCII(String path, ReadableArray data, Callback callback) {
         try {
             File dest = new File(path);
+            if(dest.exists()) {
+                callback.invoke("create file error: failed to create file at path `" + path + "`, file already exists.");
+                return;
+            }
             boolean created = dest.createNewFile();
             if(!created) {
                 callback.invoke("create file error: failed to create file at path `" + path + "` for its parent path may not exists");
