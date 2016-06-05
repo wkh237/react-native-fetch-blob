@@ -143,7 +143,7 @@ RNFetchBlob
 
 **Use Specific File Path**
 
-If you prefer a specific path rather than random generated one, you can use `path` option. We've added a [getSystemDirs](#user-content-getsysdirs) API in v0.5.0 that lists several common used directories.
+If you prefer a specific path rather than random generated one, you can use `path` option. We've added a constant [dirs](#user-content-dirs) in v0.5.0 that contains several common used directories.
 
 ```js
 let dirs = RNFetchBlob.fs.dirs
@@ -347,7 +347,7 @@ File access APIs were made when developing `v0.5.0`, which helping us write test
 
 Here's the list of `fs` APIs
 
-- getSystemDirs
+- dirs
 - createFile
 - readStream
 - writeStream
@@ -536,9 +536,9 @@ RNFetchBlob.base64.decode(data)
 
 `0.5.0`
 
-#### getSystemDirs():Map<String, String>
+#### dirs
 
-This method returns common used folders:
+This constant is a hash map contains common used folders:
 - DocumentDir
 - CacheDir
 - DCIMDir (Android Only)
