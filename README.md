@@ -304,6 +304,10 @@ If you want to make a file in `External Storage` becomes visible in Picture, Mis
 ```js
 
 RNFetchBlog
+    .config({
+        // DCIMDir is in external storage
+        path : dirs.DCIMDir + '/music.mp3'
+    })
     .fetch('GET', 'http://example.com/music.mp3')
     .then((res) => RNFetchBlob.fs.scanFile([ { path : res.path(), mime : 'audio/mpeg' } ]))
     .then(() => {
@@ -316,14 +320,14 @@ RNFetchBlog
 
 If mime is null or undefined, then the mime type will be inferred from the file extension.
 
-**Download Notification and Visibiliy in Download App**
+**Download Notification and Visibiliy in Download App (Android Only)**
 
-Generally, when you store a file into 
+If you want to download success notification or make the stored file visible like the above. You have to add some options to `config`. 
 
 ```js
 RNFetchBlob.config({
   fileCache : true,
-  // android only options
+  // android only options, these options be a no-op on IOS
   addAndroidDownloads : {
     // Show notification when response data transmitted
     notification : true,
@@ -339,7 +343,6 @@ RNFetchBlob.config({
 .fetch('GET', 'http://example.com/image1.png')
 .then(...)
 ```
-
 
 #### File Access
 
