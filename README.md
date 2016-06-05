@@ -322,7 +322,7 @@ If mime is null or undefined, then the mime type will be inferred from the file 
 
 **Download Notification and Visibiliy in Download App (Android Only)**
 
-If you want to download success notification or make the stored file visible like the above. You have to add some options to `config`. 
+If you want to download notification or make the stored file visible like the above. You have to add some options to `config`. 
 
 ```js
 RNFetchBlob.config({
@@ -715,16 +715,29 @@ RNFetchBlob.fs.unlink(path)
 .catch((err) => { ... })
 ```
 
-#### lstat(path:string):Promise
+#### lstat(path:string):Promise<RNFetchBlobStat>
 
-Get statistic data of a path, the result data will be an array contains objects like this :
+Get statistic data of files in a directory, the result data will be an array of [RNFetchBlobStat](#user-content-rnfetchblobstat).
 
-{
-    filename : 'foo.png',
-    path : '/path/to/the/file/wihout/file/name/',
-    size : 4901,
-    type : 'file'
-}
+```js
+RNFetchBlob.fs.lstat(PATH_OF_A_FOLDER)
+    .then((stats) => {})
+    .catch((err) => {})
+```
+
+#### stat(path:string):Promise<RNFetchBlobStat>
+
+Similar get statistic a data or a directory. the result data will be a [RNFetchBlobStat](#user-content-rnfetchblobstat).
+
+```js
+RNFetchBlob.fs.stat(PATH_OF_THE_TARGET)
+    .then((stats) => {})
+    .catch((err) => {})
+```
+
+#### scanFile(path:string):Promise (Androi Only)
+
+Connect `Media Scanner` and scan the file. see [Android Media Scanner, and Downloads App Support](#user-content-android-media-scanner-and-downloads-app-support) chapter for more information.
 
 ## Types
 
@@ -769,6 +782,25 @@ RNFetchBlob.session('session-name').add(resp.path())
 // or
 resp.session('session-name')
 ```
+---
+
+### RNFetchBlobStat
+
+Statistic data of a file, see the following sample object.
+
+```js
+{
+    // file name
+    filename : 'foo.png',
+    // folder of the file or the folder itself
+    path : '/path/to/the/file/wihout/file/name/',
+    // size in byte
+    size : 4901,
+    // `file` or `directory`
+    type : 'file',
+    // last modified timestamp
+    lastModified : 141323298
+}
 
 ---
 
