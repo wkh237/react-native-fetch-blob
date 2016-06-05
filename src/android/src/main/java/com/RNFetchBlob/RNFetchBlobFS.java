@@ -494,15 +494,20 @@ public class RNFetchBlobFS {
      * @param paths An array of file paths.
      * @param callback JS contest callback
      */
-    static void removeSession(ReadableArray paths, Callback callback) {
+    static void removeSession(ReadableArray paths, final Callback callback) {
 
         AsyncTask<ReadableArray, Integer, Integer> task = new AsyncTask<ReadableArray, Integer, Integer>() {
             @Override
             protected Integer doInBackground(ReadableArray ...paths) {
-                for(int i =0; i< paths[0].size(); i++) {
-                    File f = new File(paths[0].getString(i));
-                    if(f.exists())
-                        f.delete();
+                try {
+                    for (int i = 0; i < paths[0].size(); i++) {
+                        File f = new File(paths[0].getString(i));
+                        if (f.exists())
+                            f.delete();
+                    }
+                    callback.invoke(null, true);
+                } catch(Exception err) {
+                    callback.invoke(err.getLocalizedMessage());
                 }
                 return paths[0].size();
             }

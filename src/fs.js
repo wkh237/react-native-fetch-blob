@@ -68,11 +68,11 @@ function getSystemDirs() {
  * @return {RNFetchBlobSession}
  */
 function session(name:string):RNFetchBlobSession {
-  let s = sessions[name]
+  let s = RNFetchBlobSession.getSession(name)
   if(s)
     return new RNFetchBlobSession(name)
   else {
-    sessions[name] = []
+    RNFetchBlobSession.setSession(name, [])
     return new RNFetchBlobSession(name, [])
   }
 }

@@ -12,6 +12,8 @@ import {
 const RNFetchBlob = NativeModules.RNFetchBlob
 const emitter = DeviceEventEmitter
 
+let sessions = {}
+
 export default class RNFetchBlobSession {
 
   add : (path:string) => RNFetchBlobSession;
@@ -19,6 +21,18 @@ export default class RNFetchBlobSession {
   dispose : () => Promise;
   list : () => Array<string>;
   name : string;
+
+  static getSession(name:string):any {
+    return sessions[name]
+  }
+
+  static setSession(name:string, val:any) {
+    sessions[name] = val
+  }
+
+  static removeSession(name:string) {
+    delete sessions[name]
+  }
 
   constructor(name:string, list:Array<string>) {
     this.name = name
