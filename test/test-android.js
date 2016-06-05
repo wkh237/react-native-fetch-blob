@@ -59,7 +59,9 @@ describe('Download with notification', (report, done) => {
 describe('MediaScanner tests ', (report, done) => {
   let filePath = null
   let filename = `scannable-test-${Date.now()}.png`
-  RNFetchBlob.fs.getSystemDirs().then((dirs) => {
+  let dirs = null
+  RNFetchBlob.fs.getSystemDirs().then((resp) => {
+    dirs = resp
     filePath = `${dirs.DownloadDir}/${filename}`
     return RNFetchBlob.config({
         path : filePath,
@@ -68,11 +70,24 @@ describe('MediaScanner tests ', (report, done) => {
   })
   .then((resp) => {
     tmpFilePath = resp.path()
-    RNFetchBlob.fs.scanFile([
+    return RNFetchBlob.fs.scanFile([
       { path:resp.path() }
     ])
     .then(() => {
       report(<Assert key="scan success" expect={true} actual={true}/>)
+      return RNFetchBlob
+              .config({
+                path : dirs.DCIMDir + '/beethoven-'+ Date.now() +'.mp3'
+              })
+              .fetch('GET', `${TEST_SERVER_URL}/public/beethoven.mp3`)
+    })
+  })
+  .then((resp) => {
+    fs.scanFile([{
+      path : resp.path()
+    }])
+    .then(() => {
+      report(<Assert key="scan mp3 file success" expect={true} actual={true}/>)
       done()
     })
   })
