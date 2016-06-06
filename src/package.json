@@ -13,6 +13,10 @@
     "react-native",
     "fetch",
     "blob",
+    "fs",
+    "upload",
+    "download",
+    "filestream",
     "image header"
   ],
   "rnpm": {
