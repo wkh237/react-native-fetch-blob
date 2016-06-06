@@ -4,9 +4,9 @@ A module provides upload, download, and files access API. Supports file stream r
 
 **Why do we need this**
 
-At this moment, React Native does not support `Blob` object yet, so if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854). 
+At this moment, React Native does not support `Blob` object yet, so if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854).
 
-Hence you may getting into trouble in some use cases. For example, displaying an image on image server but the server requires a specific field(such as "Authorization") in headers or body, so you can't just pass the image uri to `Image` component because that will probably returns a 401 response. With help of this module, you can send a HTTP request with any headers, and decide how to handle the response/reqeust data. It can be just simply converted into BASE64 string, or store to a file directly so that you can read it by file stream or use it's path. 
+Hence you may getting into trouble in some use cases. For example, displaying an image on image server but the server requires a specific field(such as "Authorization") in headers or body, so you can't just pass the image uri to `Image` component because that will probably returns a 401 response. With help of this module, you can send a HTTP request with any headers, and decide how to handle the response/reqeust data. It can be just simply converted into BASE64 string, or store to a file directly so that you can read it by file stream or use it's path.
 
 This module is designed to be a substitution of `blob`, there's a set of file access API including basic CRUD method, and file stream reader/writer. Also it has a special `fetch` implementation that supports binary request/response body.
 
@@ -319,7 +319,11 @@ If mime is null or undefined, then the mime type will be inferred from the file 
 
 **Download Notification and Visibiliy in Download App (Android Only)**
 
-If you want to download notification or make the stored file visible like the above. You have to add some options to `config`. 
+<img src="img/android-notification1.png" width="256">
+<img src="img/android-notification2.png" width="256">
+
+
+If you want to download notification or make the stored file visible like the above. You have to add some options to `config`.
 
 ```js
 RNFetchBlob.config({
