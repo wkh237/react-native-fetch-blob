@@ -22,44 +22,14 @@ import type {
 
 const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
 const emitter = DeviceEventEmitter
-
-// session table
-let sessions = {}
-
-/**
- * Get path of system directories.
- * @return {object} Map contains DocumentDir, CacheDir, DCIMDir, DownloadDir,
- * , some directory might not be supported by platform.
- */
-function getSystemDirs() {
-  return new Promise((resolve, reject) => {
-    try {
-      RNFetchBlob.getEnvironmentDirs((...dirs) => {
-        let [
-          DocumentDir,
-          CacheDir,
-          // Android only
-          DCIMDir,
-          DownloadDir,
-          PictureDir,
-          MusicDir,
-          MovieDir,
-          RingToneDir] = [...dirs]
-        resolve({
-          DocumentDir,
-          CacheDir,
-          DCIMDir,
-          DownloadDir,
-          PictureDir,
-          MusicDir,
-          MovieDir,
-          RingToneDir
-        })
-      })
-    } catch(err) {
-      reject(err)
-    }
-  })
+const dirs = {
+    DocumentDir :  RNFetchBlob.DocumentDir,
+    CacheDir : RNFetchBlob.CacheDir,
+    PictureDir : RNFetchBlob.PictureDir,
+    MusicDir : RNFetchBlob.MusicDir,
+    MovieDir : RNFetchBlob.MovieDir,
+    DownloadDir : RNFetchBlob.DownloadDir,
+    DCIMDir : RNFetchBlob.DCIMDir
 }
 
 /**
@@ -289,7 +259,6 @@ export default {
   session,
   ls,
   readStream,
-  getSystemDirs,
   mv,
   cp,
   writeStream,
@@ -298,5 +267,6 @@ export default {
   isDir,
   stat,
   lstat,
-  scanFile
+  scanFile,
+  dirs
 }

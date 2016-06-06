@@ -21,7 +21,6 @@ import fs from './fs'
 import base64 from 'base-64'
 const {
   RNFetchBlobSession,
-  getSystemDirs,
   readStream,
   createFile,
   unlink,
