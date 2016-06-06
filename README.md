@@ -48,9 +48,11 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
-**Android Access Permission to External storage (Optional)**
+**Grant Permission to External storage for Android 5.0 or lower**
 
-If you're going to access external storage (say, SD card storage), you might have to add the following line to `AndroidManifetst.xml`.
+Mechanism about granting Android permissions has slightly different since Android 6.0 released, please refer to [Officail Document](https://developer.android.com/training/permissions/requesting.html).
+
+If you're going to access external storage (say, SD card storage) for `Android 5.0` (or lower) devices, you might have to add the following line to `AndroidManifetst.xml`.
 
 ```diff
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -66,6 +68,10 @@ If you're going to access external storage (say, SD card storage), you might hav
     ...
 
 ```
+
+**Grant Access Permission for Android 6.0**
+
+Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. So adding permissions in `AndroidManifest.xml` won't work in Android 6.0 devices. To grant permissions in runtime, you might use modules like [react-native-android-permissions](https://github.com/lucasferreira/react-native-android-permissions).
 
 ## Guide
 
@@ -325,7 +331,7 @@ If mime is null or undefined, then the mime type will be inferred from the file 
 <img src="img/android-notification2.png" width="256">
 
 
-If you want to download notification or make the stored file visible like the above. You have to add some options to `config`.
+If you want to display a notification when file's completely download to storage (as the above), or make the downloaded file visible in "Downloads" app. You have to add some options to `config`.
 
 ```js
 RNFetchBlob.config({
