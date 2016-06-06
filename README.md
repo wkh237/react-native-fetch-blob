@@ -470,9 +470,9 @@ You can also grouping requests by using `session` API, and use `dispose` to remo
 
 ```
 
-## API
-
 ---
+
+## API
 
 ### `config(options:RNFetchBlobConfig):fetch`
 
@@ -481,8 +481,6 @@ You can also grouping requests by using `session` API, and use `dispose` to remo
 Config API was introduced in `v0.5.0` which provides some options for the `fetch` task.
 
 see [RNFetchBlobConfig](#user-content-rnfetchblobconfig)
-
----
 
 ### `fetch(method, url, headers, body):Promise<FetchBlobResponse>`
 
@@ -500,8 +498,6 @@ Headers of HTTP request, value of headers should be `stringified`, if you're upl
 Body of the HTTP request, body can either be a BASE64 string, or an array contains object elements, each element have 2  required property `name`, and `data`, and 1 optional property `filename`, once `filename` is set, content in `data` property will be consider as BASE64 string that will be converted into byte array later.
 When body is a base64 string , this string will be converted into byte array in native code, and the request body will be sent as `application/octet-stream`.
 
----
-
 ### `fetch(...).progress(eventListener):Promise<FetchBlobResponse>`
 
 `0.4.2`
@@ -516,8 +512,6 @@ A function that triggers when there's data received/sent, first argument is the 
 
 TODO
 
----
-
 ### `base64`
 
 
@@ -529,8 +523,6 @@ A helper class simply uses [base-64](https://github.com/mathiasbynens/base64) fo
 RNFetchBlob.base64.encode(data)
 RNFetchBlob.base64.decode(data)
 ```
-
----
 
 ### `fs`
 
@@ -736,9 +728,9 @@ RNFetchBlob.fs.stat(PATH_OF_THE_TARGET)
 
 Connect `Media Scanner` and scan the file. see [Android Media Scanner, and Downloads App Support](#user-content-android-media-scanner-and-downloads-app-support) chapter for more information.
 
-## Types
-
 ---
+
+## Types
 
 ### RNFetchBlobConfig
 
