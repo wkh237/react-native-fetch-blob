@@ -19,26 +19,21 @@ const describe = RNTest.config({
 })
 
 let { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles, image } = prop()
-let dirs = null
+let dirs = RNFetchBlob.fs.dirs
 
 describe('Get storage folders', (report, done) => {
-  fs.getSystemDirs().then((resp) => {
-    dirs = resp
-    console.log(dirs)
-    report(
-      <Assert key="system folders should exists" expect={resp} comparer={Comparer.exists} />,
-      <Assert key="check properties"
-        expect={['DocumentDir', 'CacheDir']}
-        comparer={Comparer.hasProperties}
-        actual={dirs}
-      />,
-      <Info key="System Folders">
-        <Text>{`${JSON.stringify(dirs)}`}</Text>
-      </Info>
-    )
-    done()
-  })
-
+  report(
+    <Assert key="system folders should exists" expect={resp} comparer={Comparer.exists} />,
+    <Assert key="check properties"
+      expect={['DocumentDir', 'CacheDir']}
+      comparer={Comparer.hasProperties}
+      actual={dirs}
+    />,
+    <Info key="System Folders">
+      <Text>{`${JSON.stringify(dirs)}`}</Text>
+    </Info>
+  )
+  done()
 })
 
 describe('ls API test', (report, done) => {
@@ -286,13 +281,10 @@ describe('cp API test', {timeout : 10000},(report, done) => {
 })
 
 describe('ASCII data test', (report, done) => {
-  let p = null
+  let p = dirs.DocumentDir + '/ASCII-test-' + Date.now()
   let expect = 'fetch-blob-'+Date.now()
-  fs.getSystemDirs()
-    .then((dirs) => {
-      p = dirs.DocumentDir + '/ASCII-test-' + Date.now()
-      return fs.createFile(p, 'utf8')
-    })
+
+  fs.createFile(p, 'utf8')
     .then(() => {
       return fs.writeStream(p, 'ascii', false)
     })
@@ -326,66 +318,56 @@ describe('ASCII data test', (report, done) => {
 })
 
 describe('ASCII file test', (report, done) => {
-  let p = ''
+  let p = dirs.DocumentDir + '/'
   let filename = ''
   let expect = []
   let base64 = RNFetchBlob.base64
-  fs.getSystemDirs().then((dirs) => {
-    p = dirs.DocumentDir + '/'
-    filename = 'ASCII-file-test' + Date.now() + '.txt'
-    expect = 'ascii test ' + Date.now()
-    return fs.createFile(p + filename, getASCIIArray(expect), 'ascii')
-  })
-  .then(() => {
-    fs.readStream(p + filename, 'base64').then((rs) => {
-      let actual = ''
-      rs.open()
-      rs.onData((chunk) => {
-        actual += chunk
-      })
-      rs.onEnd(() => {
-        report(<Assert key="written data verify"
-          expect={expect}
-          actual={base64.decode(actual)}/>)
-        done()
+  filename = 'ASCII-file-test' + Date.now() + '.txt'
+  expect = 'ascii test ' + Date.now()
+  fs.createFile(p + filename, getASCIIArray(expect), 'ascii')
+    .then(() => {
+      fs.readStream(p + filename, 'base64').then((rs) => {
+        let actual = ''
+        rs.open()
+        rs.onData((chunk) => {
+          actual += chunk
+        })
+        rs.onEnd(() => {
+          report(<Assert key="written data verify"
+            expect={expect}
+            actual={base64.decode(actual)}/>)
+          done()
+        })
       })
     })
-  })
 })
 
 describe('format conversion', (report, done) => {
-  let p = ''
-  fs.getSystemDirs().then((dirs) => {
-    p = dirs.DocumentDir + '/foo-' + Date.now()
-    return fs.createFile(p, [102, 111, 111], 'ascii')
-  })
-  .then(() => {
-    fs.readStream(p, 'utf8').then((stream) => {
-      let res = []
-      stream.open()
-      stream.onData((chunk) => {
-        res+=chunk
-      })
-      stream.onEnd(() => {
-        report(
-          <Assert key="write utf8 and read by ascii"
-            expect="foo"
-            actual={res}/>)
-            done()
+  let p = dirs.DocumentDir + '/foo-' + Date.now()
+  fs.createFile(p, [102, 111, 111], 'ascii')
+    .then(() => {
+      fs.readStream(p, 'utf8').then((stream) => {
+        let res = []
+        stream.open()
+        stream.onData((chunk) => {
+          res+=chunk
+        })
+        stream.onEnd(() => {
+          report(
+            <Assert key="write utf8 and read by ascii"
+              expect="foo"
+              actual={res}/>)
+              done()
+        })
       })
     })
-  })
 })
 
 describe('stat and lstat test', (report, done) => {
-  let p = ''
-  let dirs = null
+  let p = dirs.DocumentDir + '/' + 'ls-stat-test' + Date.now()
   let file = null
-  fs.getSystemDirs().then((resp) => {
-    dirs = resp
-    p = dirs.DocumentDir + '/' + 'ls-stat-test' + Date.now()
-    return fs.lstat(dirs.DocumentDir)
-  })
+
+  fs.lstat(dirs.DocumentDir)
   // stat a folder
   .then((stat) => {
     report(

@@ -87,18 +87,18 @@ describe('File stream reader error should be able to handled', (report, done) =>
 })
 
 let localFile = null
-let sysDirs = null
+let sysDirs = RNFetchBlob.fs.dirs
+let dirs = RNFetchBlob.fs.dirs
 
 describe('Upload from file storage', (report, done) => {
   let filename = ''
   let filepath = ''
-  fs.getSystemDirs().then((dirs) => {
-    sysDirs = dirs
-    filename = Platform.OS + '0.5.0-' + Date.now() + '-from-storage.png'
-    filepath = dirs.DocumentDir + '/' + filename
-    return RNFetchBlob.config({ path : filepath })
-                      .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
-  })
+
+  filename = Platform.OS + '0.5.0-' + Date.now() + '-from-storage.png'
+  filepath = dirs.DocumentDir + '/' + filename
+  RNFetchBlob
+  .config({ path : filepath })
+  .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
   .then((resp) => {
       let path = resp.path()
       localFile = path

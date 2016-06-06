@@ -17,7 +17,7 @@ const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
   group : 'Android only functions',
   run : Platform.OS === 'android',
-  expand : false,
+  expand : true,
 })
 const { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles } = prop()
 
@@ -26,24 +26,24 @@ let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 // Android only tests
 
 let tmpFilePath = null
+const dirs = RNFetchBlob.fs.dirs
 
 describe('Download with notification', (report, done) => {
   let filePath = null
   let filename = `test-${Date.now()}.png`
-  RNFetchBlob.fs.getSystemDirs().then((dirs) => {
-    filePath = `${dirs.DownloadDir}/${filename}`
-    return RNFetchBlob.config({
-        path : filePath,
-        addAndroidDownloads : {
-          title : 'RNFetchBlob test download success',
-          description : `File description added by RNFetchblob`,
-          mediaScannable : true,
-          mime : "image/png",
-          notification : true
-        }
-      })
-      .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
+
+  filePath = `${dirs.DownloadDir}/${filename}`
+  RNFetchBlob.config({
+    path : filePath,
+    addAndroidDownloads : {
+      title : 'RNFetchBlob test download success',
+      description : `File description added by RNFetchblob`,
+      mediaScannable : true,
+      mime : "image/png",
+      notification : true
+    }
   })
+  .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
   .then((resp) => {
     tmpFilePath = resp.path()
     report(<Info key={`image from ${tmpFilePath}`}>
@@ -57,30 +57,30 @@ describe('Download with notification', (report, done) => {
 })
 
 describe('MediaScanner tests ', (report, done) => {
-  let filePath = null
   let filename = `scannable-test-${Date.now()}.png`
-  let dirs = null
-  RNFetchBlob.fs.getSystemDirs().then((resp) => {
-    dirs = resp
-    filePath = `${dirs.DownloadDir}/${filename}`
-    return RNFetchBlob.config({
-        path : filePath,
-      })
-      .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
+  let filePath = `${dirs.DownloadDir}/${filename}`
+  RNFetchBlob.config({
+    path : filePath,
   })
+  .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
   .then((resp) => {
     tmpFilePath = resp.path()
     return RNFetchBlob.fs.scanFile([
       { path:resp.path() }
     ])
-    .then(() => {
-      report(<Assert key="scan success" expect={true} actual={true}/>)
-      return RNFetchBlob
-              .config({
-                path : dirs.DCIMDir + '/beethoven-'+ Date.now() +'.mp3'
-              })
-              .fetch('GET', `${TEST_SERVER_URL}/public/beethoven.mp3`)
-    })
+  })
+  .then(() => {
+    report(<Assert key="scan success" expect={true} actual={true}/>)
+    console.log(dirs)
+    for(let i in dirs) {
+      console.log(i)
+    }
+    console.log(dirs.DCIMDir)
+    return RNFetchBlob
+            .config({
+              path : dirs.DCIMDir + '/beethoven-'+ Date.now() +'.mp3'
+            })
+            .fetch('GET', `${TEST_SERVER_URL}/public/beethoven.mp3`)
   })
   .then((resp) => {
     fs.scanFile([{
