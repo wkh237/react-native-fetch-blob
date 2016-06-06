@@ -6,7 +6,7 @@ A module provides upload, download, and files access API. Supports file stream r
 
 At this moment, React Native does not support `Blob` object yet, so if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854).
 
-Hence you may getting into trouble in some use cases. For example, displaying an image on image server but the server requires a specific field(such as "Authorization") in headers or body, so you can't just pass the image uri to `Image` component because that will probably returns a 401 response. With help of this module, you can send a HTTP request with any headers, and decide how to handle the response/reqeust data. It can be just simply converted into BASE64 string, or store to a file directly so that you can read it by file stream or use it's path.
+Hence you may getting into trouble in some use cases. For example, displaying an image on image server but the server requires a specific field(such as "Authorization") in headers or body, so you can't just pass the image uri to `Image` component because that will probably returns a 401 response. With help of this module, you can send a HTTP request with any headers, and decide how to handle the response/reqeust data. The response data can be just simply converted into BASE64 string, or store to a file directly so that you can read it by file stream or use it's path.
 
 This module is designed to be a substitution of `blob`, there's a set of file access API including basic CRUD method, and file stream reader/writer. Also it has a special `fetch` implementation that supports binary request/response body.
 
@@ -205,7 +205,8 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
       mute : false
     }),
     'Content-Type' : 'application/octet-stream',
-    // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://` when the data comes from a file.
+    // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://`.
+    // Or simply wrap the file path with RNFetchBlob.wrap().
   }, RNFetchBlob.wrap(PATH_TO_THE_FILE))
   .then((res) => {
     console.log(res.text())
@@ -257,7 +258,8 @@ What if you want to upload a file in some field ? Just like [upload a file from 
     {
       name : 'avatar',
       filename : 'avatar.png',
-      // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://` when the data comes from a file path
+      // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://`.
+      // Or simply wrap the file path with RNFetchBlob.wrap().
       data: RNFetchBlob.wrap(PATH_TO_THE_FILE)
     },
     // elements without property `filename` will be sent as plain text
@@ -511,6 +513,10 @@ Register on progress event handler for a fetch request.
 #### eventListener:`(sendOrReceivedBytes:number, totalBytes:number)`
 
 A function that triggers when there's data received/sent, first argument is the number of sent/received bytes, and second argument is expected total bytes number.
+
+#### `wrap(path:string):string`
+
+Simply prepend `RNFetchBlob-file://` to a path, this make the file path becomes recognizable to native `fetch` method.
 
 #### `session(name:string):RNFetchBlobSession`
 
