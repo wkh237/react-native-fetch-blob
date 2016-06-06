@@ -1,7 +1,7 @@
 {
   "name": "react-native-fetch-blob",
   "version": "0.5.0",
-  "description": "A react-native plugin for fetch blob data via HTTP.",
+  "description": "A module provides upload, download, and files access API. Supports file stream read/write for process large files.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
