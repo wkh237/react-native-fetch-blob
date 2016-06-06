@@ -820,7 +820,6 @@ A `session` is an object that helps you manage files. It simply main a list of f
 ### TODOs
 
 * Customizable Multipart MIME type
-* Improvement of file cache management API
 
 ### Development
 
