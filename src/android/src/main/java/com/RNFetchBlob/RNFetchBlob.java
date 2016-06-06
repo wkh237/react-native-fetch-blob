@@ -198,8 +198,14 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             AsyncHttpResponseHandler handler;
 
             // create handler
-            if(config.fileCache || config.path != null)
+            if(config.fileCache || config.path != null) {
                 handler = new RNFetchBlobFileHandler(this.getReactApplicationContext(), taskId, config, callback);
+                // if path format invalid, throw error
+                if (!((RNFetchBlobFileHandler)handler).isValid) {
+                    callback.invoke("RNFetchBlob fetch error, configuration path `"+ config.path  +"` is not a valid path.");
+                    return;
+                }
+            }
             else
                 handler = new RNFetchBlobBinaryHandler(this.getReactApplicationContext(), taskId, callback);
 
@@ -287,8 +293,14 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             AsyncHttpResponseHandler handler;
 
             // create handler
-            if(config.fileCache || config.path != null)
+            if(config.fileCache || config.path != null) {
                 handler = new RNFetchBlobFileHandler(this.getReactApplicationContext(), taskId, config, callback);
+                // if path format invalid, throw error
+                if (!((RNFetchBlobFileHandler)handler).isValid) {
+                    callback.invoke("RNFetchBlob fetch error, configuration path `"+ config.path  +"` is not a valid path.");
+                    return;
+                }
+            }
             else
                 handler = new RNFetchBlobBinaryHandler(this.getReactApplicationContext(), taskId, callback);
 

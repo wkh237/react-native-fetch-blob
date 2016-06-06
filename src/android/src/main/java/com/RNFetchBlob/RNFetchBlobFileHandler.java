@@ -21,6 +21,7 @@ import cz.msebera.android.httpclient.Header;
  */
 public class RNFetchBlobFileHandler extends FileAsyncHttpResponseHandler {
 
+    public boolean isValid;
     Callback onResponse;
     ReactContext mCtx;
     String mTaskId;
@@ -32,6 +33,10 @@ public class RNFetchBlobFileHandler extends FileAsyncHttpResponseHandler {
         this.mTaskId = taskId;
         this.mConfig = config;
         this.mCtx = ctx;
+        if(!new File(RNFetchBlobFileHandler.getFilePath(ctx, taskId, config)).isFile()) {
+            this.isValid = false;
+        }
+        this.isValid = true;
     }
 
     static String getFilePath(ReactApplicationContext ctx, String taskId, RNFetchBlobConfig config) {

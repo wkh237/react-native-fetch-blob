@@ -70,12 +70,7 @@ describe('MediaScanner tests ', (report, done) => {
     ])
   })
   .then(() => {
-    report(<Assert key="scan success" expect={true} actual={true}/>)
-    console.log(dirs)
-    for(let i in dirs) {
-      console.log(i)
-    }
-    console.log(dirs.DCIMDir)
+    report(<Assert key={`scan image success, there should be a new file in Picture app named "${filename}"`} expect={true} actual={true}/>)
     return RNFetchBlob
             .config({
               path : dirs.DCIMDir + '/beethoven-'+ Date.now() +'.mp3'
@@ -87,7 +82,10 @@ describe('MediaScanner tests ', (report, done) => {
       path : resp.path()
     }])
     .then(() => {
-      report(<Assert key="scan mp3 file success" expect={true} actual={true}/>)
+      report(<Assert
+        key={`scan mp3 file success, there exist a new file named "beethoven-${Date.now()}.mp3" in Music app`}
+        expect={true}
+        actual={true}/>)
       done()
     })
   })

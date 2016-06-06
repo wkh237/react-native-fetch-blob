@@ -406,23 +406,15 @@ public class RNFetchBlobFS {
     }
 
     void scanFile(String [] path, String[] mimes, final Callback callback) {
-//        try {
-//            MediaScannerConnection.scanFile(mCtx, path, mimes, new MediaScannerConnection.OnScanCompletedListener() {
-//                @Override
-//                public void onScanCompleted(String s, Uri uri) {
-//                    callback.invoke(null, true);
-//                }
-//            });
-//        } catch(Exception err) {
-//            callback.invoke(err.getLocalizedMessage(), null);
-//        }
-        for(String p : path) {
-            File file = new File(p);
-            Uri uri = Uri.fromFile(file);
-            Intent scanFileIntent = new Intent(
-                    Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri);
-            mCtx.sendBroadcast(scanFileIntent);
-            callback.invoke(null, true);
+        try {
+            MediaScannerConnection.scanFile(mCtx, path, mimes, new MediaScannerConnection.OnScanCompletedListener() {
+                @Override
+                public void onScanCompleted(String s, Uri uri) {
+                    callback.invoke(null, true);
+                }
+            });
+        } catch(Exception err) {
+            callback.invoke(err.getLocalizedMessage(), null);
         }
     }
 

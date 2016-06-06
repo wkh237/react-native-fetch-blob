@@ -574,6 +574,14 @@ RCT_EXPORT_MODULE();
     return self;
 }
 
+- (NSDictionary *)constantsToExport
+{
+    return @{
+             @"DocumentDir": [FetchBlobFS getDocumentDir],
+             @"CacheDir" : [FetchBlobFS getCacheDir]
+            };
+}
+
 // Fetch blob data request
 RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
                   taskId:(NSString *)taskId

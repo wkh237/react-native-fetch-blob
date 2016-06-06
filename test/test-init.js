@@ -18,7 +18,7 @@ const { Assert, Comparer, Info, describe, prop } = RNTest
 // test environment variables
 
 prop('FILENAME', `${Platform.OS}-0.5.0-${Date.now()}.png`)
-prop('TEST_SERVER_URL', 'http://192.168.0.14:8123')
+prop('TEST_SERVER_URL', 'http://192.168.16.70:8123')
 prop('DROPBOX_TOKEN', 'fsXcpmKPrHgAAAAAAAAAoXZhcXYWdgLpQMan6Tb_bzJ237DXhgQSev12hA-gUXt4')
 prop('styles', {
   image : {
@@ -52,7 +52,7 @@ describe('GET image from server', (report, done) => {
 })
 
 
-// require('./test-fs')
-// require('./test-0.1.x-0.4.x')
-// require('./test-0.5.x')
+require('./test-fs')
+require('./test-0.1.x-0.4.x')
+require('./test-0.5.x')
 require('./test-android')
