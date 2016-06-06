@@ -21,6 +21,8 @@ import com.loopj.android.http.RequestParams;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import cz.msebera.android.httpclient.HttpEntity;
 import cz.msebera.android.httpclient.entity.AbstractHttpEntity;
@@ -43,10 +45,9 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
         return "RNFetchBlob";
     }
 
-    @ReactMethod
-    public void getEnvironmentDirs(Callback callback) {
-        ReactApplicationContext ctx = this.getReactApplicationContext();
-        RNFetchBlobFS.getSystemfolders(ctx, callback);
+    @Override
+    public Map<String, Object> getConstants() {
+        return RNFetchBlobFS.getSystemfolders(this.getReactApplicationContext());
     }
 
     @ReactMethod

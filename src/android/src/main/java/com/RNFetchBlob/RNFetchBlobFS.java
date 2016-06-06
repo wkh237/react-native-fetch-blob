@@ -51,27 +51,18 @@ public class RNFetchBlobFS {
     /**
      * Static method that returns system folders to JS context
      * @param ctx   React Native application context
-     * @param callback  Javascript callback function
      */
-    static public void getSystemfolders(ReactApplicationContext ctx, Callback callback) {
-        callback.invoke(
-                // document folder
-                ctx.getFilesDir().getAbsolutePath(),
-                // cache folder
-                ctx.getCacheDir().getAbsolutePath(),
-                // SD card folder
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath(),
-                // Download folder
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath(),
-                // Picture
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(),
-                // Music
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).getAbsolutePath(),
-                // Movies
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getAbsolutePath(),
-                // Ringtones
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_RINGTONES).getAbsolutePath()
-        );
+    static public Map<String, Object> getSystemfolders(ReactApplicationContext ctx) {
+        Map<String, Object> res = new HashMap<>();
+        res.put("DocumentDir", ctx.getFilesDir().getAbsolutePath());
+        res.put("CacheDir", ctx.getCacheDir().getAbsolutePath());
+        res.put("DCIMDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath());
+        res.put("PictureDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath());
+        res.put("MusicDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).getAbsolutePath());
+        res.put("DownloadDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
+        res.put("MovieDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getAbsolutePath());
+        res.put("RingtoneDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_RINGTONES).getAbsolutePath());
+        return res;
     }
 
     /**
@@ -431,7 +422,7 @@ public class RNFetchBlobFS {
             Intent scanFileIntent = new Intent(
                     Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri);
             mCtx.sendBroadcast(scanFileIntent);
-            callback.invoke();
+            callback.invoke(null, true);
         }
     }
 
