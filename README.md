@@ -750,8 +750,6 @@ A set of configurations that will be injected into a `fetch` method, with the fo
   - mediaScannable : A `boolean` value, see [Officail Document](https://developer.android.com/reference/android/app/DownloadManager.html#addCompletedDownload(java.lang.String, java.lang.String, boolean, java.lang.String, java.lang.String, long, boolean))
   - notification : A `boolean` value decide whether show a notification when download complete.
 
----
-
 ### RNFetchBlobResponse
 
 When `fetch` success, it resolve a `FetchBlobResponse` object as first argument. `FetchBlobResponse` object has the following methods (these method are synchronous, so you might take quite a performance impact if the file is big)
@@ -771,7 +769,6 @@ RNFetchBlob.session('session-name').add(resp.path())
 // or
 resp.session('session-name')
 ```
----
 
 ### RNFetchBlobStat
 
@@ -790,8 +787,8 @@ Statistic data of a file, see the following sample object.
     // last modified timestamp
     lastModified : 141323298
 }
+```
 
----
 
 ### RNFetchBlobSession
 
