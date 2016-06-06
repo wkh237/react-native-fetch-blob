@@ -1,4 +1,4 @@
-# react-native-fetch-blob [![npm version](https://badge.fury.io/js/react-native-fetch-blob.svg)](https://badge.fury.io/js/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg)
+# react-native-fetch-blob [![npm version](https://img.shields.io/badge/npm package-0.5.1-brightgreen.svg)](https://badge.fury.io/js/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg)
 
 A module provides upload, download, and files access API. Supports file stream read/write for process large files.
 
