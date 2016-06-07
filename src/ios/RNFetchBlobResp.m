@@ -112,20 +112,12 @@
                 callback(@[[error localizedDescription]]);
                 return;
             }
-            else
+            else {
                 callback(@[[NSNull null], [resp base64EncodedStringWithOptions:0]]);
+            }
         }];
-//        [session uploadTaskWithRequest:req fromData:data completionHandler:^(NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-//            if(error != nil) {
-//                callback(@[[error localizedDescription]]);
-//                return;
-//            }
-//            else
-//                callback(@[[NSNull null], [resp base64EncodedStringWithOptions:0]]);
-//        }];
         [task resume];
     }
-//    callback(@[[NSString stringWithFormat:@"RNFetchBlob could not initialize connection"], [NSNull null]]);
 }
 
 
@@ -170,60 +162,5 @@
             }
      ];
 }
-
-
-//- (void) URLSessionDidFinishEventsForBackgroundURLSession:(NSURLSession *)session
-//{
-//
-//}
-
-
-//- (void) connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
-//    
-//    //    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-//    
-//    [self.fileStream closeInStream];
-//    [self.fileStream closeOutStream];
-//    
-//    callback(@[[error localizedDescription], [NSNull null]]);
-//}
-
-
-
-
-// handle 301 and 302 responses
-//- (NSURLRequest *)connection:(NSURLConnection *)connection willSendRequest:(NSURLRequest *)request redirectResponse:response {
-//    return request;
-//}
-
-// request complete
-//- (void) connectionDidFinishLoading:(NSURLConnection *)connection {
-//    
-//    NSData * data;
-//    if(respData != nil)
-//        data = [NSData dataWithData:respData];
-//    else
-//        data = [[NSData alloc] init];
-//    
-//    NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
-//    NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
-//    Boolean useCache = [self.options valueForKey:CONFIG_USE_TEMP];
-//    
-//    [self.fileStream closeInStream];
-//    
-//    // if fileCache is true or file path is given, return a path
-//    if( path != nil ) {
-//        callback(@[[NSNull null], path]);
-//    }
-//    // when fileCache option is set but no path specified, save to tmp path
-//    else if( [self.options valueForKey:CONFIG_USE_TEMP] != nil) {
-//        NSString * tmpPath = [RNFetchBlobFS getTempPath:taskId withExtension:ext];
-//        callback(@[[NSNull null], tmpPath]);
-//    }
-//    // otherwise return base64 string
-//    else {
-//        callback(@[[NSNull null], [data base64EncodedStringWithOptions:0]]);
-//    }
-//}
 
 @end
