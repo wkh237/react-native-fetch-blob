@@ -35,6 +35,7 @@ describe('Download file to storage with custom file extension', (report, done) =
     })
     .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
     .then((resp) => {
+      console.log(resp.path())
       tmpFilePath = resp.path()
       report(<Info key={`image from ${tmpFilePath}`}>
         <Image
@@ -158,7 +159,7 @@ describe('Session create mechanism test', (report, done) => {
     })
     .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
   let p3 = RNFetchBlob.config({
-      path : sysDirs.DocumentDir + '/session-test.png'
+      path : sysDirs.DocumentDir + '/session-test'+Date.now()+'.png'
     })
     .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
 
