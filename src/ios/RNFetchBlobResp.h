@@ -12,7 +12,7 @@
 #import <Foundation/Foundation.h>
 #import "RCTBridgeModule.h"
 
-@interface FetchBlobUtils : NSObject  <NSURLConnectionDelegate, NSURLConnectionDataDelegate> {
+@interface FetchBlobUtils : NSObject  <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate> {
     
     NSString * taskId;
     int expectedBytes;
@@ -37,7 +37,7 @@
 - (void) sendRequest;
 
 + (NSMutableDictionary *) normalizeHeaders:(NSDictionary *)headers;
-- (void) sendRequest:(NSDictionary *)options bridge:(RCTBridge *)bridgeRef taskId:(NSString *)taskId withRequest:(NSURLRequest *)req callback:(RCTResponseSenderBlock) callback;
+- (void) sendRequest:(NSDictionary *)options bridge:(RCTBridge *)bridgeRef taskId:(NSString *)taskId withRequest:(NSURLRequest *)req withData:( NSData * _Nullable )data callback:(RCTResponseSenderBlock) callback;
 
 
 @end

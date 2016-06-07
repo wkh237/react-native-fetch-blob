@@ -50,7 +50,7 @@
 }
 
 
-- (void) sendRequest:(NSDictionary *)options bridge:(RCTBridge *)bridgeRef taskId:(NSString *)taskId withRequest:(NSURLRequest *)req callback:(RCTResponseSenderBlock) callback {
+- (void) sendRequest:(NSDictionary *)options bridge:(RCTBridge *)bridgeRef taskId:(NSString *)taskId withRequest:(NSURLRequest *)req withData:( NSData * _Nullable )data callback:(RCTResponseSenderBlock) callback {
     self.taskId = taskId;
     self.respData = [[NSMutableData alloc] initWithLength:0];
     self.callback = callback;
@@ -61,52 +61,89 @@
     
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
     NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
+
+    NSURLSession * session = [NSURLSession sharedSession];
     
-    // open file stream for write
+    // file will be stored at a specific path
     if( path != nil) {
-        self.fileStream = [[RNFetchBlobFS alloc]initWithCallback:self.callback];
-        [self.fileStream openWithPath:path encode:@"ascii" appendData:YES ];
+        NSURLSessionDownloadTask * task = [session downloadTaskWithRequest:req completionHandler:^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+            if(error != nil) {
+                callback(@[[error localizedDescription]]);
+                return;
+            }
+            NSError * taskErr;
+            NSFileManager * fm = [NSFileManager defaultManager];
+            // move temp file to desination
+            [fm moveItemAtURL:location toURL:[NSURL fileURLWithPath:path] error:&taskErr];
+            if(taskErr != nil) {
+                callback(@[[taskErr localizedDescription]]);
+                return;
+            }
+            callback(@[[NSNull null], path]);
+        }];
+        [task resume];
     }
+    // file will be stored at tmp path
     else if ( [self.options valueForKey:CONFIG_USE_TEMP]!= nil ) {
-        self.fileStream = [[RNFetchBlobFS alloc]initWithCallback:self.callback];
-        [self.fileStream openWithPath:[RNFetchBlobFS getTempPath:taskId withExtension:ext] encode:@"ascii" appendData:YES];
+        NSURLSessionDownloadTask * task = [session downloadTaskWithRequest:req completionHandler:^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+            if(error != nil) {
+                callback(@[[error localizedDescription]]);
+                return;
+            }
+            NSError * taskErr;
+            NSFileManager * fm = [NSFileManager defaultManager];
+            NSString * tmpPath = [RNFetchBlobFS getTempPath:self.taskId withExtension:[self.options valueForKey:CONFIG_FILE_EXT]];
+            // move temp file to desination
+            [fm moveItemAtURL:location toURL:[NSURL fileURLWithPath:tmpPath] error:&taskErr];
+            if(taskErr != nil) {
+                callback(@[[taskErr localizedDescription]]);
+                return;
+            }
+            callback(@[[NSNull null], tmpPath]);
+        }];
+        [task resume];
     }
-    
-    NSURLConnection *conn = [[NSURLConnection alloc] initWithRequest:req delegate:self startImmediately:NO];
-    [conn scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-    [conn start];
-    
-    if(!conn) {
-        callback(@[[NSString stringWithFormat:@"RNFetchBlob could not initialize connection"], [NSNull null]]);
+    // base64 response
+    else {
+        
+        NSURLSessionUploadTask * task =
+        [session dataTaskWithRequest:req completionHandler:^(NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+            if(error != nil) {
+                callback(@[[error localizedDescription]]);
+                return;
+            }
+            else
+                callback(@[[NSNull null], [resp base64EncodedStringWithOptions:0]]);
+        }];
+//        [session uploadTaskWithRequest:req fromData:data completionHandler:^(NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+//            if(error != nil) {
+//                callback(@[[error localizedDescription]]);
+//                return;
+//            }
+//            else
+//                callback(@[[NSNull null], [resp base64EncodedStringWithOptions:0]]);
+//        }];
+        [task resume];
     }
+//    callback(@[[NSString stringWithFormat:@"RNFetchBlob could not initialize connection"], [NSNull null]]);
 }
 
 
-#pragma mark NSURLConnection delegate methods
+#pragma mark NSURLSession delegate methods
 
-
-- (void) connection:(NSURLConnection *)connection didReceiveResponse:(nonnull NSURLResponse *)response {
-    //    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
+- (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler
+{
     expectedBytes = [response expectedContentLength];
 }
 
-
-- (void) connection:(NSURLConnection *)connection didReceiveData:(nonnull NSData *)data {
+- (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data
+{
     receivedBytes += [data length];
     
     Boolean fileCache = [self.options valueForKey:CONFIG_USE_TEMP];
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
-    if(path != nil) {
-        
-        [self.fileStream write:data];
-    }
-    // write to tmp file
-    else if( fileCache != nil) {
-        NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
-        [self.fileStream write:data];
-    }
     // cache data in memory
-    else {
+    if(path == nil && fileCache == nil) {
         [respData appendData:data];
     }
     
@@ -120,8 +157,8 @@
      ];
 }
 
-- (void) connection:(NSURLConnection *)connection didSendBodyData:(NSInteger)bytesWritten totalBytesWritten:(NSInteger)totalBytesWritten totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite {
-    
+- (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didSendBodyData:(int64_t)bytesSent totalBytesSent:(int64_t)totalBytesWritten totalBytesExpectedToSend:(int64_t)totalBytesExpectedToWrite
+{
     expectedBytes = totalBytesExpectedToWrite;
     receivedBytes += totalBytesWritten;
     [self.bridge.eventDispatcher
@@ -132,57 +169,61 @@
             @"total": [NSString stringWithFormat:@"%d", expectedBytes]
             }
      ];
-    
 }
 
-- (void) connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
-    
-    //    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-    
-    [self.fileStream closeInStream];
-    [self.fileStream closeOutStream];
-    
-    callback(@[[error localizedDescription], [NSNull null]]);
-}
 
-- (NSCachedURLResponse *) connection:(NSURLConnection *)connection willCacheResponse: (NSCachedURLResponse *)cachedResponse {
-    return nil;
-}
+//- (void) URLSessionDidFinishEventsForBackgroundURLSession:(NSURLSession *)session
+//{
+//
+//}
+
+
+//- (void) connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
+//    
+//    //    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+//    
+//    [self.fileStream closeInStream];
+//    [self.fileStream closeOutStream];
+//    
+//    callback(@[[error localizedDescription], [NSNull null]]);
+//}
+
+
 
 
 // handle 301 and 302 responses
-- (NSURLRequest *)connection:(NSURLConnection *)connection willSendRequest:(NSURLRequest *)request redirectResponse:response {
-    return request;
-}
+//- (NSURLRequest *)connection:(NSURLConnection *)connection willSendRequest:(NSURLRequest *)request redirectResponse:response {
+//    return request;
+//}
 
 // request complete
-- (void) connectionDidFinishLoading:(NSURLConnection *)connection {
-    
-    NSData * data;
-    if(respData != nil)
-        data = [NSData dataWithData:respData];
-    else
-        data = [[NSData alloc] init];
-    
-    NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
-    NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
-    Boolean useCache = [self.options valueForKey:CONFIG_USE_TEMP];
-    
-    [self.fileStream closeInStream];
-    
-    // if fileCache is true or file path is given, return a path
-    if( path != nil ) {
-        callback(@[[NSNull null], path]);
-    }
-    // when fileCache option is set but no path specified, save to tmp path
-    else if( [self.options valueForKey:CONFIG_USE_TEMP] != nil) {
-        NSString * tmpPath = [RNFetchBlobFS getTempPath:taskId withExtension:ext];
-        callback(@[[NSNull null], tmpPath]);
-    }
-    // otherwise return base64 string
-    else {
-        callback(@[[NSNull null], [data base64EncodedStringWithOptions:0]]);
-    }
-}
+//- (void) connectionDidFinishLoading:(NSURLConnection *)connection {
+//    
+//    NSData * data;
+//    if(respData != nil)
+//        data = [NSData dataWithData:respData];
+//    else
+//        data = [[NSData alloc] init];
+//    
+//    NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
+//    NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
+//    Boolean useCache = [self.options valueForKey:CONFIG_USE_TEMP];
+//    
+//    [self.fileStream closeInStream];
+//    
+//    // if fileCache is true or file path is given, return a path
+//    if( path != nil ) {
+//        callback(@[[NSNull null], path]);
+//    }
+//    // when fileCache option is set but no path specified, save to tmp path
+//    else if( [self.options valueForKey:CONFIG_USE_TEMP] != nil) {
+//        NSString * tmpPath = [RNFetchBlobFS getTempPath:taskId withExtension:ext];
+//        callback(@[[NSNull null], tmpPath]);
+//    }
+//    // otherwise return base64 string
+//    else {
+//        callback(@[[NSNull null], [data base64EncodedStringWithOptions:0]]);
+//    }
+//}
 
 @end

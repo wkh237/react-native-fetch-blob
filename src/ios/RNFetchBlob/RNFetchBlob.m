@@ -76,9 +76,9 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
     // generate boundary
     NSString * boundary = [NSString stringWithFormat:@"RNFetchBlob%d", timeStampObj];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSMutableData * postData = [[NSMutableData alloc] init];
         // if method is POST or PUT, convert data string format
         if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
-            NSMutableData * postData = [[NSMutableData alloc] init];
             
             // combine multipart/form-data body
             for(id field in form) {
@@ -129,7 +129,7 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
         
         // send HTTP request
         FetchBlobUtils * utils = [[FetchBlobUtils alloc] init];
-        [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
+        [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request withData:postData callback:callback];
     });
 }
 
@@ -149,11 +149,11 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
     NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[FetchBlobUtils normalizeHeaders:headers]];
     // move heavy task to another thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSMutableData * blobData;
         // if method is POST or PUT, convert data string format
         if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
             // generate octet-stream body
             if(body != nil) {
-                NSMutableData * blobData;
                 
                 // when body is a string contains file path prefix, try load file from the path
                 if([body hasPrefix:self.filePathPrefix]) {
@@ -174,7 +174,7 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
         
         // send HTTP request
         FetchBlobUtils * utils = [[FetchBlobUtils alloc] init];
-        [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
+        [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request withData:blobData callback:callback];
     });
 }
 
