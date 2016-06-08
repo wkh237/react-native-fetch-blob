@@ -51,7 +51,7 @@
 }
 
 // send HTTP request
-- (void) sendRequest:(NSDictionary *)options bridge:(RCTBridge *)bridgeRef taskId:(NSString *)taskId withRequest:(NSURLRequest *)req withData:( NSData * _Nullable )data callback:(RCTResponseSenderBlock) callback {
+- (void) sendRequest:(NSDictionary *)options bridge:(RCTBridge *)bridgeRef taskId:(NSString *)taskId withRequest:(NSURLRequest *)req callback:(RCTResponseSenderBlock) callback {
     self.taskId = taskId;
     self.respData = [[NSMutableData alloc] initWithLength:0];
     self.callback = callback;
@@ -106,8 +106,8 @@
     }
     // base64 response
     else {
-        
         NSURLSessionUploadTask * task =
+        
         [session dataTaskWithRequest:req completionHandler:^(NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error) {
             if(error != nil) {
                 callback(@[[error localizedDescription]]);

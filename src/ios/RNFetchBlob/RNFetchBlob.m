@@ -129,7 +129,7 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
         
         // send HTTP request
         RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-        [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request withData:postData callback:callback];
+        [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
     });
 }
 
@@ -147,7 +147,6 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                                                  URLWithString: url]];
     
     NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
-    
     // move heavy task to another thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSMutableData * blobData;
@@ -159,12 +158,15 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                 // when body is a string contains file path prefix, try load file from the path
                 if([body hasPrefix:self.filePathPrefix]) {
                     NSString * orgPath = [body substringFromIndex:[self.filePathPrefix length]];
-                    blobData = [[NSData alloc] initWithContentsOfFile:orgPath];
+                    [request setHTTPBodyStream: [NSInputStream inputStreamWithFileAtPath:orgPath ]];
+//                    blobData = [[NSData alloc] initWithContentsOfFile:orgPath];
                 }
                 // otherwise convert it as BASE64 data string
-                else
+                else {
                     blobData = [[NSData alloc] initWithBase64EncodedString:body options:0];
-                [request setHTTPBody:blobData];
+                    [request setHTTPBody:blobData];
+                }
+                
                 [mheaders setValue:@"application/octet-stream" forKey:@"content-type"];
                 
             }
@@ -175,7 +177,7 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
         
         // send HTTP request
         RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-        [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request withData:blobData callback:callback];
+        [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
     });
 }
 

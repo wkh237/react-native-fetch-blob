@@ -37,7 +37,7 @@
 - (void) sendRequest;
 
 + (NSMutableDictionary *) normalizeHeaders:(NSDictionary *)headers;
-- (void) sendRequest:(NSDictionary *)options bridge:(RCTBridge *)bridgeRef taskId:(NSString *)taskId withRequest:(NSURLRequest *)req withData:( NSData * _Nullable )data callback:(RCTResponseSenderBlock) callback;
+- (void) sendRequest:(NSDictionary *)options bridge:(RCTBridge *)bridgeRef taskId:(NSString *)taskId withRequest:(NSURLRequest *)req callback:(RCTResponseSenderBlock) callback;
 
 
 @end
