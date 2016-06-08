@@ -146,6 +146,42 @@ describe('Upload multipart data with file from storage', (report, done) => {
     })
 })
 
+describe('Upload and download at the same time', (report, done) => {
+
+  let content = 'POST and PUT calls with headers and body should also work correctly'
+  let filename = 'download-header-test-' + Date.now()
+  let body = RNFetchBlob.base64.encode(content)
+
+  RNFetchBlob
+    .config({
+      fileCache : true,
+    })
+    .fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+      Authorization : `Bearer ${DROPBOX_TOKEN}`,
+      'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
+      'Content-Type' : 'application/octet-stream',
+    }, body)
+    .then((resp) =>  {
+      return RNFetchBlob.fs.readStream(resp.path(), 'utf8')
+    })
+    .then((stream) => {
+      let actual = ''
+      stream.open()
+      stream.onData((chunk) => {
+        actual += chunk
+      })
+      stream.onEnd(() => {
+        report(
+          <Assert
+            key="response data should be the filename"
+            expect={filename}
+            actual={JSON.parse(actual).name} />)
+        done()
+      })
+    })
+
+})
+
 describe('Session create mechanism test', (report, done) => {
   let sessionName = 'foo-' + Date.now()
   testSessionName = sessionName
