@@ -1,9 +1,9 @@
 //
-//  RNFetchBlobResp.m
+//  RNFetchBlobNetwork.m
 //  RNFetchBlob
 //
-//  Created by Ben Hsieh on 2016/6/6.
-//  Copyright © 2016年 suzuri04x2. All rights reserved.
+//  Created by wkh237 on 2016/6/6.
+//  Copyright © 2016 wkh237. All rights reserved.
 //
 
 #import "RCTConvert.h"
@@ -12,7 +12,7 @@
 #import "RCTBridge.h"
 #import "RCTEventDispatcher.h"
 #import "RNFetchBlobFS.h"
-#import "RNFetchBlobResp.h"
+#import "RNFetchBlobNetwork.h"
 #import "RNFetchBlobConst.h"
 
 ////////////////////////////////////////
@@ -21,7 +21,7 @@
 //
 ////////////////////////////////////////
 
-@implementation FetchBlobUtils
+@implementation RNFetchBlobNetwork
 
 
 @synthesize taskId;
@@ -31,6 +31,12 @@
 @synthesize callback;
 @synthesize bridge;
 @synthesize options;
+
+// constructor
+- (id)init {
+    self = [super init];
+    return self;
+}
 
 
 // removing case from headers
@@ -44,12 +50,7 @@
     return mheaders;
 }
 
-- (id)init {
-    self = [super init];
-    return self;
-}
-
-
+// send HTTP request
 - (void) sendRequest:(NSDictionary *)options bridge:(RCTBridge *)bridgeRef taskId:(NSString *)taskId withRequest:(NSURLRequest *)req withData:( NSData * _Nullable )data callback:(RCTResponseSenderBlock) callback {
     self.taskId = taskId;
     self.respData = [[NSMutableData alloc] initWithLength:0];
@@ -120,14 +121,22 @@
     }
 }
 
+////////////////////////////////////////
+//
+//  NSURLSession delegates
+//
+////////////////////////////////////////
+
 
 #pragma mark NSURLSession delegate methods
 
+// set expected content length on response received
 - (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler
 {
     expectedBytes = [response expectedContentLength];
 }
 
+// download progress handler
 - (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data
 {
     receivedBytes += [data length];
@@ -149,6 +158,11 @@
      ];
 }
 
+- (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
+    NSLog([error localizedDescription]);
+}
+
+// upload progress handler
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didSendBodyData:(int64_t)bytesSent totalBytesSent:(int64_t)totalBytesWritten totalBytesExpectedToSend:(int64_t)totalBytesExpectedToWrite
 {
     expectedBytes = totalBytesExpectedToWrite;

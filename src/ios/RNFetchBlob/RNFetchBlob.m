@@ -10,7 +10,7 @@
 #import "RCTBridge.h"
 #import "RCTEventDispatcher.h"
 #import "RNFetchBlobFS.h"
-#import "RNFetchBlobResp.h"
+#import "RNFetchBlobNetwork.h"
 #import "RNFetchBlobConst.h"
 
 
@@ -67,7 +67,7 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
                                     initWithURL:[NSURL
                                                  URLWithString: url]];
     
-    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[ FetchBlobUtils normalizeHeaders:headers]];
+    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[ RNFetchBlobNetwork normalizeHeaders:headers]];
     
     
     NSTimeInterval timeStamp = [[NSDate date] timeIntervalSince1970];
@@ -128,7 +128,7 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
         
         
         // send HTTP request
-        FetchBlobUtils * utils = [[FetchBlobUtils alloc] init];
+        RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
         [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request withData:postData callback:callback];
     });
 }
@@ -146,7 +146,8 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                                     initWithURL:[NSURL
                                                  URLWithString: url]];
     
-    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[FetchBlobUtils normalizeHeaders:headers]];
+    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
+    
     // move heavy task to another thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSMutableData * blobData;
@@ -173,7 +174,7 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
         [request setAllHTTPHeaderFields:mheaders];
         
         // send HTTP request
-        FetchBlobUtils * utils = [[FetchBlobUtils alloc] init];
+        RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
         [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request withData:blobData callback:callback];
     });
 }
