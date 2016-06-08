@@ -182,6 +182,33 @@ describe('Upload and download at the same time', (report, done) => {
 
 })
 
+RNTest.config({
+  group : '0.5.x',
+  run : true,
+  expand : false,
+  timeout : 30000,
+})('Upload and download large file', (report, done) => {
+  let filename = '22mb-dummy-' + Date.now()
+  RNFetchBlob.config({
+    fileCache : true
+  })
+  .fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`)
+  .then((res) => {
+    return RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+      Authorization : `Bearer ${DROPBOX_TOKEN}`,
+      'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
+      'Content-Type' : 'application/octet-stream',
+    }, RNFetchBlob.wrap(res.path()))
+  })
+  .then((res) => {
+    report(<Assert
+      key="upload should success withou crashing app"
+      expect={filename}
+      actual={res.json().name}/>)
+    done()
+  })
+})
+
 describe('Session create mechanism test', (report, done) => {
   let sessionName = 'foo-' + Date.now()
   testSessionName = sessionName
