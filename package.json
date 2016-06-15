@@ -1,6 +1,6 @@
 {
   "name": "fetchblob",
-  "version": "0.4.2",
+  "version": "0.5.2",
   "private": true,
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start",
@@ -11,6 +11,6 @@
     "chalk": "^1.1.3",
     "chokidar": "^1.5.1",
     "express": "^4.13.4",
-    "multer": "^1.1.0"  
+    "multer": "^1.1.0"
   }
 }
