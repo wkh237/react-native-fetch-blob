@@ -41,19 +41,19 @@ app.use('/public', express.static('./public'))
 app.get('/redirect', function(req, res) {
   res.redirect('/public/github.png')
 })
-// handle octet-stream request
-app.post('/upload', function(req, res){
 
-  console.log(req.headers)
-  console.log(req.body)
-  fs.writeFile('./uploads/file'+Date.now()+'.png', req.body,function(err){
-    if(!err)
-      res.status(200).send({ message : 'ok'})
-    else
-      res.status(500).send({ message : err})
-  })
-
+app.all('/params', function(req, res) {
+  console.log(req.url)
+    var resp =
+      {
+         time : req.query.time,
+         name : req.query.name,
+         lang : req.query.lang
+      }
+    console.log(resp)
+    res.send(resp)
 })
+
 // return an empty response
 app.all('/empty', function(req, res) {
   res.send('')

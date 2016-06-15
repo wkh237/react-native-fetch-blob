@@ -10,7 +10,7 @@
 #import "RCTBridge.h"
 #import "RCTEventDispatcher.h"
 #import "RNFetchBlobFS.h"
-#import "RNFetchBlobResp.h"
+#import "RNFetchBlobNetwork.h"
 #import "RNFetchBlobConst.h"
 
 
@@ -61,13 +61,13 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
                   form:(NSArray *)form
                   callback:(RCTResponseSenderBlock)callback)
 {
-    
+    NSString * encodedUrl = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     // send request
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
                                     initWithURL:[NSURL
-                                                 URLWithString: url]];
+                                                 URLWithString: encodedUrl]];
     
-    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[ FetchBlobUtils normalizeHeaders:headers]];
+    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[ RNFetchBlobNetwork normalizeHeaders:headers]];
     
     
     NSTimeInterval timeStamp = [[NSDate date] timeIntervalSince1970];
@@ -76,9 +76,9 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
     // generate boundary
     NSString * boundary = [NSString stringWithFormat:@"RNFetchBlob%d", timeStampObj];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSMutableData * postData = [[NSMutableData alloc] init];
         // if method is POST or PUT, convert data string format
         if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
-            NSMutableData * postData = [[NSMutableData alloc] init];
             
             // combine multipart/form-data body
             for(id field in form) {
@@ -128,7 +128,7 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
         
         
         // send HTTP request
-        FetchBlobUtils * utils = [[FetchBlobUtils alloc] init];
+        RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
         [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
     });
 }
@@ -141,29 +141,33 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                   headers:(NSDictionary *)headers
                   body:(NSString *)body callback:(RCTResponseSenderBlock)callback)
 {
+    NSString * encodedUrl = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     // send request
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
                                     initWithURL:[NSURL
-                                                 URLWithString: url]];
+                                                 URLWithString: encodedUrl]];
     
-    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[FetchBlobUtils normalizeHeaders:headers]];
+    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
     // move heavy task to another thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSMutableData * blobData;
         // if method is POST or PUT, convert data string format
         if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
             // generate octet-stream body
             if(body != nil) {
-                NSMutableData * blobData;
                 
                 // when body is a string contains file path prefix, try load file from the path
                 if([body hasPrefix:self.filePathPrefix]) {
                     NSString * orgPath = [body substringFromIndex:[self.filePathPrefix length]];
-                    blobData = [[NSData alloc] initWithContentsOfFile:orgPath];
+                    [request setHTTPBodyStream: [NSInputStream inputStreamWithFileAtPath:orgPath ]];
+//                    blobData = [[NSData alloc] initWithContentsOfFile:orgPath];
                 }
                 // otherwise convert it as BASE64 data string
-                else
+                else {
                     blobData = [[NSData alloc] initWithBase64EncodedString:body options:0];
-                [request setHTTPBody:blobData];
+                    [request setHTTPBody:blobData];
+                }
+                
                 [mheaders setValue:@"application/octet-stream" forKey:@"content-type"];
                 
             }
@@ -173,7 +177,7 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
         [request setAllHTTPHeaderFields:mheaders];
         
         // send HTTP request
-        FetchBlobUtils * utils = [[FetchBlobUtils alloc] init];
+        RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
         [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
     });
 }

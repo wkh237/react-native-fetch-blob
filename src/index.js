@@ -104,7 +104,6 @@ function fetch(...args:any):Promise {
   let options = this || {}
 
   let promise = new Promise((resolve, reject) => {
-
     let [method, url, headers, body] = [...args]
     let nativeMethodName = Array.isArray(body) ? 'fetchBlobForm' : 'fetchBlob'
 

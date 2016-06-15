@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		A158F4271D052E49006FFD38 /* RNFetchBlobFS.m in Sources */ = {isa = PBXBuildFile; fileRef = A158F4261D052E49006FFD38 /* RNFetchBlobFS.m */; };
 		A158F42D1D0535BB006FFD38 /* RNFetchBlobConst.m in Sources */ = {isa = PBXBuildFile; fileRef = A158F42C1D0535BB006FFD38 /* RNFetchBlobConst.m */; };
-		A158F4301D0539DB006FFD38 /* RNFetchBlobResp.m in Sources */ = {isa = PBXBuildFile; fileRef = A158F42F1D0539DB006FFD38 /* RNFetchBlobResp.m */; };
+		A158F4301D0539DB006FFD38 /* RNFetchBlobNetwork.m in Sources */ = {isa = PBXBuildFile; fileRef = A158F42F1D0539DB006FFD38 /* RNFetchBlobNetwork.m */; };
 		A15C30141CD25C330074CB35 /* RNFetchBlob.m in Sources */ = {isa = PBXBuildFile; fileRef = A15C30131CD25C330074CB35 /* RNFetchBlob.m */; };
 		A166D1AA1CE0647A00273590 /* RNFetchBlob.h in Sources */ = {isa = PBXBuildFile; fileRef = A15C30111CD25C330074CB35 /* RNFetchBlob.h */; };
 /* End PBXBuildFile section */
@@ -31,8 +31,8 @@
 		A158F4281D052E57006FFD38 /* RNFetchBlobFS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNFetchBlobFS.h; sourceTree = "<group>"; };
 		A158F4291D0534A9006FFD38 /* RNFetchBlobConst.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNFetchBlobConst.h; sourceTree = "<group>"; };
 		A158F42C1D0535BB006FFD38 /* RNFetchBlobConst.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNFetchBlobConst.m; sourceTree = "<group>"; };
-		A158F42E1D0539CE006FFD38 /* RNFetchBlobResp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNFetchBlobResp.h; sourceTree = "<group>"; };
-		A158F42F1D0539DB006FFD38 /* RNFetchBlobResp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNFetchBlobResp.m; sourceTree = "<group>"; };
+		A158F42E1D0539CE006FFD38 /* RNFetchBlobNetwork.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNFetchBlobNetwork.h; sourceTree = "<group>"; };
+		A158F42F1D0539DB006FFD38 /* RNFetchBlobNetwork.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNFetchBlobNetwork.m; sourceTree = "<group>"; };
 		A15C300E1CD25C330074CB35 /* libRNFetchBlob.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNFetchBlob.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		A15C30111CD25C330074CB35 /* RNFetchBlob.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RNFetchBlob.h; path = RNFetchBlob/RNFetchBlob.h; sourceTree = "<group>"; };
 		A15C30131CD25C330074CB35 /* RNFetchBlob.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = RNFetchBlob.m; path = RNFetchBlob/RNFetchBlob.m; sourceTree = "<group>"; };
@@ -59,8 +59,8 @@
 		A15C30051CD25C330074CB35 = {
 			isa = PBXGroup;
 			children = (
-				A158F42F1D0539DB006FFD38 /* RNFetchBlobResp.m */,
-				A158F42E1D0539CE006FFD38 /* RNFetchBlobResp.h */,
+				A158F42F1D0539DB006FFD38 /* RNFetchBlobNetwork.m */,
+				A158F42E1D0539CE006FFD38 /* RNFetchBlobNetwork.h */,
 				A158F42C1D0535BB006FFD38 /* RNFetchBlobConst.m */,
 				A158F4291D0534A9006FFD38 /* RNFetchBlobConst.h */,
 				A158F4281D052E57006FFD38 /* RNFetchBlobFS.h */,
@@ -139,7 +139,7 @@
 				A166D1AA1CE0647A00273590 /* RNFetchBlob.h in Sources */,
 				A158F42D1D0535BB006FFD38 /* RNFetchBlobConst.m in Sources */,
 				A158F4271D052E49006FFD38 /* RNFetchBlobFS.m in Sources */,
-				A158F4301D0539DB006FFD38 /* RNFetchBlobResp.m in Sources */,
+				A158F4301D0539DB006FFD38 /* RNFetchBlobNetwork.m in Sources */,
 				A15C30141CD25C330074CB35 /* RNFetchBlob.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

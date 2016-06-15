@@ -15,7 +15,7 @@ import {
 const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
-  group : '0.5.x',
+  group : '0.5.1',
   run : true,
   expand : false,
 })
@@ -35,6 +35,7 @@ describe('Download file to storage with custom file extension', (report, done) =
     })
     .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
     .then((resp) => {
+      console.log(resp.path())
       tmpFilePath = resp.path()
       report(<Info key={`image from ${tmpFilePath}`}>
         <Image
@@ -145,6 +146,69 @@ describe('Upload multipart data with file from storage', (report, done) => {
     })
 })
 
+describe('Upload and download at the same time', (report, done) => {
+
+  let content = 'POST and PUT calls with headers and body should also work correctly'
+  let filename = 'download-header-test-' + Date.now()
+  let body = RNFetchBlob.base64.encode(content)
+
+  RNFetchBlob
+    .config({
+      fileCache : true,
+    })
+    .fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+      Authorization : `Bearer ${DROPBOX_TOKEN}`,
+      'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
+      'Content-Type' : 'application/octet-stream',
+    }, body)
+    .then((resp) =>  {
+      return RNFetchBlob.fs.readStream(resp.path(), 'utf8')
+    })
+    .then((stream) => {
+      let actual = ''
+      stream.open()
+      stream.onData((chunk) => {
+        actual += chunk
+      })
+      stream.onEnd(() => {
+        report(
+          <Assert
+            key="response data should be the filename"
+            expect={filename}
+            actual={JSON.parse(actual).name} />)
+        done()
+      })
+    })
+
+})
+
+RNTest.config({
+  group : '0.5.1',
+  run : true,
+  expand : false,
+  timeout : 30000,
+})('Upload and download large file', (report, done) => {
+  let filename = '22mb-dummy-' + Date.now()
+  RNFetchBlob.config({
+    fileCache : true
+  })
+  .fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`)
+  .then((res) => {
+    return RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+      Authorization : `Bearer ${DROPBOX_TOKEN}`,
+      'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
+      'Content-Type' : 'application/octet-stream',
+    }, RNFetchBlob.wrap(res.path()))
+  })
+  .then((res) => {
+    report(<Assert
+      key="upload should success withou crashing app"
+      expect={filename}
+      actual={res.json().name}/>)
+    done()
+  })
+})
+
 describe('Session create mechanism test', (report, done) => {
   let sessionName = 'foo-' + Date.now()
   testSessionName = sessionName
@@ -158,7 +222,7 @@ describe('Session create mechanism test', (report, done) => {
     })
     .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
   let p3 = RNFetchBlob.config({
-      path : sysDirs.DocumentDir + '/session-test.png'
+      path : sysDirs.DocumentDir + '/session-test'+Date.now()+'.png'
     })
     .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
 

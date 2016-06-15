@@ -1,9 +1,9 @@
 //
-//  RNFetchBlobResp.h
+//  RNFetchBlobNetwork.h
 //  RNFetchBlob
 //
-//  Created by Ben Hsieh on 2016/6/6.
-//  Copyright © 2016年 suzuri04x2. All rights reserved.
+//  Created by wkh237 on 2016/6/6.
+//  Copyright © 2016 wkh237. All rights reserved.
 //
 
 #ifndef RNFetchBlobResp_h
@@ -12,7 +12,7 @@
 #import <Foundation/Foundation.h>
 #import "RCTBridgeModule.h"
 
-@interface FetchBlobUtils : NSObject  <NSURLConnectionDelegate, NSURLConnectionDataDelegate> {
+@interface RNFetchBlobNetwork : NSObject  <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate> {
     
     NSString * taskId;
     int expectedBytes;
