@@ -160,17 +160,9 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
         RNFetchBlobConfig config = new RNFetchBlobConfig(options);
 
         try {
-            Uri uri = Uri.parse(url);
             AsyncHttpClient req = new AsyncHttpClient();
 
-            // set params
-            RequestParams params = new RequestParams();
             AbstractHttpEntity entity = null;
-
-            // set params
-            for (String paramName : uri.getQueryParameterNames()) {
-                params.put(paramName, uri.getQueryParameter(paramName));
-            }
 
             // set headers
             ReadableMapKeySetIterator it = headers.keySetIterator();
@@ -212,7 +204,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             // send request
             switch(method.toLowerCase()) {
                 case "get" :
-                    req.get(url, params, handler);
+                    req.get(url, handler);
                     break;
                 case "post" :
                     req.post(this.getReactApplicationContext(), url, entity, "octet-stream", handler);
@@ -221,7 +213,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                     req.put(this.getReactApplicationContext(), url, entity, "octet-stream",handler);
                     break;
                 case "delete" :
-                    req.delete(url, params, handler);
+                    req.delete(url, handler);
                     break;
             }
         } catch(Exception error) {
@@ -235,16 +227,10 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
         RNFetchBlobConfig config = new RNFetchBlobConfig(options);
         try {
-            Uri uri = Uri.parse(url);
+
             AsyncHttpClient req = new AsyncHttpClient();
 
-            // set params
-            RequestParams params = new RequestParams();
             HttpEntity entity = null;
-            // set params
-            for (String paramName : uri.getQueryParameterNames()) {
-                params.put(paramName, uri.getQueryParameter(paramName));
-            }
 
             // set headers
             if(headers != null) {
@@ -307,7 +293,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             // send request
             switch(method.toLowerCase()) {
                 case "get" :
-                    req.get(url, params, handler);
+                    req.get(url, handler);
                     break;
                 case "post" :
                     req.post(this.getReactApplicationContext(), url, entity, "multipart/form-data; charset=utf8", handler);
@@ -316,7 +302,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                     req.put(this.getReactApplicationContext(), url, entity, "multipart/form-data",handler);
                     break;
                 case "delete" :
-                    req.delete(url, params, handler);
+                    req.delete(url, handler);
                     break;
             }
         } catch(Exception error) {

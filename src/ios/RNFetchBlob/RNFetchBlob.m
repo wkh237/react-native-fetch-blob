@@ -61,11 +61,11 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
                   form:(NSArray *)form
                   callback:(RCTResponseSenderBlock)callback)
 {
-    
+    NSString * encodedUrl = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     // send request
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
                                     initWithURL:[NSURL
-                                                 URLWithString: url]];
+                                                 URLWithString: encodedUrl]];
     
     NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[ RNFetchBlobNetwork normalizeHeaders:headers]];
     
@@ -141,10 +141,11 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                   headers:(NSDictionary *)headers
                   body:(NSString *)body callback:(RCTResponseSenderBlock)callback)
 {
+    NSString * encodedUrl = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     // send request
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
                                     initWithURL:[NSURL
-                                                 URLWithString: url]];
+                                                 URLWithString: encodedUrl]];
     
     NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
     // move heavy task to another thread
