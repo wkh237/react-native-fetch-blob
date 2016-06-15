@@ -183,7 +183,7 @@ describe('Upload and download at the same time', (report, done) => {
 })
 
 RNTest.config({
-  group : '0.5.x',
+  group : '0.5.1',
   run : true,
   expand : false,
   timeout : 30000,
