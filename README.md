@@ -1,4 +1,4 @@
-# react-native-fetch-blob [![npm version](https://img.shields.io/badge/npm package-0.5.1-brightgreen.svg)](https://badge.fury.io/js/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg) ![](https://img.shields.io/badge/in progress-0.5.2-yellow.svg)
+# react-native-fetch-blob [![npm version](https://img.shields.io/badge/npm package-0.5.2-brightgreen.svg)](https://badge.fury.io/js/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg) ![](https://img.shields.io/badge/in progress-0.6.0-yellow.svg)
 
 A module provides upload, download, and files access API. Supports file stream read/write for process large files.
 
@@ -27,7 +27,7 @@ This update is `backward-compatible` generally you don't have to change existing
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-manage-cached-files)
 * [API](#user-content-api)
- * [config](#user-content-config)
+ * [config](#user-content-configoptionsrnfetchblobconfigfetch)
  * [fetch](#user-content-fetchmethod-url-headers-bodypromisefetchblobresponse)
  * [session](#user-content-sessionnamestringrnfetchblobsession)
  * [base64](#user-content-base64)
@@ -492,7 +492,7 @@ You can also grouping requests by using `session` API, and use `dispose` to remo
 
 Config API was introduced in `v0.5.0` which provides some options for the `fetch` task.
 
-see [RNFetchBlobConfig](#user-content-rnfetchblobconfig)
+see [RNFetchBlobConfig](#user-content-configoptionsrnfetchblobconfigfetch)
 
 ### `fetch(method, url, headers, body):Promise<FetchBlobResponse>`
 
@@ -520,13 +520,18 @@ Register on progress event handler for a fetch request.
 
 A function that triggers when there's data received/sent, first argument is the number of sent/received bytes, and second argument is expected total bytes number.
 
-#### `wrap(path:string):string`
+### `wrap(path:string):string`
 
 Simply prepend `RNFetchBlob-file://` to a path, this make the file path becomes recognizable to native `fetch` method.
 
-#### `session(name:string):RNFetchBlobSession`
+### `session(name:string):RNFetchBlobSession`
 
-TODO
+Session API helps managing cached files, the following code, will try to return an existing session object with the given `name`, if it does not exist, create one.
+
+```js
+RNFetchBlob.session('mysession')
+```
+see [Class RNFetchBlobSession](#user-content-rnfetchblobsession) for usage.
 
 ### `base64`
 
@@ -823,15 +828,22 @@ A `session` is an object that helps you manage files. It simply main a list of f
 
 | Version | |
 |---|---|
+| 0.5.2 | Fix improper url params bug [#26](https://github.com/wkh237/react-native-fetch-blob/issues/26) and change IOS HTTP implementation from NSURLConnection to NSURLSession |
 | 0.5.0 | Upload/download with direct access to file storage, and also added file access APIs |
 | 0.4.2 | Supports upload/download progress |
 | 0.4.1 | Fixe upload form-data missing file extension problem on Android |
 | 0.4.0 | Add base-64 encode/decode library and API |
 | ~0.3.0 | Upload/Download octet-stream and form-data |
 
-### TODOs
+### TODO
 
 * Customizable Multipart MIME type
+
+### In Progress (v0.6.0)
+
+* Add `readFile` and `WriteFile` API to `fs`
+* Add file access API for direct access RNFetchBlobResponse when the response is a file path
+* Android Download Manager file download API
 
 ### Development
 

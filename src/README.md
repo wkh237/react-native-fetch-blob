@@ -1,14 +1,14 @@
-# react-native-fetch-blob [![npm version](https://badge.fury.io/js/react-native-fetch-blob.svg)](https://badge.fury.io/js/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg)
-
-For latest document please visit our [github](https://github.com/wkh237/react-native-fetch-blob/)
+# react-native-fetch-blob [![npm version](https://img.shields.io/badge/npm package-0.5.2-brightgreen.svg)](https://badge.fury.io/js/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg) ![](https://img.shields.io/badge/in progress-0.6.0-yellow.svg)
 
 A module provides upload, download, and files access API. Supports file stream read/write for process large files.
+
+**[Please visit our Github for updated document](https://github.com/wkh237/react-native-fetch-blob)**
 
 **Why do we need this**
 
 At this moment, React Native does not support `Blob` object yet, so if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854).
 
-Hence you may getting into trouble in some use cases. For example, displaying an image on image server but the server requires a specific field(such as "Authorization") in headers or body, so you can't just pass the image uri to `Image` component because that will probably returns a 401 response. With help of this module, you can send a HTTP request with any headers, and decide how to handle the response/reqeust data. It can be just simply converted into BASE64 string, or store to a file directly so that you can read it by file stream or use it's path.
+Hence you may getting into trouble in some use cases. For example, displaying an image on image server but the server requires a specific field(such as "Authorization") in headers or body, so you can't just pass the image uri to `Image` component because that will probably returns a 401 response. With help of this module, you can send a HTTP request with any headers, and decide how to handle the response/reqeust data. The response data can be just simply converted into BASE64 string, or store to a file directly so that you can read it by file stream or use it's path.
 
 This module is designed to be a substitution of `blob`, there's a set of file access API including basic CRUD method, and file stream reader/writer. Also it has a special `fetch` implementation that supports binary request/response body.
 
@@ -29,7 +29,7 @@ This update is `backward-compatible` generally you don't have to change existing
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-manage-cached-files)
 * [API](#user-content-api)
- * [config](#user-content-config)
+ * [config](#user-content-configoptionsrnfetchblobconfigfetch)
  * [fetch](#user-content-fetchmethod-url-headers-bodypromisefetchblobresponse)
  * [session](#user-content-sessionnamestringrnfetchblobsession)
  * [base64](#user-content-base64)
@@ -50,9 +50,11 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
-**Android Access Permission to External storage (Optional)**
+**Grant Permission to External storage for Android 5.0 or lower**
 
-If you're going to access external storage (say, SD card storage), you might have to add the following line to `AndroidManifetst.xml`.
+Mechanism about granting Android permissions has slightly different since Android 6.0 released, please refer to [Officail Document](https://developer.android.com/training/permissions/requesting.html).
+
+If you're going to access external storage (say, SD card storage) for `Android 5.0` (or lower) devices, you might have to add the following line to `AndroidManifetst.xml`.
 
 ```diff
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -68,6 +70,10 @@ If you're going to access external storage (say, SD card storage), you might hav
     ...
 
 ```
+
+**Grant Access Permission for Android 6.0**
+
+Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. So adding permissions in `AndroidManifest.xml` won't work in Android 6.0 devices. To grant permissions in runtime, you might use modules like [react-native-android-permissions](https://github.com/lucasferreira/react-native-android-permissions).
 
 ## Guide
 
@@ -207,7 +213,8 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
       mute : false
     }),
     'Content-Type' : 'application/octet-stream',
-    // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://` when the data comes from a file.
+    // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://`.
+    // Or simply wrap the file path with RNFetchBlob.wrap().
   }, RNFetchBlob.wrap(PATH_TO_THE_FILE))
   .then((res) => {
     console.log(res.text())
@@ -259,7 +266,8 @@ What if you want to upload a file in some field ? Just like [upload a file from 
     {
       name : 'avatar',
       filename : 'avatar.png',
-      // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://` when the data comes from a file path
+      // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://`.
+      // Or simply wrap the file path with RNFetchBlob.wrap().
       data: RNFetchBlob.wrap(PATH_TO_THE_FILE)
     },
     // elements without property `filename` will be sent as plain text
@@ -325,7 +333,7 @@ If mime is null or undefined, then the mime type will be inferred from the file 
 <img src="img/android-notification2.png" width="256">
 
 
-If you want to download notification or make the stored file visible like the above. You have to add some options to `config`.
+If you want to display a notification when file's completely download to storage (as the above), or make the downloaded file visible in "Downloads" app. You have to add some options to `config`.
 
 ```js
 RNFetchBlob.config({
@@ -486,7 +494,7 @@ You can also grouping requests by using `session` API, and use `dispose` to remo
 
 Config API was introduced in `v0.5.0` which provides some options for the `fetch` task.
 
-see [RNFetchBlobConfig](#user-content-rnfetchblobconfig)
+see [RNFetchBlobConfig](#user-content-configoptionsrnfetchblobconfigfetch)
 
 ### `fetch(method, url, headers, body):Promise<FetchBlobResponse>`
 
@@ -514,9 +522,18 @@ Register on progress event handler for a fetch request.
 
 A function that triggers when there's data received/sent, first argument is the number of sent/received bytes, and second argument is expected total bytes number.
 
-#### `session(name:string):RNFetchBlobSession`
+### `wrap(path:string):string`
 
-TODO
+Simply prepend `RNFetchBlob-file://` to a path, this make the file path becomes recognizable to native `fetch` method.
+
+### `session(name:string):RNFetchBlobSession`
+
+Session API helps managing cached files, the following code, will try to return an existing session object with the given `name`, if it does not exist, create one.
+
+```js
+RNFetchBlob.session('mysession')
+```
+see [Class RNFetchBlobSession](#user-content-rnfetchblobsession) for usage.
 
 ### `base64`
 
@@ -813,16 +830,22 @@ A `session` is an object that helps you manage files. It simply main a list of f
 
 | Version | |
 |---|---|
+| 0.5.2 | Fix improper url params bug [#26](https://github.com/wkh237/react-native-fetch-blob/issues/26) and change IOS HTTP implementation from NSURLConnection to NSURLSession |
 | 0.5.0 | Upload/download with direct access to file storage, and also added file access APIs |
 | 0.4.2 | Supports upload/download progress |
 | 0.4.1 | Fixe upload form-data missing file extension problem on Android |
 | 0.4.0 | Add base-64 encode/decode library and API |
 | ~0.3.0 | Upload/Download octet-stream and form-data |
 
-### TODOs
+### TODO
 
 * Customizable Multipart MIME type
-* Improvement of file cache management API
+
+### In Progress (v0.6.0)
+
+* Add `readFile` and `WriteFile` API to `fs`
+* Add file access API for direct access RNFetchBlobResponse when the response is a file path
+* Android Download Manager file download API
 
 ### Development
 
