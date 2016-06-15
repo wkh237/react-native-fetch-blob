@@ -50,26 +50,8 @@ describe('GET image from server', (report, done) => {
     })
 })
 
-// // Only use when doing memory leaking test 
-// RNTest.config({
-//   timeout : 900000000
-// })('Memory leaking test', (report, done) => {
-//   let promises = []
-//   for(let i = 0 ; i < 2000; i++) {
-//     promises.push(RNFetchBlob
-//       .fetch('GET', `${TEST_SERVER_URL}/public/github.png`, {
-//         Authorization : 'Bearer abde123eqweje'
-//       })
-//     )
-//   }
-//   Promise.all(promises).then(() => {
-//     report(<Assert key="test finished" expect={true} actual={true}/>)
-//     done()
-//   })
-// })
-
-
-require('./test-0.1.x-0.4.x')
-require('./test-0.5.x')
-require('./test-fs')
-require('./test-android')
+// require('./test-0.1.x-0.4.x')
+// require('./test-0.5.1')
+require('./test-0.5.2')
+// require('./test-fs')
+// require('./test-android')
