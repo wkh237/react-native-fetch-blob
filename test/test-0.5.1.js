@@ -15,7 +15,7 @@ import {
 const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
-  group : '0.5.x',
+  group : '0.5.1',
   run : true,
   expand : false,
 })
