@@ -42,6 +42,18 @@ app.get('/redirect', function(req, res) {
   res.redirect('/public/github.png')
 })
 
+app.all('/params', function(req, res) {
+  console.log(req.url)
+    var resp =
+      {
+         time : req.query.time,
+         name : req.query.name,
+         lang : req.query.lang
+      }
+    console.log(resp)
+    res.send(resp)
+})
+
 // return an empty response
 app.all('/empty', function(req, res) {
   res.send('')
