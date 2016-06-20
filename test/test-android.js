@@ -91,3 +91,17 @@ describe('MediaScanner tests ', (report, done) => {
   })
 
 })
+
+describe('android download manager', (report, done) => {
+  RNFetchBlob.config({
+    addAndroidDownloads : {
+      useDownloadManager : true,
+      title : 'RNFetchBlob test download success',
+      description : `File description added by RNFetchblob`,
+      mediaScannable : true,
+      mime : "image/png",
+      notification : true
+    }
+  })
+  .fetch('GET', `${TEST_SERVER_URL}/public/beethoven.mp3`)
+})
