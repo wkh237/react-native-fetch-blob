@@ -1,5 +1,7 @@
 package com.RNFetchBlob;
 
+import android.app.DownloadManager;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
 
@@ -158,6 +160,30 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     public void fetchBlob(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, final Callback callback) {
 
         RNFetchBlobConfig config = new RNFetchBlobConfig(options);
+
+        // use download manager instead of default HTTP implementation
+        if(config.addAndroidDownloads != null && config.addAndroidDownloads.hasKey("useDownloadManager")) {
+
+            if(config.addAndroidDownloads.getBoolean("useDownloadManager")) {
+                Uri uri = Uri.parse(url);
+                DownloadManager.Request req = new DownloadManager.Request(uri);
+                if(config.path != null) {
+                    Uri dest = null;
+                    dest = Uri.parse(config.path);
+                    req.setDestinationUri(dest);
+                }
+                // set headers
+                ReadableMapKeySetIterator it = headers.keySetIterator();
+                while (it.hasNextKey()) {
+                    String key = it.nextKey();
+                    req.addRequestHeader(key, headers.getString(key));
+                }
+                DownloadManager dm = (DownloadManager) this.getReactApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
+                dm.enqueue(req);
+                return;
+            }
+
+        }
 
         try {
             AsyncHttpClient req = new AsyncHttpClient();
