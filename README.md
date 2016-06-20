@@ -24,7 +24,7 @@ This update is `backward-compatible` generally you don't have to change existing
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
  * [Upload/Download progress](#user-content-uploaaddownload-progress)
- * [Android Media Scanner, and Downloads App Support](#user-content-android-media-scanner-and-downloads-app-support)
+ * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-downloads-app-support)
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-manage-cached-files)
@@ -303,14 +303,17 @@ In `version >= 0.4.2` it is possible to know the upload/download progress.
     })
 ```
 
-#### Android Media Scanner, and Downloads App Support
+#### Android Media Scanner, and Download Manager Support
 
-If you want to make a file in `External Storage` becomes visible in Picture, Misuc, or other built-in apps, you will have to use `Media Scanner`. To make this happend, use `scanFile` method in `fs`.
+If you want to make a file in `External Storage` becomes visible in Picture, Downloads, or other built-in apps, you will have to use `Media Scanner` or `Download Manager`. 
 
+**Media Scanner**
+
+Media scanner scan the file and categorize by given MIME type, if MIME type not specified, it will try to resolve the file using its file extension.
 
 ```js
 
-RNFetchBlog
+RNFetchBlob
     .config({
         // DCIMDir is in external storage
         path : dirs.DCIMDir + '/music.mp3'
@@ -325,7 +328,28 @@ RNFetchBlog
     })
 ```
 
-If mime is null or undefined, then the mime type will be inferred from the file extension.
+**Download Manager**
+
+When download large files on Android it is recommended to use `Download Manager`, it supports lot of native features like progress bar, and notification, also the download task will be handled by OS, and more effective.
+
+```js
+RNFetchBlob
+    .config({
+        // Optional, if not specified, the file will download to system default path
+        path : DOWNLOAD_DEST, 
+        addAdnroidDownloads : {
+            useDownloadManager : true, // <-- this is the only thing required
+            // Optional, override notification setting (default to true)
+            notification : false,
+            // Optional, but recommended since android DownloadManager will fail when 
+            // the url does not contains a file extension, by default the mime type will be text/plain
+            mime : 'text/plain',
+            description : 'File downloaded by download manager.'
+        }
+    })
+    .fetch('GET', 'http://example.com/file/somefile')
+```
+
 
 **Download Notification and Visibiliy in Download App (Android Only)**
 
