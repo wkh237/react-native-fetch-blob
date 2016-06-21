@@ -13,6 +13,8 @@ extern NSString *const FILE_PREFIX = @"RNFetchBlob-file://";
 extern NSString *const CONFIG_USE_TEMP = @"fileCache";
 extern NSString *const CONFIG_FILE_PATH = @"path";
 extern NSString *const CONFIG_FILE_EXT = @"appendExt";
+extern NSString *const CONFIG_TRUSTY = @"trusty";
+
 
 extern NSString *const MSG_EVENT = @"RNFetchBlobMessage";
 extern NSString *const MSG_EVENT_LOG = @"log";

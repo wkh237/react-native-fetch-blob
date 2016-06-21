@@ -23,6 +23,7 @@
 
 @implementation RNFetchBlobNetwork
 
+NSOperationQueue *taskQueue;
 
 @synthesize taskId;
 @synthesize expectedBytes;
@@ -31,10 +32,17 @@
 @synthesize callback;
 @synthesize bridge;
 @synthesize options;
+@synthesize fileTaskCompletionHandler;
+@synthesize dataTaskCompletionHandler;
+@synthesize error;
+
 
 // constructor
 - (id)init {
     self = [super init];
+    if(taskQueue == nil) {
+        taskQueue = [[NSOperationQueue alloc] init];
+    }
     return self;
 }
 
@@ -51,7 +59,8 @@
 }
 
 // send HTTP request
-- (void) sendRequest:(NSDictionary *)options bridge:(RCTBridge *)bridgeRef taskId:(NSString *)taskId withRequest:(NSURLRequest *)req callback:(RCTResponseSenderBlock) callback {
+- (void) sendRequest:(NSDictionary  * _Nullable )options bridge:(RCTBridge * _Nullable)bridgeRef taskId:(NSString * _Nullable)taskId withRequest:(NSURLRequest * _Nullable)req callback:(_Nullable RCTResponseSenderBlock) callback
+{
     self.taskId = taskId;
     self.respData = [[NSMutableData alloc] initWithLength:0];
     self.callback = callback;
@@ -62,12 +71,15 @@
     
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
     NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
-
-    NSURLSession * session = [NSURLSession sharedSession];
+    NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
+    NSURLSession * session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:taskQueue];
+    
+//    NSURLSession * session = [NSURLSession sharedSession];
     
     // file will be stored at a specific path
     if( path != nil) {
-        NSURLSessionDownloadTask * task = [session downloadTaskWithRequest:req completionHandler:^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        
+        self.fileTaskCompletionHandler = ^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
             if(error != nil) {
                 callback(@[[error localizedDescription]]);
                 return;
@@ -81,12 +93,14 @@
                 return;
             }
             callback(@[[NSNull null], path]);
-        }];
+        };
+        NSURLSessionDownloadTask * task = [session downloadTaskWithRequest:req completionHandler:fileTaskCompletionHandler];
         [task resume];
     }
     // file will be stored at tmp path
     else if ( [self.options valueForKey:CONFIG_USE_TEMP]!= nil ) {
-        NSURLSessionDownloadTask * task = [session downloadTaskWithRequest:req completionHandler:^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        
+        self.fileTaskCompletionHandler = ^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
             if(error != nil) {
                 callback(@[[error localizedDescription]]);
                 return;
@@ -101,14 +115,13 @@
                 return;
             }
             callback(@[[NSNull null], tmpPath]);
-        }];
+        };
+        NSURLSessionDownloadTask * task = [session downloadTaskWithRequest:req completionHandler:fileTaskCompletionHandler];
         [task resume];
     }
     // base64 response
     else {
-        NSURLSessionUploadTask * task =
-        
-        [session dataTaskWithRequest:req completionHandler:^(NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        self.dataTaskCompletionHandler = ^(NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error) {
             if(error != nil) {
                 callback(@[[error localizedDescription]]);
                 return;
@@ -116,7 +129,8 @@
             else {
                 callback(@[[NSNull null], [resp base64EncodedStringWithOptions:0]]);
             }
-        }];
+        };
+        NSURLSessionDataTask * task = [session dataTaskWithRequest:req completionHandler:dataTaskCompletionHandler];
         [task resume];
     }
 }
@@ -160,6 +174,7 @@
 
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     NSLog([error localizedDescription]);
+    self.error = error;
 }
 
 // upload progress handler
@@ -175,6 +190,30 @@
             @"total": [NSString stringWithFormat:@"%d", expectedBytes]
             }
      ];
+}
+
+- (void) application:(UIApplication *)application handleEventsForBackgroundURLSession:(NSString *)identifier completionHandler:(void (^)())completionHandler {
+    
+}
+
+- (void) URLSessionDidFinishEventsForBackgroundURLSession:(NSURLSession *)session
+{
+    if(self.dataTaskCompletionHandler != nil)
+    {
+        dataTaskCompletionHandler(self.respData, nil, error);
+    }
+    else if(self.fileTaskCompletionHandler != nil)
+    {
+        fileTaskCompletionHandler(nil, nil, self.error);
+    }
+}
+
+- (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler
+{
+    if([options valueForKey:CONFIG_TRUSTY] == YES)
+        completionHandler(NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
+    else
+        RCTLogError(@"counld not create connection with an unstrusted SSL certification, if you're going to create connection anyway, add `trusty:true` to RNFetchBlob.config");
 }
 
 @end

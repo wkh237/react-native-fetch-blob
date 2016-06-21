@@ -12,32 +12,29 @@
 #import <Foundation/Foundation.h>
 #import "RCTBridgeModule.h"
 
-@interface RNFetchBlobNetwork : NSObject  <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate> {
-    
-    NSString * taskId;
-    int expectedBytes;
-    int receivedBytes;
-    NSMutableData * respData;
-    RCTResponseSenderBlock callback;
-    RCTBridge * bridge;
-    NSDictionary * options;
-    RNFetchBlobFS * fileStream;
-}
-@property (nonatomic) NSString * taskId;
+typedef void(^CompletionHander)(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error);
+typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error);
+
+@interface RNFetchBlobNetwork : NSObject  <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate, UIApplicationDelegate>
+
+@property (nullable, nonatomic) NSString * taskId;
 @property (nonatomic) int expectedBytes;
 @property (nonatomic) int receivedBytes;
-@property (nonatomic) NSMutableData * respData;
-@property (nonatomic) RCTResponseSenderBlock callback;
-@property (nonatomic) RCTBridge * bridge;
-@property (nonatomic) NSDictionary * options;
-@property (nonatomic) RNFetchBlobFS * fileStream;
+@property (nullable, nonatomic) NSMutableData * respData;
+@property (nullable, nonatomic) RCTResponseSenderBlock callback;
+@property (nullable, nonatomic) RCTBridge * bridge;
+@property (nullable, nonatomic) NSDictionary * options;
+@property (nullable, nonatomic) RNFetchBlobFS * fileStream;
+@property (nullable, nonatomic) CompletionHander fileTaskCompletionHandler;
+@property (nullable, nonatomic) DataTaskCompletionHander dataTaskCompletionHandler;
+@property (nullable, nonatomic) NSError * error;
 
 
-- (id) init;
+- (nullable id) init;
 - (void) sendRequest;
 
-+ (NSMutableDictionary *) normalizeHeaders:(NSDictionary *)headers;
-- (void) sendRequest:(NSDictionary *)options bridge:(RCTBridge *)bridgeRef taskId:(NSString *)taskId withRequest:(NSURLRequest *)req callback:(RCTResponseSenderBlock) callback;
++ (NSMutableDictionary  * _Nullable ) normalizeHeaders:(NSDictionary * _Nullable)headers;
+- (void) sendRequest:(NSDictionary  * _Nullable )options bridge:(RCTBridge * _Nullable)bridgeRef taskId:(NSString * _Nullable)taskId withRequest:(NSURLRequest * _Nullable)req callback:(_Nullable RCTResponseSenderBlock) callback;
 
 
 @end
