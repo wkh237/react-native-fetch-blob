@@ -19,10 +19,12 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.Base64;
+import com.loopj.android.http.MySSLSocketFactory;
 import com.loopj.android.http.RequestParams;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -158,183 +160,12 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void fetchBlob(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, final Callback callback) {
-
-        RNFetchBlobConfig config = new RNFetchBlobConfig(options);
-
-        // use download manager instead of default HTTP implementation
-        if(config.addAndroidDownloads != null && config.addAndroidDownloads.hasKey("useDownloadManager")) {
-
-            if(config.addAndroidDownloads.getBoolean("useDownloadManager")) {
-                Uri uri = Uri.parse(url);
-                DownloadManager.Request req = new DownloadManager.Request(uri);
-                if(config.path != null) {
-                    Uri dest = null;
-                    dest = Uri.parse(config.path);
-                    req.setDestinationUri(dest);
-                }
-                // set headers
-                ReadableMapKeySetIterator it = headers.keySetIterator();
-                while (it.hasNextKey()) {
-                    String key = it.nextKey();
-                    req.addRequestHeader(key, headers.getString(key));
-                }
-                DownloadManager dm = (DownloadManager) this.getReactApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
-                dm.enqueue(req);
-                return;
-            }
-
-        }
-
-        try {
-            AsyncHttpClient req = new AsyncHttpClient();
-
-            AbstractHttpEntity entity = null;
-
-            // set headers
-            ReadableMapKeySetIterator it = headers.keySetIterator();
-            while (it.hasNextKey()) {
-                String key = it.nextKey();
-                req.addHeader(key, headers.getString(key));
-            }
-
-            // set body for POST and PUT
-            if(body != null && method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put")) {
-
-                byte [] blob;
-                // upload from storage
-                if(body.startsWith(filePathPrefix)) {
-                    String filePath = body.substring(filePathPrefix.length());
-                    entity = new FileEntity(new File(filePath));
-                }
-                else {
-                    blob = Base64.decode(body, 0);
-                    entity = new ByteArrayEntity(blob);
-                }
-                entity.setContentType(headers.getString("Content-Type"));
-            }
-
-            AsyncHttpResponseHandler handler;
-
-            // create handler
-            if(config.fileCache || config.path != null) {
-                handler = new RNFetchBlobFileHandler(this.getReactApplicationContext(), taskId, config, callback);
-                // if path format invalid, throw error
-                if (!((RNFetchBlobFileHandler)handler).isValid) {
-                    callback.invoke("RNFetchBlob fetch error, configuration path `"+ config.path  +"` is not a valid path.");
-                    return;
-                }
-            }
-            else
-                handler = new RNFetchBlobBinaryHandler(this.getReactApplicationContext(), taskId, callback);
-
-            // send request
-            switch(method.toLowerCase()) {
-                case "get" :
-                    req.get(url, handler);
-                    break;
-                case "post" :
-                    req.post(this.getReactApplicationContext(), url, entity, "octet-stream", handler);
-                    break;
-                case "put" :
-                    req.put(this.getReactApplicationContext(), url, entity, "octet-stream",handler);
-                    break;
-                case "delete" :
-                    req.delete(url, handler);
-                    break;
-            }
-        } catch(Exception error) {
-            callback.invoke( "RNFetchBlob serialize request data failed: " + error.getMessage() + error.getCause());
-        }
-
+        new RNFetchBlobReq(this.getReactApplicationContext(), options, taskId, method, url, headers, body, callback).run();
     }
 
     @ReactMethod
     public void fetchBlobForm(ReadableMap options, String taskId, String method, String url, ReadableMap headers, ReadableArray body, final Callback callback) {
-
-        RNFetchBlobConfig config = new RNFetchBlobConfig(options);
-        try {
-
-            AsyncHttpClient req = new AsyncHttpClient();
-
-            HttpEntity entity = null;
-
-            // set headers
-            if(headers != null) {
-                ReadableMapKeySetIterator it = headers.keySetIterator();
-                while (it.hasNextKey()) {
-                    String key = it.nextKey();
-                    req.addHeader(key, headers.getString(key));
-                }
-            }
-
-            // set body for POST and PUT
-            if(body != null && method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put")) {
-                Long tsLong = System.currentTimeMillis()/1000;
-                String ts = tsLong.toString();
-                String boundary = "RNFetchBlob".concat(ts);
-                MultipartEntityBuilder form = MultipartEntityBuilder.create();
-                form.setBoundary(boundary);
-                for( int i = 0; i< body.size(); i++) {
-                    ReadableMap map = body.getMap(i);
-                    String name = map.getString("name");
-                    if(!map.hasKey("data"))
-                        continue;
-                    String data = map.getString("data");
-                    // file field
-                    if(map.hasKey("filename")) {
-                        String filename = map.getString("filename");
-                        // upload from storage
-                        if(data.startsWith(filePathPrefix)) {
-                            File file = new File(data.substring(filePathPrefix.length()));
-                            form.addBinaryBody(name, file, ContentType.APPLICATION_OCTET_STREAM, filename);
-                        }
-                        // base64 embedded file content
-                        else {
-                            form.addBinaryBody(name, Base64.decode(data, 0), ContentType.APPLICATION_OCTET_STREAM, filename);
-                        }
-                    }
-                    // data field
-                    else {
-                        form.addTextBody(name, map.getString("data"));
-                    }
-                }
-                entity = form.build();
-                req.addHeader("Content-Type", headers.getString("Content-Type") + "; charset=utf8; boundary=" + boundary);
-            }
-
-            AsyncHttpResponseHandler handler;
-
-            // create handler
-            if(config.fileCache || config.path != null) {
-                handler = new RNFetchBlobFileHandler(this.getReactApplicationContext(), taskId, config, callback);
-                // if path format invalid, throw error
-                if (!((RNFetchBlobFileHandler)handler).isValid) {
-                    callback.invoke("RNFetchBlob fetch error, configuration path `"+ config.path  +"` is not a valid path.");
-                    return;
-                }
-            }
-            else
-                handler = new RNFetchBlobBinaryHandler(this.getReactApplicationContext(), taskId, callback);
-
-            // send request
-            switch(method.toLowerCase()) {
-                case "get" :
-                    req.get(url, handler);
-                    break;
-                case "post" :
-                    req.post(this.getReactApplicationContext(), url, entity, "multipart/form-data; charset=utf8", handler);
-                    break;
-                case "put" :
-                    req.put(this.getReactApplicationContext(), url, entity, "multipart/form-data",handler);
-                    break;
-                case "delete" :
-                    req.delete(url, handler);
-                    break;
-            }
-        } catch(Exception error) {
-            callback.invoke( "RNFetchBlob serialize request data failed: " + error.getMessage() + error.getCause());
-        }
-
+        new RNFetchBlobReq(this.getReactApplicationContext(), options, taskId, method, url, headers, body, callback).run();
     }
 
 }
