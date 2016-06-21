@@ -26,7 +26,7 @@ This update is `backward-compatible` generally you don't have to change existing
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-manage-cached-files)
- * [Self-Signed SSL Server](#user-content-selfsigned-ssl-server)
+ * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
 * [API](#user-content-api)
  * [config](#user-content-configoptionsrnfetchblobconfigfetch)
  * [fetch](#user-content-fetchmethod-url-headers-bodypromisefetchblobresponse)
