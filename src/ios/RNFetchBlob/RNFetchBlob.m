@@ -160,7 +160,6 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                 if([body hasPrefix:self.filePathPrefix]) {
                     NSString * orgPath = [body substringFromIndex:[self.filePathPrefix length]];
                     [request setHTTPBodyStream: [NSInputStream inputStreamWithFileAtPath:orgPath ]];
-//                    blobData = [[NSData alloc] initWithContentsOfFile:orgPath];
                 }
                 // otherwise convert it as BASE64 data string
                 else {
