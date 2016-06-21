@@ -813,7 +813,7 @@ Statistic data of a file, see the following sample object.
 
 ### RNFetchBlobSession
 
-A `session` is an object that helps you manage files. It simply main a list of file path and let you use `dispose()`to delete files in this session once and for all.
+A `session` is an object that helps you manage files. It simply maintains a list of file path and let you use `dispose()`to delete files in this session once and for all.
 
 #### add(path:string):RNFetchBlobSession
   Add a file path to this session.
