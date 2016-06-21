@@ -13,6 +13,7 @@ var mkdirp = require('mkdirp')
 var dirname = require('path').dirname
 var app = express()
 var fs = require('fs')
+var https = require('https')
 
 var JS_SOURCE_PATH = '../test/',
     LIB_SOURCE_PATH = '../src/',
@@ -24,6 +25,16 @@ watch(JS_SOURCE_PATH, APP_SOURCE_PATH)
 // watch lib js source
 watch(LIB_SOURCE_PATH, NODE_MODULE_MODULE_PATH, {ignored: /\.\.\/src\/(android|ios)\//})
 
+// https
+var server = https.createServer({
+  key : fs.readFileSync('./key.pem'),
+  cert : fs.readFileSync('./cert.pem')
+}, app).listen(8124, function(err){
+  if(!err)
+    console.log('SSL test server running at port ',8124)
+})
+
+// http
 app.listen(8123, function(err){
   if(!err)
     console.log('test server running at port ',8123)
