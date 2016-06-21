@@ -114,16 +114,3 @@ describe('Progress report test', (report, done) => {
     })
 
 })
-
-// FIXME : not yet supported
-// describe('Large file download test', (report, done) => {
-  // let received = 0
-  // RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`, {
-  //   Authorization : 'Bearer abde123eqweje'
-  // })
-  // .then((resp) => {
-    // report(<Assert key="not supported" expect={true} actual={false}/>)
-    // done()
-  // })
-
-// })

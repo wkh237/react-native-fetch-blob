@@ -71,10 +71,19 @@ NSOperationQueue *taskQueue;
     
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
     NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
-    NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
-    NSURLSession * session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:taskQueue];
+    NSURLSession * session;
     
-//    NSURLSession * session = [NSURLSession sharedSession];
+    // the session trust any SSL certification
+    if([options valueForKey:CONFIG_TRUSTY] != nil)
+    {
+        NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
+        session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:taskQueue];
+    }
+    // the session validates SSL certification, self-signed certification will be aborted
+    else
+    {
+        session = [NSURLSession sharedSession];
+    }
     
     // file will be stored at a specific path
     if( path != nil) {
@@ -210,10 +219,10 @@ NSOperationQueue *taskQueue;
 
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler
 {
-    if([options valueForKey:CONFIG_TRUSTY] == YES)
+    if([options valueForKey:CONFIG_TRUSTY] != nil)
         completionHandler(NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
     else
-        RCTLogError(@"counld not create connection with an unstrusted SSL certification, if you're going to create connection anyway, add `trusty:true` to RNFetchBlob.config");
+        RCTLogWarn(@"counld not create connection with an unstrusted SSL certification, if you're going to create connection anyway, add `trusty:true` to RNFetchBlob.config");
 }
 
 @end
