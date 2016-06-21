@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by xeiyan on 2016/4/29.
+ * Created by wkh237 on 2016/4/29.
  */
 public class RNFetchBlobPackage implements ReactPackage {
 
