@@ -1,8 +1,6 @@
-# react-native-fetch-blob [![npm version](https://img.shields.io/badge/npm package-0.5.2-brightgreen.svg)](https://badge.fury.io/js/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg) ![](https://img.shields.io/badge/in progress-0.6.0-yellow.svg)
+# react-native-fetch-blob [![npm version](https://img.shields.io/badge/npm package-0.5.3-brightgreen.svg)](https://badge.fury.io/js/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg) ![](https://img.shields.io/badge/in progress-0.6.0-yellow.svg)
 
 A module provides upload, download, and files access API. Supports file stream read/write for process large files.
-
-**[Please visit our Github for updated document](https://github.com/wkh237/react-native-fetch-blob)**
 
 **Why do we need this**
 
@@ -28,6 +26,7 @@ This update is `backward-compatible` generally you don't have to change existing
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-manage-cached-files)
+ * [Self-Signed SSL Server](#user-content-selfsigned-ssl-server)
 * [API](#user-content-api)
  * [config](#user-content-configoptionsrnfetchblobconfigfetch)
  * [fetch](#user-content-fetchmethod-url-headers-bodypromisefetchblobresponse)
@@ -484,6 +483,20 @@ You can also grouping requests by using `session` API, and use `dispose` to remo
 
 ```
 
+#### Self-Signed SSL Server
+
+By default, react-native-fetch-blob does NOT allow connection to unknown certification provider since it's dangerous. If you're going to connect a server with self-signed certification, add `trusty` to `config`. This function is available for version >= `0.5.3`
+
+```js
+RNFetchBlob.config({
+  trusty : true
+})
+.then('GET', 'https://mysite.com')
+.then((resp) => {
+  // ...
+})
+```
+
 ---
 
 ## API
@@ -759,10 +772,14 @@ Connect `Media Scanner` and scan the file. see [Android Media Scanner, and Downl
 
 A set of configurations that will be injected into a `fetch` method, with the following properties.
 
+#### trusty:boolean
+  `0.5.3`
+  Set this property to `true` will allow the request create connection with server have self-signed SSL certification. This is not recommended to use in production.
+
 #### fileCache:boolean
   Set this property to `true` will makes response data of the `fetch` stored in a temp file, by default the temp file will stored in App's own root folder with file name template `RNFetchBlob_tmp${timestamp}`.
 #### appendExt:string
-  Set this propery to change temp file extension that created by `fetch` response data.
+  Set this property to change temp file extension that created by `fetch` response data.
 #### path:string
   When this property has value, `fetch` API will try to store response data in the path ignoring `fileCache` and `appendExt` property.
 #### addAndroidDownloads:object (Android only)
@@ -815,7 +832,7 @@ Statistic data of a file, see the following sample object.
 
 ### RNFetchBlobSession
 
-A `session` is an object that helps you manage files. It simply main a list of file path and let you use `dispose()`to delete files in this session once and for all.
+A `session` is an object that helps you manage files. It simply maintains a list of file path and let you use `dispose()`to delete files in this session once and for all.
 
 #### add(path:string):RNFetchBlobSession
   Add a file path to this session.
@@ -830,6 +847,7 @@ A `session` is an object that helps you manage files. It simply main a list of f
 
 | Version | |
 |---|---|
+| 0.5.3 | Add API for access untrusted SSL server |
 | 0.5.2 | Fix improper url params bug [#26](https://github.com/wkh237/react-native-fetch-blob/issues/26) and change IOS HTTP implementation from NSURLConnection to NSURLSession |
 | 0.5.0 | Upload/download with direct access to file storage, and also added file access APIs |
 | 0.4.2 | Supports upload/download progress |
@@ -849,5 +867,5 @@ A `session` is an object that helps you manage files. It simply main a list of f
 
 ### Development
 
-If you're interested in hacking this module, check our [development guide](https://github.com/wkh237/react-native-fetch-blob/wiki/Development-Guide), there might be some helpful information.
+If you're interested in hacking this module, check our [development guide](https://github.com/wkh237/react-native-fetch-blob/wiki/Home), there might be some helpful information.
 Please feel free to make a PR or file an issue.
