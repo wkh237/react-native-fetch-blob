@@ -1,3 +1,7 @@
+#!/bin/bash
+
+set -e
+
 TEST_APP_NAME='RNFetchBlobTest'
 TEST_APP_PATH="$(pwd)/${TEST_APP_NAME}"
 TARGET='android'
@@ -25,7 +29,6 @@ fi
 # Create new rn project
 if [ "$#" -eq 1 ]; then
   echo 'creating test app RNFetchBlobTest ..'
-  rm -rf "${TEST_APP_NAME}"
   react-native init "${TEST_APP_NAME}"
 fi
 # copy js files to test app folder
