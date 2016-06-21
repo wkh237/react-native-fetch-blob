@@ -19,6 +19,7 @@ const { Assert, Comparer, Info, describe, prop } = RNTest
 
 prop('FILENAME', `${Platform.OS}-0.5.0-${Date.now()}.png`)
 prop('TEST_SERVER_URL', 'http://localhost:8123')
+prop('TEST_SERVER_URL_SSL', 'https://localhost:8124')
 prop('DROPBOX_TOKEN', 'fsXcpmKPrHgAAAAAAAAAoXZhcXYWdgLpQMan6Tb_bzJ237DXhgQSev12hA-gUXt4')
 prop('styles', {
   image : {
