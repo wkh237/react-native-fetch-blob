@@ -46,6 +46,16 @@ app.use(function(req,res,next){
   next()
 })
 
+app.use('/upload-form', function(req, res, next) {
+  console.log(req.headers)
+  // req.on('data', (chunk) => {
+    // console.log(String(chunk,'utf8'))
+  // })
+  // req.on('end', () => {
+    next()
+  // })
+})
+
 app.use(upload.any())
 app.use('/public', express.static('./public'))
 // for redirect test
