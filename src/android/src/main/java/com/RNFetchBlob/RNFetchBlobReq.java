@@ -1,9 +1,5 @@
 package com.RNFetchBlob;
 
-import android.app.DownloadManager;
-import android.content.Context;
-import android.net.Uri;
-
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
@@ -101,6 +97,8 @@ public class RNFetchBlobReq implements Runnable{
         }
 
         try {
+
+            req = new AsyncHttpClient();
 
             // use trusty SSL socket
             if(this.options.trusty) {
