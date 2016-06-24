@@ -293,6 +293,7 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                             else
                                 asciiStr = [asciiStr stringByAppendingFormat:@"%d", val];
                         }
+                        free(bytePtr);
                     }
                     asciiStr = [asciiStr stringByAppendingString:@"]"];
                     [self.bridge.eventDispatcher
