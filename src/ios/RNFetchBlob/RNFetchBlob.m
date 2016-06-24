@@ -209,14 +209,15 @@ RCT_EXPORT_METHOD(createFileASCII:(NSString *)path data:(NSArray *)dataArray cal
     
     NSFileManager * fm = [NSFileManager defaultManager];
     NSMutableData * fileContent = [NSMutableData alloc];
-    
-    char bytes[[dataArray count]];
+    // prevent stack overflow, alloc on heap
+    char * bytes = (char*) malloc([dataArray count]);
+//    char bytes[[dataArray count]];
     for(int i = 0; i < dataArray.count; i++) {
         bytes[i] = [[dataArray objectAtIndex:i] charValue];
     }
     [fileContent appendBytes:bytes length:dataArray.count];
     BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
-    
+    free(bytes);
     if(success == YES)
         callback(@[[NSNull null]]);
     else
@@ -259,13 +260,15 @@ RCT_EXPORT_METHOD(writeStream:(NSString *)path withEncoding:(NSString *)encoding
 
 RCT_EXPORT_METHOD(writeArrayChunk:(NSString *)streamId withArray:(NSArray *)dataArray callback:(RCTResponseSenderBlock) callback) {
     RNFetchBlobFS *fs = [[RNFetchBlobFS getFileStreams] valueForKey:streamId];
-    char bytes[[dataArray count]];
+//    char bytes[[dataArray count]];
+    char * bytes = (char *) malloc([dataArray count]);
     for(int i = 0; i < dataArray.count; i++) {
         bytes[i] = [[dataArray objectAtIndex:i] charValue];
     }
     NSMutableData * data = [NSMutableData alloc];
     [data appendBytes:bytes length:dataArray.count];
     [fs write:data];
+    free(bytes);
     callback(@[[NSNull null]]);
 }
 
