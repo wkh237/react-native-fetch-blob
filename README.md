@@ -1,4 +1,4 @@
-# react-native-fetch-blob [![npm version](https://img.shields.io/badge/npm package-0.5.5-brightgreen.svg)](https://badge.fury.io/js/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg) ![](https://img.shields.io/badge/in progress-0.6.0-yellow.svg)
+# react-native-fetch-blob [![npm version](https://img.shields.io/badge/npm package-0.5.6-brightgreen.svg)](https://badge.fury.io/js/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg) ![](https://img.shields.io/badge/in progress-0.6.0-yellow.svg)
 
 A module provides upload, download, and files access API. Supports file stream read/write for process large files.
 
@@ -847,6 +847,7 @@ A `session` is an object that helps you manage files. It simply maintains a list
 
 | Version | |
 |---|---|
+| 0.5.6 | Add support for IOS network status indicator. Fix file stream ASCII reader bug. |
 | 0.5.5 | Remove work in progress code added in 0.5.2 which may cause memory leaks. |
 | 0.5.4 | Fix #30 #31 build build error, and improve memory efficiency. |
 | 0.5.3 | Add API for access untrusted SSL server |

@@ -23,6 +23,7 @@ extern NSString *const CONFIG_USE_TEMP;
 extern NSString *const CONFIG_FILE_PATH;
 extern NSString *const CONFIG_FILE_EXT;
 extern NSString *const CONFIG_TRUSTY;
+extern NSString *const CONFIG_INDICATOR;
 
 // fs events
 extern NSString *const FS_EVENT_DATA;

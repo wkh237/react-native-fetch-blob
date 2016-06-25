@@ -264,7 +264,8 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                 chunkSize = 4095;
             if(self.bufferSize > 0)
                 chunkSize = self.bufferSize;
-            uint8_t * buf = (uint8_t *)malloc(chunkSize);
+//            uint8_t * buf = (uint8_t *)malloc(chunkSize);
+            uint8_t buf[chunkSize];
             unsigned int len = 0;
             len = [(NSInputStream *)stream read:buf maxLength:chunkSize];
             // still have data in stream
@@ -281,6 +282,7 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                     NSString * asciiStr = @"[";
                     if (chunkData.length > 0)
                     {
+//                        unsigned char *bytePtr = (unsigned char *)[chunkData bytes];
                         unsigned char *bytePtr = (unsigned char *)[chunkData bytes];
                         NSInteger byteLen = chunkData.length/sizeof(uint8_t);
                         for (int i = 0; i < byteLen; i++)
@@ -291,7 +293,7 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                             else
                                 asciiStr = [asciiStr stringByAppendingFormat:@"%d", val];
                         }
-                        free(bytePtr);
+//                        free(bytePtr);
                     }
                     asciiStr = [asciiStr stringByAppendingString:@"]"];
                     [self.bridge.eventDispatcher
@@ -301,10 +303,10 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                              @"detail": asciiStr
                             }
                      ];
-                    free(buf);
-                    asciiStr = nil;
-                    buf = nil;
-                    chunkData = nil;
+//                    free(buf);
+//                    asciiStr = nil;
+//                    buf = nil;
+//                    chunkData = nil;
                     return;
                 }
                 // convert byte array to base64 data chunks
@@ -330,8 +332,8 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                         @"detail": encodedChunk
                         }
                  ];
-                chunkData = nil;
-                free(buf);
+//                chunkData = nil;
+//                free(buf);
             }
             // end of stream
             else {
@@ -342,8 +344,8 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                         @"detail": @""
                         }
                  ];
-                chunkData = nil;
-                free(buf);
+//                chunkData = nil;
+//                free(buf);
             }
             break;
         }
