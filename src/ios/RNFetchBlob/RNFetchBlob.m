@@ -130,6 +130,7 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
         // send HTTP request
         RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
         [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
+        utils = nil;
     });
 }
 
@@ -178,6 +179,7 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
         // send HTTP request
         RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
         [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:request callback:callback];
+        utils = nil;
     });
 }
 
