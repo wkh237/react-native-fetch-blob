@@ -3,7 +3,9 @@ type RNFetchBlobConfig = {
   fileCache : bool,
   path : string,
   appendExt : string,
-  session : string
+  session : string,
+  addAndroidDownloads : any,
+  indicator : bool
 };
 
 type RNFetchBlobNative = {

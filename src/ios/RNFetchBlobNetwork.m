@@ -77,7 +77,7 @@ NSOperationQueue *taskQueue;
     if([options valueForKey:CONFIG_TRUSTY] != nil)
     {
         NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
-        session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:taskQueue];
+        session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:[NSOperationQueue mainQueue]];
     }
     // the session validates SSL certification, self-signed certification will be aborted
     else
@@ -105,6 +105,7 @@ NSOperationQueue *taskQueue;
             callback(@[[NSNull null], path]);
             // prevent memory leaks
             self.respData = nil;
+            [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }];
         [task resume];
     }
@@ -127,6 +128,7 @@ NSOperationQueue *taskQueue;
                 return;
             }
             callback(@[[NSNull null], tmpPath]);
+            [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
             // prevent memory leaks
             self.respData = nil;
         }];
@@ -143,9 +145,15 @@ NSOperationQueue *taskQueue;
             else {
                 callback(@[[NSNull null], [resp base64EncodedStringWithOptions:0]]);
             }
+            self.respData = nil;
+            [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }];
         [task resume];
     }
+    
+    // network status indicator
+    if([[options objectForKey:CONFIG_INDICATOR] boolValue] == YES)
+        [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
 }
 
 ////////////////////////////////////////
@@ -188,6 +196,7 @@ NSOperationQueue *taskQueue;
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     NSLog([error localizedDescription]);
     self.error = error;
+    [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
 }
 
 // upload progress handler
@@ -205,9 +214,9 @@ NSOperationQueue *taskQueue;
      ];
 }
 
-- (void) application:(UIApplication *)application handleEventsForBackgroundURLSession:(NSString *)identifier completionHandler:(void (^)())completionHandler {
-    
-}
+//- (void) application:(UIApplication *)application handleEventsForBackgroundURLSession:(NSString *)identifier completionHandler:(void (^)())completionHandler {
+//    
+//}
 
 //- (void) URLSessionDidFinishEventsForBackgroundURLSession:(NSURLSession *)session
 //{
@@ -225,8 +234,10 @@ NSOperationQueue *taskQueue;
 {
     if([options valueForKey:CONFIG_TRUSTY] != nil)
         completionHandler(NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
-    else
+    else {
         RCTLogWarn(@"counld not create connection with an unstrusted SSL certification, if you're going to create connection anyway, add `trusty:true` to RNFetchBlob.config");
+        [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
+    }
 }
 
 @end

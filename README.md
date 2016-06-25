@@ -871,6 +871,7 @@ A `session` is an object that helps you manage files. It simply maintains a list
 
 | Version | |
 |---|---|
+| 0.5.6 | Add support for IOS network status indicator. Fix file stream ASCII reader bug. |
 | 0.5.5 | Remove work in progress code added in 0.5.2 which may cause memory leaks. |
 | 0.5.4 | Fix #30 #31 build build error, and improve memory efficiency. |
 | 0.5.3 | Add API for access untrusted SSL server |

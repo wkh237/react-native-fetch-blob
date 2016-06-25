@@ -14,6 +14,7 @@ extern NSString *const CONFIG_USE_TEMP = @"fileCache";
 extern NSString *const CONFIG_FILE_PATH = @"path";
 extern NSString *const CONFIG_FILE_EXT = @"appendExt";
 extern NSString *const CONFIG_TRUSTY = @"trusty";
+extern NSString *const CONFIG_INDICATOR = @"indicator";
 
 
 extern NSString *const MSG_EVENT = @"RNFetchBlobMessage";

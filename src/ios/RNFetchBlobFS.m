@@ -37,7 +37,7 @@ NSMutableDictionary *fileStreams = nil;
 
 // static member getter
 + (NSArray *) getFileStreams {
-    
+
     if(fileStreams == nil)
         fileStreams = [[NSMutableDictionary alloc] init];
     return fileStreams;
@@ -70,12 +70,12 @@ NSMutableDictionary *fileStreams = nil;
 }
 
 + (NSString *) getTempPath {
-    
+
     return [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingString:@"/RNFetchBlob_tmp"];
 }
 
 + (NSString *) getTempPath:(NSString*)taskId withExtension:(NSString *)ext {
-    
+
     NSString * documentDir = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
     NSString * filename = [NSString stringWithFormat:@"/RNFetchBlob_tmp/RNFetchBlobTmp_%@", taskId];
     if(ext != nil)
@@ -173,7 +173,7 @@ NSMutableDictionary *fileStreams = nil;
             }
             resolve(resultArray);
         }
-        
+
     }
     @catch(NSException * e)
     {
@@ -289,17 +289,17 @@ NSMutableDictionary *fileStreams = nil;
         [self.outStream close];
         self.outStream = nil;
     }
-    
+
 }
 
 - (void)readWithPath:(NSString *)path useEncoding:(NSString *)encoding bufferSize:(int) bufferSize {
-    
+
     self.inStream = [[NSInputStream alloc] initWithFileAtPath:path];
     self.inStream.delegate = self;
     self.encoding = encoding;
     self.path = path;
     self.bufferSize = bufferSize;
-    
+
     // NSStream needs a runloop so let's create a run loop for it
     dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0);
     // start NSStream is a runloop
@@ -308,7 +308,7 @@ NSMutableDictionary *fileStreams = nil;
                             forMode:NSDefaultRunLoopMode];
         [inStream open];
         [[NSRunLoop currentRunLoop] run];
-        
+
     });
 }
 
@@ -320,7 +320,7 @@ NSMutableDictionary *fileStreams = nil;
         [[RNFetchBlobFS getFileStreams] setValue:nil forKey:self.streamId];
         self.streamId = nil;
     }
-    
+
 }
 
 void runOnMainQueueWithoutDeadlocking(void (^block)(void))
@@ -339,18 +339,18 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
 #pragma mark RNFetchBlobFS read stream delegate
 
 - (void)stream:(NSStream *)stream handleEvent:(NSStreamEvent)eventCode {
-    
+
     NSString * streamEventCode = [NSString stringWithFormat:@"RNFetchBlobStream+%@", self.path];
-    
+
     switch(eventCode) {
-            
+
             // write stream event
         case NSStreamEventHasSpaceAvailable:
         {
-            
-            
+
+
         }
-            
+
             // read stream incoming chunk
         case NSStreamEventHasBytesAvailable:
         {
@@ -360,7 +360,8 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                 chunkSize = 4095;
             if(self.bufferSize > 0)
                 chunkSize = self.bufferSize;
-            uint8_t * buf = (uint8_t *)malloc(chunkSize);
+//            uint8_t * buf = (uint8_t *)malloc(chunkSize);
+            uint8_t buf[chunkSize];
             unsigned int len = 0;
             len = [(NSInputStream *)stream read:buf maxLength:chunkSize];
             // still have data in stream
@@ -385,7 +386,7 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                             [asciiArray addObject:[NSNumber numberWithChar:bytePtr[i]]];
                         }
                     }
-                    
+
                     [self.bridge.eventDispatcher
                      sendDeviceEventWithName:streamEventCode
                      body: @{
@@ -393,11 +394,10 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                              @"detail": asciiArray
                             }
                      ];
-                    free(buf);
-                    bytePtr = nil;
-                    asciiArray = nil;
-                    buf = nil;
-                    chunkData = nil;
+//                    free(buf);
+//                    asciiStr = nil;
+//                    buf = nil;
+//                    chunkData = nil;
                     return;
                 }
                 // convert byte array to base64 data chunks
@@ -415,7 +415,7 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                      ];
                     return;
                 }
-                
+
                 [self.bridge.eventDispatcher
                  sendDeviceEventWithName:streamEventCode
                  body:@{
@@ -423,8 +423,8 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                         @"detail": encodedChunk
                         }
                  ];
-                chunkData = nil;
-                free(buf);
+//                chunkData = nil;
+//                free(buf);
             }
             // end of stream
             else {
@@ -435,12 +435,12 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                         @"detail": @""
                         }
                  ];
-                chunkData = nil;
-                free(buf);
+//                chunkData = nil;
+//                free(buf);
             }
             break;
         }
-            
+
             // stream error
         case NSStreamEventErrorOccurred:
         {
@@ -453,10 +453,9 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
              ];
             break;
         }
-            
+
     }
-    
+
 }
 
 @end
-
