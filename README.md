@@ -796,6 +796,10 @@ Connect `Media Scanner` and scan the file. see [Android Media Scanner, and Downl
 
 A set of configurations that will be injected into a `fetch` method, with the following properties.
 
+#### indicator:boolean
+  `0.5.6`
+  Set this property to `true` to display a network indicator on status bar, this feature is only supported on IOS.
+
 #### trusty:boolean
   `0.5.3`
   Set this property to `true` will allow the request create connection with server have self-signed SSL certification. This is not recommended to use in production.
