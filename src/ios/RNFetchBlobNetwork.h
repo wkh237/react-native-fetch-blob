@@ -21,12 +21,12 @@ typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse 
 @property (nonatomic) int expectedBytes;
 @property (nonatomic) int receivedBytes;
 @property (nullable, nonatomic) NSMutableData * respData;
-@property (nullable, nonatomic) RCTResponseSenderBlock callback;
+@property (strong, nonatomic) RCTResponseSenderBlock callback;
 @property (nullable, nonatomic) RCTBridge * bridge;
 @property (nullable, nonatomic) NSDictionary * options;
 @property (nullable, nonatomic) RNFetchBlobFS * fileStream;
-@property (nullable, nonatomic) CompletionHander fileTaskCompletionHandler;
-@property (nullable, nonatomic) DataTaskCompletionHander dataTaskCompletionHandler;
+//@property (strong, nonatomic) CompletionHander fileTaskCompletionHandler;
+//@property (strong, nonatomic) DataTaskCompletionHander dataTaskCompletionHandler;
 @property (nullable, nonatomic) NSError * error;
 
 

@@ -32,8 +32,8 @@ NSOperationQueue *taskQueue;
 @synthesize callback;
 @synthesize bridge;
 @synthesize options;
-@synthesize fileTaskCompletionHandler;
-@synthesize dataTaskCompletionHandler;
+//@synthesize fileTaskCompletionHandler;
+//@synthesize dataTaskCompletionHandler;
 @synthesize error;
 
 
@@ -88,7 +88,8 @@ NSOperationQueue *taskQueue;
     // file will be stored at a specific path
     if( path != nil) {
         
-        self.fileTaskCompletionHandler = ^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+//        self.fileTaskCompletionHandler = ;
+        NSURLSessionDownloadTask * task = [session downloadTaskWithRequest:req completionHandler:^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
             if(error != nil) {
                 callback(@[[error localizedDescription]]);
                 return;
@@ -102,14 +103,16 @@ NSOperationQueue *taskQueue;
                 return;
             }
             callback(@[[NSNull null], path]);
-        };
-        NSURLSessionDownloadTask * task = [session downloadTaskWithRequest:req completionHandler:fileTaskCompletionHandler];
+            // prevent memory leaks
+            self.respData = nil;
+        }];
         [task resume];
     }
     // file will be stored at tmp path
     else if ( [self.options valueForKey:CONFIG_USE_TEMP]!= nil ) {
         
-        self.fileTaskCompletionHandler = ^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+//        self.fileTaskCompletionHandler;
+        NSURLSessionDownloadTask * task = [session downloadTaskWithRequest:req completionHandler:^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
             if(error != nil) {
                 callback(@[[error localizedDescription]]);
                 return;
@@ -124,13 +127,15 @@ NSOperationQueue *taskQueue;
                 return;
             }
             callback(@[[NSNull null], tmpPath]);
-        };
-        NSURLSessionDownloadTask * task = [session downloadTaskWithRequest:req completionHandler:fileTaskCompletionHandler];
+            // prevent memory leaks
+            self.respData = nil;
+        }];
         [task resume];
     }
     // base64 response
     else {
-        self.dataTaskCompletionHandler = ^(NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+//        self.dataTaskCompletionHandler = ;
+        NSURLSessionDataTask * task = [session dataTaskWithRequest:req completionHandler:^(NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error) {
             if(error != nil) {
                 callback(@[[error localizedDescription]]);
                 return;
@@ -138,8 +143,7 @@ NSOperationQueue *taskQueue;
             else {
                 callback(@[[NSNull null], [resp base64EncodedStringWithOptions:0]]);
             }
-        };
-        NSURLSessionDataTask * task = [session dataTaskWithRequest:req completionHandler:dataTaskCompletionHandler];
+        }];
         [task resume];
     }
 }
@@ -205,17 +209,17 @@ NSOperationQueue *taskQueue;
     
 }
 
-- (void) URLSessionDidFinishEventsForBackgroundURLSession:(NSURLSession *)session
-{
-    if(self.dataTaskCompletionHandler != nil)
-    {
-        dataTaskCompletionHandler(self.respData, nil, error);
-    }
-    else if(self.fileTaskCompletionHandler != nil)
-    {
-        fileTaskCompletionHandler(nil, nil, self.error);
-    }
-}
+//- (void) URLSessionDidFinishEventsForBackgroundURLSession:(NSURLSession *)session
+//{
+//    if(self.dataTaskCompletionHandler != nil)
+//    {
+//        dataTaskCompletionHandler(self.respData, nil, error);
+//    }
+//    else if(self.fileTaskCompletionHandler != nil)
+//    {
+//        fileTaskCompletionHandler(nil, nil, self.error);
+//    }
+//}
 
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler
 {

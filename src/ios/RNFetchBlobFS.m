@@ -258,19 +258,18 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
             // read stream incoming chunk
         case NSStreamEventHasBytesAvailable:
         {
-            NSMutableData * chunkData = [[NSMutableData data] init];
+            NSMutableData * chunkData = [[NSMutableData alloc] init];
             NSInteger chunkSize = 4096;
             if([[self.encoding lowercaseString] isEqualToString:@"base64"])
                 chunkSize = 4095;
             if(self.bufferSize > 0)
                 chunkSize = self.bufferSize;
-            uint8_t buf[chunkSize];
+            uint8_t * buf = (uint8_t *)malloc(chunkSize);
             unsigned int len = 0;
-            
             len = [(NSInputStream *)stream read:buf maxLength:chunkSize];
             // still have data in stream
             if(len) {
-                [chunkData appendBytes:(const void *)buf length:len];
+                [chunkData appendBytes:buf length:len];
                 // dispatch data event
                 NSString * encodedChunk = [NSString alloc];
                 if( [[self.encoding lowercaseString] isEqualToString:@"utf8"] ) {
@@ -286,29 +285,33 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                         NSInteger byteLen = chunkData.length/sizeof(uint8_t);
                         for (int i = 0; i < byteLen; i++)
                         {
-                            uint8_t * byteFromArray = chunkData.bytes;
                             NSInteger val = bytePtr[i];
                             if(i+1 < byteLen)
                                 asciiStr = [asciiStr stringByAppendingFormat:@"%d,", val];
                             else
                                 asciiStr = [asciiStr stringByAppendingFormat:@"%d", val];
                         }
+                        free(bytePtr);
                     }
                     asciiStr = [asciiStr stringByAppendingString:@"]"];
                     [self.bridge.eventDispatcher
                      sendDeviceEventWithName:streamEventCode
-                     body:@{
-                            @"event": FS_EVENT_DATA,
-                            @"detail": asciiStr
+                     body: @{
+                             @"event": FS_EVENT_DATA,
+                             @"detail": asciiStr
                             }
                      ];
+                    free(buf);
+                    asciiStr = nil;
+                    buf = nil;
+                    chunkData = nil;
                     return;
                 }
                 // convert byte array to base64 data chunks
                 else if ( [[self.encoding lowercaseString] isEqualToString:@"base64"] ) {
                     encodedChunk = [chunkData base64EncodedStringWithOptions:0];
                 }
-                // unknown encoding, send erro event
+                // unknown encoding, send error event
                 else {
                     [self.bridge.eventDispatcher
                      sendDeviceEventWithName:streamEventCode
@@ -327,7 +330,8 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                         @"detail": encodedChunk
                         }
                  ];
-                
+                chunkData = nil;
+                free(buf);
             }
             // end of stream
             else {
@@ -338,6 +342,8 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                         @"detail": @""
                         }
                  ];
+                chunkData = nil;
+                free(buf);
             }
             break;
         }
