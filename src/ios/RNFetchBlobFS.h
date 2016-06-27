@@ -28,7 +28,7 @@
 
 @property (nonatomic) NSOutputStream * outStream;
 @property (nonatomic) NSInputStream * inStream;
-@property (nonatomic) RCTResponseSenderBlock callback;
+@property (strong, nonatomic) RCTResponseSenderBlock callback;
 @property (nonatomic) RCTBridge * bridge;
 @property (nonatomic) NSString * encoding;
 @property (nonatomic) NSString * taskId;
