@@ -22,7 +22,6 @@ let { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles, image } = prop()
 let dirs = RNFetchBlob.fs.dirs
 
 describe('Get storage folders', (report, done) => {
-  console.log(dirs)
   report(
     <Assert key="system folders should exists"
       expect={dirs}
