@@ -63,15 +63,18 @@ public class RNFetchBlobFS {
         AsyncTask<String, Integer, Integer> task = new AsyncTask<String, Integer, Integer>() {
             @Override
             protected Integer doInBackground(String... args) {
-                String path = args[0];
-                String encoding = args[1];
-                String data = args[2];
-                File f = new File(path);
                 try {
+                    String path = args[0];
+                    String encoding = args[1];
+                    String data = args[2];
+                    File f = new File(path);
+                    File dir = f.getParentFile();
+                    if(!dir.exists())
+                        dir.mkdirs();
                     FileOutputStream fout = new FileOutputStream(f);
                     fout.write(stringToBytes(data, encoding));
                     fout.close();
-                    promise.resolve(null);
+                    promise.resolve(Arguments.createArray());
                 } catch (Exception e) {
                     promise.reject("RNFetchBlob writeFileError", e.getLocalizedMessage());
                 }
@@ -88,13 +91,16 @@ public class RNFetchBlobFS {
      * @param promise
      */
     static public void writeFile(String path, ReadableArray data, final Promise promise) {
-        AsyncTask<Object, Integer, Integer> task = new AsyncTask<Object, Integer, Integer>() {
+        AsyncTask<Object, Void, Void> task = new AsyncTask<Object, Void, Void>() {
             @Override
-            protected Integer doInBackground(Object... args) {
-                String path = String.valueOf(args[0]);
-                ReadableArray data = (ReadableArray) args[2];
-                File f = new File(path);
+            protected Void doInBackground(Object... args) {
                 try {
+                    String path = (String)args[0];
+                    ReadableArray data = (ReadableArray) args[1];
+                    File f = new File(path);
+                    File dir = f.getParentFile();
+                    if(!dir.exists())
+                        dir.mkdirs();
                     FileOutputStream os = new FileOutputStream(f);
                     byte [] bytes = new byte[data.size()];
                     for(int i=0;i<data.size();i++) {
@@ -119,7 +125,7 @@ public class RNFetchBlobFS {
      * @param promise
      */
     static public void readFile(String path, String encoding, final Promise promise ) {
-        AsyncTask task = new AsyncTask<String, Integer, Integer>() {
+        AsyncTask<String, Integer, Integer> task = new AsyncTask<String, Integer, Integer>() {
             @Override
             protected Integer doInBackground(String... strings) {
                 try {
@@ -140,7 +146,7 @@ public class RNFetchBlobFS {
                             for(byte b : bytes) {
                                 asciiResult.pushInt((int)b);
                             }
-                            promise.resolve(bytes);
+                            promise.resolve(asciiResult);
                             break;
                         case "utf8" :
                             promise.resolve(new String(bytes));
