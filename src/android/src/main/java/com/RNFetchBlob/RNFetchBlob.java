@@ -1,40 +1,14 @@
 package com.RNFetchBlob;
 
-import android.app.DownloadManager;
-import android.content.Context;
-import android.net.Uri;
-import android.os.Environment;
-
-import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.bridge.ReadableMapKeySetIterator;
-import com.facebook.react.bridge.WritableArray;
-import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.modules.core.DeviceEventManagerModule;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
-import com.loopj.android.http.Base64;
-import com.loopj.android.http.MySSLSocketFactory;
-import com.loopj.android.http.RequestParams;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.security.KeyStore;
-import java.util.HashMap;
 import java.util.Map;
-
-import cz.msebera.android.httpclient.HttpEntity;
-import cz.msebera.android.httpclient.entity.AbstractHttpEntity;
-import cz.msebera.android.httpclient.entity.ByteArrayEntity;
-import cz.msebera.android.httpclient.entity.ContentType;
-import cz.msebera.android.httpclient.entity.FileEntity;
-import cz.msebera.android.httpclient.entity.mime.MultipartEntityBuilder;
-import cz.msebera.android.httpclient.entity.mime.content.ContentBody;
 
 public class RNFetchBlob extends ReactContextBaseJavaModule {
 
@@ -117,6 +91,21 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     @ReactMethod
     public void removeSession(ReadableArray paths, Callback callback) {
         RNFetchBlobFS.removeSession(paths, callback);
+    }
+
+    @ReactMethod
+    public void readFile(String path, String encoding, Promise promise) {
+        RNFetchBlobFS.readFile(path, encoding, promise);
+    }
+
+    @ReactMethod
+    public void writeFileArray(String path, ReadableArray data, Promise promise) {
+        RNFetchBlobFS.writeFile(path, data, promise);
+    }
+
+    @ReactMethod
+    public void writeFile(String path, String encoding, String data, Promise promise) {
+        RNFetchBlobFS.writeFile(path, encoding, data, promise);
     }
 
     @ReactMethod

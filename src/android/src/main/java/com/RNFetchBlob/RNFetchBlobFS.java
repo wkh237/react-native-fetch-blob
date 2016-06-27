@@ -8,6 +8,7 @@ import android.os.Environment;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
@@ -18,6 +19,7 @@ import com.loopj.android.http.Base64;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,9 +27,11 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import cz.msebera.android.httpclient.util.EncodingUtils;
 
@@ -46,6 +50,113 @@ public class RNFetchBlobFS {
     RNFetchBlobFS(ReactApplicationContext ctx) {
         this.mCtx = ctx;
         this.emitter = ctx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
+    }
+
+    /**
+     * Write string with encoding to file
+     * @param path Destination file path.
+     * @param encoding Encoding of the string.
+     * @param data Array passed from JS context.
+     * @param promise
+     */
+    static public void writeFile(String path, String encoding, String data, final Promise promise) {
+        AsyncTask<String, Integer, Integer> task = new AsyncTask<String, Integer, Integer>() {
+            @Override
+            protected Integer doInBackground(String... args) {
+                String path = args[0];
+                String encoding = args[1];
+                String data = args[2];
+                File f = new File(path);
+                try {
+                    FileOutputStream fout = new FileOutputStream(f);
+                    fout.write(stringToBytes(data, encoding));
+                    fout.close();
+                    promise.resolve(null);
+                } catch (Exception e) {
+                    promise.reject("RNFetchBlob writeFileError", e.getLocalizedMessage());
+                }
+                return null;
+            }
+        };
+        task.execute(path, encoding, data);
+    }
+
+    /**
+     * Write array of bytes into file
+     * @param path Destination file path.
+     * @param data Array passed from JS context.
+     * @param promise
+     */
+    static public void writeFile(String path, ReadableArray data, final Promise promise) {
+        AsyncTask<Object, Integer, Integer> task = new AsyncTask<Object, Integer, Integer>() {
+            @Override
+            protected Integer doInBackground(Object... args) {
+                String path = String.valueOf(args[0]);
+                ReadableArray data = (ReadableArray) args[2];
+                File f = new File(path);
+                try {
+                    FileOutputStream os = new FileOutputStream(f);
+                    byte [] bytes = new byte[data.size()];
+                    for(int i=0;i<data.size();i++) {
+                        bytes[i] = (byte) data.getInt(i);
+                    }
+                    os.write(bytes);
+                    os.close();
+                    promise.resolve(null);
+                } catch (Exception e) {
+                    promise.reject("RNFetchBlob writeFileError", e.getLocalizedMessage());
+                }
+                return null;
+            }
+        };
+        task.execute(path, data);
+    }
+
+    /**
+     * Read file with a buffer that has the same size as the target file.
+     * @param path  Path of the file.
+     * @param encoding  Encoding of read stream.
+     * @param promise
+     */
+    static public void readFile(String path, String encoding, final Promise promise ) {
+        AsyncTask task = new AsyncTask<String, Integer, Integer>() {
+            @Override
+            protected Integer doInBackground(String... strings) {
+                try {
+                    String path = strings[0];
+                    String encoding = strings[1];
+                    File f = new File(path);
+                    int length = (int) f.length();
+                    byte[] bytes = new byte[length];
+                    FileInputStream in = new FileInputStream(f);
+                    in.read(bytes);
+                    in.close();
+                    switch (encoding.toLowerCase()) {
+                        case "base64" :
+                            promise.resolve(Base64.encodeToString(bytes, 0));
+                            break;
+                        case "ascii" :
+                            WritableArray asciiResult = Arguments.createArray();
+                            for(byte b : bytes) {
+                                asciiResult.pushInt((int)b);
+                            }
+                            promise.resolve(bytes);
+                            break;
+                        case "utf8" :
+                            promise.resolve(new String(bytes));
+                            break;
+                        default:
+                            promise.resolve(new String(bytes));
+                            break;
+                    }
+                }
+                catch(Exception err) {
+                    promise.reject("ReadFile Error", err.getLocalizedMessage());
+                }
+                return null;
+            }
+        };
+        task.execute(path, encoding);
     }
 
     /**
@@ -106,14 +217,11 @@ public class RNFetchBlobFS {
                         }
                     } else if (encoding.equalsIgnoreCase("ascii")) {
                         while ((cursor = fs.read(buffer)) != -1) {
-                            String chunk = "[";
+                            WritableArray chunk = Arguments.createArray();
                             for(int i =0;i<cursor;i++)
                             {
-                                chunk += (int)buffer[i];
-                                if(i+1 < cursor)
-                                    chunk += ",";
+                                chunk.pushInt((int)buffer[i]);
                             }
-                            chunk = chunk + "]";
                             emitStreamEvent(eventName, "data", chunk);
                         }
                     } else if (encoding.equalsIgnoreCase("base64")) {
@@ -527,6 +635,13 @@ public class RNFetchBlobFS {
         WritableMap eventData = Arguments.createMap();
         eventData.putString("event", event);
         eventData.putString("detail", data);
+        this.emitter.emit(streamName, eventData);
+    }
+
+    void emitStreamEvent(String streamName, String event, WritableArray  data) {
+        WritableMap eventData = Arguments.createMap();
+        eventData.putString("event", event);
+        eventData.putArray("detail", data);
         this.emitter.emit(streamName, eventData);
     }
 
