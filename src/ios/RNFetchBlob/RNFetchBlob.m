@@ -415,12 +415,12 @@ RCT_EXPORT_METHOD(readFile:(NSString *)path encoding:(NSString *)encoding resolv
     [RNFetchBlobFS readFile:path encoding:encoding resolver:resolve rejecter:reject];
 })
 
-RCT_EXPORT_METHOD(writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
-    [RNFetchBlobFS writeFile:path encoding:encoding data:data resolver:resolve rejecter:reject];
+RCT_EXPORT_METHOD(writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    [RNFetchBlobFS writeFile:path encoding:encoding data:data append:append resolver:resolve rejecter:reject];
 })
 
-RCT_EXPORT_METHOD(writeFileArray:(NSString *)path data:(NSArray *)data resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
-    [RNFetchBlobFS writeFileArray:path data:data resolver:resolve rejecter:reject];
+RCT_EXPORT_METHOD(writeFileArray:(NSString *)path data:(NSArray *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    [RNFetchBlobFS writeFileArray:path data:data append:append resolver:resolve rejecter:reject];
 })
 
 RCT_EXPORT_METHOD(getEnvironmentDirs:(RCTResponseSenderBlock) callback) {

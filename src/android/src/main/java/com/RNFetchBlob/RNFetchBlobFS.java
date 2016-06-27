@@ -59,7 +59,7 @@ public class RNFetchBlobFS {
      * @param data Array passed from JS context.
      * @param promise
      */
-    static public void writeFile(String path, String encoding, String data, final Promise promise) {
+    static public void writeFile(String path, String encoding, String data, final boolean append, final Promise promise) {
         AsyncTask<String, Integer, Integer> task = new AsyncTask<String, Integer, Integer>() {
             @Override
             protected Integer doInBackground(String... args) {
@@ -71,7 +71,7 @@ public class RNFetchBlobFS {
                     File dir = f.getParentFile();
                     if(!dir.exists())
                         dir.mkdirs();
-                    FileOutputStream fout = new FileOutputStream(f);
+                    FileOutputStream fout = new FileOutputStream(f, append);
                     fout.write(stringToBytes(data, encoding));
                     fout.close();
                     promise.resolve(Arguments.createArray());
@@ -90,7 +90,7 @@ public class RNFetchBlobFS {
      * @param data Array passed from JS context.
      * @param promise
      */
-    static public void writeFile(String path, ReadableArray data, final Promise promise) {
+    static public void writeFile(String path, ReadableArray data, final boolean append, final Promise promise) {
         AsyncTask<Object, Void, Void> task = new AsyncTask<Object, Void, Void>() {
             @Override
             protected Void doInBackground(Object... args) {
@@ -101,7 +101,7 @@ public class RNFetchBlobFS {
                     File dir = f.getParentFile();
                     if(!dir.exists())
                         dir.mkdirs();
-                    FileOutputStream os = new FileOutputStream(f);
+                    FileOutputStream os = new FileOutputStream(f, append);
                     byte [] bytes = new byte[data.size()];
                     for(int i=0;i<data.size();i++) {
                         bytes[i] = (byte) data.getInt(i);

@@ -84,14 +84,17 @@ NSMutableDictionary *fileStreams = nil;
     return tempPath;
 }
 
-+ (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
++ (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
     @try {
         NSFileManager * fm = [NSFileManager defaultManager];
         NSError * err = nil;
+        // check if the folder exists, if not exists, create folders recursively
+        // after the folders created, write data into the file
         NSString * folder = [path stringByDeletingLastPathComponent];
         if(![fm fileExistsAtPath:folder]) {
             [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:&err];
         }
+        // if file exists, write file by encoding and strategy
         if(![fm fileExistsAtPath:path]) {
             if([[encoding lowercaseString] isEqualToString:@"base64"]){
                 NSData * byteData = [[NSData alloc] initWithBase64EncodedString:data options:0];
@@ -102,14 +105,21 @@ NSMutableDictionary *fileStreams = nil;
         }
         else {
             NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
-            [fileHandle seekToEndOfFile];
+            NSData * content = nil;
             if([[encoding lowercaseString] isEqualToString:@"base64"]) {
-                NSData * byteData = [[NSData alloc] initWithBase64EncodedString:data options:0];
-                [fileHandle writeData:byteData];
+                content = [[NSData alloc] initWithBase64EncodedString:data options:0];
             }
-            else
-                [fileHandle writeData:[data dataUsingEncoding:NSUTF8StringEncoding]];
-            [fileHandle closeFile];
+            else {
+                content = [data dataUsingEncoding:NSUTF8StringEncoding];
+            }
+            if(append == YES) {
+                [fileHandle seekToEndOfFile];
+                [fileHandle writeData:content];
+                [fileHandle closeFile];
+            }
+            else {
+                [content writeToFile:path atomically:YES];
+            }
         }
         fm = nil;
         resolve([NSNull null]);
@@ -120,22 +130,38 @@ NSMutableDictionary *fileStreams = nil;
     }
 }
 
-+ (void) writeFileArray:(NSString *)path data:(NSArray *)data resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
++ (void) writeFileArray:(NSString *)path data:(NSArray *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
     @try {
         NSFileManager * fm = [NSFileManager defaultManager];
+        NSError * err = nil;
+        // check if the folder exists, if not exists, create folders recursively
+        // after the folders created, write data into the file
+        NSString * folder = [path stringByDeletingLastPathComponent];
+        if(![fm fileExistsAtPath:folder]) {
+            [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:&err];
+        }
         NSMutableData * fileContent = [NSMutableData alloc];
         // prevent stack overflow, alloc on heap
         char * bytes = (char*) malloc([data count]);
         for(int i = 0; i < data.count; i++) {
             bytes[i] = [[data objectAtIndex:i] charValue];
         }
-        // if append == NO
-//        BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
         [fileContent appendBytes:bytes length:data.count];
-        NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
-        [fileHandle seekToEndOfFile];
-        [fileHandle writeData:fileContent];
-        [fileHandle closeFile];
+        if(![fm fileExistsAtPath:path]) {
+            [fm createFileAtPath:path contents:fileContent attributes:NULL];
+        }
+        // if file exists, write file
+        else {
+            if(append == YES) {
+                NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
+                [fileHandle seekToEndOfFile];
+                [fileHandle writeData:fileContent];
+                [fileHandle closeFile];
+            }
+            else {
+                [fileContent writeToFile:path atomically:YES];
+            }
+        }
         free(bytes);
         fm = nil;
         resolve([NSNull null]);

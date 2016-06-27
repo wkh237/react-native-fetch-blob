@@ -99,13 +99,13 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void writeFileArray(String path, ReadableArray data, Promise promise) {
-        RNFetchBlobFS.writeFile(path, data, promise);
+    public void writeFileArray(String path, ReadableArray data, boolean append, Promise promise) {
+        RNFetchBlobFS.writeFile(path, data, append, promise);
     }
 
     @ReactMethod
-    public void writeFile(String path, String encoding, String data, Promise promise) {
-        RNFetchBlobFS.writeFile(path, encoding, data, promise);
+    public void writeFile(String path, String encoding, String data, boolean append, Promise promise) {
+        RNFetchBlobFS.writeFile(path, encoding, data, append, promise);
     }
 
     @ReactMethod
