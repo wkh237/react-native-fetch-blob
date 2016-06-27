@@ -27,7 +27,7 @@ export default class RNFetchBlobReadStream {
 
     // register for file stream event
     let subscription = emitter.addListener(`RNFetchBlobStream+${this.path}`, (e) => {
-    
+
       let {event, detail} = e
       if(this._onData && event === 'data')
         this._onData(detail)
@@ -59,7 +59,7 @@ export default class RNFetchBlobReadStream {
   onData(fn) {
     if(this.encoding.toLowerCase() === 'ascii')
       this._onData = (data) => {
-        fn(JSON.parse(data))
+        fn(data)
       }
     else
       this._onData = fn

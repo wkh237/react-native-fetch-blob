@@ -134,10 +134,14 @@ function mkdir(path:string):Promise {
  * @return {Promise<Array<number> | string>}
  */
 function readFile(path:string, encoding:string, bufferSize:number):Promise<any> {
+  if(typeof path !== 'string')
+    return Promise.reject('Invalid argument "path" ')
   return RNFetchBlob.readFile(path, encoding)
 }
 
 function writeFile(path:string, encoding:string, data:string | Array<number>):Promise {
+  if(typeof path !== 'string')
+    return Promise.reject('Invalid argument "path" ')
   if(encoding.toLocaleLowerCase() === 'ascii') {
     if(!Array.isArray(data))
       Promise.reject(`Expected "data" is an Array when encoding is "ascii", however got ${typeof data}`)
@@ -286,6 +290,8 @@ export default {
   mv,
   cp,
   writeStream,
+  writeFile,
+  readFile,
   exists,
   createFile,
   isDir,
