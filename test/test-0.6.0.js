@@ -33,7 +33,7 @@ describe('writeFile test', (report, done) => {
     .then((actual) => {
       report(<Assert key="utf8 content should correct" expect={data} actual={actual}/>)
       data += 'base64'
-      return fs.writeFile(path, 'base64', RNFetchBlob.base64.encode(data))
+      return fs.writeFile(path, 'base64', RNFetchBlob.base64.encode('base64'))
     })
     .then(() => fs.readFile(path, 'base64'))
     .then((actual) => {
@@ -41,7 +41,7 @@ describe('writeFile test', (report, done) => {
         expect={RNFetchBlob.base64.decode(RNFetchBlob.base64.encode(data))}
         actual={RNFetchBlob.base64.decode(actual)}/>)
       data += 'ascii'
-      return fs.writeFile(path, 'ascii', getASCIIArray(data));
+      return fs.writeFile(path, 'ascii', getASCIIArray('ascii'));
     })
     .then(() => fs.readFile(path, 'ascii'))
     .then((actual) => {
