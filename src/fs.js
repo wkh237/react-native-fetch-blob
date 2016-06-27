@@ -128,6 +128,30 @@ function mkdir(path:string):Promise {
 }
 
 /**
+ * Wrapper method of readStream.
+ * @param  {string} path Path of the file.
+ * @param  {'base64' | 'utf8' | 'ascii'} encoding Encoding of read stream.
+ * @return {Promise<Array<number> | string>}
+ */
+function readFile(path:string, encoding:string, bufferSize:number):Promise<any> {
+  return RNFetchBlob.readFile(path, encoding)
+}
+
+function writeFile(path:string, encoding:string, data:string | Array<number>):Promise {
+  if(encoding.toLocaleLowerCase() === 'ascii') {
+    if(!Array.isArray(data))
+      Promise.reject(`Expected "data" is an Array when encoding is "ascii", however got ${typeof data}`)
+    else
+      return RNFetchBlob.writeFileArray(path, data);
+  } else {
+    if(typeof data !== 'string')
+      Promise.reject(`Expected "data" is a String when encoding is "utf8" or "base64", however got ${typeof data}`)
+    else
+      return RNFetchBlob.writeFile(path, encoding, data);
+  }
+}
+
+/**
  * Show statistic data of a path.
  * @param  {string} path Target path
  * @return {RNFetchBlobFile}
