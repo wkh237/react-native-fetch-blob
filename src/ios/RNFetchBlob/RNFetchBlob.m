@@ -213,7 +213,7 @@ RCT_EXPORT_METHOD(createFileASCII:(NSString *)path data:(NSArray *)dataArray cal
     NSMutableData * fileContent = [NSMutableData alloc];
     // prevent stack overflow, alloc on heap
     char * bytes = (char*) malloc([dataArray count]);
-//    char bytes[[dataArray count]];
+
     for(int i = 0; i < dataArray.count; i++) {
         bytes[i] = [[dataArray objectAtIndex:i] charValue];
     }
@@ -410,6 +410,18 @@ RCT_EXPORT_METHOD(mkdir:(NSString *)path callback:(RCTResponseSenderBlock) callb
         [RNFetchBlobFS mkdir:path];
     callback(@[[NSNull null]]);
 }
+
+RCT_EXPORT_METHOD(readFile:(NSString *)path encoding:(NSString *)encoding resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    [RNFetchBlobFS readFile:path encoding:encoding resolver:resolve rejecter:reject];
+})
+
+RCT_EXPORT_METHOD(writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    [RNFetchBlobFS writeFile:path encoding:encoding data:data resolver:resolve rejecter:reject];
+})
+
+RCT_EXPORT_METHOD(writeFileArray:(NSString *)path data:(NSArray *)data resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    [RNFetchBlobFS writeFileArray:path data:data resolver:resolve rejecter:reject];
+})
 
 RCT_EXPORT_METHOD(getEnvironmentDirs:(RCTResponseSenderBlock) callback) {
     

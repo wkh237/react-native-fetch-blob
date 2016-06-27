@@ -69,7 +69,6 @@ NSMutableDictionary *fileStreams = nil;
     return [NSSearchPathForDirectoriesInDomains(NSPicturesDirectory, NSUserDomainMask, YES) firstObject];
 }
 
-
 + (NSString *) getTempPath {
     
     return [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingString:@"/RNFetchBlob_tmp"];
@@ -83,6 +82,103 @@ NSMutableDictionary *fileStreams = nil;
         filename = [filename stringByAppendingString: [NSString stringWithFormat:@".%@", ext]];
     NSString * tempPath = [documentDir stringByAppendingString: filename];
     return tempPath;
+}
+
++ (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    @try {
+        NSFileManager * fm = [NSFileManager defaultManager];
+        NSError * err = nil;
+        NSString * folder = [path stringByDeletingLastPathComponent];
+        if(![fm fileExistsAtPath:folder]) {
+            [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:&err];
+        }
+        if(![fm fileExistsAtPath:path]) {
+            if([[encoding lowercaseString] isEqualToString:@"base64"]){
+                NSData * byteData = [[NSData alloc] initWithBase64EncodedString:data options:0];
+                [fm createFileAtPath:path contents:byteData attributes:NULL];
+            }
+            else
+                [fm createFileAtPath:path contents:[data dataUsingEncoding:NSUTF8StringEncoding] attributes:NULL];
+        }
+        else {
+            NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
+            [fileHandle seekToEndOfFile];
+            if([[encoding lowercaseString] isEqualToString:@"base64"]) {
+                NSData * byteData = [[NSData alloc] initWithBase64EncodedString:data options:0];
+                [fileHandle writeData:byteData];
+            }
+            else
+                [fileHandle writeData:[data dataUsingEncoding:NSUTF8StringEncoding]];
+            [fileHandle closeFile];
+        }
+        fm = nil;
+        resolve([NSNull null]);
+    }
+    @catch (NSException * e)
+    {
+        reject(@"RNFetchBlob writeFile Error", @"Error", [e description]);
+    }
+}
+
++ (void) writeFileArray:(NSString *)path data:(NSArray *)data resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    @try {
+        NSFileManager * fm = [NSFileManager defaultManager];
+        NSMutableData * fileContent = [NSMutableData alloc];
+        // prevent stack overflow, alloc on heap
+        char * bytes = (char*) malloc([data count]);
+        for(int i = 0; i < data.count; i++) {
+            bytes[i] = [[data objectAtIndex:i] charValue];
+        }
+        // if append == NO
+//        BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
+        [fileContent appendBytes:bytes length:data.count];
+        NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
+        [fileHandle seekToEndOfFile];
+        [fileHandle writeData:fileContent];
+        [fileHandle closeFile];
+        free(bytes);
+        fm = nil;
+        resolve([NSNull null]);
+    }
+    @catch (NSException * e)
+    {
+        reject(@"RNFetchBlob writeFile Error", @"Error", [e description]);
+    }
+}
+
++ (void) readFile:(NSString *)path encoding:(NSString *)encoding resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    @try
+    {
+        NSFileManager * fm = [NSFileManager defaultManager];
+        NSError *err = nil;
+        BOOL exists = [fm fileExistsAtPath:path];
+        if(!exists) {
+            @throw @"RNFetchBlobFS readFile error", @"file not exists", path;
+            return;
+        }
+        if([[encoding lowercaseString] isEqualToString:@"utf8"]) {
+            NSString * utf8Result = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&err];
+            resolve(utf8Result);
+        }
+        else if ([[encoding lowercaseString] isEqualToString:@"base64"]) {
+            NSData * fileData = [NSData dataWithContentsOfFile:path];
+            resolve([fileData base64EncodedStringWithOptions:0]);
+        }
+        else if ([[encoding lowercaseString] isEqualToString:@"ascii"]) {
+            NSData * resultData = [NSData dataWithContentsOfFile:path];
+            NSMutableArray * resultArray = [NSMutableArray array];
+            char * bytes = [resultData bytes];
+            for(int i=0;i<[resultData length];i++) {
+                [resultArray addObject:[NSNumber numberWithChar:bytes[i]]];
+            }
+            resolve(resultArray);
+        }
+        
+    }
+    @catch(NSException * e)
+    {
+        reject(@"RNFetchBlobFS readFile error", @"error", [e description]);
+    }
 }
 
 + (BOOL) mkdir:(NSString *) path {
@@ -278,31 +374,28 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                 // when encoding is ASCII, send byte array data
                 else if ( [[self.encoding lowercaseString] isEqualToString:@"ascii"] ) {
                     // RCTBridge only emits string data, so we have to create JSON byte array string
-                    NSString * asciiStr = @"[";
+                    NSMutableArray * asciiArray = [NSMutableArray array];
+                    unsigned char *bytePtr;
                     if (chunkData.length > 0)
                     {
-                        unsigned char *bytePtr = (unsigned char *)[chunkData bytes];
+                        bytePtr = (unsigned char *)[chunkData bytes];
                         NSInteger byteLen = chunkData.length/sizeof(uint8_t);
                         for (int i = 0; i < byteLen; i++)
                         {
-                            NSInteger val = bytePtr[i];
-                            if(i+1 < byteLen)
-                                asciiStr = [asciiStr stringByAppendingFormat:@"%d,", val];
-                            else
-                                asciiStr = [asciiStr stringByAppendingFormat:@"%d", val];
+                            [asciiArray addObject:[NSNumber numberWithChar:bytePtr[i]]];
                         }
-                        free(bytePtr);
                     }
-                    asciiStr = [asciiStr stringByAppendingString:@"]"];
+                    
                     [self.bridge.eventDispatcher
                      sendDeviceEventWithName:streamEventCode
                      body: @{
                              @"event": FS_EVENT_DATA,
-                             @"detail": asciiStr
+                             @"detail": asciiArray
                             }
                      ];
                     free(buf);
-                    asciiStr = nil;
+                    bytePtr = nil;
+                    asciiArray = nil;
                     buf = nil;
                     chunkData = nil;
                     return;
