@@ -79,8 +79,17 @@ app.all('/params', function(req, res) {
 app.all('/empty', function(req, res) {
   res.send('')
 })
+
+app.delete('/hey', function(req, res) {
+  res.send('man')
+})
+
 // handle multipart/form-data request
-app.post('/upload-form', function(req, res) {
+app.post('/upload-form', formUpload)
+
+app.put('/upload-form', formUpload)
+
+function formUpload(req, res) {
   console.log(req.headers)
   console.log(req.body)
   console.log(req.files)
@@ -94,7 +103,7 @@ app.post('/upload-form', function(req, res) {
     fields : req.body,
     files : req.files
   })
-})
+}
 
 function watch(source, dest, ignore) {
   // watch files in  test folder
