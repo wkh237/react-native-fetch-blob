@@ -141,7 +141,7 @@ describe('DELETE request test', (report, done) => {
   RNFetchBlob.fetch('DELETE', `${TEST_SERVER_URL}/hey`)
   .then((resp) => {
     report(
-      <Assert key="check DELETE request result" expect={'man'} actual={resp.text()}/>,
+      <Assert key="check DELETE request result" expect={'man'} actual={resp.text()}/>)
       done()
   })
 })
