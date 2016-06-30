@@ -129,9 +129,9 @@ public class RNFetchBlobReq implements Runnable{
                     break;
                 case "put" :
                     if(this.type == null || this.type.equalsIgnoreCase("octet"))
-                        req.post(ctx, url, entity, "application/octet-stream", handler);
+                        req.put(ctx, url, entity, "application/octet-stream", handler);
                     else
-                        req.post(ctx, url, entity, "multipart/form-data", handler);
+                        req.put(ctx, url, entity, "multipart/form-data", handler);
                     break;
                 case "delete" :
                     req.delete(url, handler);
