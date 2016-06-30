@@ -304,7 +304,7 @@ In `version >= 0.4.2` it is possible to know the upload/download progress.
 
 #### Android Media Scanner, and Downloads App Support
 
-If you want to make a file in `External Storage` becomes visible in Picture, Misuc, or other built-in apps, you will have to use `Media Scanner`. To make this happend, use `scanFile` method in `fs`.
+If you want to make a file in `External Storage` becomes visible in Picture, Music, or other built-in apps, you will have to use `Media Scanner`. To make this happend, use `scanFile` method in `fs`.
 
 
 ```js
