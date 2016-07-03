@@ -370,14 +370,14 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
 
     switch(eventCode) {
 
-            // write stream event
+        // write stream event
         case NSStreamEventHasSpaceAvailable:
         {
 
 
         }
 
-            // read stream incoming chunk
+        // read stream incoming chunk
         case NSStreamEventHasBytesAvailable:
         {
             NSMutableData * chunkData = [[NSMutableData alloc] init];
@@ -386,7 +386,6 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                 chunkSize = 4095;
             if(self.bufferSize > 0)
                 chunkSize = self.bufferSize;
-//            uint8_t * buf = (uint8_t *)malloc(chunkSize);
             uint8_t buf[chunkSize];
             unsigned int len = 0;
             len = [(NSInputStream *)stream read:buf maxLength:chunkSize];
@@ -420,10 +419,6 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                              @"detail": asciiArray
                             }
                      ];
-//                    free(buf);
-//                    asciiStr = nil;
-//                    buf = nil;
-//                    chunkData = nil;
                     return;
                 }
                 // convert byte array to base64 data chunks
@@ -449,8 +444,6 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                         @"detail": encodedChunk
                         }
                  ];
-//                chunkData = nil;
-//                free(buf);
             }
             // end of stream
             else {
@@ -461,13 +454,11 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
                         @"detail": @""
                         }
                  ];
-//                chunkData = nil;
-//                free(buf);
             }
             break;
         }
 
-            // stream error
+        // stream error
         case NSStreamEventErrorOccurred:
         {
             [self.bridge.eventDispatcher
