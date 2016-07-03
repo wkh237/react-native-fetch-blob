@@ -628,7 +628,39 @@ fs.createFile(NEW_FILE_PATH, [102, 111, 111], 'ascii')
 fs.createFile(NEW_FILE_PATH, base64.encode('foo'), 'base64')
 ```
 
+### writeFile(path:string, content:string | Array<number>, encoding:string, append:boolean):Promise<WriteStream>
+
+`0.6.0`
+
+#### path:`string`
+The path of the file to write.
+#### content:`string` | `Array<number>`
+Data that write to the `path`, should be an utf8/base64 encoded string, or an array contains numbers between 0-255.
+#### encoding:`utf8` | `base64` | `ascii`
+Encoding of input data.
+#### append:`boolean`(optional, default to `false`)
+Will new data append after existing file or not.
+
+```js
+
+// write UTF8 data to file
+RNFetchBlob.fs.writeFile(PATH_TO_WRITE, 'foo', 'utf8', false)
+              .then(()=>{ ... })
+// write bytes to file
+RNFetchBlob.fs.writeFile(PATH_TO_WRITE, [102,111,111], 'ascii', true)
+              .then(()=>{ ... })
+// write base64 data to file
+RNFetchBlob.fs.writeFile(PATH_TO_WRITE, RNFetchBlob.base64.encode('foo'), 'base64', true)
+              .then(()=>{ ... })
+
+// the file should have content like this
+// foofoofoo
+
+```
+
 ### writeStream(path:string, encoding:string, append:boolean):Promise<WriteStream>
+
+`0.5.0`
 
 #### path:`string`
 The path to the file the stream is writing to.
@@ -664,7 +696,29 @@ RNFetchBlob.fs.writeStream(PATH_TO_WRITE, 'base64')
 
 ```
 
+#### readFile(path, encoding):Promise<ReadStream>
+
+`0.6.0`
+
+##### path:`string`
+Path of the file to file.
+##### encoding:`string`
+Decoder to decode the file data, should be one of `base64`, `ascii`, and `utf8`, it uses `utf8` by default.
+
+Read the file from the given path, if the file is large, you should consider use `readStream` instead.
+
+```js
+RNFetchBlob.fs.readFile(PATH_TO_READ, 'base64')
+.then((data) => {
+  // handle the data ..
+})
+```
+
+
+
 #### readStream(path, encoding, bufferSize):Promise<ReadStream>
+
+`0.5.0`
 
 ##### path:`string`
 The path to the file the stream is reading from.
@@ -691,6 +745,8 @@ RNFetchBlob.fs.readStream(PATH_TO_READ, 'utf8')
 
 #### mkdir(path:string):Promise
 
+`0.5.0`
+
 Create a directory named `path`
 
 ```js
@@ -700,6 +756,8 @@ RNFetchBlob.fs.mkdir(PATH_TO_CREATE)
 ```
 
 #### ls(path:string):Promise<Array<String>>
+
+`0.5.0`
 
 List files and directories in a `path`
 
@@ -712,6 +770,8 @@ RNFetchBlob.fs.ls(PATH_TO_LIST)
 ```
 
 #### mv(from:string, to:string):Promise
+
+`0.5.0`
 
 Move a file's location
 
@@ -732,6 +792,8 @@ RNFetchBlob.fs.mv(SRC_PATH, DEST_PATH)
 ```
 
 #### exists(path:string):Promise<boolean>
+
+`0.5.0`
 
 Check if a file exist at `path`
 
@@ -756,6 +818,8 @@ RNFetchBlob.fs.exists(PATH_OF_FILE)
 
 #### unlink(path:string):Promise<boolean>
 
+`0.5.0`
+
 Delete a file at `path`
 
 ```js
@@ -766,6 +830,8 @@ RNFetchBlob.fs.unlink(path)
 
 #### lstat(path:string):Promise<RNFetchBlobStat>
 
+`0.5.0`
+
 Get statistic data of files in a directory, the result data will be an array of [RNFetchBlobStat](#user-content-rnfetchblobstat).
 
 ```js
@@ -775,6 +841,8 @@ RNFetchBlob.fs.lstat(PATH_OF_A_FOLDER)
 ```
 
 #### stat(path:string):Promise<RNFetchBlobStat>
+
+`0.5.0`
 
 Similar get statistic a data or a directory. the result data will be a [RNFetchBlobStat](#user-content-rnfetchblobstat).
 
@@ -812,6 +880,7 @@ A set of configurations that will be injected into a `fetch` method, with the fo
   When this property has value, `fetch` API will try to store response data in the path ignoring `fileCache` and `appendExt` property.
 #### addAndroidDownloads:object (Android only)
   This is an Android only property, it should be an object with the following properties :
+  - useDownloadManager : download file using Android download manager or not.
   - title : title of the file
   - description : File description of the file.
   - mime : MIME type of the file. By default is `text/plain`
@@ -830,6 +899,10 @@ When `fetch` success, it resolve a `FetchBlobResponse` object as first argument.
   returns decoded base64 string (done in js context)
 #### path():string
   returns file path if the response data is cached in file
+#### readFile(encoding:string):Promise
+  return a promise that resolves response data when possible.
+#### readStream(encoding:string, bufferSize:number):Promise<RNFetchBlobSession>
+  return a promise that resolves a `readStream` object when possible.
 #### session(name:string):RNFetchBlobSession
   when the response data is cached in a file, this method adds the file into the session. The following usages are equivalent.
 ```js
@@ -875,6 +948,7 @@ A `session` is an object that helps you manage files. It simply maintains a list
 
 | Version | |
 |---|---|
+| 0.6.0 | Add readFile and writeFile API for easier file access, also added Android download manager support. |
 | 0.5.8 | Fix #33 PUT request will always be sent as POST on Android |
 | 0.5.7 | Fix #31 #30 Xcode pre 7.3 build error |
 | 0.5.6 | Add support for IOS network status indicator. Fix file stream ASCII reader bug. |
@@ -887,12 +961,6 @@ A `session` is an object that helps you manage files. It simply maintains a list
 | 0.4.1 | Fixe upload form-data missing file extension problem on Android |
 | 0.4.0 | Add base-64 encode/decode library and API |
 | ~0.3.0 | Upload/Download octet-stream and form-data |
-
-### In Progress (v0.6.0)
-
-* Add `readFile` and `WriteFile` API to `fs`
-* Add file access API for direct access RNFetchBlobResponse when the response is a file path
-* Android Download Manager file download API
 
 ### Development
 
