@@ -875,6 +875,7 @@ A `session` is an object that helps you manage files. It simply maintains a list
 
 | Version | |
 |---|---|
+| 0.5.8 | Fix #33 PUT request will always be sent as POST on Android |
 | 0.5.7 | Fix #31 #30 Xcode pre 7.3 build error |
 | 0.5.6 | Add support for IOS network status indicator. Fix file stream ASCII reader bug. |
 | 0.5.5 | Remove work in progress code added in 0.5.2 which may cause memory leaks. |
