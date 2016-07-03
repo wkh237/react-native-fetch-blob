@@ -238,6 +238,22 @@ class FetchBlobResponse {
         return null
       }
     }
+    /**
+     * Read file content with given encoding, if the response does not contains
+     * a file path, show warning message
+     * @param  {String} encoding Encode type, should be one of `base64`, `ascrii`, `utf8`.
+     * @return {String}
+     */
+    this.readFile = (encode: 'base64' | 'utf8' | 'ascii') => {
+      if(this.type === 'path') {
+        encode = encode || 'utf8'
+        return RNFetchBlob.fs.readFile(this.data, encode)
+      }
+      else {
+        console.warn('RNFetchblob', 'this response does not contains a readable file')
+        return null
+      }
+    }
   }
 
 }
