@@ -25,7 +25,7 @@ const  dirs = RNFetchBlob.fs.dirs
 
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
-describe('writeFile test', (report, done) => {
+describe('writeFile and readFile test', (report, done) => {
   let path = dirs.DocumentDir + '/0.6.0-'+Date.now()+'/writeFileTest'+Date.now()
   let data = 'hellofrom'+Date.now()
   fs.writeFile(path, data)
@@ -51,6 +51,11 @@ describe('writeFile test', (report, done) => {
         actual={actual}/>)
       done()
     })
+})
+
+describe('append file test', (report, done) => {
+
+  // TODO 
 })
 
 function getASCIIArray(str) {
