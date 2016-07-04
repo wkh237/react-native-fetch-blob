@@ -52,6 +52,15 @@ public class RNFetchBlobFS {
         this.emitter = ctx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
     }
 
+    static String getExternalFilePath(ReactApplicationContext ctx, String taskId, RNFetchBlobConfig config) {
+        if(config.path != null)
+            return config.path;
+        else if(config.fileCache && config.appendExt != null)
+            return RNFetchBlobFS.getTmpPath(ctx, taskId) + "." + config.appendExt;
+        else
+            return RNFetchBlobFS.getTmpPath(ctx, taskId);
+    }
+
     /**
      * Write string with encoding to file
      * @param path Destination file path.
@@ -128,6 +137,7 @@ public class RNFetchBlobFS {
         AsyncTask<String, Integer, Integer> task = new AsyncTask<String, Integer, Integer>() {
             @Override
             protected Integer doInBackground(String... strings) {
+
                 try {
                     String path = strings[0];
                     String encoding = strings[1];

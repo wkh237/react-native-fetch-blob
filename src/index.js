@@ -28,6 +28,7 @@ const {
   mkdir,
   session,
   writeStream,
+  readFile,
   ls,
   isDir,
   mv,
@@ -124,7 +125,7 @@ function fetch(...args:any):Promise {
       else {
         let respType = 'base64'
         // response data is saved to storage
-        if(options.path || options.fileCache) {
+        if(options.path || options.fileCache || options.addAndroidDownloads) {
           respType = 'path'
           if(options.session)
             session(options.session).add(data)
@@ -247,7 +248,7 @@ class FetchBlobResponse {
     this.readFile = (encode: 'base64' | 'utf8' | 'ascii') => {
       if(this.type === 'path') {
         encode = encode || 'utf8'
-        return RNFetchBlob.fs.readFile(this.data, encode)
+        return readFile(this.data, encode)
       }
       else {
         console.warn('RNFetchblob', 'this response does not contains a readable file')

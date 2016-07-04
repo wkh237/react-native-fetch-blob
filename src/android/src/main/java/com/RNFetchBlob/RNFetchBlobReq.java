@@ -1,7 +1,11 @@
 package com.RNFetchBlob;
 
 import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.database.Cursor;
 import android.net.Uri;
 
 import com.facebook.react.bridge.Callback;
@@ -15,11 +19,9 @@ import com.loopj.android.http.Base64;
 import com.loopj.android.http.MySSLSocketFactory;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.security.KeyStore;
 
 import cz.msebera.android.httpclient.HttpEntity;
-import cz.msebera.android.httpclient.entity.AbstractHttpEntity;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import cz.msebera.android.httpclient.entity.ContentType;
 import cz.msebera.android.httpclient.entity.FileEntity;
@@ -28,7 +30,7 @@ import cz.msebera.android.httpclient.entity.mime.MultipartEntityBuilder;
 /**
  * Created by wkh237 on 2016/6/21.
  */
-public class RNFetchBlobReq implements Runnable{
+public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
     final String filePathPrefix = "RNFetchBlob-file://";
     ReactApplicationContext ctx;
@@ -40,6 +42,7 @@ public class RNFetchBlobReq implements Runnable{
     ReadableMap headers;
     Callback callback;
     HttpEntity entity;
+    long downloadManagerId;
     AsyncHttpClient req;
     String type;
 
@@ -82,10 +85,13 @@ public class RNFetchBlobReq implements Runnable{
             if(options.addAndroidDownloads.getBoolean("useDownloadManager")) {
                 Uri uri = Uri.parse(url);
                 DownloadManager.Request req = new DownloadManager.Request(uri);
-                if(options.path != null) {
-                    Uri dest = null;
-                    dest = Uri.parse(options.path);
-                    req.setDestinationUri(dest);
+                req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+
+                if(options.addAndroidDownloads.hasKey("title")) {
+                    req.setTitle(options.addAndroidDownloads.getString("title"));
+                }
+                if(options.addAndroidDownloads.hasKey("description")) {
+                    req.setDescription(options.addAndroidDownloads.getString("description"));
                 }
                 // set headers
                 ReadableMapKeySetIterator it = headers.keySetIterator();
@@ -94,7 +100,8 @@ public class RNFetchBlobReq implements Runnable{
                     req.addRequestHeader(key, headers.getString(key));
                 }
                 DownloadManager dm = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
-                dm.enqueue(req);
+                downloadManagerId = dm.enqueue(req);
+                ctx.registerReceiver(this, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
                 return;
             }
 
@@ -229,5 +236,29 @@ public class RNFetchBlobReq implements Runnable{
             }
         }
 
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        String action = intent.getAction();
+        if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
+            long id = intent.getExtras().getLong(DownloadManager.EXTRA_DOWNLOAD_ID);
+            if(id == this.downloadManagerId) {
+                DownloadManager.Query query = new DownloadManager.Query();
+                query.setFilterById(downloadManagerId);
+                DownloadManager dm = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
+                dm.query(query);
+                Cursor c = dm.query(query);
+                if (c.moveToFirst()) {
+                    String contentUri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
+                    Uri uri = Uri.parse(contentUri);
+                    Cursor cursor = ctx.getContentResolver().query(uri, new String[] { android.provider.MediaStore.Images.ImageColumns.DATA }, null, null, null);
+                    cursor.moveToFirst();
+                    String filePath = cursor.getString(0);
+                    cursor.close();
+                    this.callback.invoke(null, filePath);
+                }
+            }
+        }
     }
 }
