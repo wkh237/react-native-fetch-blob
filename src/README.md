@@ -1,4 +1,4 @@
-# react-native-fetch-blob [![npm version](https://img.shields.io/badge/npm package-0.5.8-brightgreen.svg)](https://badge.fury.io/js/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg) ![](https://img.shields.io/badge/in progress-0.6.0-yellow.svg)
+# react-native-fetch-blob [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)]() ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/express.svg?maxAge=2592000&style=flat-square)]()
 
 A module provides upload, download, and files access API. Supports file stream read/write for process large files.
 
@@ -22,17 +22,12 @@ This update is `backward-compatible` generally you don't have to change existing
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
  * [Upload/Download progress](#user-content-uploaaddownload-progress)
- * [Android Media Scanner, and Downloads App Support](#user-content-android-media-scanner-and-downloads-app-support)
+ * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-downloads-app-support)
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-manage-cached-files)
  * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
-* [API](#user-content-api)
- * [config](#user-content-configoptionsrnfetchblobconfigfetch)
- * [fetch](#user-content-fetchmethod-url-headers-bodypromisefetchblobresponse)
- * [session](#user-content-sessionnamestringrnfetchblobsession)
- * [base64](#user-content-base64)
- * [fs](#user-content-fs)
+* [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
 * [Development](#user-content-development)
 
 ## Installation
@@ -68,6 +63,16 @@ If you're going to access external storage (say, SD card storage) for `Android 5
 
     ...
 
+```
+
+Also, if you're going to use `Android Download Manager` you have to add this to `AndroidManifetst.xml`
+
+```diff
+    <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
++           <action android:name="android.intent.action.DOWNLOAD_COMPLETE"/>                          
+    </intent-filter>
 ```
 
 **Grant Access Permission for Android 6.0**
@@ -302,14 +307,17 @@ In `version >= 0.4.2` it is possible to know the upload/download progress.
     })
 ```
 
-#### Android Media Scanner, and Downloads App Support
+#### Android Media Scanner, and Download Manager Support
 
-If you want to make a file in `External Storage` becomes visible in Picture, Music, or other built-in apps, you will have to use `Media Scanner`. To make this happend, use `scanFile` method in `fs`.
+If you want to make a file in `External Storage` becomes visible in Picture, Downloads, or other built-in apps, you will have to use `Media Scanner` or `Download Manager`.
 
+**Media Scanner**
+
+Media scanner scan the file and categorize by given MIME type, if MIME type not specified, it will try to resolve the file using its file extension.
 
 ```js
 
-RNFetchBlog
+RNFetchBlob
     .config({
         // DCIMDir is in external storage
         path : dirs.DCIMDir + '/music.mp3'
@@ -324,7 +332,32 @@ RNFetchBlog
     })
 ```
 
-If mime is null or undefined, then the mime type will be inferred from the file extension.
+**Download Manager**
+
+When download large files on Android it is recommended to use `Download Manager`, it supports lot of native features like progress bar, and notification, also the download task will be handled by OS, and more effective.
+
+When using DownloadManager, `fileCache` and `path` properties in `config` will not take effect, because Android DownloadManager can only store files to external storage. When download complete, DownloadManager will generate a file path so that you can deal with it.
+
+```js
+RNFetchBlob
+    .config({
+        addAdnroidDownloads : {
+            useDownloadManager : true, // <-- this is the only thing required
+            // Optional, override notification setting (default to true)
+            notification : false,
+            // Optional, but recommended since android DownloadManager will fail when
+            // the url does not contains a file extension, by default the mime type will be text/plain
+            mime : 'text/plain',
+            description : 'File downloaded by download manager.'
+        }
+    })
+    .fetch('GET', 'http://example.com/file/somefile')
+    .then((resp) => {
+      // the path of downloaded file
+      resp.path()
+    })
+```
+
 
 **Download Notification and Visibiliy in Download App (Android Only)**
 
@@ -362,6 +395,9 @@ Here's the list of `fs` APIs
 
 - dirs
 - createFile
+- readFile
+- writeFile
+- appendFile
 - readStream
 - writeStream
 - unlink
@@ -375,7 +411,7 @@ Here's the list of `fs` APIs
 - stat
 - scanFile (Android Only)
 
-See [fs chapter](#user-content-fs) for more information
+See [File API](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API) for more information
 
 #### File Stream
 
@@ -497,360 +533,11 @@ RNFetchBlob.config({
 })
 ```
 
----
-
-## API
-
-### `config(options:RNFetchBlobConfig):fetch`
-
-`0.5.0`
-
-Config API was introduced in `v0.5.0` which provides some options for the `fetch` task.
-
-see [RNFetchBlobConfig](#user-content-configoptionsrnfetchblobconfigfetch)
-
-### `fetch(method, url, headers, body):Promise<FetchBlobResponse>`
-
-`legacy`
-
-Send a HTTP request uses given headers and body, and return a Promise.
-
-#### method:`string` Required
-HTTP request method, can be one of `get`, `post`, `delete`, and `put`, case-insensitive.
-#### url:`string` Required
-HTTP request destination url.
-#### headers:`object` (Optional)
-Headers of HTTP request, value of headers should be `stringified`, if you're uploading binary files, content-type should be `application/octet-stream` or `multipart/form-data`(see examples above).
-#### body:`string | Array<Object>` (Optional)
-Body of the HTTP request, body can either be a BASE64 string, or an array contains object elements, each element have 2  required property `name`, and `data`, and 1 optional property `filename`, once `filename` is set, content in `data` property will be consider as BASE64 string that will be converted into byte array later.
-When body is a base64 string , this string will be converted into byte array in native code, and the request body will be sent as `application/octet-stream`.
-
-### `fetch(...).progress(eventListener):Promise<FetchBlobResponse>`
-
-`0.4.2`
-
-Register on progress event handler for a fetch request.
-
-#### eventListener:`(sendOrReceivedBytes:number, totalBytes:number)`
-
-A function that triggers when there's data received/sent, first argument is the number of sent/received bytes, and second argument is expected total bytes number.
-
-### `wrap(path:string):string`
-
-Simply prepend `RNFetchBlob-file://` to a path, this make the file path becomes recognizable to native `fetch` method.
-
-### `session(name:string):RNFetchBlobSession`
-
-Session API helps managing cached files, the following code, will try to return an existing session object with the given `name`, if it does not exist, create one.
-
-```js
-RNFetchBlob.session('mysession')
-```
-see [Class RNFetchBlobSession](#user-content-rnfetchblobsession) for usage.
-
-### `base64`
-
-
-`0.4.2`
-
-A helper class simply uses [base-64](https://github.com/mathiasbynens/base64) for decode and encode BASE64 data.
-
-```js
-RNFetchBlob.base64.encode(data)
-RNFetchBlob.base64.decode(data)
-```
-
-### `fs`
-
-`0.5.0`
-
-#### dirs
-
-This constant is a hash map contains common used folders:
-- DocumentDir
-- CacheDir
-- DCIMDir (Android Only)
-- DownloadDir (Android Only)
-- MusicDir (Android Only)
-- PictureDir (Android Only)
-- MovieDir (Android Only)
-- RingtoneDir (Android Only)
-
-```js
-const dirs = RNFetchBlob.fs.dirs
-console.log(dirs.DocumentDir)
-console.log(dirs.CacheDir)
-console.log(dirs.DCIMDir)
-console.log(dirs.DownloadDir)
-```
-> If you're going to make downloaded file visible in Android `Downloads` app, please see [Show Downloaded File and Notification in Android Downloads App](#user-content-show-downloaded-file-and-notifiction-in-android-downloads-app).
-
-### createFile(path, data, encoding):Promise
-
-#### path:`string`
-The path which this new file will be created.
-#### data:`string` | `Array<number>`
-Content of the new file, when `encoding` is `ascii`, this argument shoud be an array contains number 0~255.
-#### encoding:`utf8` | `base64` | `ascii`
-Encoding of content.
-
-the following expressions are equivalent.
-
-```js
-const fs = RNFetchBlob.fs
-const base64 = RNFetchBlob.base64
-fs.createFile(NEW_FILE_PATH, 'foo', 'utf8')
-fs.createFile(NEW_FILE_PATH, [102, 111, 111], 'ascii')
-fs.createFile(NEW_FILE_PATH, base64.encode('foo'), 'base64')
-```
-
-### writeStream(path:string, encoding:string, append:boolean):Promise<WriteStream>
-
-#### path:`string`
-The path to the file the stream is writing to.
-#### encoding:`utf8` | `base64` | `ascii`
-Encoding of input data.
-#### append:`boolean`(optional, default to `false`)
-Will new data append after existing file or not.
-
-Calling `writeStream` method will returns a Promise, which resolves a `RNFetchBlobWriteSteam` instance when stream opened successfully.
-
-```js
-// write utf8 data
-RNFetchBlob.fs.writeStream(PATH_TO_WRITE, 'utf8')
-    .then((stream) => {
-        stream.write('foo')
-        return stream.close()
-    })
-// write ASCII data
-RNFetchBlob.fs.writeStream(PATH_TO_WRITE, 'ascii')
-    .then((stream) => {
-        // write char `f`
-        stream.write([102])
-        // write char `o`, `o`
-        stream.write([111,111])
-        return stream.close()
-    })
-// write BASE64
-RNFetchBlob.fs.writeStream(PATH_TO_WRITE, 'base64')
-    .then((stream) => {
-        stream.write(RNFetchBlob.base64.encode('foo'))
-        return stream.close()
-    })
-
-```
-
-#### readStream(path, encoding, bufferSize):Promise<ReadStream>
-
-##### path:`string`
-The path to the file the stream is reading from.
-##### encoding:`string`
-Encoding of the data.
-##### bufferSize:`number`(optional)
-Buffer size of read stream, default to `4096` and `4095`(when encoding is `base64`)
-
-`readStream` returns a promise which will resolve `RNFetchBlobReadStream`.
-
-```js
-RNFetchBlob.fs.readStream(PATH_TO_READ, 'utf8')
-    .then((stream) => {
-        let data = ''
-        stream.open()
-        stream.onData((chunk) => {
-            chunk += data
-        })
-        stream.onEnd(() => {
-            console.log(data)
-        })
-    })
-```
-
-#### mkdir(path:string):Promise
-
-Create a directory named `path`
-
-```js
-RNFetchBlob.fs.mkdir(PATH_TO_CREATE)
-.then(() => { ... })
-.catch((err) => { ... })
-```
-
-#### ls(path:string):Promise<Array<String>>
-
-List files and directories in a `path`
-
-```js
-RNFetchBlob.fs.ls(PATH_TO_LIST)
-    // files will an array contains filenames
-    .then((files) => {
-        console.log(files)
-    })
-```
-
-#### mv(from:string, to:string):Promise
-
-Move a file's location
-
-```js
-RNFetchBlob.fs.mv(FROM_PATH, TO_PATH)
-.then(() => { ... })
-.catch(() => { ... })
-```
-
-#### cp(src:string, dest:string):Promise
-
-Copy a file.
-
-```js
-RNFetchBlob.fs.mv(SRC_PATH, DEST_PATH)
-.then(() => { ... })
-.catch(() => { ... })
-```
-
-#### exists(path:string):Promise<boolean>
-
-Check if a file exist at `path`
-
-```js
-RNFetchBlob.fs.exists(PATH_OF_FILE)
-.then((exist) => {
-    console.log(`file ${exist ? '' : 'not'} exists`)
-})
-.catch(() => { ... })
-```
-
-#### isDir(path:string):Promise<boolean>
-
-Check the file at `path` is a directory or not. Resolves with `false` when the path is not a directory, or it does not exists.
-
-```js
-RNFetchBlob.fs.exists(PATH_OF_FILE)
-.then((isDir) => {
-    console.log(`file is ${isDir ? '' : 'not'} a directory`)
-})
-```
-
-#### unlink(path:string):Promise<boolean>
-
-Delete a file at `path`
-
-```js
-RNFetchBlob.fs.unlink(path)
-.then(() => { ... })
-.catch((err) => { ... })
-```
-
-#### lstat(path:string):Promise<RNFetchBlobStat>
-
-Get statistic data of files in a directory, the result data will be an array of [RNFetchBlobStat](#user-content-rnfetchblobstat).
-
-```js
-RNFetchBlob.fs.lstat(PATH_OF_A_FOLDER)
-    .then((stats) => {})
-    .catch((err) => {})
-```
-
-#### stat(path:string):Promise<RNFetchBlobStat>
-
-Similar get statistic a data or a directory. the result data will be a [RNFetchBlobStat](#user-content-rnfetchblobstat).
-
-```js
-RNFetchBlob.fs.stat(PATH_OF_THE_TARGET)
-    .then((stats) => {})
-    .catch((err) => {})
-```
-
-#### scanFile(path:string):Promise (Androi Only)
-
-Connect `Media Scanner` and scan the file. see [Android Media Scanner, and Downloads App Support](#user-content-android-media-scanner-and-downloads-app-support) chapter for more information.
-
----
-
-## Types
-
-### RNFetchBlobConfig
-
-A set of configurations that will be injected into a `fetch` method, with the following properties.
-
-#### indicator:boolean
-  `0.5.6`
-  Set this property to `true` to display a network indicator on status bar, this feature is only supported on IOS.
-
-#### trusty:boolean
-  `0.5.3`
-  Set this property to `true` will allow the request create connection with server have self-signed SSL certification. This is not recommended to use in production.
-
-#### fileCache:boolean
-  Set this property to `true` will makes response data of the `fetch` stored in a temp file, by default the temp file will stored in App's own root folder with file name template `RNFetchBlob_tmp${timestamp}`.
-#### appendExt:string
-  Set this property to change temp file extension that created by `fetch` response data.
-#### path:string
-  When this property has value, `fetch` API will try to store response data in the path ignoring `fileCache` and `appendExt` property.
-#### addAndroidDownloads:object (Android only)
-  This is an Android only property, it should be an object with the following properties :
-  - title : title of the file
-  - description : File description of the file.
-  - mime : MIME type of the file. By default is `text/plain`
-  - mediaScannable : A `boolean` value, see [Officail Document](https://developer.android.com/reference/android/app/DownloadManager.html#addCompletedDownload(java.lang.String, java.lang.String, boolean, java.lang.String, java.lang.String, long, boolean))
-  - notification : A `boolean` value decide whether show a notification when download complete.
-
-### RNFetchBlobResponse
-
-When `fetch` success, it resolve a `FetchBlobResponse` object as first argument. `FetchBlobResponse` object has the following methods (these method are synchronous, so you might take quite a performance impact if the file is big)
-
-#### base64():string
-  returns base64 string of response data (done in native context)
-#### json():object
-  returns json parsed object (done in js context)
-#### text():string
-  returns decoded base64 string (done in js context)
-#### path():string
-  returns file path if the response data is cached in file
-#### session(name:string):RNFetchBlobSession
-  when the response data is cached in a file, this method adds the file into the session. The following usages are equivalent.
-```js
-RNFetchBlob.session('session-name').add(resp.path())
-// or
-resp.session('session-name')
-```
-
-### RNFetchBlobStat
-
-Statistic data of a file, see the following sample object.
-
-```js
-{
-    // file name
-    filename : 'foo.png',
-    // folder of the file or the folder itself
-    path : '/path/to/the/file/wihout/file/name/',
-    // size in byte
-    size : 4901,
-    // `file` or `directory`
-    type : 'file',
-    // last modified timestamp
-    lastModified : 141323298
-}
-```
-
-
-### RNFetchBlobSession
-
-A `session` is an object that helps you manage files. It simply maintains a list of file path and let you use `dispose()`to delete files in this session once and for all.
-
-#### add(path:string):RNFetchBlobSession
-  Add a file path to this session.
-#### remove(path:string):RNFetchBlobSession
-  Remove a file path from this session (not delete the file).
-#### list():Array<String>
-  Returns an array contains file paths in this session.
-#### dispose():Promise
-  Delete all files according to paths in the session.
-
-## Major Changes
+## Changes
 
 | Version | |
 |---|---|
+| 0.6.0 | Add readFile and writeFile API for easier file access, also added Android download manager support. |
 | 0.5.8 | Fix #33 PUT request will always be sent as POST on Android |
 | 0.5.7 | Fix #31 #30 Xcode pre 7.3 build error |
 | 0.5.6 | Add support for IOS network status indicator. Fix file stream ASCII reader bug. |
@@ -860,15 +547,9 @@ A `session` is an object that helps you manage files. It simply maintains a list
 | 0.5.2 | Fix improper url params bug [#26](https://github.com/wkh237/react-native-fetch-blob/issues/26) and change IOS HTTP implementation from NSURLConnection to NSURLSession |
 | 0.5.0 | Upload/download with direct access to file storage, and also added file access APIs |
 | 0.4.2 | Supports upload/download progress |
-| 0.4.1 | Fixe upload form-data missing file extension problem on Android |
+| 0.4.1 | Fix upload form-data missing file extension problem on Android |
 | 0.4.0 | Add base-64 encode/decode library and API |
 | ~0.3.0 | Upload/Download octet-stream and form-data |
-
-### In Progress (v0.6.0)
-
-* Add `readFile` and `WriteFile` API to `fs`
-* Add file access API for direct access RNFetchBlobResponse when the response is a file path
-* Android Download Manager file download API
 
 ### Development
 
