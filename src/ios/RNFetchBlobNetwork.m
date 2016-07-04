@@ -21,6 +21,16 @@
 //
 ////////////////////////////////////////
 
+@interface RNFetchBlobNetwork ()
+{
+    BOOL * respFile;
+    NSString * destPath;
+    NSOutputStream * writeStream;
+    long bodyLength;
+}
+
+@end
+
 @implementation RNFetchBlobNetwork
 
 NSOperationQueue *taskQueue;
@@ -32,8 +42,8 @@ NSOperationQueue *taskQueue;
 @synthesize callback;
 @synthesize bridge;
 @synthesize options;
-//@synthesize fileTaskCompletionHandler;
-//@synthesize dataTaskCompletionHandler;
+@synthesize fileTaskCompletionHandler;
+@synthesize dataTaskCompletionHandler;
 @synthesize error;
 
 
@@ -73,83 +83,28 @@ NSOperationQueue *taskQueue;
     NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
     NSURLSession * session;
     
+    bodyLength = [[req HTTPBody] length];
+    
     // the session trust any SSL certification
-    if([options valueForKey:CONFIG_TRUSTY] != nil)
+
+    NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:taskId];
+    session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:[NSOperationQueue mainQueue]];
+    
+    if(path != nil || [self.options valueForKey:CONFIG_USE_TEMP]!= nil)
     {
-        NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
-        session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:[NSOperationQueue mainQueue]];
+        respFile = YES;
+        if(path != nil)
+            destPath = path;
+        else
+            destPath = [RNFetchBlobFS getTempPath:taskId withExtension:[self.options valueForKey:CONFIG_FILE_EXT]];
     }
-    // the session validates SSL certification, self-signed certification will be aborted
     else
     {
-        session = [NSURLSession sharedSession];
+        respData = [[NSMutableData alloc] init];
+        respFile = NO;
     }
-    
-    // file will be stored at a specific path
-    if( path != nil) {
-        
-//        self.fileTaskCompletionHandler = ;
-        NSURLSessionDownloadTask * task = [session downloadTaskWithRequest:req completionHandler:^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-            if(error != nil) {
-                callback(@[[error localizedDescription]]);
-                return;
-            }
-            NSError * taskErr;
-            NSFileManager * fm = [NSFileManager defaultManager];
-            // move temp file to desination
-            [fm moveItemAtURL:location toURL:[NSURL fileURLWithPath:path] error:&taskErr];
-            if(taskErr != nil) {
-                callback(@[[taskErr localizedDescription]]);
-                return;
-            }
-            callback(@[[NSNull null], path]);
-            // prevent memory leaks
-            self.respData = nil;
-            [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-        }];
-        [task resume];
-    }
-    // file will be stored at tmp path
-    else if ( [self.options valueForKey:CONFIG_USE_TEMP]!= nil ) {
-        
-//        self.fileTaskCompletionHandler;
-        NSURLSessionDownloadTask * task = [session downloadTaskWithRequest:req completionHandler:^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-            if(error != nil) {
-                callback(@[[error localizedDescription]]);
-                return;
-            }
-            NSError * taskErr;
-            NSFileManager * fm = [NSFileManager defaultManager];
-            NSString * tmpPath = [RNFetchBlobFS getTempPath:self.taskId withExtension:[self.options valueForKey:CONFIG_FILE_EXT]];
-            // move temp file to desination
-            [fm moveItemAtURL:location toURL:[NSURL fileURLWithPath:tmpPath] error:&taskErr];
-            if(taskErr != nil) {
-                callback(@[[taskErr localizedDescription]]);
-                return;
-            }
-            callback(@[[NSNull null], tmpPath]);
-            [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-            // prevent memory leaks
-            self.respData = nil;
-        }];
-        [task resume];
-    }
-    // base64 response
-    else {
-//        self.dataTaskCompletionHandler = ;
-        NSURLSessionDataTask * task = [session dataTaskWithRequest:req completionHandler:^(NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-            if(error != nil) {
-                callback(@[[error localizedDescription]]);
-                return;
-            }
-            else {
-                callback(@[[NSNull null], [resp base64EncodedStringWithOptions:0]]);
-            }
-            self.respData = nil;
-            [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-        }];
-        [task resume];
-    }
+    NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
+    [task resume];
     
     // network status indicator
     if([[options objectForKey:CONFIG_INDICATOR] boolValue] == YES)
@@ -169,18 +124,33 @@ NSOperationQueue *taskQueue;
 - (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler
 {
     expectedBytes = [response expectedContentLength];
+    
+    if(respFile == YES)
+    {
+        NSFileManager * fm = [NSFileManager defaultManager];
+        NSString * folder = [destPath stringByDeletingLastPathComponent];
+        if(![fm fileExistsAtPath:folder]) {
+            [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:nil];
+        }
+        [fm createFileAtPath:destPath contents:[[NSData alloc] init] attributes:nil];
+        writeStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:YES];
+        [writeStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+        [writeStream open];
+    }
+    completionHandler(NSURLSessionResponseAllow);
 }
 
 // download progress handler
 - (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data
 {
     receivedBytes += [data length];
-    
-    Boolean fileCache = [self.options valueForKey:CONFIG_USE_TEMP];
-    NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
-    // cache data in memory
-    if(path == nil && fileCache == nil) {
+    if(respFile == NO)
+    {
         [respData appendData:data];
+    }
+    else
+    {
+        [writeStream write:[data bytes] maxLength:[data length]];
     }
     
     [self.bridge.eventDispatcher
@@ -191,6 +161,20 @@ NSOperationQueue *taskQueue;
             @"total": [NSString stringWithFormat:@"%d", expectedBytes]
             }
      ];
+    
+    if(receivedBytes >= expectedBytes)
+    {
+        if(respFile == YES)
+        {
+            [writeStream close];
+            callback(@[[NSNull null], destPath]);
+        }
+        // base64 response
+        else {
+            callback(@[[NSNull null], [respData base64EncodedStringWithOptions:0]]);
+        }
+        [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
+    }
 }
 
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
@@ -202,14 +186,12 @@ NSOperationQueue *taskQueue;
 // upload progress handler
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didSendBodyData:(int64_t)bytesSent totalBytesSent:(int64_t)totalBytesWritten totalBytesExpectedToSend:(int64_t)totalBytesExpectedToWrite
 {
-    expectedBytes = totalBytesExpectedToWrite;
-    receivedBytes += totalBytesWritten;
     [self.bridge.eventDispatcher
      sendDeviceEventWithName:@"RNFetchBlobProgress"
      body:@{
             @"taskId": taskId,
-            @"written": [NSString stringWithFormat:@"%d", receivedBytes],
-            @"total": [NSString stringWithFormat:@"%d", expectedBytes]
+            @"written": [NSString stringWithFormat:@"%d", totalBytesWritten],
+            @"total": [NSString stringWithFormat:@"%d", totalBytesExpectedToWrite]
             }
      ];
 }
@@ -230,13 +212,34 @@ NSOperationQueue *taskQueue;
 //    }
 //}
 
-- (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler
+- (void) URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable credantial))completionHandler
 {
     if([options valueForKey:CONFIG_TRUSTY] != nil)
-        completionHandler(NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
-    else {
-        RCTLogWarn(@"counld not create connection with an unstrusted SSL certification, if you're going to create connection anyway, add `trusty:true` to RNFetchBlob.config");
-        [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
+    {
+        completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
+    }
+    else
+    {
+        NSURLSessionAuthChallengeDisposition disposition = NSURLSessionAuthChallengePerformDefaultHandling;
+        __block NSURLCredential *credential = nil;
+        if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust])
+        {
+            credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
+            if (credential) {
+                disposition = NSURLSessionAuthChallengeUseCredential;
+            } else {
+                disposition = NSURLSessionAuthChallengePerformDefaultHandling;
+            }
+        }
+        else
+        {
+            disposition = NSURLSessionAuthChallengeCancelAuthenticationChallenge;
+            RCTLogWarn(@"counld not create connection with an unstrusted SSL certification, if you're going to create connection anyway, add `trusty:true` to RNFetchBlob.config");
+            [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
+        }
+        if (completionHandler) {
+            completionHandler(disposition, credential);
+        }
     }
 }
 
