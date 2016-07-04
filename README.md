@@ -336,6 +336,8 @@ RNFetchBlob
 
 When download large files on Android it is recommended to use `Download Manager`, it supports lot of native features like progress bar, and notification, also the download task will be handled by OS, and more effective.
 
+<img src="img/download-manager.png" width="256">
+
 When using DownloadManager, `fileCache` and `path` properties in `config` will not take effect, because Android DownloadManager can only store files to external storage. When download complete, DownloadManager will generate a file path so that you can deal with it.
 
 ```js
