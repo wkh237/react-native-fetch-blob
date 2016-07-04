@@ -22,7 +22,7 @@ This update is `backward-compatible` generally you don't have to change existing
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
  * [Upload/Download progress](#user-content-uploaaddownload-progress)
- * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-downloads-app-support)
+ * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-manage-cached-files)
