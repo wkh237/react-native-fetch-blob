@@ -32,7 +32,7 @@ describe('writeFile and readFile test', (report, done) => {
     .then(() => fs.readFile(path, 'utf8'))
     .then((actual) => {
       report(<Assert key="utf8 content should correct" expect={data} actual={actual}/>)
-      data += 'base64'
+      data = 'base64'
       return fs.writeFile(path, RNFetchBlob.base64.encode('base64'), 'base64')
     })
     .then(() => fs.readFile(path, 'base64'))
@@ -40,7 +40,7 @@ describe('writeFile and readFile test', (report, done) => {
       report(<Assert key="base64 content should correct"
         expect={RNFetchBlob.base64.decode(RNFetchBlob.base64.encode(data))}
         actual={RNFetchBlob.base64.decode(actual)}/>)
-      data += 'ascii'
+      data = 'ascii'
       return fs.writeFile(path, getASCIIArray('ascii'), 'ascii');
     })
     .then(() => fs.readFile(path, 'ascii'))
@@ -54,8 +54,34 @@ describe('writeFile and readFile test', (report, done) => {
 })
 
 describe('append file test', (report, done) => {
+  let path = dirs.DocumentDir + '/append-test'+Date.now()
+  let content = 'test on ' + Date.now()
+  fs.writeFile(path, content, 'utf8')
+    .then(() => fs.appendFile(path, '100', 'utf8', true))
+    .then(() => fs.readFile(path, 'utf8'))
+    .then((data) => {
+      report(
+        <Assert key="utf8 data should be appended"
+          expect={content + '100'}
+          actual={data} />)
+      return fs.appendFile(path, getASCIIArray('200'), 'ascii')
+    })
+    .then(() => fs.readFile(path, 'ascii'))
+    .then((data) => {
+      report(<Assert key="ascii data should be appended"
+        expect={getASCIIArray(content + '100' + '200')}
+        comparer={Comparer.equalToArray}
+        actual={data} />)
+      return fs.appendFile(path, RNFetchBlob.base64.encode('300'), 'base64')
+    })
+    .then(() => fs.readFile(path, 'base64'))
+    .then((data) => {
+      report(<Assert key="base64 data should be appended"
+        expect={content + '100' + '200' + '300'}
+        actual={RNFetchBlob.base64.decode(data)} />)
+        done()
+    })
 
-  // TODO 
 })
 
 function getASCIIArray(str) {

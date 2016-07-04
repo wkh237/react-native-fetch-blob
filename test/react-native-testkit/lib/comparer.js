@@ -8,11 +8,12 @@ export default {
     return a !== null && a !== void 0
   },
   equalToArray : (a, b) => {
-    if(!Array.isArray(a) && Array.isArray(b))
-      return false
-    return (a.length == b.length) && a.every(function(element, index) {
-      return element === b[index];
-    });
+    var i = a.length;
+    if (i != b.length) return false;
+    while (i--) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
   },
   hasValue : (a, b) => (a !== void 0) && (Array.isArray(a) ? a.length !==0 : true),
   isArray : (a, b) => Array.isArray(a),
