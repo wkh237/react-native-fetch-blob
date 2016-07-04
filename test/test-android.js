@@ -96,12 +96,32 @@ describe('android download manager', (report, done) => {
   RNFetchBlob.config({
     addAndroidDownloads : {
       useDownloadManager : true,
-      title : 'RNFetchBlob test download success',
+      title : 'RNFetchBlob test download manager test',
       description : `File description added by RNFetchblob`,
       mediaScannable : true,
-      mime : "image/png",
       notification : true
     }
   })
-  .fetch('GET', `${TEST_SERVER_URL}/public/beethoven.mp3`)
+  .fetch('GET', `${TEST_SERVER_URL}/public/beethoven.mp3`).then((resp) => {
+    report(
+      <Assert key="download manager complete handler" expect={true} actual={true}/>
+    )
+    return resp.readStream('ascii')
+  })
+  .then((stream) => {
+    stream.open();
+    let len = 0
+    stream.onData((chunk) => {
+      len += chunk.length
+    })
+    stream.onEnd(() => {
+      report(
+        <Assert key="download manager URI is readable"
+          expect={len}
+          comparer={Comparer.greater}
+          actual={0}/>
+      )
+      done()
+    })
+  })
 })
