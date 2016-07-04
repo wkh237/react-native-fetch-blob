@@ -27,25 +27,25 @@ public class RNFetchBlobFileHandler extends FileAsyncHttpResponseHandler {
     String mTaskId;
     RNFetchBlobConfig mConfig;
 
-    RNFetchBlobFileHandler(ReactApplicationContext ctx, String taskId, RNFetchBlobConfig config, Callback onResponse) {
-        super(new File( RNFetchBlobFileHandler.getFilePath(ctx, taskId, config)), false, false);
+    RNFetchBlobFileHandler(ReactApplicationContext ctx, String taskId, String key, RNFetchBlobConfig config, Callback onResponse) {
+        super(new File( RNFetchBlobFileHandler.getFilePath(ctx, taskId, key, config)), false, false);
         this.onResponse = onResponse;
         this.mTaskId = taskId;
         this.mConfig = config;
         this.mCtx = ctx;
-        if(!new File(RNFetchBlobFileHandler.getFilePath(ctx, taskId, config)).isFile()) {
+        if(!new File(RNFetchBlobFileHandler.getFilePath(ctx, taskId, key, config)).isFile()) {
             this.isValid = false;
         }
         this.isValid = true;
     }
 
-    static String getFilePath(ReactApplicationContext ctx, String taskId, RNFetchBlobConfig config) {
+    static String getFilePath(ReactApplicationContext ctx, String taskId, String key, RNFetchBlobConfig config) {
         if(config.path != null)
             return config.path;
         else if(config.fileCache && config.appendExt != null)
-            return RNFetchBlobFS.getTmpPath(ctx, taskId) + "." + config.appendExt;
+            return RNFetchBlobFS.getTmpPath(ctx, key) + "." + config.appendExt;
         else
-            return RNFetchBlobFS.getTmpPath(ctx, taskId);
+            return RNFetchBlobFS.getTmpPath(ctx, key);
     }
 
     @Override
