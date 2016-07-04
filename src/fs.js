@@ -316,6 +316,7 @@ export default {
   cp,
   writeStream,
   writeFile,
+  appendFile,
   readFile,
   exists,
   createFile,
