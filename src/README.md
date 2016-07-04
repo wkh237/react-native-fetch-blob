@@ -4,11 +4,11 @@ A module provides upload, download, and files access API. Supports file stream r
 
 **Why do we need this**
 
-At this moment, React Native does not support `Blob` object yet, so if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854).
+React Native does not support `Blob` object at this moment, which means if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854).
 
-Hence you may getting into trouble in some use cases. For example, displaying an image on image server but the server requires a specific field(such as "Authorization") in headers or body, so you can't just pass the image uri to `Image` component because that will probably returns a 401 response. With help of this module, you can send a HTTP request with any headers, and decide how to handle the response/reqeust data. The response data can be just simply converted into BASE64 string, or store to a file directly so that you can read it by file stream or use it's path.
+For some uses cases, you might get into trouble. For example, displaying an image that requires a specific field in headers (ex. "Authorization : Bearer ...") or body, so you can't just pass the image uri to `Image` component because that will probably returns a 401 response. Or you're going to upload binary data which generated from JS, the server will get an empry body due to [this issue](https://github.com/facebook/react-native/issues/854). With help of this APIs provides by this module, you can send HTTP request with any headers, and decide how to handle the response/reqeust data without worry about if it is not supported by `fetch` API. The response data can be just simply converted into BASE64 string, or store to a file directly so that you can read it by file access APIs such as readFile, readStream.
 
-This module is designed to be a substitution of `blob`, there's a set of file access API including basic CRUD method, and file stream reader/writer. Also it has a special `fetch` implementation that supports binary request/response body.
+This module was designed to be a substitution of `Blob`, there's a set of APIs including basic file system CRUD method, and file stream reader/writer. Also it has a special `fetch` implementation that supports binary request/response body.
 
 **Pre v0.5.0 Users**
 
@@ -21,11 +21,11 @@ This update is `backward-compatible` generally you don't have to change existing
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
- * [Upload/Download progress](#user-content-uploaaddownload-progress)
- * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-downloads-app-support)
+ * [Upload/Download progress](#user-content-uploaddownload-progress)
+ * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
- * [Manage cached files](#user-content-manage-cached-files)
+ * [Manage cached files](#user-content-cache-file-management)
  * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
 * [Development](#user-content-development)
@@ -336,6 +336,8 @@ RNFetchBlob
 
 When download large files on Android it is recommended to use `Download Manager`, it supports lot of native features like progress bar, and notification, also the download task will be handled by OS, and more effective.
 
+<img src="img/download-manager.png" width="256">
+
 When using DownloadManager, `fileCache` and `path` properties in `config` will not take effect, because Android DownloadManager can only store files to external storage. When download complete, DownloadManager will generate a file path so that you can deal with it.
 
 ```js
@@ -391,25 +393,25 @@ RNFetchBlob.config({
 
 File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However I realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need those APIs for there cases.
 
-Here's the list of `fs` APIs
+File Access APIs
 
-- dirs
-- createFile
-- readFile
-- writeFile
-- appendFile
-- readStream
-- writeStream
-- unlink
-- mkdir
-- ls
-- mv
-- cp
-- exists
-- isDir
-- lstat
-- stat
-- scanFile (Android Only)
+- [dirs](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#dirs)
+- [createFile](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#createfilepath-data-encodingpromise)
+- [writeFile (0.6.0)](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#writefilepathstring-contentstring--array-encodingstring-appendbooleanpromise)
+- [appendFile (0.6.0) ](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#appendfilepathstring-contentstring--array-encodingstringpromise)
+- [readFile (0.6.0)](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#readfilepath-encodingpromise)
+- [readStream](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#readstreampath-encoding-buffersizepromise)
+- [writeStream](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#writestreampathstring-encodingstring-appendbooleanpromise)
+- [unlink](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#unlinkpathstringpromise)
+- [mkdir](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#mkdirpathstringpromise)
+- [ls](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#lspathstringpromise)
+- [mv](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#mvfromstring-tostringpromise)
+- [cp](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#cpsrcstring-deststringpromise)
+- [exists](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#existspathstringpromise)
+- [isDir](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#isdirpathstringpromise)
+- [stat](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#statpathstringpromise)
+- [lstat](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#lstatpathstringpromise)
+- [scanFile (Android only)](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#scanfilepathstringpromise-androi-only)
 
 See [File API](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API) for more information
 
