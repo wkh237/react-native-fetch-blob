@@ -539,6 +539,7 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.6.1 | Fix #37 progress report API issue on IOS |
 | 0.6.0 | Add readFile and writeFile API for easier file access, also added Android download manager support. |
 | 0.5.8 | Fix #33 PUT request will always be sent as POST on Android |
 | 0.5.7 | Fix #31 #30 Xcode pre 7.3 build error |
