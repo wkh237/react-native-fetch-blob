@@ -97,19 +97,20 @@ describe('Compare uploaded multipart image', (report, done) => {
 // added after 0.4.2
 
 describe('Progress report test', (report, done) => {
-  let received = 0
+  let actual = 0, expect = -1
   RNFetchBlob
     .fetch('GET', `${TEST_SERVER_URL}/public/1mb-dummy`, {
       Authorization : 'Bearer abde123eqweje'
     })
-    .progress((written, total) => {
-      // report(<Info key={`progress = ${written} bytes / ${total} bytes`}/>)
-      if(written === total)
-        report(<Assert key="progress goes to 100%" expect={written} actual={total}/>)
+    .progress((received, total) => {
+      actual = received
+      expect = total
     })
     .then((resp) => {
-      report(<Assert key="response data should be correct event with progress listener"
-        expect={resp.text().substr(0,10)} actual={"1234567890"}/>)
+      report(
+        <Assert key="download progress correct" expect={expect} actual={actual}/>,
+        <Assert key="response data should be correct event with progress listener"
+          expect={resp.text().substr(0,10)} actual={"1234567890"}/>)
       done()
     })
 
@@ -117,7 +118,7 @@ describe('Progress report test', (report, done) => {
 
 
 describe('PUT request test', (report, done) => {
-
+  let actual = 0, expect = -1
   RNFetchBlob.fetch('PUT', `${TEST_SERVER_URL}/upload-form`, {
       Authorization : "Bearer fsXcpmKPrHgAAAAAAAAAEGxFXwhejXM_E8fznZoXPhHbhbNhA-Lytbe6etp1Jznz",
       'Content-Type' : 'multipart/form-data',
@@ -127,14 +128,19 @@ describe('PUT request test', (report, done) => {
       { name : 'field1', data : 'hello !!'},
       { name : 'field2', data : 'hello2 !!'}
     ])
-  .then((resp) => {
-    resp = resp.json()
-    report(
-      <Assert key="check put form data #1" expect="hello !!" actual={resp.fields.field1}/>,
-      <Assert key="check put form data #2" expect="hello2 !!" actual={resp.fields.field2}/>,
-    )
-    done()
-  })
+    .progress((written, total) => {
+      actual = written
+      expect = total
+    })
+    .then((resp) => {
+      resp = resp.json()
+      report(
+        <Assert key="upload progress correct" expect={expect} actual={actual}/>,
+        <Assert key="check put form data #1" expect="hello !!" actual={resp.fields.field1}/>,
+        <Assert key="check put form data #2" expect="hello2 !!" actual={resp.fields.field2}/>,
+      )
+      done()
+    })
 })
 
 describe('DELETE request test', (report, done) => {

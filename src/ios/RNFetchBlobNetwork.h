@@ -15,7 +15,7 @@
 typedef void(^CompletionHander)(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error);
 typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error);
 
-@interface RNFetchBlobNetwork : NSObject  <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate, UIApplicationDelegate>
+@interface RNFetchBlobNetwork : NSObject  <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate>
 
 @property (nullable, nonatomic) NSString * taskId;
 @property (nonatomic) int expectedBytes;
@@ -25,8 +25,8 @@ typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse 
 @property (nullable, nonatomic) RCTBridge * bridge;
 @property (nullable, nonatomic) NSDictionary * options;
 @property (nullable, nonatomic) RNFetchBlobFS * fileStream;
-//@property (strong, nonatomic) CompletionHander fileTaskCompletionHandler;
-//@property (strong, nonatomic) DataTaskCompletionHander dataTaskCompletionHandler;
+@property (strong, nonatomic) CompletionHander fileTaskCompletionHandler;
+@property (strong, nonatomic) DataTaskCompletionHander dataTaskCompletionHandler;
 @property (nullable, nonatomic) NSError * error;
 
 
