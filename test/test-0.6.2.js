@@ -26,25 +26,43 @@ const  dirs = RNFetchBlob.fs.dirs
 
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
-CameraRoll.getPhotos({first : 10}, function(resp){console.log(resp)}, (err)=>{console.log(err)})
-  // .then((resp) => {
-  //   console.log(resp)
-  // })
-  // .catch((err) => {
-  //   console.log(err)
-  // })
 
-describe('access file in assets', (report, done) => {
+describe('access assets from camera roll', (report, done) => {
+  let photo = null
   CameraRoll.getPhotos({first : 10})
     .then((resp) => {
+      photo = resp.edges[0].node.image.uri
       report(<Info key="items">
-        <Text>{JSON.stringify(resp)}</Text>
+        <Text>{photo}</Text>
       </Info>)
+      return fs.readFile(photo, 'base64')
     })
-    .catch((err) => {
-      console.log(err)
-      report(<Info key="err">
-        <Text>{JSON.stringify(err)}</Text>
+    .then((data) => {
+      report(<Info key="asset image">
+        <Image
+          style={styles.image}
+          source={{uri: `data:image/png;base64, ${data}`}}/>
       </Info>)
+      done()
     })
+})
+
+describe('read asset in app bundle',(report, done) => {
+  let target = 'bundle-assets://test-asset2.png'
+  fs.readFile(target, 'base64')
+  .then((data) => {
+    report(<Info key="asset image">
+      <Image
+        style={styles.image}
+        source={{uri: `data:image/png;base64, ${data}`}}/>
+    </Info>)
+    return fs.readFile('bundle-assets://test-asset1.json', 'utf8')
+  })
+  .then((resp) => {
+    report(
+      <Assert key="asset content verify"
+        expect="asset#1"
+        actual={JSON.parse(resp).secret}/>)
+      done()
+  })
 })
