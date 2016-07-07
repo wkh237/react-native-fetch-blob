@@ -423,7 +423,7 @@ When calling `readStream` method, you have to `open` the stream, and start to re
 
 ```js
 let data = ''
-RNFetchBlob.readStream(
+RNFetchBlob.fs.readStream(
     // encoding, should be one of `base64`, `utf8`, `ascii`
     'base64',
     // file path
@@ -450,7 +450,7 @@ RNFetchBlob.readStream(
 When use `writeStream`, the stream is also opened immediately, but you have to `write`, and `close` by yourself.
 
 ```js
-RNFetchBlob.writeStream(
+RNFetchBlob.fs.writeStream(
     PATH_TO_FILE,
     // encoding, should be one of `base64`, `utf8`, `ascii`
     'utf8',
