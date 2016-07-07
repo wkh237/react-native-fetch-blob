@@ -51,6 +51,8 @@
 + (void) writeFileArray:(NSString *)path data:(NSArray *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 + (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 + (void) readFile:(NSString *)path encoding:(NSString *)encoding resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
++ (void) readAssetFile:(NSData *)assetUrl completionBlock:(void(^)(NSData * content))completionBlock failBlock:(void(^)(NSError * err))failBlock;
++ (NSString *) getPathOfAsset:(NSString *)assetURI;
 
 // constructor
 - (id) init;
@@ -61,6 +63,7 @@
 - (void) openWithDestination;
 - (void) openWithId;
 - (NSString *)openWithPath:(NSString *)destPath encode:(nullable NSString *)encode appendData:(BOOL)append;
+- (void) startAssetReadStream:(NSData *)assetUrl;
 
 // file stream write data
 - (void)write:(NSData *) chunk;

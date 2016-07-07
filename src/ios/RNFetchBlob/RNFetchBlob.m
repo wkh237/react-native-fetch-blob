@@ -236,16 +236,13 @@ RCT_EXPORT_METHOD(exists:(NSString *)path callback:(RCTResponseSenderBlock)callb
     
 }
 
-RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding bufferSize:(int)bufferSize) {
-    RNFetchBlobFS *fileStream = [[RNFetchBlobFS alloc] initWithBridgeRef:self.bridge];
-    if(bufferSize == nil) {
-        if([[encoding lowercaseString] isEqualToString:@"base64"])
-            bufferSize = 4095;
-        else
-            bufferSize = 4096;
-    }
-    [fileStream readWithPath:path useEncoding:encoding bufferSize:bufferSize];
-}
+RCT_EXPORT_METHOD(writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    [RNFetchBlobFS writeFile:path encoding:encoding data:data append:append resolver:resolve rejecter:reject];
+})
+
+RCT_EXPORT_METHOD(writeFileArray:(NSString *)path data:(NSArray *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    [RNFetchBlobFS writeFileArray:path data:data append:append resolver:resolve rejecter:reject];
+})
 
 RCT_EXPORT_METHOD(writeStream:(NSString *)path withEncoding:(NSString *)encoding appendData:(BOOL)append callback:(RCTResponseSenderBlock)callback) {
     RNFetchBlobFS * fileStream = [[RNFetchBlobFS alloc] initWithBridgeRef:self.bridge];
@@ -412,16 +409,29 @@ RCT_EXPORT_METHOD(mkdir:(NSString *)path callback:(RCTResponseSenderBlock) callb
 }
 
 RCT_EXPORT_METHOD(readFile:(NSString *)path encoding:(NSString *)encoding resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    
     [RNFetchBlobFS readFile:path encoding:encoding resolver:resolve rejecter:reject];
 })
 
-RCT_EXPORT_METHOD(writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
-    [RNFetchBlobFS writeFile:path encoding:encoding data:data append:append resolver:resolve rejecter:reject];
-})
-
-RCT_EXPORT_METHOD(writeFileArray:(NSString *)path data:(NSArray *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
-    [RNFetchBlobFS writeFileArray:path data:data append:append resolver:resolve rejecter:reject];
-})
+RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding bufferSize:(int)bufferSize) {
+    
+    RNFetchBlobFS *fileStream = [[RNFetchBlobFS alloc] initWithBridgeRef:self.bridge];
+    if(bufferSize == nil) {
+        if([[encoding lowercaseString] isEqualToString:@"base64"])
+            bufferSize = 4095;
+        else
+            bufferSize = 4096;
+    }
+    // read asset stream
+    if([path hasPrefix:@"assets-library://"])
+    {
+        
+    }
+    else
+    {
+        [fileStream readWithPath:path useEncoding:encoding bufferSize:bufferSize];
+    }
+}
 
 RCT_EXPORT_METHOD(getEnvironmentDirs:(RCTResponseSenderBlock) callback) {
     
