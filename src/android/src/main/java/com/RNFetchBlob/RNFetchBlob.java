@@ -13,9 +13,12 @@ import java.util.Map;
 public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     String filePathPrefix = "RNFetchBlob-file://";
+    static ReactApplicationContext RCTContext;
 
     public RNFetchBlob(ReactApplicationContext reactContext) {
+
         super(reactContext);
+        RCTContext = reactContext;
     }
 
     @Override

@@ -15,6 +15,7 @@
 #import "RNFetchBlobFS.h"
 #import "RNFetchBlobConst.h"
 @import AssetsLibrary;
+@import Photos;
 
 NSMutableDictionary *fileStreams = nil;
 

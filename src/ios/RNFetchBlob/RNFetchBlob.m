@@ -97,6 +97,7 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
                     if(content != nil) {
                         if([content hasPrefix:self.filePathPrefix]) {
                             NSString * orgPath = [content substringFromIndex:[self.filePathPrefix length]];
+                            orgPath = [RNFetchBlobFS getPathOfAsset:orgPath];
                             blobData = [[NSData alloc] initWithContentsOfFile:orgPath];
                         }
                         else
@@ -160,6 +161,7 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                 // when body is a string contains file path prefix, try load file from the path
                 if([body hasPrefix:self.filePathPrefix]) {
                     NSString * orgPath = [body substringFromIndex:[self.filePathPrefix length]];
+                    orgPath = [RNFetchBlobFS getPathOfAsset:orgPath];
                     [request setHTTPBodyStream: [NSInputStream inputStreamWithFileAtPath:orgPath ]];
                 }
                 // otherwise convert it as BASE64 data string
