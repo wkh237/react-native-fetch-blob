@@ -4,7 +4,7 @@ A module provides upload, download, and files access API. Supports file stream r
 
 **Why do we need this**
 
-React Native does not support `Blob` object at this moment, which means if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854).
+React Native does not support `Blob` object at this moment, which means if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See facebook/react-native#854.
 
 For some use cases, you might get into trouble. For example, displaying an image that requires a specific field in headers (ex. "Authorization : Bearer ...") or body, so you can't just pass the image uri to `Image` component because that will probably returns a 401 response. Or you're going to upload binary data which generated from JS, the server will get an empry body due to [this issue](https://github.com/facebook/react-native/issues/854). With help of APIs provided by this module, you can send HTTP request with any headers, and decide how to handle the response/reqeust data without worry about if it is not supported by `fetch` API. The response data can be just simply converted into BASE64 string, or stored to a file directly so that you can read it by using file access APIs such as readFile, readStream.
 
