@@ -334,6 +334,9 @@ RCT_EXPORT_METHOD(stat:(NSString *)path callback:(RCTResponseSenderBlock) callba
     BOOL exist = nil;
     BOOL isDir = nil;
     NSError * error = nil;
+    
+    path = [RNFetchBlobFS getPathOfAsset:path];
+    
     exist = [fm fileExistsAtPath:path isDirectory:&isDir];
     if(exist == NO) {
         callback(@[[NSString stringWithFormat:@"failed to list path `%@` for it is not exist or it is not exist", path]]);
@@ -352,6 +355,9 @@ RCT_EXPORT_METHOD(lstat:(NSString *)path callback:(RCTResponseSenderBlock) callb
     NSFileManager* fm = [NSFileManager defaultManager];
     BOOL exist = nil;
     BOOL isDir = nil;
+    
+    path = [RNFetchBlobFS getPathOfAsset:path];
+    
     exist = [fm fileExistsAtPath:path isDirectory:&isDir];
     if(exist == NO) {
         callback(@[[NSString stringWithFormat:@"failed to list path `%@` for it is not exist or it is not exist", path]]);
@@ -380,6 +386,7 @@ RCT_EXPORT_METHOD(lstat:(NSString *)path callback:(RCTResponseSenderBlock) callb
 
 RCT_EXPORT_METHOD(cp:(NSString *)path toPath:(NSString *)dest callback:(RCTResponseSenderBlock) callback) {
     NSError * error = nil;
+    path = [RNFetchBlobFS getPathOfAsset:path];
     BOOL result = [[NSFileManager defaultManager] copyItemAtURL:[NSURL fileURLWithPath:path] toURL:[NSURL fileURLWithPath:dest] error:&error];
     
     if(error == nil)

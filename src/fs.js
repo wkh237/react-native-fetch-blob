@@ -48,7 +48,7 @@ function session(name:string):RNFetchBlobSession {
   }
 }
 
-function addAssetPrefix(path:string):string {
+function asset(path:string):string {
   if(Platform.OS === 'ios') {
     // path from camera roll
     if(/^assets-library\:\/\//.test(path))
@@ -335,5 +335,5 @@ export default {
   lstat,
   scanFile,
   dirs,
-  addAssetPrefix
+  asset
 }

@@ -344,7 +344,6 @@ public class RNFetchBlobFS {
         try {
             stream.write(chunk);
             callback.invoke();
-            chunk = null;
         } catch (Exception e) {
             callback.invoke(e.getLocalizedMessage());
         }
@@ -431,8 +430,7 @@ public class RNFetchBlobFS {
 
         try {
 
-            String destFolder = new File(dest).getPath();
-            if(!new File(path).exists()) {
+            if(!isPathExists(path)) {
                 callback.invoke("cp error: source file at path`" + path + "` not exists");
                 return;
             }
@@ -490,7 +488,6 @@ public class RNFetchBlobFS {
             try {
                 String filename = path.replace(assetPrefix, "");
                 AssetFileDescriptor fd = RNFetchBlob.RCTContext.getAssets().openFd(filename);
-                // TODO : handle asset folder
                 callback.invoke(true, false);
             } catch (IOException e) {
                 callback.invoke(false, false);
@@ -512,14 +509,13 @@ public class RNFetchBlobFS {
     static void ls(String path, Callback callback) {
         path = normalizePath(path);
         File src = new File(path);
-        // TODO : handle asset folder
-        if(!src.exists() || !src.isDirectory()) {
+        if (!src.exists() || !src.isDirectory()) {
             callback.invoke("ls error: failed to list path `" + path + "` for it is not exist or it is not a folder");
             return;
         }
-        String [] files = new File(path).list();
+        String[] files = new File(path).list();
         WritableArray arg = Arguments.createArray();
-        for(String i : files) {
+        for (String i : files) {
             arg.pushString(i);
         }
         callback.invoke(null, arg);
@@ -527,7 +523,7 @@ public class RNFetchBlobFS {
 
     static void lstat(String path, final Callback callback) {
         path = normalizePath(path);
-        File src = new File(path);
+
         new AsyncTask<String, Integer, Integer>() {
             @Override
             protected Integer doInBackground(String ...args) {
