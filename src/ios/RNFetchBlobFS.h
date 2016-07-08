@@ -11,6 +11,7 @@
 
 #import <Foundation/Foundation.h>
 #import "RCTBridgeModule.h"
+@import AssetsLibrary;
 
 @interface RNFetchBlobFS : NSObject <NSStreamDelegate>  {
     NSOutputStream * outStream;
@@ -42,6 +43,8 @@
 + (NSString *) getCacheDir;
 + (NSString *) getDocumentDir;
 + (NSString *) getTempPath:(NSString*)taskId withExtension:(NSString *)ext;
++ (NSString *) getPathOfAsset:(NSString *)assetURI;
++ (void) getPathFromUri:(NSString *)uri completionHandler:(void(^)(NSString * path, ALAssetRepresentation *asset)) onComplete;
 
 // fs methods
 + (RNFetchBlobFS *) getFileStreams;
@@ -50,9 +53,8 @@
 + (BOOL) exists:(NSString *) path;
 + (void) writeFileArray:(NSString *)path data:(NSArray *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 + (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
-+ (void) readFile:(NSString *)path encoding:(NSString *)encoding resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
++ (void) readFile:(NSString *)path encoding:(NSString *)encoding resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject onComplete:(void (^)(NSData * content))onComplete;
 + (void) readAssetFile:(NSData *)assetUrl completionBlock:(void(^)(NSData * content))completionBlock failBlock:(void(^)(NSError * err))failBlock;
-+ (NSString *) getPathOfAsset:(NSString *)assetURI;
 
 // constructor
 - (id) init;
