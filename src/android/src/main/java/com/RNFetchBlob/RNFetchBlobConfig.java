@@ -14,6 +14,7 @@ public class RNFetchBlobConfig {
     public String appendExt;
     public ReadableMap addAndroidDownloads;
     public Boolean trusty;
+    public String key;
 
     RNFetchBlobConfig(ReadableMap options) {
         if(options == null)
@@ -25,6 +26,7 @@ public class RNFetchBlobConfig {
         if(options.hasKey("addAndroidDownloads")) {
             this.addAndroidDownloads = options.getMap("addAndroidDownloads");
         }
+        this.key = options.hasKey("key") ? options.getString("key") : null;
     }
 
 }
