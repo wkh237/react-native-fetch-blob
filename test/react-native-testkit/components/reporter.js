@@ -20,9 +20,10 @@ export default class Reporter extends Component {
   constructor(props:any) {
     super(props)
     this.tests = {
+      summary : [{}],
       common : []
     }
-    this.testGroups = ['common']
+    this.testGroups = ['summary','common']
     this.ds = null
     this.updateDataSource()
 
@@ -50,10 +51,28 @@ export default class Reporter extends Component {
       />)
   }
 
-  renderTest(t) {
+  renderTest(t, group) {
+
     let pass = true
     let foundActions = false
     let tests = RNTEST.TestContext.getTests()
+
+    if(group === 'summary')
+    {
+      let passed = 0
+      let executed = 0
+      let count = 0
+      for(let i in tests) {
+        count++
+        if(tests[i].executed)
+          passed += tests[i].status === 'pass' ? 1 : 0
+      }
+      return (<View style={{flex : 1}}>
+        <Text>{`${count} test cases`}</Text>
+        <Text>{`${executed} tests executed`}</Text>
+        <Text>{`${ParseFloat(pass/count).toFixed(2)}% tests passed`}</Text>
+      </View>)
+    }
 
     if(Array.isArray(t.result) && !t.expired) {
       t.result = t.result.map((r) => {

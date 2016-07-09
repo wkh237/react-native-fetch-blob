@@ -4,6 +4,7 @@ let tests: Array<TestCase> = []
 let RCTContext: ReactElement = null
 let props:any = {}
 let timeout = 30000
+let summary = {}
 
 export default class TestContext {
 
@@ -146,6 +147,16 @@ export default class TestContext {
   static update(i, ...data) {
     let test = tests[i]
     let result = test.result || []
+    // if new element have prop `uid`, we should replace it not appending it.
+    for(let i in data) {
+      if(data[i].props.uid) {
+        for(let j in result) {
+          if(result[j].uid === data[i].props.uid)
+          result[j] = data[i]
+          break
+        }
+      }
+    }
     Object.assign(test, {result : [...result, ...data]})
     RCTContext.forceUpdate()
   }
