@@ -63,10 +63,10 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
                   callback:(RCTResponseSenderBlock)callback)
 {
     
-    [RNFetchBlobReqBuilder buildMultipartRequest:options taskId:taskId method:method url:url headers:headers form:form onComplete:^(NSURLRequest *req) {
+    [RNFetchBlobReqBuilder buildMultipartRequest:options taskId:taskId method:method url:url headers:headers form:form onComplete:^(NSURLRequest *req, long bodyLength) {
         // send HTTP request
         RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-        [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+        [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
         utils = nil;
     }];
     
@@ -80,10 +80,10 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                   headers:(NSDictionary *)headers
                   body:(NSString *)body callback:(RCTResponseSenderBlock)callback)
 {
-    [RNFetchBlobReqBuilder buildOctetRequest:options taskId:taskId method:method url:url headers:headers body:body onComplete:^(NSURLRequest *req) {
+    [RNFetchBlobReqBuilder buildOctetRequest:options taskId:taskId method:method url:url headers:headers body:body onComplete:^(NSURLRequest *req, long bodyLength) {
         // send HTTP request
         RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-        [utils sendRequest:options bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+        [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
         utils = nil;
     }];
     

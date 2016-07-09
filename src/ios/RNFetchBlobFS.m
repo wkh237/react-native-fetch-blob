@@ -283,9 +283,10 @@ NSMutableDictionary *fileStreams = nil;
         [[self class] getPathFromUri:path completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
             NSData * fileContent;
             NSError * err;
+            Byte * buffer;
             if(asset != nil)
             {
-                Byte * buffer = malloc(asset.size);
+                buffer = malloc(asset.size);
                 [asset getBytes:buffer fromOffset:0 length:asset.size error:&err];
                 if(err != nil)
                 {
@@ -293,8 +294,6 @@ NSMutableDictionary *fileStreams = nil;
                     return;
                 }
                 fileContent = [NSData dataWithBytes:buffer length:asset.size];
-                if(onComplete != nil)
-                    onComplete(fileContent);
                 free(buffer);
             }
             else
@@ -305,7 +304,10 @@ NSMutableDictionary *fileStreams = nil;
                     return;
                 }
                 fileContent = [NSData dataWithContentsOfFile:path];
+                
             }
+            if(onComplete != nil)
+                onComplete(fileContent);
             
             if([[encoding lowercaseString] isEqualToString:@"utf8"]) {
                 if(resolve != nil)
@@ -329,7 +331,7 @@ NSMutableDictionary *fileStreams = nil;
     @catch(NSException * e)
     {
         if(reject != nil)
-        reject(@"RNFetchBlobFS readFile error", @"error", [e description]);
+            reject(@"RNFetchBlobFS readFile error", @"error", [e description]);
     }
 }
 

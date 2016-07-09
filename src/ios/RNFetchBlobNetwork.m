@@ -69,7 +69,12 @@ NSOperationQueue *taskQueue;
 }
 
 // send HTTP request
-- (void) sendRequest:(NSDictionary  * _Nullable )options bridge:(RCTBridge * _Nullable)bridgeRef taskId:(NSString * _Nullable)taskId withRequest:(NSURLRequest * _Nullable)req callback:(_Nullable RCTResponseSenderBlock) callback
+- (void) sendRequest:(NSDictionary  * _Nullable )options
+       contentLength:(long) contentLength
+              bridge:(RCTBridge * _Nullable)bridgeRef
+              taskId:(NSString * _Nullable)taskId
+         withRequest:(NSURLRequest * _Nullable)req
+            callback:(_Nullable RCTResponseSenderBlock) callback
 {
     self.taskId = taskId;
     self.respData = [[NSMutableData alloc] initWithLength:0];
@@ -83,7 +88,7 @@ NSOperationQueue *taskQueue;
     NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
     NSURLSession * session;
     
-    bodyLength = [[req HTTPBody] length];
+    bodyLength = contentLength;
     
     // the session trust any SSL certification
 
@@ -104,6 +109,7 @@ NSOperationQueue *taskQueue;
         respFile = NO;
     }
     NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
+    
     [task resume];
     
     // network status indicator
@@ -191,7 +197,7 @@ NSOperationQueue *taskQueue;
      body:@{
             @"taskId": taskId,
             @"written": [NSString stringWithFormat:@"%d", totalBytesWritten],
-            @"total": [NSString stringWithFormat:@"%d", totalBytesExpectedToWrite]
+            @"total": [NSString stringWithFormat:@"%d", bodyLength]
             }
      ];
 }

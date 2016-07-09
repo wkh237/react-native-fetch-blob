@@ -28,7 +28,7 @@
                           url:(NSString *)url
                       headers:(NSDictionary *)headers
                          form:(NSArray *)form
-                   onComplete:(void(^)(NSURLRequest * req))onComplete
+                   onComplete:(void(^)(NSURLRequest * req, long bodyLength))onComplete
 {
     NSString * encodedUrl = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     // send request
@@ -56,7 +56,7 @@
             [mheaders setValue:[NSString stringWithFormat:@"multipart/form-data; charset=utf-8; boundary=%@", boundary] forKey:@"content-type"];
             [request setHTTPMethod: method];
             [request setAllHTTPHeaderFields:mheaders];
-            onComplete(request);
+            onComplete(request, [formData length]);
         }];
         
     });
@@ -69,7 +69,7 @@
                       url:(NSString *)url
                   headers:(NSDictionary *)headers
                      body:(NSString *)body
-               onComplete:(void(^)(NSURLRequest * req))onComplete
+               onComplete:(void(^)(NSURLRequest * req, long bodyLength))onComplete
 {
     NSString * encodedUrl = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     // send request
@@ -81,6 +81,7 @@
     // move heavy task to another thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSMutableData * blobData;
+        long size = -1;
         // if method is POST or PUT, convert data string format
         if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
             // generate octet-stream body
@@ -97,10 +98,11 @@
                             [mheaders setValue:@"application/octet-stream" forKey:@"content-type"];
                             [request setHTTPMethod: method];
                             [request setAllHTTPHeaderFields:mheaders];
-                            onComplete(request);
+                            onComplete(request, [content length]);
                         }];
                         return;
                     }
+                    size = [[[NSFileManager defaultManager] attributesOfItemAtPath:orgPath error:nil] fileSize];
                     [request setHTTPBodyStream: [NSInputStream inputStreamWithFileAtPath:orgPath ]];
                 }
                 // otherwise convert it as BASE64 data string
@@ -117,7 +119,7 @@
         [request setHTTPMethod: method];
         [request setAllHTTPHeaderFields:mheaders];
         
-        onComplete(request);
+        onComplete(request, size);
     });
 }
 
@@ -135,6 +137,7 @@
             NSString * name = [field valueForKey:@"name"];
             NSString * content = [field valueForKey:@"data"];
             NSString * contentType = [field valueForKey:@"type"];
+            contentType = contentType == nil ? @"application/octet-stream" : contentType;
             // field is a text field
             if([field valueForKey:@"filename"] == nil || content == [NSNull null]) {
                 [formData appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
