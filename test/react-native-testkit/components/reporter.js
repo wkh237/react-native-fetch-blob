@@ -9,9 +9,11 @@ import {
   ListView,
   Image,
   TouchableOpacity,
+  Dimensions,
   RecyclerViewBackedScrollView,
 } from 'react-native';
 
+import AnimateNumber from '../animate-text.js'
 import Assert from './assert.js'
 import RNTEST from '../index.js'
 
@@ -22,7 +24,10 @@ export default class Reporter extends Component {
     this.tests = {
       common : []
     }
-    this.testGroups = ['common']
+    this.state = {
+      listHeight : 0
+    }
+    this.testGroups = ['summary','common']
     this.ds = null
     this.updateDataSource()
 
@@ -34,23 +39,61 @@ export default class Reporter extends Component {
 
   render() {
 
+    let tests = RNTEST.TestContext.getTests()
+
+    let passed = 0
+    let executed = 0
+    let count = 0
+    for(let i in tests) {
+      if(tests[i].status !== 'skipped')
+        count++
+      if(tests[i].status !== 'waiting' && tests[i].status !== 'skipped')
+        executed++
+        passed += tests[i].status === 'pass' ? 1 : 0
+    }
+    let percent = passed / count
+    let color = `rgb(${Math.floor((1-percent) *255)},${Math.floor(percent *192)}, 0)`
+
     return (
-      <ListView
-        style={styles.container}
-        dataSource={this.ds}
-        renderRow={this.renderTest.bind(this)}
-        renderScrollComponent={props => <RecyclerViewBackedScrollView {...props} />}
-        renderSectionHeader={(data, id) => {
-          return (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionText}>{id}</Text>
-            </View>
-          )
-        }}
-      />)
+      <View style={{flex : 1}}>
+        <View style={{margin : 20}} onLayout={(e) => {
+          this.setState({
+            headerHeight : e.nativeEvent.layout.height,
+            listHeight : Dimensions.get('window').height - e.nativeEvent.layout.height
+          })
+        }}>
+          <Text>{`${executed} tests executed`}</Text>
+          <Text>{`${passed} test cases passed`}</Text>
+          <Text>{`${count} test cases`}</Text>
+          <View style={{flexDirection : 'row', alignSelf : 'center', alignItems : 'flex-end'}}>
+            <AnimateNumber style={{
+              color,
+              fontSize : 100,
+              textAlign : 'right'
+            }}
+              value={Math.floor(passed / count*100)}
+              countBy={1}/>
+            <Text style={{color, fontSize : 30, textAlign : 'left'}} >{`%`}</Text>
+          </View>
+        </View>
+        <ListView
+          style={[styles.container]}
+          dataSource={this.ds}
+          renderRow={this.renderTest.bind(this)}
+          renderScrollComponent={props => <RecyclerViewBackedScrollView {...props} />}
+          renderSectionHeader={(data, id) => {
+            return (
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionText}>{id}</Text>
+              </View>
+            )
+          }}
+        />
+      </View>)
   }
 
-  renderTest(t) {
+  renderTest(t, group) {
+
     let pass = true
     let foundActions = false
     let tests = RNTEST.TestContext.getTests()
@@ -75,9 +118,6 @@ export default class Reporter extends Component {
       t.status = 'waiting'
 
     return (
-      <TouchableOpacity onPress={()=>{
-          t.start(t.sn)
-        }}>
         <View key={'rn-test-' + t.desc} style={{
           borderBottomWidth : 1.5,
           borderColor : '#DDD',
@@ -92,8 +132,7 @@ export default class Reporter extends Component {
           <View key={t.desc + '-result'} style={{backgroundColor : '#F4F4F4'}}>
             {t.expand ? t.result : (t.status === 'pass' ? null : t.result)}
           </View>
-        </View>
-      </TouchableOpacity>)
+        </View>)
   }
 
   updateDataSource() {

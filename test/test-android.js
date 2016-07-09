@@ -17,7 +17,7 @@ const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
   group : 'Android only functions',
   run : Platform.OS === 'android',
-  expand : true,
+  expand : false,
 })
 const { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles } = prop()
 

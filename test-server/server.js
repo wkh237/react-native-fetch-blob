@@ -84,6 +84,18 @@ app.delete('/hey', function(req, res) {
   res.send('man')
 })
 
+app.post('/mime', mimeCheck)
+app.put('/mime', mimeCheck)
+
+function mimeCheck(req, res) {
+  console.log(req.files)
+  var mimes = []
+  for(var i in req.files) {
+    mimes.push(req.files[i].mimetype)
+  }
+  res.send(mimes)
+}
+
 // handle multipart/form-data request
 app.post('/upload-form', formUpload)
 

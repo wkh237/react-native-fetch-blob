@@ -256,7 +256,7 @@ Elements have property `filename` will be transformed into binary format, otherw
   })
 ```
 
-What if you want to upload a file in some field ? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, wrap `data` by `wrap` API (this feature is only available for `version >= v0.5.0`)
+What if you want to upload a file in some field ? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, wrap `data` by `wrap` API (this feature is only available for `version >= v0.5.0`). On version >= `0.6.2`, it is possible to set custom MIME type when appending file to form data.
 
 ```js
 
@@ -274,6 +274,14 @@ What if you want to upload a file in some field ? Just like [upload a file from 
       // Or simply wrap the file path with RNFetchBlob.wrap().
       data: RNFetchBlob.wrap(PATH_TO_THE_FILE)
     },
+    {
+      name : 'ringtone',
+      filename : 'ring.mp3',
+      // use custom MIME type
+      type : 'application/mp3',
+      // upload a file from asset is also possible in version >= 0.6.2
+      data : RNFetchBlob.wrap(RNFetchBlob.fs.asset('default-ringtone.mp3'))
+    }
     // elements without property `filename` will be sent as plain text
     { name : 'name', data : 'user'},
     { name : 'info', data : JSON.stringify({
@@ -289,7 +297,7 @@ What if you want to upload a file in some field ? Just like [upload a file from 
 
 #### Upload/Download progress
 
-In `version >= 0.4.2` it is possible to know the upload/download progress.
+In `version >= 0.4.2` it is possible to know the upload/download progress. On Anroid, only download progress is supported. See [wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogresseventlistenerpromisernfetchblobresponse) for more information.
 
 ```js
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
@@ -391,10 +399,12 @@ RNFetchBlob.config({
 
 #### File Access
 
-File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However I realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need those APIs for there cases.
+File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However we realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need these APIs for there cases.
+
+Before get started using file APIs we recommend read [Differences between File Source](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#differences-between-file-source) first.
 
 File Access APIs
-
+- [asset (0.6.2)](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#assetfilenamestringstring)
 - [dirs](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#dirs)
 - [createFile](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#createfilepath-data-encodingpromise)
 - [writeFile (0.6.0)](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#writefilepathstring-contentstring--array-encodingstring-appendbooleanpromise)
@@ -539,6 +549,7 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.6.2 | Add support of asset file and camera roll files, Support custom MIME type when sending multipart request, thanks @smartt |
 | 0.6.1 | Fix #37 progress report API issue on IOS |
 | 0.6.0 | Add readFile and writeFile API for easier file access, also added Android download manager support. |
 | 0.5.8 | Fix #33 PUT request will always be sent as POST on Android |

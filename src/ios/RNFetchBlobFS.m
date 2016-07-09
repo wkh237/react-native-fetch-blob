@@ -14,6 +14,8 @@
 #import "RCTEventDispatcher.h"
 #import "RNFetchBlobFS.h"
 #import "RNFetchBlobConst.h"
+@import AssetsLibrary;
+
 
 NSMutableDictionary *fileStreams = nil;
 
@@ -49,6 +51,18 @@ NSMutableDictionary *fileStreams = nil;
     [fileStreams setValue:instance forKey:uuid];
 }
 
++(NSString *) getPathOfAsset:(NSString *)assetURI
+{
+    // get file path of an app asset
+    if([assetURI hasPrefix:ASSET_PREFIX])
+    {
+        assetURI = [assetURI stringByReplacingOccurrencesOfString:ASSET_PREFIX withString:@""];
+        assetURI = [[NSBundle mainBundle] pathForResource: [assetURI stringByDeletingPathExtension]
+                                               ofType: [assetURI pathExtension]];
+    }
+    return assetURI;
+}
+
 + (NSString *) getCacheDir {
     return [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
 }
@@ -82,6 +96,93 @@ NSMutableDictionary *fileStreams = nil;
         filename = [filename stringByAppendingString: [NSString stringWithFormat:@".%@", ext]];
     NSString * tempPath = [documentDir stringByAppendingString: filename];
     return tempPath;
+}
+
+- (void) startAssetReadStream:(NSString *)assetUrl
+{
+    ALAssetsLibraryAssetForURLResultBlock resultblock = ^(ALAsset *myasset)
+    {
+        dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0);
+        dispatch_async(queue, ^ {
+            NSString * streamEventCode = [NSString stringWithFormat:@"RNFetchBlobStream+%@", self.path];
+            ALAssetRepresentation *rep = [myasset defaultRepresentation];
+            Byte *buffer = (Byte*)malloc(self.bufferSize);
+            NSUInteger cursor = [rep getBytes:buffer fromOffset:0 length:self.bufferSize error:nil];
+            while(cursor > 0)
+            {
+                cursor += [rep getBytes:buffer fromOffset:cursor length:self.bufferSize error:nil];
+                NSData * chunkData = [NSData dataWithBytes:buffer length:self.bufferSize];
+                NSString * encodedChunk = @"";
+                // emit data
+                if( [[self.encoding lowercaseString] isEqualToString:@"utf8"] ) {
+                    encodedChunk = [encodedChunk initWithData:chunkData encoding:NSUTF8StringEncoding];
+                }
+                // when encoding is ASCII, send byte array data
+                else if ( [[self.encoding lowercaseString] isEqualToString:@"ascii"] ) {
+                    // RCTBridge only emits string data, so we have to create JSON byte array string
+                    NSMutableArray * asciiArray = [NSMutableArray array];
+                    unsigned char *bytePtr;
+                    if (chunkData.length > 0)
+                    {
+                        bytePtr = (unsigned char *)[chunkData bytes];
+                        NSInteger byteLen = chunkData.length/sizeof(uint8_t);
+                        for (int i = 0; i < byteLen; i++)
+                        {
+                            [asciiArray addObject:[NSNumber numberWithChar:bytePtr[i]]];
+                        }
+                    }
+                    
+                    [self.bridge.eventDispatcher
+                     sendDeviceEventWithName:streamEventCode
+                     body: @{
+                             @"event": FS_EVENT_DATA,
+                             @"detail": asciiArray
+                             }
+                     ];
+                    return;
+                }
+                // convert byte array to base64 data chunks
+                else if ( [[self.encoding lowercaseString] isEqualToString:@"base64"] ) {
+                    encodedChunk = [chunkData base64EncodedStringWithOptions:0];
+                }
+                // unknown encoding, send error event
+                else {
+                    [self.bridge.eventDispatcher
+                     sendDeviceEventWithName:streamEventCode
+                     body:@{
+                            @"event": FS_EVENT_ERROR,
+                            @"detail": @"unrecognized encoding"
+                            }
+                     ];
+                    return;
+                }
+                
+                [self.bridge.eventDispatcher
+                 sendDeviceEventWithName:streamEventCode
+                 body:@{
+                        @"event": FS_EVENT_DATA,
+                        @"detail": encodedChunk
+                        }
+                 ];
+            }
+            free(buffer);
+        });
+        
+    };
+    
+    ALAssetsLibraryAccessFailureBlock failureblock  = ^(NSError *error)
+    {
+        
+    };
+    
+    if(assetUrl && [assetUrl length])
+    {
+        NSURL *asseturl = [NSURL URLWithString:assetUrl];
+        ALAssetsLibrary* assetslibrary = [[ALAssetsLibrary alloc] init];
+        [assetslibrary assetForURL:asseturl
+                       resultBlock:resultblock
+                      failureBlock:failureblock];
+    }
 }
 
 + (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
@@ -172,38 +273,65 @@ NSMutableDictionary *fileStreams = nil;
     }
 }
 
-+ (void) readFile:(NSString *)path encoding:(NSString *)encoding resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
++ (void) readFile:(NSString *)path encoding:(NSString *)encoding
+         resolver:(RCTPromiseResolveBlock)resolve
+         rejecter:(RCTPromiseRejectBlock)reject
+       onComplete:(void (^)(NSData * content))onComplete
+{
     @try
     {
-        NSFileManager * fm = [NSFileManager defaultManager];
-        NSError *err = nil;
-        BOOL exists = [fm fileExistsAtPath:path];
-        if(!exists) {
-            @throw @"RNFetchBlobFS readFile error", @"file not exists", path;
-            return;
-        }
-        if([[encoding lowercaseString] isEqualToString:@"utf8"]) {
-            NSString * utf8Result = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&err];
-            resolve(utf8Result);
-        }
-        else if ([[encoding lowercaseString] isEqualToString:@"base64"]) {
-            NSData * fileData = [NSData dataWithContentsOfFile:path];
-            resolve([fileData base64EncodedStringWithOptions:0]);
-        }
-        else if ([[encoding lowercaseString] isEqualToString:@"ascii"]) {
-            NSData * resultData = [NSData dataWithContentsOfFile:path];
-            NSMutableArray * resultArray = [NSMutableArray array];
-            char * bytes = [resultData bytes];
-            for(int i=0;i<[resultData length];i++) {
-                [resultArray addObject:[NSNumber numberWithChar:bytes[i]]];
+        [[self class] getPathFromUri:path completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
+            NSData * fileContent;
+            NSError * err;
+            Byte * buffer;
+            if(asset != nil)
+            {
+                buffer = malloc(asset.size);
+                [asset getBytes:buffer fromOffset:0 length:asset.size error:&err];
+                if(err != nil)
+                {
+                    reject(@"RNFetchBlobFS readFile error", @"failed to read asset", [err localizedDescription]);
+                    return;
+                }
+                fileContent = [NSData dataWithBytes:buffer length:asset.size];
+                free(buffer);
             }
-            resolve(resultArray);
-        }
-
+            else
+            {
+                BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:path];
+                if(!exists) {
+                    reject(@"RNFetchBlobFS readFile error", @"file not exists", path);
+                    return;
+                }
+                fileContent = [NSData dataWithContentsOfFile:path];
+                
+            }
+            if(onComplete != nil)
+                onComplete(fileContent);
+            
+            if([[encoding lowercaseString] isEqualToString:@"utf8"]) {
+                if(resolve != nil)
+                    resolve([[NSString alloc] initWithData:fileContent encoding:NSUTF8StringEncoding]);
+            }
+            else if ([[encoding lowercaseString] isEqualToString:@"base64"]) {
+                if(resolve != nil)
+                    resolve([fileContent base64EncodedStringWithOptions:0]);
+            }
+            else if ([[encoding lowercaseString] isEqualToString:@"ascii"]) {
+                NSMutableArray * resultArray = [NSMutableArray array];
+                char * bytes = [fileContent bytes];
+                for(int i=0;i<[fileContent length];i++) {
+                    [resultArray addObject:[NSNumber numberWithChar:bytes[i]]];
+                }
+                if(resolve != nil)
+                    resolve(resultArray);
+            }
+        }];
     }
     @catch(NSException * e)
     {
-        reject(@"RNFetchBlobFS readFile error", @"error", [e description]);
+        if(reject != nil)
+            reject(@"RNFetchBlobFS readFile error", @"error", [e description]);
     }
 }
 
@@ -325,7 +453,16 @@ NSMutableDictionary *fileStreams = nil;
     self.encoding = encoding;
     self.path = path;
     self.bufferSize = bufferSize;
-
+    
+    if([path hasPrefix:AL_PREFIX])
+    {
+        [self startAssetReadStream:path];
+        return;
+    }
+    
+    // normalize file path
+    path = [[self class] getPathOfAsset:path];
+    
     // NSStream needs a runloop so let's create a run loop for it
     dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0);
     // start NSStream is a runloop
@@ -334,7 +471,7 @@ NSMutableDictionary *fileStreams = nil;
                             forMode:NSDefaultRunLoopMode];
         [inStream open];
         [[NSRunLoop currentRunLoop] run];
-
+        
     });
 }
 
@@ -348,19 +485,6 @@ NSMutableDictionary *fileStreams = nil;
     }
 
 }
-
-void runOnMainQueueWithoutDeadlocking(void (^block)(void))
-{
-    if ([NSThread isMainThread])
-    {
-        block();
-    }
-    else
-    {
-        dispatch_sync(dispatch_get_main_queue(), block);
-    }
-}
-
 
 #pragma mark RNFetchBlobFS read stream delegate
 
@@ -473,6 +597,26 @@ void runOnMainQueueWithoutDeadlocking(void (^block)(void))
 
     }
 
+}
+
++ (void) getPathFromUri:(NSString *)uri completionHandler:(void(^)(NSString * path, ALAssetRepresentation *asset)) onComplete
+{
+    if([uri hasPrefix:AL_PREFIX])
+    {
+        NSURL *asseturl = [NSURL URLWithString:uri];
+        ALAssetsLibrary* assetslibrary = [[ALAssetsLibrary alloc] init];
+        [assetslibrary assetForURL:asseturl
+                       resultBlock:^(ALAsset *asset) {
+                           onComplete(nil, [asset defaultRepresentation]);
+                       }
+                      failureBlock:^(NSError *error) {
+                          onComplete(nil, nil);
+                      }];
+    }
+    else
+    {
+        onComplete([[self class] getPathOfAsset:uri], nil);
+    }
 }
 
 @end

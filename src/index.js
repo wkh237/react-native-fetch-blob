@@ -272,5 +272,5 @@ export default {
   config,
   session,
   fs,
-  wrap,
+  wrap
 }
