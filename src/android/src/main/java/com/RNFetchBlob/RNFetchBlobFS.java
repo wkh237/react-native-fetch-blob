@@ -555,7 +555,11 @@ public class RNFetchBlobFS {
      */
     static void stat(String path, Callback callback) {
         try {
-            callback.invoke(null, statFile(path));
+            WritableMap result = statFile(path);
+            if(result == null)
+                callback.invoke("stat error: failed to list path `" + path + "` for it is not exist or it is not a folder", null);
+            else
+                callback.invoke(null, result);
         } catch(Exception err) {
             callback.invoke(err.getLocalizedMessage());
         }

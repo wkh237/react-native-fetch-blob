@@ -199,7 +199,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     String filename = map.getString("filename");
                     // upload from storage
                     if(data.startsWith(filePathPrefix)) {
-                        File file = new File(data.substring(filePathPrefix.length()));
+                        String orgPath = data.substring(filePathPrefix.length());
+                        File file = new File(RNFetchBlobFS.normalizePath(orgPath));
                         form.addBinaryBody(name, file, ContentType.APPLICATION_OCTET_STREAM, filename);
                     }
                     // base64 embedded file content
@@ -228,7 +229,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             // upload from storage
             if(body.startsWith(filePathPrefix)) {
                 String filePath = body.substring(filePathPrefix.length());
-                entity = new FileEntity(new File(filePath));
+                entity = new FileEntity(new File(RNFetchBlobFS.normalizePath(filePath)));
             }
             else {
                 blob = Base64.decode(body, 0);
