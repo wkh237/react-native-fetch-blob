@@ -19,7 +19,7 @@ const describe = RNTest.config({
   group : '0.6.2',
   run : true,
   expand : false,
-  timeout : 12000,
+  timeout : 30000,
 })
 const { TEST_SERVER_URL, TEST_SERVER_URL_SSL, DROPBOX_TOKEN, styles } = prop()
 const  dirs = RNFetchBlob.fs.dirs
@@ -29,6 +29,7 @@ let photo = null
 
 describe('upload asset from camera roll', (report, done) => {
   let imgName = `image-from-camera-roll-${Platform.OS}.jpg`
+  let tick = Date.now()
   CameraRoll.getPhotos({first : 10})
     .then((resp) => {
       let url = resp.edges[0].node.image.uri
@@ -38,6 +39,13 @@ describe('upload asset from camera roll', (report, done) => {
         'Dropbox-API-Arg': `{\"path\": \"/rn-upload/${imgName}\",\"mode\": \"add\",\"autorename\": false,\"mute\": false}`,
         'Content-Type' : 'application/octet-stream',
       }, RNFetchBlob.wrap(url))
+      .progress((now, total) => {
+        if(Date.now() - tick < 1000)
+        return
+        report(<Info key="progress" uid="pg1">
+          <Text>{`upload ${now} / ${total} ${Math.floor(now/total*100)}% `}</Text>
+        </Info>)
+      })
     })
     .then((resp) => {
       resp = resp.json()
@@ -146,4 +154,35 @@ describe('copy asset', (report, done) => {
       </Info>)
       done()
     })
+})
+
+
+describe('upload file from assets',(report, done) => {
+  let assetName = fs.asset('test-asset1.json')
+  RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+    Authorization : `Bearer ${DROPBOX_TOKEN}`,
+    'Dropbox-API-Arg': `{\"path\": \"/rn-upload/file-from-asset-${Platform.OS}.json\",\"mode\": \"add\",\"autorename\": false,\"mute\": false}`,
+    'Content-Type' : 'application/octet-stream',
+  }, RNFetchBlob.wrap(assetName))
+  .then((resp) => {
+    resp = resp.json()
+    report(
+      <Assert key="file name check"
+        expect={`file-from-asset-${Platform.OS}.json`}
+        actual={resp.name}/>)
+    done()
+  })
+})
+
+describe('Check custom MIME type correctness',(report, done) => {
+  RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/mime`, null, [
+    { name : 'image', filename : 'image', type : 'image/jpeg', data : RNFetchBlob.base64.encode('123456') },
+    { name : 'mp3', filename : 'mp3', type : 'application/mp3', data : RNFetchBlob.base64.encode('123456') },
+    { name : 'mp3', filename : 'mp3', data : RNFetchBlob.base64.encode('123456') }
+  ])
+  .then((resp) => {
+    resp = resp.json()
+    report(<Assert key="check first mime" expect={'image/jpeg'} actual={resp[0]} />)
+    done()
+  })
 })

@@ -128,6 +128,7 @@ export default class TestContext {
           })
           resolve(...res)
         }
+        RCTContext.forceUpdate()
       }).catch((err) => {
         updateInternal({
           executed : true,

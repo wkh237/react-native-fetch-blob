@@ -13,6 +13,7 @@ import {
   RecyclerViewBackedScrollView,
 } from 'react-native';
 
+import AnimateNumber from '../animate-text.js'
 import Assert from './assert.js'
 import RNTEST from '../index.js'
 
@@ -51,7 +52,7 @@ export default class Reporter extends Component {
         passed += tests[i].status === 'pass' ? 1 : 0
     }
     let percent = passed / count
-    let color = `rgb(${Math.floor((1-percent) *255)},${Math.floor(percent *255)}, 0)`
+    let color = `rgb(${Math.floor((1-percent) *255)},${Math.floor(percent *192)}, 0)`
 
     return (
       <View style={{flex : 1}}>
@@ -64,8 +65,16 @@ export default class Reporter extends Component {
           <Text>{`${executed} tests executed`}</Text>
           <Text>{`${passed} test cases passed`}</Text>
           <Text>{`${count} test cases`}</Text>
-          <Text style={{color, fontSize : 120, textAlign : 'center'}} >{`${Math.floor(percent*100)}`}</Text>
-          <Text style={{color, fontSize : 30, textAlign :'right', marginTop : -54, marginRight : 40, backgroundColor : 'transparent'}} >{`%`}</Text>
+          <View style={{flexDirection : 'row', alignSelf : 'center', alignItems : 'flex-end'}}>
+            <AnimateNumber style={{
+              color,
+              fontSize : 100,
+              textAlign : 'right'
+            }}
+              value={Math.floor(passed / count*100)}
+              countBy={1}/>
+            <Text style={{color, fontSize : 30, textAlign : 'left'}} >{`%`}</Text>
+          </View>
         </View>
         <ListView
           style={[styles.container]}
@@ -109,9 +118,6 @@ export default class Reporter extends Component {
       t.status = 'waiting'
 
     return (
-      // <TouchableOpacity onPress={()=>{
-      //   t.start(t.sn)
-      // }}>
         <View key={'rn-test-' + t.desc} style={{
           borderBottomWidth : 1.5,
           borderColor : '#DDD',
@@ -127,7 +133,6 @@ export default class Reporter extends Component {
             {t.expand ? t.result : (t.status === 'pass' ? null : t.result)}
           </View>
         </View>)
-        {/*</TouchableOpacity>)*/}
   }
 
   updateDataSource() {
