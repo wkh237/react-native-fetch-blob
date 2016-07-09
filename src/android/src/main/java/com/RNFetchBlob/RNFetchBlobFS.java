@@ -787,7 +787,7 @@ public class RNFetchBlobFS {
     }
 
     static String normalizePath(String path) {
-        if(path.startsWith("bundle-assets://")) {
+        if(path.startsWith(assetPrefix)) {
             return path;
         }
         else if (path.startsWith("content://")) {

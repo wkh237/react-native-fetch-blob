@@ -19,6 +19,8 @@ import com.loopj.android.http.Base64;
 import com.loopj.android.http.MySSLSocketFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.KeyStore;
 
 import cz.msebera.android.httpclient.HttpEntity;
@@ -111,6 +113,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
             req = new AsyncHttpClient();
 
+            req.setLoggingEnabled(false);
+
             // use trusty SSL socket
             if(this.options.trusty) {
                 KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
@@ -196,16 +200,34 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 String data = map.getString("data");
                 // file field
                 if(map.hasKey("filename")) {
+                    String mime = map.hasKey("type") ? map.getString("type") : ContentType.APPLICATION_OCTET_STREAM.getMimeType();
                     String filename = map.getString("filename");
                     // upload from storage
                     if(data.startsWith(filePathPrefix)) {
                         String orgPath = data.substring(filePathPrefix.length());
-                        File file = new File(RNFetchBlobFS.normalizePath(orgPath));
-                        form.addBinaryBody(name, file, ContentType.APPLICATION_OCTET_STREAM, filename);
+                        orgPath = RNFetchBlobFS.normalizePath(orgPath);
+                        // path starts with content://
+                        if(RNFetchBlobFS.isAsset(orgPath)) {
+                            try {
+                                String assetName = orgPath.replace(RNFetchBlobFS.assetPrefix, "");
+                                InputStream in = RNFetchBlob.RCTContext.getAssets().open(assetName);
+                                long length = RNFetchBlob.RCTContext.getAssets().openFd(assetName).getLength();
+                                byte [] bytes = new byte[(int) length];
+                                in.read(bytes, 0, (int) length);
+                                in.close();
+                                form.addBinaryBody(name, bytes, ContentType.create(mime), filename);
+                            } catch (IOException e) {
+//                                e.printStackTrace();
+                            }
+                        }
+                        else {
+                            File file = new File(RNFetchBlobFS.normalizePath(orgPath));
+                            form.addBinaryBody(name, file, ContentType.create(mime), filename);
+                        }
                     }
                     // base64 embedded file content
                     else {
-                        form.addBinaryBody(name, Base64.decode(data, 0), ContentType.APPLICATION_OCTET_STREAM, filename);
+                        form.addBinaryBody(name, Base64.decode(data, 0), ContentType.create(mime), filename);
                     }
                 }
                 // data field
@@ -228,8 +250,25 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             byte [] blob;
             // upload from storage
             if(body.startsWith(filePathPrefix)) {
-                String filePath = body.substring(filePathPrefix.length());
-                entity = new FileEntity(new File(RNFetchBlobFS.normalizePath(filePath)));
+                String orgPath = body.substring(filePathPrefix.length());
+                orgPath = RNFetchBlobFS.normalizePath(orgPath);
+                // handle
+                if(RNFetchBlobFS.isAsset(orgPath)) {
+                    try {
+                        String assetName = orgPath.replace(RNFetchBlobFS.assetPrefix, "");
+                        InputStream in = RNFetchBlob.RCTContext.getAssets().open(assetName);
+                        long length = 0;
+                        length = RNFetchBlob.RCTContext.getAssets().openFd(assetName).getLength();
+                        byte [] bytes = new byte[(int) length];
+                        in.read(bytes, 0, (int) length);
+                        in.close();
+                        entity = new ByteArrayEntity(bytes);
+                    } catch (IOException e) {
+//                        e.printStackTrace();
+                    }
+                }
+                else
+                    entity = new FileEntity(new File(RNFetchBlobFS.normalizePath(orgPath)));
             }
             else {
                 blob = Base64.decode(body, 0);
