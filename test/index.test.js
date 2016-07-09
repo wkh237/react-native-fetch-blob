@@ -10,6 +10,7 @@ import {
   View,
   Platform,
   ScrollView,
+  CameraRoll,
   Image,
 } from 'react-native';
 

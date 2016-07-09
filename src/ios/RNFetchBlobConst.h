@@ -16,7 +16,10 @@ extern NSString *const MSG_EVENT;
 extern NSString *const MSG_EVENT_LOG;
 extern NSString *const MSG_EVENT_WARN;
 extern NSString *const MSG_EVENT_ERROR;
+
 extern NSString *const FILE_PREFIX;
+extern NSString *const ASSET_PREFIX;
+extern NSString *const AL_PREFIX;
 
 // config
 extern NSString *const CONFIG_USE_TEMP;

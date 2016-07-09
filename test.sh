@@ -33,6 +33,7 @@ if [ "$#" -eq 1 ]; then
 fi
 # copy js files to test app folder
 cp -R test/ "${TEST_APP_PATH}/"
+node -e "var fs=require('fs'); var pkg = JSON.parse(fs.readFileSync('./RNFetchBlobTest/package.json')); pkg.rnpm = {assets : ['assets']}; fs.writeFileSync('./RNFetchBlobTest/package.json', JSON.stringify(pkg, null, 4));"
 
 # install module
 cd "${TEST_APP_PATH}"

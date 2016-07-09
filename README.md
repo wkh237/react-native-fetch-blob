@@ -1,23 +1,23 @@
-# react-native-fetch-blob [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/express.svg?maxAge=2592000&style=flat-square)]() [![npm](https://img.shields.io/badge/inProgress-0.7.0-yellow.svg?style=flat-square)]()
+# react-native-fetch-blob [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/express.svg?maxAge=2592000&style=flat-square)]() [![npm](https://img.shields.io/badge/inProgress-0.7.0-yellow.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/milestones)
 
 A module provides upload, download, and files access API. Supports file stream read/write for process large files.
 
 **Why do we need this**
 
-React Native does not support `Blob` object at this moment, which means if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [[fetch] Does fetch with blob() marshal data across the bridge?](https://github.com/facebook/react-native/issues/854).
+React Native does not support `Blob` object at this moment, which means if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [facebook/react-native#854](https://github.com/facebook/react-native/issues/854).
 
 For some use cases, you might get into trouble. For example, displaying an image that requires a specific field in headers (ex. "Authorization : Bearer ...") or body, so you can't just pass the image uri to `Image` component because that will probably returns a 401 response. Or you're going to upload binary data which generated from JS, the server will get an empry body due to [this issue](https://github.com/facebook/react-native/issues/854). With help of APIs provided by this module, you can send HTTP request with any headers, and decide how to handle the response/reqeust data without worry about if it is not supported by `fetch` API. The response data can be just simply converted into BASE64 string, or stored to a file directly so that you can read it by using file access APIs such as readFile, readStream.
 
 This module was designed to be a substitution of `Blob`, there's a set of APIs including basic file system CRUD method, and file stream reader/writer. Also it has a special `fetch` implementation that supports binary request/response body.
 
-**Pre v0.5.0 Users**
+**Backward Compatible**
 
-All updates are `backward-compatible` generally you don't have to change existing code unless you're going to use new APIs. In latest version (v0.5.0), new APIs can either `upload` or `download` files simply using a file path. It's much more memory efficent in some use case. We've also introduced `fs` APIs for access files, and `file stream` API that helps you read/write files (especially for **large ones**), see [Examples](#user-content-usage) bellow. This module implements native methods, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
+All updates are `backward-compatible` generally you don't have to change existing code unless you're going to use new APIs. But we recommend pre `0.5.0` users consider upgrade the package to latest version, since we have introduced new APIs can either `upload` or `download` files simply using a file path. It's much more memory efficent in some use case. We've also introduced `fs` APIs for access files, and `file stream` API that helps you read/write files (especially for **large ones**), see [Examples](#user-content-recipes) bellow. This module implements native methods, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
 
 ## TOC
 
 * [Installation](#user-content-installation)
-* [Guide](#user-content-guide)
+* [Recipes](#user-content-recipes)
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
@@ -79,7 +79,7 @@ Also, if you're going to use `Android Download Manager` you have to add this to 
 
 Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. So adding permissions in `AndroidManifest.xml` won't work in Android 6.0 devices. To grant permissions in runtime, you might use modules like [react-native-android-permissions](https://github.com/lucasferreira/react-native-android-permissions).
 
-## Guide
+## Recipes
 
 ```js
 import RNFetchBlob from 'react-native-fetch-blob'
@@ -256,7 +256,7 @@ Elements have property `filename` will be transformed into binary format, otherw
   })
 ```
 
-What if you want to upload a file in some field ? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, wrap `data` by `wrap` API (this feature is only available for `version >= v0.5.0`)
+What if you want to upload a file in some field ? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, wrap `data` by `wrap` API (this feature is only available for `version >= v0.5.0`). On version >= `0.6.2`, it is possible to set custom MIME type when appending file to form data.
 
 ```js
 
@@ -274,6 +274,14 @@ What if you want to upload a file in some field ? Just like [upload a file from 
       // Or simply wrap the file path with RNFetchBlob.wrap().
       data: RNFetchBlob.wrap(PATH_TO_THE_FILE)
     },
+    {
+      name : 'ringtone',
+      filename : 'ring.mp3',
+      // use custom MIME type
+      type : 'application/mp3',
+      // upload a file from asset is also possible in version >= 0.6.2
+      data : RNFetchBlob.wrap(RNFetchBlob.fs.asset('default-ringtone.mp3'))
+    }
     // elements without property `filename` will be sent as plain text
     { name : 'name', data : 'user'},
     { name : 'info', data : JSON.stringify({
@@ -289,7 +297,7 @@ What if you want to upload a file in some field ? Just like [upload a file from 
 
 #### Upload/Download progress
 
-In `version >= 0.4.2` it is possible to know the upload/download progress.
+In `version >= 0.4.2` it is possible to know the upload/download progress. On Anroid, only download progress is supported. See [wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogresseventlistenerpromisernfetchblobresponse) for more information.
 
 ```js
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
@@ -391,10 +399,12 @@ RNFetchBlob.config({
 
 #### File Access
 
-File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However I realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need those APIs for there cases.
+File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However we realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need these APIs for there cases.
+
+Before get started using file APIs we recommend read [Differences between File Source](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#differences-between-file-source) first.
 
 File Access APIs
-
+- [asset (0.6.2)](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#assetfilenamestringstring)
 - [dirs](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#dirs)
 - [createFile](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#createfilepath-data-encodingpromise)
 - [writeFile (0.6.0)](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#writefilepathstring-contentstring--array-encodingstring-appendbooleanpromise)
@@ -423,7 +433,7 @@ When calling `readStream` method, you have to `open` the stream, and start to re
 
 ```js
 let data = ''
-RNFetchBlob.readStream(
+RNFetchBlob.fs.readStream(
     // encoding, should be one of `base64`, `utf8`, `ascii`
     'base64',
     // file path
@@ -450,7 +460,7 @@ RNFetchBlob.readStream(
 When use `writeStream`, the stream is also opened immediately, but you have to `write`, and `close` by yourself.
 
 ```js
-RNFetchBlob.writeStream(
+RNFetchBlob.fs.writeStream(
     PATH_TO_FILE,
     // encoding, should be one of `base64`, `utf8`, `ascii`
     'utf8',
@@ -539,6 +549,7 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.6.2 | Add support of asset file and camera roll files, Support custom MIME type when sending multipart request, thanks @smartt |
 | 0.6.1 | Fix #37 progress report API issue on IOS |
 | 0.6.0 | Add readFile and writeFile API for easier file access, also added Android download manager support. |
 | 0.5.8 | Fix #33 PUT request will always be sent as POST on Android |

@@ -1,10 +1,16 @@
 package com.RNFetchBlob;
 
+import android.app.Application;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
+import android.database.Cursor;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.provider.MediaStore;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
@@ -43,6 +49,7 @@ public class RNFetchBlobFS {
     ReactApplicationContext mCtx;
     DeviceEventManagerModule.RCTDeviceEventEmitter emitter;
     String encoding = "base64";
+    static final String assetPrefix = "bundle-assets://";
     boolean append = false;
     OutputStream writeStreamInstance = null;
     static HashMap<String, RNFetchBlobFS> fileStreams = new HashMap<>();
@@ -134,6 +141,7 @@ public class RNFetchBlobFS {
      * @param promise
      */
     static public void readFile(String path, String encoding, final Promise promise ) {
+        path = normalizePath(path);
         AsyncTask<String, Integer, Integer> task = new AsyncTask<String, Integer, Integer>() {
             @Override
             protected Integer doInBackground(String... strings) {
@@ -141,12 +149,25 @@ public class RNFetchBlobFS {
                 try {
                     String path = strings[0];
                     String encoding = strings[1];
-                    File f = new File(path);
-                    int length = (int) f.length();
-                    byte[] bytes = new byte[length];
-                    FileInputStream in = new FileInputStream(f);
-                    in.read(bytes);
-                    in.close();
+                    byte[] bytes;
+
+                    if(path.startsWith(assetPrefix)) {
+                        String assetName = path.replace(assetPrefix, "");
+                        long length = RNFetchBlob.RCTContext.getAssets().openFd(assetName).getLength();
+                        bytes = new byte[(int) length];
+                        InputStream in = RNFetchBlob.RCTContext.getAssets().open(assetName);
+                        in.read(bytes, 0, (int) length);
+                        in.close();
+                    }
+                    else {
+                        File f = new File(path);
+                        int length = (int) f.length();
+                        bytes = new byte[length];
+                        FileInputStream in = new FileInputStream(f);
+                        in.read(bytes);
+                        in.close();
+                    }
+
                     switch (encoding.toLowerCase()) {
                         case "base64" :
                             promise.resolve(Base64.encodeToString(bytes, 0));
@@ -209,6 +230,7 @@ public class RNFetchBlobFS {
      * @param bufferSize    Buffer size of read stream, default to 4096 (4095 when encode is `base64`)
      */
     public void readStream( String path, String encoding, int bufferSize) {
+        path = normalizePath(path);
         AsyncTask<String, Integer, Integer> task = new AsyncTask<String, Integer, Integer>() {
             @Override
             protected Integer doInBackground(String ... args) {
@@ -221,7 +243,15 @@ public class RNFetchBlobFS {
                     int chunkSize = encoding.equalsIgnoreCase("base64") ? 4095 : 4096;
                     if(bufferSize > 0)
                         chunkSize = bufferSize;
-                    FileInputStream fs = new FileInputStream(new File(path));
+
+                    InputStream fs;
+                    if(path.startsWith(assetPrefix)) {
+                        fs = RNFetchBlob.RCTContext.getAssets().open(path.replace(assetPrefix, ""));
+                    }
+                    else {
+                        fs = new FileInputStream(new File(path));
+                    }
+
                     byte[] buffer = new byte[chunkSize];
                     int cursor = 0;
                     boolean error = false;
@@ -314,7 +344,6 @@ public class RNFetchBlobFS {
         try {
             stream.write(chunk);
             callback.invoke();
-            chunk = null;
         } catch (Exception e) {
             callback.invoke(e.getLocalizedMessage());
         }
@@ -344,7 +373,7 @@ public class RNFetchBlobFS {
     }
 
     /**
-     * Close file stream by ID
+     * Close file write stream by ID
      * @param streamId Stream ID
      * @param callback JS context callback
      */
@@ -395,13 +424,13 @@ public class RNFetchBlobFS {
      * @param callback  JS context callback
      */
     static void cp(String path, String dest, Callback callback) {
+        path = normalizePath(path);
         InputStream in = null;
         OutputStream out = null;
 
         try {
 
-            String destFolder = new File(dest).getPath();
-            if(!new File(path).exists()) {
+            if(!isPathExists(path)) {
                 callback.invoke("cp error: source file at path`" + path + "` not exists");
                 return;
             }
@@ -409,7 +438,7 @@ public class RNFetchBlobFS {
             if(!new File(dest).exists())
                 new File(dest).createNewFile();
 
-            in = new FileInputStream(path);
+            in = inputStreamFromPath(path);
             out = new FileOutputStream(dest);
 
             byte[] buf = new byte[1024];
@@ -454,9 +483,22 @@ public class RNFetchBlobFS {
      * @param callback  JS context callback
      */
     static void exists(String path, Callback callback) {
-        boolean exist = new File(path).exists();
-        boolean isDir = new File(path).isDirectory();;
-        callback.invoke(exist, isDir);
+        path = normalizePath(path);
+        if(isAsset(path)) {
+            try {
+                String filename = path.replace(assetPrefix, "");
+                AssetFileDescriptor fd = RNFetchBlob.RCTContext.getAssets().openFd(filename);
+                callback.invoke(true, false);
+            } catch (IOException e) {
+                callback.invoke(false, false);
+            }
+        }
+        else {
+            boolean exist = new File(path).exists();
+            boolean isDir = new File(path).isDirectory();
+            callback.invoke(exist, isDir);
+        }
+
     }
 
     /**
@@ -465,21 +507,23 @@ public class RNFetchBlobFS {
      * @param callback  JS context callback
      */
     static void ls(String path, Callback callback) {
+        path = normalizePath(path);
         File src = new File(path);
-        if(!src.exists() || !src.isDirectory()) {
+        if (!src.exists() || !src.isDirectory()) {
             callback.invoke("ls error: failed to list path `" + path + "` for it is not exist or it is not a folder");
             return;
         }
-        String [] files = new File(path).list();
+        String[] files = new File(path).list();
         WritableArray arg = Arguments.createArray();
-        for(String i : files) {
+        for (String i : files) {
             arg.pushString(i);
         }
         callback.invoke(null, arg);
     }
 
     static void lstat(String path, final Callback callback) {
-        File src = new File(path);
+        path = normalizePath(path);
+
         new AsyncTask<String, Integer, Integer>() {
             @Override
             protected Integer doInBackground(String ...args) {
@@ -511,24 +555,59 @@ public class RNFetchBlobFS {
      */
     static void stat(String path, Callback callback) {
         try {
-            File target = new File(path);
-            if (!target.exists()) {
-                callback.invoke("stat error: file " + path + " does not exists");
-                return;
-            }
-            WritableMap stat = Arguments.createMap();
-            stat.putString("filename", target.getName());
-            stat.putString("path", target.getPath());
-            stat.putString("type", target.isDirectory() ? "directory" : "file");
-            stat.putString("size", String.valueOf(target.length()));
-            String lastModified = String.valueOf(target.lastModified());
-            stat.putString("lastModified", lastModified);
-            callback.invoke(null, stat);
+            WritableMap result = statFile(path);
+            if(result == null)
+                callback.invoke("stat error: failed to list path `" + path + "` for it is not exist or it is not a folder", null);
+            else
+                callback.invoke(null, result);
         } catch(Exception err) {
             callback.invoke(err.getLocalizedMessage());
         }
     }
 
+    /**
+     * Basic stat method
+     * @param path
+     * @return Stat result of a file or path
+     */
+    static WritableMap statFile(String path) {
+        try {
+            path = normalizePath(path);
+            WritableMap stat = Arguments.createMap();
+            if(isAsset(path)) {
+                String name = path.replace(assetPrefix, "");
+                AssetFileDescriptor fd = RNFetchBlob.RCTContext.getAssets().openFd(name);
+                stat.putString("filename", name);
+                stat.putString("path", path);
+                stat.putString("type", "asset");
+                stat.putString("size", String.valueOf(fd.getLength()));
+                stat.putString("lastModified", "0");
+            }
+            else {
+                File target = new File(path);
+                if (!target.exists()) {
+                    return null;
+                }
+                stat.putString("filename", target.getName());
+                stat.putString("path", target.getPath());
+                stat.putString("type", target.isDirectory() ? "directory" : "file");
+                stat.putString("size", String.valueOf(target.length()));
+                String lastModified = String.valueOf(target.lastModified());
+                stat.putString("lastModified", lastModified);
+
+            }
+            return stat;
+        } catch(Exception err) {
+            return null;
+        }
+    }
+
+    /**
+     * Media scanner scan file
+     * @param path
+     * @param mimes
+     * @param callback
+     */
     void scanFile(String [] path, String[] mimes, final Callback callback) {
         try {
             MediaScannerConnection.scanFile(mCtx, path, mimes, new MediaScannerConnection.OnScanCompletedListener() {
@@ -669,18 +748,60 @@ public class RNFetchBlobFS {
         this.emitter.emit("RNFetchBlobStream" + taskId, eventData);
     }
 
-    static WritableMap statFile(String path) {
-        File target = new File(path);
-        if(!target.exists()) {
-            return null;
+    /**
+     * Get input stream of the given path, when the path is a string starts with bundle-assets://
+     * the stream is created by Assets Manager, otherwise use FileInputStream.
+     * @param path
+     * @return
+     * @throws IOException
+     */
+    static InputStream inputStreamFromPath(String path) throws IOException {
+        if (path.startsWith(assetPrefix)) {
+            return RNFetchBlob.RCTContext.getAssets().open(path.replace(assetPrefix, ""));
         }
-        WritableMap stat = Arguments.createMap();
-        stat.putString("filename", target.getName());
-        stat.putString("path", target.getPath());
-        stat.putString("type", target.isDirectory() ? "directory" : "file");
-        stat.putInt("size", (int)target.length());
-        stat.putInt("lastModified", (int)target.lastModified());
-        return stat;
+        return new FileInputStream(new File(path));
+    }
+
+    /**
+     * Check if the asset or the file exists
+     * @param path
+     * @return
+     */
+    static boolean isPathExists(String path) {
+        if(path.startsWith(assetPrefix)) {
+            try {
+                RNFetchBlob.RCTContext.getAssets().open(path.replace(assetPrefix, ""));
+            } catch (IOException e) {
+                return false;
+            }
+            return true;
+        }
+        else {
+            return new File(path).exists();
+        }
+
+    }
+
+    static boolean isAsset(String path) {
+        return path.startsWith(assetPrefix);
+    }
+
+    static String normalizePath(String path) {
+        if(path.startsWith(assetPrefix)) {
+            return path;
+        }
+        else if (path.startsWith("content://")) {
+            String[] proj = { MediaStore.Images.Media.DATA };
+            Uri contentUri = Uri.parse(path);
+            CursorLoader loader = new CursorLoader(RNFetchBlob.RCTContext, contentUri, proj, null, null, null);
+            Cursor cursor = loader.loadInBackground();
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            String result = cursor.getString(column_index);
+            cursor.close();
+            return result;
+        }
+        return path;
     }
 
 }

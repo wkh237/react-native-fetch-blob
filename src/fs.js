@@ -8,6 +8,7 @@
 import {
   NativeModules,
   DeviceEventEmitter,
+  Platform,
   NativeAppEventEmitter,
 } from 'react-native'
 import RNFetchBlobSession from './class/RNFetchBlobSession'
@@ -45,6 +46,15 @@ function session(name:string):RNFetchBlobSession {
     RNFetchBlobSession.setSession(name, [])
     return new RNFetchBlobSession(name, [])
   }
+}
+
+function asset(path:string):string {
+  if(Platform.OS === 'ios') {
+    // path from camera roll
+    if(/^assets-library\:\/\//.test(path))
+      return path
+  }
+  return 'bundle-assets://' + path
 }
 
 function createFile(path:string, data:string, encoding: 'base64' | 'ascii' | 'utf8'):Promise {
@@ -324,5 +334,6 @@ export default {
   stat,
   lstat,
   scanFile,
-  dirs
+  dirs,
+  asset
 }

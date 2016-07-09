@@ -8,6 +8,10 @@
 #import "RNFetchBlobConst.h"
 
 extern NSString *const FILE_PREFIX = @"RNFetchBlob-file://";
+extern NSString *const ASSET_PREFIX = @"bundle-assets://";
+extern NSString *const AL_PREFIX = @"assets-library://";
+
+
 
 // fetch configs
 extern NSString *const CONFIG_USE_TEMP = @"fileCache";
