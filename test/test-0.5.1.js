@@ -213,25 +213,27 @@ RNTest.config({
   })
   .then((res) => {
     deb = Date.now()
-    return RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+    let promise =  RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
       Authorization : `Bearer ${DROPBOX_TOKEN}`,
       'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
       'Content-Type' : 'application/octet-stream',
     }, RNFetchBlob.wrap(res.path()))
-    .progress((now, total) => {
-      if(Date.now() - deb < 1000)
-        return
-      deb = Date.now()
-      if(begin2 === -1)
-        begin2 = Date.now()
-      let speed = Math.floor(now / (Date.now() - begin2))
-      report(<Info uid="100"  key="progress">
-        <Text>
-          {`upload ${now} / ${total} bytes (${speed} kb/s)`}
-          {` ${Math.floor((total-now)/speed/1000)} seconds left`}
-        </Text>
-      </Info>)
-    })
+    if(Platform.OS === 'ios')
+      promise.progress((now, total) => {
+        if(Date.now() - deb < 1000)
+          return
+        deb = Date.now()
+        if(begin2 === -1)
+          begin2 = Date.now()
+        let speed = Math.floor(now / (Date.now() - begin2))
+        report(<Info uid="100"  key="progress">
+          <Text>
+            {`upload ${now} / ${total} bytes (${speed} kb/s)`}
+            {` ${Math.floor((total-now)/speed/1000)} seconds left`}
+          </Text>
+        </Info>)
+      })
+    return promise
   })
   .then((res) => {
     report(<Assert
