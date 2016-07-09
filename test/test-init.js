@@ -50,7 +50,7 @@ describe('GET image from server', (report, done) => {
         done()
     })
 })
-//
+
 require('./test-0.1.x-0.4.x')
 require('./test-0.5.1')
 require('./test-0.5.2')

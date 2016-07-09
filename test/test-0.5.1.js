@@ -119,6 +119,7 @@ describe('Upload from file storage', (report, done) => {
 })
 
 describe('Upload multipart data with file from storage', (report, done) => {
+  try{
     let filename = 'test-from-storage-img-'+Date.now()+'.png'
     RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload-form`, {
         'Content-Type' : 'multipart/form-data',
@@ -144,6 +145,9 @@ describe('Upload multipart data with file from storage', (report, done) => {
       </Info>)
       done()
     })
+  } catch(err) {
+    console.log(err)
+  }
 })
 
 describe('Upload and download at the same time', (report, done) => {
@@ -179,30 +183,51 @@ describe('Upload and download at the same time', (report, done) => {
         done()
       })
     })
-
 })
 
 RNTest.config({
   group : '0.5.1',
   run : true,
   expand : false,
-  timeout : 30000,
+  timeout : 600000,
 })('Upload and download large file', (report, done) => {
   let filename = '22mb-dummy-' + Date.now()
+  let begin = -1
+  let begin2 = -1
   RNFetchBlob.config({
     fileCache : true
   })
   .fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`)
+  // .progress((now, total) => {
+  //   if(begin === -1)
+  //     begin = Date.now()
+  //   report(<Info uid="200" key="progress">
+  //     <Text>
+  //       {`download ${now} / ${total} bytes (${Math.floor(now / (Date.now() - begin))} kb/s)`}
+  //     </Text>
+  //   </Info>)
+  // })
   .then((res) => {
     return RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
       Authorization : `Bearer ${DROPBOX_TOKEN}`,
       'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
       'Content-Type' : 'application/octet-stream',
     }, RNFetchBlob.wrap(res.path()))
+    // .progress((now, total) => {
+    //   if(begin2 === -1)
+    //     begin2 = Date.now()
+    //   let speed = Math.floor(now / (Date.now() - begin2))
+    //   report(<Info uid="100"  key="progress">
+    //     <Text>
+    //       {`upload ${now} / ${total} bytes (${speed} kb/s)`}
+    //       {` ${Math.floor((total-now)/speed/1000)} seconds left`}
+    //     </Text>
+    //   </Info>)
+    // })
   })
   .then((res) => {
     report(<Assert
-      key="upload should success withou crashing app"
+      key="upload should success without crashing app"
       expect={filename}
       actual={res.json().name}/>)
     done()
@@ -302,5 +327,4 @@ describe('Session API CRUD test', (report, done) => {
       })
 
   })
-
 })

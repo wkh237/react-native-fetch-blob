@@ -42,7 +42,7 @@ export default class TestContext {
       run : run === false ? false : true,
       result : null,
       asserts : [],
-      timeout : timeout || 3000,
+      timeout : timeout || 15000,
       expired : false,
       running : false,
       executed : false,
@@ -153,6 +153,7 @@ export default class TestContext {
         for(let j in result) {
           if(result[j].uid === data[i].props.uid)
           result[j] = data[i]
+          result.splice(j,1)
           break
         }
       }

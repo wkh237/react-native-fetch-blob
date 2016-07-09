@@ -9,6 +9,7 @@ import {
   ListView,
   Image,
   TouchableOpacity,
+  Dimensions,
   RecyclerViewBackedScrollView,
 } from 'react-native';
 
@@ -20,8 +21,10 @@ export default class Reporter extends Component {
   constructor(props:any) {
     super(props)
     this.tests = {
-      summary : [{}],
       common : []
+    }
+    this.state = {
+      listHeight : 0
     }
     this.testGroups = ['summary','common']
     this.ds = null
@@ -35,20 +38,49 @@ export default class Reporter extends Component {
 
   render() {
 
+    let tests = RNTEST.TestContext.getTests()
+
+    let passed = 0
+    let executed = 0
+    let count = 0
+    for(let i in tests) {
+      if(tests[i].status !== 'skipped')
+        count++
+      if(tests[i].status !== 'waiting' && tests[i].status !== 'skipped')
+        executed++
+        passed += tests[i].status === 'pass' ? 1 : 0
+    }
+    let percent = passed / count
+    let color = `rgb(${Math.floor((1-percent) *255)},${Math.floor(percent *255)}, 0)`
+
     return (
-      <ListView
-        style={styles.container}
-        dataSource={this.ds}
-        renderRow={this.renderTest.bind(this)}
-        renderScrollComponent={props => <RecyclerViewBackedScrollView {...props} />}
-        renderSectionHeader={(data, id) => {
-          return (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionText}>{id}</Text>
-            </View>
-          )
-        }}
-      />)
+      <View style={{flex : 1}}>
+        <View style={{margin : 20}} onLayout={(e) => {
+          this.setState({
+            headerHeight : e.nativeEvent.layout.height,
+            listHeight : Dimensions.get('window').height - e.nativeEvent.layout.height
+          })
+        }}>
+          <Text>{`${executed} tests executed`}</Text>
+          <Text>{`${passed} test cases passed`}</Text>
+          <Text>{`${count} test cases`}</Text>
+          <Text style={{color, fontSize : 120, textAlign : 'center'}} >{`${Math.floor(percent*100)}`}</Text>
+          <Text style={{color, fontSize : 30, textAlign :'right', marginTop : -54, marginRight : 40, backgroundColor : 'transparent'}} >{`%`}</Text>
+        </View>
+        <ListView
+          style={[styles.container]}
+          dataSource={this.ds}
+          renderRow={this.renderTest.bind(this)}
+          renderScrollComponent={props => <RecyclerViewBackedScrollView {...props} />}
+          renderSectionHeader={(data, id) => {
+            return (
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionText}>{id}</Text>
+              </View>
+            )
+          }}
+        />
+      </View>)
   }
 
   renderTest(t, group) {
@@ -56,23 +88,6 @@ export default class Reporter extends Component {
     let pass = true
     let foundActions = false
     let tests = RNTEST.TestContext.getTests()
-
-    if(group === 'summary')
-    {
-      let passed = 0
-      let executed = 0
-      let count = 0
-      for(let i in tests) {
-        count++
-        if(tests[i].executed)
-          passed += tests[i].status === 'pass' ? 1 : 0
-      }
-      return (<View style={{flex : 1}}>
-        <Text>{`${count} test cases`}</Text>
-        <Text>{`${executed} tests executed`}</Text>
-        <Text>{`${ParseFloat(pass/count).toFixed(2)}% tests passed`}</Text>
-      </View>)
-    }
 
     if(Array.isArray(t.result) && !t.expired) {
       t.result = t.result.map((r) => {
@@ -94,9 +109,9 @@ export default class Reporter extends Component {
       t.status = 'waiting'
 
     return (
-      <TouchableOpacity onPress={()=>{
-          t.start(t.sn)
-        }}>
+      // <TouchableOpacity onPress={()=>{
+      //   t.start(t.sn)
+      // }}>
         <View key={'rn-test-' + t.desc} style={{
           borderBottomWidth : 1.5,
           borderColor : '#DDD',
@@ -111,8 +126,8 @@ export default class Reporter extends Component {
           <View key={t.desc + '-result'} style={{backgroundColor : '#F4F4F4'}}>
             {t.expand ? t.result : (t.status === 'pass' ? null : t.result)}
           </View>
-        </View>
-      </TouchableOpacity>)
+        </View>)
+        {/*</TouchableOpacity>)*/}
   }
 
   updateDataSource() {
