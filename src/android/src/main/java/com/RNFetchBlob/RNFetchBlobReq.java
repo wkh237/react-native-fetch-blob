@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
+import java.security.MessageDigest;
 
 import cz.msebera.android.httpclient.HttpEntity;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
@@ -78,6 +79,28 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         }
     }
 
+    public static String getMD5(String input) {
+        String result = null;
+
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(input.getBytes());
+            byte[] digest = md.digest();
+            
+            StringBuffer sb = new StringBuffer();
+            
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b & 0xff));
+            }
+
+            result = sb.toString();
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        }
+
+        return result;
+    }
+
     @Override
     public void run() {
 
@@ -107,6 +130,20 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 return;
             }
 
+        }
+
+        String cacheKey = this.taskId;
+        if (this.options.key != null) {
+            cacheKey = RNFetchBlobReq.getMD5(this.options.key);
+            if (cacheKey == null) {
+                cacheKey = this.taskId;
+            }
+
+            File file = new File(RNFetchBlobFileHandler.getFilePath(ctx, taskId, cacheKey, this.options));
+            if (file.exists()) {
+               callback.invoke(null, file.getAbsolutePath());
+               return;
+            }
         }
 
         try {
@@ -145,7 +182,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
             // create handler
             if(options.fileCache || options.path != null) {
-                handler = new RNFetchBlobFileHandler(ctx, taskId, options, callback);
+                handler = new RNFetchBlobFileHandler(ctx, taskId, cacheKey, options, callback);
                 // if path format invalid, throw error
                 if (!((RNFetchBlobFileHandler)handler).isValid) {
                     callback.invoke("RNFetchBlob fetch error, configuration path `"+ options.path  +"` is not a valid path.");

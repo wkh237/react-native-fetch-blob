@@ -79,6 +79,12 @@ function wrap(path:string):string {
  *                   If this property has a valid string format, resonse data
  *                   will be saved to specific file path. Default string format
  *                   is : `RNFetchBlob-file://path-to-file`
+ *         @property {string} key
+ *                   If this property is set, it will be converted to md5, to
+ *                   check if a file with this name exists.
+ *                   If it exists, the absolute path is returned (no network 
+ *                   activity takes place )
+ *                   If it doesn't exist, the file is downloaded as usual
  *
  * @return {function} This method returns a `fetch` method instance.
  */
@@ -125,7 +131,7 @@ function fetch(...args:any):Promise {
       else {
         let respType = 'base64'
         // response data is saved to storage
-        if(options.path || options.fileCache || options.addAndroidDownloads) {
+        if(options.path || options.fileCache || options.addAndroidDownloads || options.key) {
           respType = 'path'
           if(options.session)
             session(options.session).add(data)
