@@ -27,7 +27,7 @@ const  dirs = RNFetchBlob.fs.dirs
 
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
-describe('upload asset from camera roll', (report, done) => {
+describe('massive HTTP request', (report, done) => {
   try {
   let promises = []
   let progress = []
