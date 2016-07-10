@@ -35,7 +35,7 @@ describe('massive HTTP request', (report, done) => {
   for(let i=0; i<1500;i++) {
     let p = RNFetchBlob
     .config({fileCache : true})
-    .fetch('GET', `${TEST_SERVER_URL}/public/github2.png`)
+    .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
     // .progress(function(current, total){
     //   progress[this] = current/total
     // }.bind(i))
