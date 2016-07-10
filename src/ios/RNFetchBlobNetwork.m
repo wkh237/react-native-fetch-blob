@@ -92,7 +92,7 @@ NSOperationQueue *taskQueue;
     
     // the session trust any SSL certification
 
-    NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:taskId];
+    NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
     session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:[NSOperationQueue mainQueue]];
     
     if(path != nil || [self.options valueForKey:CONFIG_USE_TEMP]!= nil)
@@ -168,25 +168,21 @@ NSOperationQueue *taskQueue;
             }
      ];
     
-    if(receivedBytes >= expectedBytes)
-    {
-        if(respFile == YES)
-        {
-            [writeStream close];
-            callback(@[[NSNull null], destPath]);
-        }
-        // base64 response
-        else {
-            callback(@[[NSNull null], [respData base64EncodedStringWithOptions:0]]);
-        }
-        [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-    }
 }
 
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     NSLog([error localizedDescription]);
     self.error = error;
     [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
+    if(respFile == YES)
+    {
+        [writeStream close];
+        callback(@[error == nil ? [NSNull null] : [error localizedDescription], destPath]);
+    }
+    // base64 response
+    else {
+        callback(@[error == nil ? [NSNull null] : [error localizedDescription], [respData base64EncodedStringWithOptions:0]]);
+    }
 }
 
 // upload progress handler
