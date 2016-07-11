@@ -212,13 +212,14 @@ RNTest.config({
     </Info>)
   })
   .then((res) => {
+    try {
     deb = Date.now()
     let promise =  RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
       Authorization : `Bearer ${DROPBOX_TOKEN}`,
       'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
       'Content-Type' : 'application/octet-stream',
     }, RNFetchBlob.wrap(res.path()))
-    if(Platform.OS === 'ios')
+    if(Platform.OS === 'ios') {
       promise.progress((now, total) => {
         if(Date.now() - deb < 1000)
           return
@@ -233,7 +234,9 @@ RNTest.config({
           </Text>
         </Info>)
       })
+    }
     return promise
+  } catch(err) { console.log(err) }
   })
   .then((res) => {
     report(<Assert
