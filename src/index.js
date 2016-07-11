@@ -82,7 +82,7 @@ function wrap(path:string):string {
  *         @property {string} key
  *                   If this property is set, it will be converted to md5, to
  *                   check if a file with this name exists.
- *                   If it exists, the absolute path is returned (no network 
+ *                   If it exists, the absolute path is returned (no network
  *                   activity takes place )
  *                   If it doesn't exist, the file is downloaded as usual
  *
@@ -121,6 +121,12 @@ function fetch(...args:any):Promise {
       }
     })
 
+    let subscription = emitter.addListener('RNFetchBlobProgress-upload', (e) => {
+      if(e.taskId === taskId && promise.onProgress) {
+        promise.onUploadProgress(e.written, e.total)
+      }
+    })
+
     let req = RNFetchBlob[nativeMethodName]
     req(options, taskId, method, url, headers || {}, body, (err, data) => {
 
@@ -146,6 +152,11 @@ function fetch(...args:any):Promise {
   // handler.
   promise.progress = (fn) => {
     promise.onProgress = fn
+    return promise
+  }
+
+  promise.uploadProgress = (fn) => {
+    promise.onUploadProgress = fn
     return promise
   }
 

@@ -1,10 +1,7 @@
 package com.RNFetchBlob;
 
-import android.app.Application;
 import android.content.CursorLoader;
-import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -17,7 +14,6 @@ import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
-import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -25,21 +21,14 @@ import com.loopj.android.http.Base64;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-
-import cz.msebera.android.httpclient.util.EncodingUtils;
 
 /**
  * Created by wkh237 on 2016/5/26.
@@ -49,7 +38,6 @@ public class RNFetchBlobFS {
     ReactApplicationContext mCtx;
     DeviceEventManagerModule.RCTDeviceEventEmitter emitter;
     String encoding = "base64";
-    static final String assetPrefix = "bundle-assets://";
     boolean append = false;
     OutputStream writeStreamInstance = null;
     static HashMap<String, RNFetchBlobFS> fileStreams = new HashMap<>();
@@ -151,8 +139,8 @@ public class RNFetchBlobFS {
                     String encoding = strings[1];
                     byte[] bytes;
 
-                    if(path.startsWith(assetPrefix)) {
-                        String assetName = path.replace(assetPrefix, "");
+                    if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
+                        String assetName = path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
                         long length = RNFetchBlob.RCTContext.getAssets().openFd(assetName).getLength();
                         bytes = new byte[(int) length];
                         InputStream in = RNFetchBlob.RCTContext.getAssets().open(assetName);
@@ -245,8 +233,8 @@ public class RNFetchBlobFS {
                         chunkSize = bufferSize;
 
                     InputStream fs;
-                    if(path.startsWith(assetPrefix)) {
-                        fs = RNFetchBlob.RCTContext.getAssets().open(path.replace(assetPrefix, ""));
+                    if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
+                        fs = RNFetchBlob.RCTContext.getAssets().open(path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, ""));
                     }
                     else {
                         fs = new FileInputStream(new File(path));
@@ -486,7 +474,7 @@ public class RNFetchBlobFS {
         path = normalizePath(path);
         if(isAsset(path)) {
             try {
-                String filename = path.replace(assetPrefix, "");
+                String filename = path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
                 AssetFileDescriptor fd = RNFetchBlob.RCTContext.getAssets().openFd(filename);
                 callback.invoke(true, false);
             } catch (IOException e) {
@@ -575,7 +563,7 @@ public class RNFetchBlobFS {
             path = normalizePath(path);
             WritableMap stat = Arguments.createMap();
             if(isAsset(path)) {
-                String name = path.replace(assetPrefix, "");
+                String name = path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
                 AssetFileDescriptor fd = RNFetchBlob.RCTContext.getAssets().openFd(name);
                 stat.putString("filename", name);
                 stat.putString("path", path);
@@ -756,8 +744,8 @@ public class RNFetchBlobFS {
      * @throws IOException
      */
     static InputStream inputStreamFromPath(String path) throws IOException {
-        if (path.startsWith(assetPrefix)) {
-            return RNFetchBlob.RCTContext.getAssets().open(path.replace(assetPrefix, ""));
+        if (path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
+            return RNFetchBlob.RCTContext.getAssets().open(path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, ""));
         }
         return new FileInputStream(new File(path));
     }
@@ -768,9 +756,9 @@ public class RNFetchBlobFS {
      * @return
      */
     static boolean isPathExists(String path) {
-        if(path.startsWith(assetPrefix)) {
+        if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
             try {
-                RNFetchBlob.RCTContext.getAssets().open(path.replace(assetPrefix, ""));
+                RNFetchBlob.RCTContext.getAssets().open(path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, ""));
             } catch (IOException e) {
                 return false;
             }
@@ -782,15 +770,15 @@ public class RNFetchBlobFS {
 
     }
 
-    static boolean isAsset(String path) {
-        return path.startsWith(assetPrefix);
+    public static boolean isAsset(String path) {
+        return path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET);
     }
 
-    static String normalizePath(String path) {
-        if(path.startsWith(assetPrefix)) {
+    public static String normalizePath(String path) {
+        if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
             return path;
         }
-        else if (path.startsWith("content://")) {
+        else if (path.startsWith(RNFetchBlobConst.FILE_PREFIX_CONTENT)) {
             String[] proj = { MediaStore.Images.Media.DATA };
             Uri contentUri = Uri.parse(path);
             CursorLoader loader = new CursorLoader(RNFetchBlob.RCTContext, contentUri, proj, null, null, null);

@@ -8,114 +8,102 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 
+import com.RNFetchBlob.Request.FormPartBody;
+import com.RNFetchBlob.Response.RNFetchBlobDefaultResp;
+import com.RNFetchBlob.Response.RNFetchBlobFileResp;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.Base64;
-import com.loopj.android.http.MySSLSocketFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.KeyStore;
-import java.security.MessageDigest;
 
-import cz.msebera.android.httpclient.HttpEntity;
-import cz.msebera.android.httpclient.entity.ByteArrayEntity;
-import cz.msebera.android.httpclient.entity.ContentType;
-import cz.msebera.android.httpclient.entity.FileEntity;
-import cz.msebera.android.httpclient.entity.mime.MultipartEntityBuilder;
+import okhttp3.Call;
+import okhttp3.Interceptor;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /**
  * Created by wkh237 on 2016/6/21.
  */
 public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
-    final String filePathPrefix = "RNFetchBlob-file://";
+    enum RequestType  {
+        Form,
+        SingleFile,
+        Others
+    };
+
+    enum ResponseType {
+        MemoryCache,
+        FileCache
+    };
+
+    MediaType contentType = RNFetchBlobConst.MIME_OCTET;
     ReactApplicationContext ctx;
     RNFetchBlobConfig options;
     String taskId;
     String method;
     String url;
-    String boundary;
+    String rawRequestBody;
+    String destPath;
+    ReadableArray rawRequestBodyArray;
     ReadableMap headers;
     Callback callback;
-    HttpEntity entity;
+    long contentLength;
     long downloadManagerId;
-    AsyncHttpClient req;
-    String type;
+    RequestType requestType;
+    ResponseType responseType;
 
-    public RNFetchBlobReq(ReactApplicationContext ctx, ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, final Callback callback) {
-        this.ctx = ctx;
+    public RNFetchBlobReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, final Callback callback) {
         this.method = method;
-        this.options= new RNFetchBlobConfig(options);
+        this.options = new RNFetchBlobConfig(options);
         this.taskId = taskId;
         this.url = url;
         this.headers = headers;
         this.callback = callback;
-        this.req = new AsyncHttpClient();
-        if(body != null) {
-            type = "octet";
-            buildEntity(body);
-        }
-    }
+        this.rawRequestBody = body;
+        this.rawRequestBodyArray = arrayBody;
 
-    public RNFetchBlobReq(ReactApplicationContext ctx, ReadableMap options, String taskId, String method, String url, ReadableMap headers, ReadableArray body, final Callback callback) {
-        this.ctx = ctx;
-        this.method = method;
-        this.options= new RNFetchBlobConfig(options);
-        this.taskId = taskId;
-        this.url = url;
-        this.headers = headers;
-        this.callback = callback;
-        this.req = new AsyncHttpClient();
-        if(body != null) {
-            type = "form";
-            buildFormEntity(body);
-        }
-    }
+        if(this.options.fileCache != null || this.options.path != null)
+            responseType = ResponseType.FileCache;
+        else
+            responseType = ResponseType.MemoryCache;
 
-    public static String getMD5(String input) {
-        String result = null;
-
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            md.update(input.getBytes());
-            byte[] digest = md.digest();
-            
-            StringBuffer sb = new StringBuffer();
-            
-            for (byte b : digest) {
-                sb.append(String.format("%02x", b & 0xff));
-            }
-
-            result = sb.toString();
-        } catch(Exception ex) {
-            ex.printStackTrace();
-        }
-
-        return result;
+        if (body != null)
+            requestType = RequestType.SingleFile;
+        else if (arrayBody != null)
+            requestType = RequestType.Form;
+        else
+            requestType = RequestType.Others;
     }
 
     @Override
     public void run() {
 
         // use download manager instead of default HTTP implementation
-        if(options.addAndroidDownloads != null && options.addAndroidDownloads.hasKey("useDownloadManager")) {
+        if (options.addAndroidDownloads != null && options.addAndroidDownloads.hasKey("useDownloadManager")) {
 
-            if(options.addAndroidDownloads.getBoolean("useDownloadManager")) {
+            if (options.addAndroidDownloads.getBoolean("useDownloadManager")) {
                 Uri uri = Uri.parse(url);
                 DownloadManager.Request req = new DownloadManager.Request(uri);
                 req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
 
-                if(options.addAndroidDownloads.hasKey("title")) {
+                if (options.addAndroidDownloads.hasKey("title")) {
                     req.setTitle(options.addAndroidDownloads.getString("title"));
                 }
-                if(options.addAndroidDownloads.hasKey("description")) {
+                if (options.addAndroidDownloads.hasKey("description")) {
                     req.setDescription(options.addAndroidDownloads.getString("description"));
                 }
                 // set headers
@@ -132,186 +120,244 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         }
 
+        // find cached result if `key` property exists
         String cacheKey = this.taskId;
         if (this.options.key != null) {
-            cacheKey = RNFetchBlobReq.getMD5(this.options.key);
+            cacheKey = RNFetchBlobUtils.getMD5(this.options.key);
             if (cacheKey == null) {
                 cacheKey = this.taskId;
             }
 
-            File file = new File(RNFetchBlobFileHandler.getFilePath(ctx, taskId, cacheKey, this.options));
+            File file = new File(RNFetchBlobFS.getTmpPath(ctx, cacheKey));
             if (file.exists()) {
-               callback.invoke(null, file.getAbsolutePath());
-               return;
+                callback.invoke(null, file.getAbsolutePath());
+                return;
             }
         }
 
+        if(this.options.path != null)
+            destPath = this.options.path;
+        else if(this.options.fileCache)
+            destPath = RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey);
+
+        OkHttpClient client;
         try {
 
-            req = new AsyncHttpClient();
-
-            req.setLoggingEnabled(false);
-
             // use trusty SSL socket
-            if(this.options.trusty) {
-                KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-                trustStore.load(null, null);
-                MySSLSocketFactory sf = new MySSLSocketFactory(trustStore);
-                sf.setHostnameVerifier(MySSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-                req.setSSLSocketFactory(sf);
+            if (this.options.trusty) {
+                client = RNFetchBlobUtils.getUnsafeOkHttpClient();
+            } else {
+                client = new OkHttpClient();
             }
 
+            final Request.Builder builder = new Request.Builder();
+
             // set headers
-            if(headers != null) {
+            if (headers != null) {
                 ReadableMapKeySetIterator it = headers.keySetIterator();
                 while (it.hasNextKey()) {
                     String key = it.nextKey();
-                    req.addHeader(key, headers.getString(key));
+                    builder.addHeader(key, headers.getString(key));
                 }
             }
 
-            if(type != null)
-            {
-                if(type == "octet")
-                    req.addHeader("Content-Type", "application/octet-stream");
-                else if(type == "form")
-                    req.addHeader("Content-Type", "multipart/form-data; charset=utf8; boundary="+boundary);
+            // set request body
+            switch (requestType) {
+                case SingleFile:
+                    builder.method(method, new RNFetchBlobBody(
+                            taskId,
+                            RequestType.SingleFile,
+                            null,
+                            buildOctetBody(rawRequestBody),
+                            contentLength
+                    ));
+                    break;
+                case Form:
+                    builder.method(method, new RNFetchBlobBody(
+                            taskId,
+                            RequestType.Form,
+                            buildFormBody(rawRequestBodyArray),
+                            null,
+                            contentLength
+                    ));
+                case Others:
+                    builder.method(method, new RNFetchBlobBody(
+                            taskId,
+                            RequestType.Others,
+                            buildRawBody(rawRequestBody),
+                            null,
+                            contentLength
+                    ));
+                    break;
             }
 
-            AsyncHttpResponseHandler handler;
+            final Request req = builder.build();
 
-            // create handler
-            if(options.fileCache || options.path != null) {
-                handler = new RNFetchBlobFileHandler(ctx, taskId, cacheKey, options, callback);
-                // if path format invalid, throw error
-                if (!((RNFetchBlobFileHandler)handler).isValid) {
-                    callback.invoke("RNFetchBlob fetch error, configuration path `"+ options.path  +"` is not a valid path.");
-                    return;
+            // create response handler
+            client.networkInterceptors().add(new Interceptor() {
+                @Override
+                public Response intercept(Chain chain) throws IOException {
+                    Response originalResponse = chain.proceed(req);
+                    RNFetchBlobDefaultResp exetneded;
+                    switch (responseType) {
+                        case MemoryCache:
+                            exetneded = new RNFetchBlobDefaultResp(
+                                    RNFetchBlob.RCTContext,
+                                    taskId,
+                                    originalResponse.body());
+                            break;
+                        case FileCache:
+                            exetneded = new RNFetchBlobFileResp(
+                                    RNFetchBlob.RCTContext,
+                                    taskId,
+                                    originalResponse.body(),
+                                    destPath);
+                            break;
+                        default:
+                            exetneded = new RNFetchBlobDefaultResp(
+                                    RNFetchBlob.RCTContext,
+                                    taskId,
+                                    originalResponse.body());
+                            break;
+                    }
+                    return originalResponse.newBuilder().body(exetneded).build();
                 }
-            }
-            else
-                handler = new RNFetchBlobBinaryHandler(this.ctx, taskId, callback);
+            });
 
-            // send request
-            switch(method.toLowerCase()) {
-                case "get" :
-                    req.get(url, handler);
-                    break;
-                case "post" :
-                    if(this.type == null || this.type.equalsIgnoreCase("octet"))
-                        req.post(ctx, url, entity, "application/octet-stream", handler);
-                    else
-                        req.post(ctx, url, entity, "multipart/form-data", handler);
-                    break;
-                case "put" :
-                    if(this.type == null || this.type.equalsIgnoreCase("octet"))
-                        req.put(ctx, url, entity, "application/octet-stream", handler);
-                    else
-                        req.put(ctx, url, entity, "multipart/form-data", handler);
-                    break;
-                case "delete" :
-                    req.delete(url, handler);
-                    break;
-            }
-        } catch(Exception error) {
-            callback.invoke( "RNFetchBlob serialize request data failed: " + error.getMessage() + error.getCause());
+            client.newCall(req).enqueue(new okhttp3.Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    callback.invoke(e.getLocalizedMessage(), null);
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    ReadableMap notifyConfig = options.addAndroidDownloads;
+                    // Download manager settings
+                    if(notifyConfig != null ) {
+                        String title = "", desc = "", mime = "text/plain";
+                        boolean scannable = false, notification = false;
+                        if(notifyConfig.hasKey("title"))
+                            title = options.addAndroidDownloads.getString("title");
+                        if(notifyConfig.hasKey("description"))
+                            desc = notifyConfig.getString("description");
+                        if(notifyConfig.hasKey("mime"))
+                            mime = notifyConfig.getString("mime");
+                        if(notifyConfig.hasKey("mediaScannable"))
+                            scannable = notifyConfig.getBoolean("mediaScannable");
+                        if(notifyConfig.hasKey("notification"))
+                            notification = notifyConfig.getBoolean("notification");
+                        DownloadManager dm = (DownloadManager)RNFetchBlob.RCTContext.getSystemService(RNFetchBlob.RCTContext.DOWNLOAD_SERVICE);
+                        dm.addCompletedDownload(title, desc, scannable, mime, destPath, contentLength, notification);
+                    }
+                    done(response);
+                }
+            });
+
+
+        } catch (Exception error) {
+            callback.invoke("RNFetchBlob request error: " + error.getMessage() + error.getCause());
         }
     }
 
     /**
-     * Build Mutipart body
-     * @param body  Body in array format
+     * Send response data back to javascript context.
+     * @param resp OkHttp response object
      */
-    void buildFormEntity(ReadableArray body) {
-        if(body != null && (method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put"))) {
-            Long tsLong = System.currentTimeMillis()/1000;
-            String ts = tsLong.toString();
-            boundary = "RNFetchBlob".concat(ts);
-            MultipartEntityBuilder form = MultipartEntityBuilder.create();
-            form.setBoundary(boundary);
-            for( int i = 0; i< body.size(); i++) {
+    private void done(Response resp) {
+        switch (responseType) {
+            case MemoryCache:
+                try {
+                    callback.invoke(null, android.util.Base64.encode(resp.body().bytes(), 0));
+                } catch (IOException e) {
+                    callback.invoke("RNFetchBlob failed to encode response data to BASE64 string.", null);
+                }
+                break;
+            case FileCache:
+                callback.invoke(null, destPath);
+                break;
+            default:
+                try {
+                    callback.invoke(null, new String(resp.body().bytes(), "UTF-8"));
+                } catch (IOException e) {
+                    callback.invoke("RNFetchBlob failed to encode response data to UTF8 string.", null);
+                }
+                break;
+        }
+    }
+
+    /**
+     * Build request body by given string
+     * @param body Content of request body in UTF8 string format.
+     * @return
+     */
+    RequestBody buildRawBody(String body) {
+        if(body != null) {
+            this.contentType = MediaType.parse(options.mime);
+        }
+        return RequestBody.create(this.contentType, body);
+    }
+
+    /**
+     * When request body is a multipart form data, build a MultipartBody object.
+     * @param body Body in array format
+     * @return
+     */
+    MultipartBody buildFormBody(ReadableArray body) {
+        if (body != null && (method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put"))) {
+            this.contentType = RNFetchBlobConst.MIME_MULTIPART;
+            MultipartBody.Builder formBuilder = new MultipartBody.Builder();
+            formBuilder.setType(MultipartBody.FORM);
+
+            for (int i = 0; i < body.size(); i++) {
                 ReadableMap map = body.getMap(i);
-                String name = map.getString("name");
-                if(!map.hasKey("data"))
-                    continue;
-                String data = map.getString("data");
-                // file field
-                if(map.hasKey("filename")) {
-                    String mime = map.hasKey("type") ? map.getString("type") : ContentType.APPLICATION_OCTET_STREAM.getMimeType();
-                    String filename = map.getString("filename");
-                    // upload from storage
-                    if(data.startsWith(filePathPrefix)) {
-                        String orgPath = data.substring(filePathPrefix.length());
-                        orgPath = RNFetchBlobFS.normalizePath(orgPath);
-                        // path starts with content://
-                        if(RNFetchBlobFS.isAsset(orgPath)) {
-                            try {
-                                String assetName = orgPath.replace(RNFetchBlobFS.assetPrefix, "");
-                                InputStream in = RNFetchBlob.RCTContext.getAssets().open(assetName);
-                                long length = RNFetchBlob.RCTContext.getAssets().openFd(assetName).getLength();
-                                byte [] bytes = new byte[(int) length];
-                                in.read(bytes, 0, (int) length);
-                                in.close();
-                                form.addBinaryBody(name, bytes, ContentType.create(mime), filename);
-                            } catch (IOException e) {
-//                                e.printStackTrace();
-                            }
-                        }
-                        else {
-                            File file = new File(RNFetchBlobFS.normalizePath(orgPath));
-                            form.addBinaryBody(name, file, ContentType.create(mime), filename);
-                        }
-                    }
-                    // base64 embedded file content
-                    else {
-                        form.addBinaryBody(name, Base64.decode(data, 0), ContentType.create(mime), filename);
-                    }
-                }
-                // data field
-                else {
-                    form.addTextBody(name, map.getString("data"));
-                }
+                FormPartBody fieldData = new FormPartBody(RNFetchBlob.RCTContext, map);
+                if(fieldData.filename == null)
+                    formBuilder.addFormDataPart(fieldData.fieldName, fieldData.stringBody);
+                else
+                    formBuilder.addFormDataPart(fieldData.fieldName, fieldData.filename, fieldData.partBody);
             }
-            entity = form.build();
+            return formBuilder.build();
         }
+        return null;
     }
 
     /**
-     * Build Octet-Stream body
-     * @param body  Body in string format
+     * Get InputStream of request body when request body contains a single file.
+     *
+     * @param body Body in string format
+     * @return InputStream When there's no request body, returns null
      */
-    void buildEntity(String body) {
+    InputStream buildOctetBody(String body) {
         // set body for POST and PUT
-        if(body != null && (method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put"))) {
-
-            byte [] blob;
+        if (body != null && (method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put"))) {
+            this.contentType = RNFetchBlobConst.MIME_OCTET;
+            byte[] blob;
             // upload from storage
-            if(body.startsWith(filePathPrefix)) {
-                String orgPath = body.substring(filePathPrefix.length());
+            if (body.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
+                String orgPath = body.substring(RNFetchBlobConst.FILE_PREFIX.length());
                 orgPath = RNFetchBlobFS.normalizePath(orgPath);
                 // handle
-                if(RNFetchBlobFS.isAsset(orgPath)) {
+                if (RNFetchBlobFS.isAsset(orgPath)) {
                     try {
-                        String assetName = orgPath.replace(RNFetchBlobFS.assetPrefix, "");
-                        InputStream in = RNFetchBlob.RCTContext.getAssets().open(assetName);
-                        long length = 0;
-                        length = RNFetchBlob.RCTContext.getAssets().openFd(assetName).getLength();
-                        byte [] bytes = new byte[(int) length];
-                        in.read(bytes, 0, (int) length);
-                        in.close();
-                        entity = new ByteArrayEntity(bytes);
+                        String assetName = orgPath.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
+                        return RNFetchBlob.RCTContext.getAssets().open(assetName);
                     } catch (IOException e) {
 //                        e.printStackTrace();
                     }
+                } else {
+                    File f = new File(RNFetchBlobFS.normalizePath(orgPath));
+                    try {
+                        return new FileInputStream(f);
+                    } catch (FileNotFoundException e) {
+                        callback.invoke(e.getLocalizedMessage(), null);
+                    }
                 }
-                else
-                    entity = new FileEntity(new File(RNFetchBlobFS.normalizePath(orgPath)));
-            }
-            else {
-                blob = Base64.decode(body, 0);
-                entity = new ByteArrayEntity(blob);
+            } else {
+                return new ByteArrayInputStream(Base64.decode(body, 0));
             }
         }
+        return null;
 
     }
 
@@ -320,7 +366,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         String action = intent.getAction();
         if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
             long id = intent.getExtras().getLong(DownloadManager.EXTRA_DOWNLOAD_ID);
-            if(id == this.downloadManagerId) {
+            if (id == this.downloadManagerId) {
                 DownloadManager.Query query = new DownloadManager.Query();
                 query.setFilterById(downloadManagerId);
                 DownloadManager dm = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -329,13 +375,19 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 if (c.moveToFirst()) {
                     String contentUri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
                     Uri uri = Uri.parse(contentUri);
-                    Cursor cursor = ctx.getContentResolver().query(uri, new String[] { android.provider.MediaStore.Images.ImageColumns.DATA }, null, null, null);
-                    cursor.moveToFirst();
-                    String filePath = cursor.getString(0);
-                    cursor.close();
-                    this.callback.invoke(null, filePath);
+                    Cursor cursor = ctx.getContentResolver().query(uri, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
+                    if (cursor != null) {
+                        cursor.moveToFirst();
+                        String filePath = cursor.getString(0);
+                        cursor.close();
+                        this.callback.invoke(null, filePath);
+                    }
+                    else
+                        this.callback.invoke(null, null);
                 }
             }
         }
     }
+
+
 }
