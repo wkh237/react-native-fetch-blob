@@ -46,9 +46,9 @@ rnpm link
 
 **Grant Permission to External storage for Android 5.0 or lower**
 
-Mechanism about granting Android permissions has slightly different since Android 6.0 released, please refer to [Officail Document](https://developer.android.com/training/permissions/requesting.html).
+Mechanism about granting Android permissions has slightly different since Android 6.0 released, please refer to [Official Document](https://developer.android.com/training/permissions/requesting.html).
 
-If you're going to access external storage (say, SD card storage) for `Android 5.0` (or lower) devices, you might have to add the following line to `AndroidManifetst.xml`.
+If you're going to access external storage (say, SD card storage) for `Android 5.0` (or lower) devices, you might have to add the following line to `AndroidManifest.xml`.
 
 ```diff
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -110,7 +110,7 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
 
 #### Download to storage directly
 
-The simplest way is give a `fileCach` option to config, and set it to `true`. This will let the incoming response data stored in a temporary path **wihout** any file extension.
+The simplest way is give a `fileCache` option to config, and set it to `true`. This will let the incoming response data stored in a temporary path **without** any file extension.
 
 **These files won't be removed automatically, please refer to [Cache File Management](#user-content-cache-file-management)**
 
@@ -297,7 +297,7 @@ What if you want to upload a file in some field ? Just like [upload a file from 
 
 #### Upload/Download progress
 
-In `version >= 0.4.2` it is possible to know the upload/download progress. On Anroid, only download progress is supported. See [wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogresseventlistenerpromisernfetchblobresponse) for more information.
+In `version >= 0.4.2` it is possible to know the upload/download progress. On Android, only download progress is supported. See [wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogresseventlistenerpromisernfetchblobresponse) for more information.
 
 ```js
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
