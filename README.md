@@ -64,18 +64,6 @@ protected List<ReactPackage> getPackages() {
 ...
 ```
 
-And this code to `MainActivity.java` (react-native >= 0.29.0)
-
-```diff
-...
-+    @Override
-+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-+        RNPermissionsPackage.onRequestPermissionsResult(requestCode, permissions, grantResults); // very important event callback
-+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-+    }
-...
-```
-
 **Grant Permission to External storage for Android 5.0 or lower**
 
 Mechanism about granting Android permissions has slightly different since Android 6.0 released, please refer to [Official Document](https://developer.android.com/training/permissions/requesting.html).
