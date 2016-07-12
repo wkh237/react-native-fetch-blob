@@ -40,10 +40,9 @@ app.listen(8123, function(err){
     console.log('test server running at port ',8123)
 })
 
-var count = 0
 
 app.use(function(req,res,next){
-  console.log(chalk.green('request url=') + chalk.magenta(req.url), ++count)
+  console.log(chalk.green('request url=') + chalk.magenta(req.url))
   next()
 })
 

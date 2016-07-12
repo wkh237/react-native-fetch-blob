@@ -39,7 +39,7 @@ public class RNFetchBlobUtils {
 
     }
 
-    public static OkHttpClient getUnsafeOkHttpClient() {
+    public static OkHttpClient.Builder getUnsafeOkHttpClient() {
         try {
             // Create a trust manager that does not validate certificate chains
             final TrustManager[] trustAllCerts = new TrustManager[]{
@@ -74,8 +74,7 @@ public class RNFetchBlobUtils {
                 }
             });
 
-            OkHttpClient okHttpClient = builder.build();
-            return okHttpClient;
+            return builder;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

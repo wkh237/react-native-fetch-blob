@@ -13,7 +13,7 @@ import {
   Image,
 } from 'react-native';
 
-const { Assert, Comparer, Info, describe, prop } = RNTest
+const { Assert, Comparer, Info, prop } = RNTest
 
 // test environment variables
 
@@ -25,11 +25,17 @@ prop('styles', {
   image : {
     width: Dimensions.get('window').width*0.9,
     height : Dimensions.get('window').width*0.9,
-    margin :16
+    margin : 16
   }
 })
 
 const { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles, image } = prop()
+
+const describe = RNTest.config({
+  run : true,
+  expand : false,
+  timeout : 5000,
+})
 
 // init
 
@@ -53,10 +59,10 @@ describe('GET image from server', (report, done) => {
 
 
 require('./test-0.1.x-0.4.x')
-require('./test-0.5.1')
-require('./test-0.5.2')
-require('./test-0.6.0')
-require('./test-0.6.2')
-require('./test-0.6.3')
-require('./test-fs')
-require('./test-android')
+// require('./test-0.5.1')
+// require('./test-0.5.2')
+// require('./test-0.6.0')
+// require('./test-0.6.2')
+// require('./test-0.6.3')
+// require('./test-fs')
+// require('./test-android')

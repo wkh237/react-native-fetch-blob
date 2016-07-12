@@ -7,8 +7,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Base64;
 
-import com.RNFetchBlob.Request.FormPartBody;
 import com.RNFetchBlob.Response.RNFetchBlobDefaultResp;
 import com.RNFetchBlob.Response.RNFetchBlobFileResp;
 import com.facebook.react.bridge.Callback;
@@ -16,14 +16,16 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
-import com.loopj.android.http.Base64;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import okhttp3.Call;
 import okhttp3.Interceptor;
@@ -33,6 +35,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /**
  * Created by wkh237 on 2016/6/21.
@@ -42,12 +45,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     enum RequestType  {
         Form,
         SingleFile,
+        WithoutBody,
         Others
     };
 
     enum ResponseType {
-        MemoryCache,
-        FileCache
+        KeepInMemory,
+        FileStorage
     };
 
     MediaType contentType = RNFetchBlobConst.MIME_OCTET;
@@ -76,17 +80,17 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         this.rawRequestBody = body;
         this.rawRequestBodyArray = arrayBody;
 
-        if(this.options.fileCache != null || this.options.path != null)
-            responseType = ResponseType.FileCache;
+        if(this.options.fileCache == true || this.options.path != null)
+            responseType = ResponseType.FileStorage;
         else
-            responseType = ResponseType.MemoryCache;
+            responseType = ResponseType.KeepInMemory;
 
         if (body != null)
             requestType = RequestType.SingleFile;
         else if (arrayBody != null)
             requestType = RequestType.Form;
         else
-            requestType = RequestType.Others;
+            requestType = RequestType.WithoutBody;
     }
 
     @Override
@@ -122,109 +126,112 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         // find cached result if `key` property exists
         String cacheKey = this.taskId;
-        if (this.options.key != null) {
-            cacheKey = RNFetchBlobUtils.getMD5(this.options.key);
-            if (cacheKey == null) {
-                cacheKey = this.taskId;
-            }
-
-            File file = new File(RNFetchBlobFS.getTmpPath(ctx, cacheKey));
-            if (file.exists()) {
-                callback.invoke(null, file.getAbsolutePath());
-                return;
-            }
-        }
+//        if (this.options.key != null) {
+//            cacheKey = RNFetchBlobUtils.getMD5(this.options.key);
+//            if (cacheKey == null) {
+//                cacheKey = this.taskId;
+//            }
+//
+//            File file = new File(RNFetchBlobFS.getTmpPath(ctx, cacheKey));
+//            if (file.exists()) {
+//                callback.invoke(null, file.getAbsolutePath());
+//                return;
+//            }
+//        }
 
         if(this.options.path != null)
-            destPath = this.options.path;
-        else if(this.options.fileCache)
-            destPath = RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey);
+            this.destPath = this.options.path;
+        else if(this.options.fileCache == true)
+            this.destPath = RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey);
 
-        OkHttpClient client;
-        try {
+        OkHttpClient.Builder client;
 
+//        try {
             // use trusty SSL socket
             if (this.options.trusty) {
                 client = RNFetchBlobUtils.getUnsafeOkHttpClient();
             } else {
-                client = new OkHttpClient();
+                client = new OkHttpClient.Builder();
             }
 
             final Request.Builder builder = new Request.Builder();
-
+            try {
+                builder.url(new URL(url));
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
             // set headers
             if (headers != null) {
                 ReadableMapKeySetIterator it = headers.keySetIterator();
                 while (it.hasNextKey()) {
                     String key = it.nextKey();
-                    builder.addHeader(key, headers.getString(key));
+                    String value = headers.getString(key);
+                    builder.header(key, value);
                 }
             }
 
             // set request body
             switch (requestType) {
                 case SingleFile:
+                    InputStream dataStream= buildOctetBody(rawRequestBody);
                     builder.method(method, new RNFetchBlobBody(
                             taskId,
                             RequestType.SingleFile,
                             null,
-                            buildOctetBody(rawRequestBody),
-                            contentLength
+                            dataStream,
+                            contentLength,
+                            RNFetchBlobConst.MIME_OCTET
                     ));
                     break;
                 case Form:
                     builder.method(method, new RNFetchBlobBody(
                             taskId,
                             RequestType.Form,
-                            buildFormBody(rawRequestBodyArray),
+                            rawRequestBodyArray,
                             null,
-                            contentLength
+                            0,
+                            MediaType.parse("multipart/form-data; boundary=RNFetchBlob-" + taskId)
                     ));
-                case Others:
-                    builder.method(method, new RNFetchBlobBody(
-                            taskId,
-                            RequestType.Others,
-                            buildRawBody(rawRequestBody),
-                            null,
-                            contentLength
-                    ));
+                    break;
+                case WithoutBody:
+                    builder.method(method, null);
                     break;
             }
 
             final Request req = builder.build();
 
-            // create response handler
-            client.networkInterceptors().add(new Interceptor() {
+//             create response handler
+            client.addInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
-                    Response originalResponse = chain.proceed(req);
-                    RNFetchBlobDefaultResp exetneded;
-                    switch (responseType) {
-                        case MemoryCache:
-                            exetneded = new RNFetchBlobDefaultResp(
-                                    RNFetchBlob.RCTContext,
-                                    taskId,
-                                    originalResponse.body());
-                            break;
-                        case FileCache:
-                            exetneded = new RNFetchBlobFileResp(
-                                    RNFetchBlob.RCTContext,
-                                    taskId,
-                                    originalResponse.body(),
-                                    destPath);
-                            break;
-                        default:
-                            exetneded = new RNFetchBlobDefaultResp(
-                                    RNFetchBlob.RCTContext,
-                                    taskId,
-                                    originalResponse.body());
-                            break;
-                    }
-                    return originalResponse.newBuilder().body(exetneded).build();
+                Response originalResponse = chain.proceed(req);
+                    ResponseBody extended;
+                switch (responseType) {
+                    case KeepInMemory:
+                        extended = new RNFetchBlobDefaultResp(
+                                RNFetchBlob.RCTContext,
+                                taskId,
+                                originalResponse.body());
+                        break;
+                    case FileStorage:
+                        extended = new RNFetchBlobFileResp(
+                                RNFetchBlob.RCTContext,
+                                taskId,
+                                originalResponse.body(),
+                                destPath);
+                        break;
+                    default:
+                        extended = new RNFetchBlobDefaultResp(
+                                RNFetchBlob.RCTContext,
+                                taskId,
+                                originalResponse.body());
+                        break;
+                }
+                return originalResponse.newBuilder().body(extended).build();
                 }
             });
 
-            client.newCall(req).enqueue(new okhttp3.Callback() {
+            client.build().newCall(req).enqueue(new okhttp3.Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
                     callback.invoke(e.getLocalizedMessage(), null);
@@ -255,9 +262,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             });
 
 
-        } catch (Exception error) {
-            callback.invoke("RNFetchBlob request error: " + error.getMessage() + error.getCause());
-        }
+//        } catch (Exception error) {
+//            error.printStackTrace();
+//            callback.invoke("RNFetchBlob request error: " + error.getMessage() + error.getCause());
+//        }
     }
 
     /**
@@ -266,15 +274,22 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
      */
     private void done(Response resp) {
         switch (responseType) {
-            case MemoryCache:
+            case KeepInMemory:
                 try {
-                    callback.invoke(null, android.util.Base64.encode(resp.body().bytes(), 0));
+                    byte [] b = resp.body().bytes();
+                    callback.invoke(null, android.util.Base64.encodeToString(b,Base64.NO_WRAP));
                 } catch (IOException e) {
                     callback.invoke("RNFetchBlob failed to encode response data to BASE64 string.", null);
                 }
                 break;
-            case FileCache:
-                callback.invoke(null, destPath);
+            case FileStorage:
+                // write chunk
+                try {
+                    resp.body().bytes();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                callback.invoke(null, this.destPath);
                 break;
             default:
                 try {
@@ -294,32 +309,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     RequestBody buildRawBody(String body) {
         if(body != null) {
             this.contentType = MediaType.parse(options.mime);
-        }
-        return RequestBody.create(this.contentType, body);
-    }
-
-    /**
-     * When request body is a multipart form data, build a MultipartBody object.
-     * @param body Body in array format
-     * @return
-     */
-    MultipartBody buildFormBody(ReadableArray body) {
-        if (body != null && (method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put"))) {
-            this.contentType = RNFetchBlobConst.MIME_MULTIPART;
-            MultipartBody.Builder formBuilder = new MultipartBody.Builder();
-            formBuilder.setType(MultipartBody.FORM);
-
-            for (int i = 0; i < body.size(); i++) {
-                ReadableMap map = body.getMap(i);
-                FormPartBody fieldData = new FormPartBody(RNFetchBlob.RCTContext, map);
-                if(fieldData.filename == null)
-                    formBuilder.addFormDataPart(fieldData.fieldName, fieldData.stringBody);
-                else
-                    formBuilder.addFormDataPart(fieldData.fieldName, fieldData.filename, fieldData.partBody);
-            }
-            return formBuilder.build();
+            return RequestBody.create(this.contentType, body);
         }
         return null;
+
     }
 
     /**
@@ -337,10 +330,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             if (body.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
                 String orgPath = body.substring(RNFetchBlobConst.FILE_PREFIX.length());
                 orgPath = RNFetchBlobFS.normalizePath(orgPath);
-                // handle
+                // upload file from assets
                 if (RNFetchBlobFS.isAsset(orgPath)) {
                     try {
                         String assetName = orgPath.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
+                        contentLength = RNFetchBlob.RCTContext.getAssets().openFd(assetName).getLength();
                         return RNFetchBlob.RCTContext.getAssets().open(assetName);
                     } catch (IOException e) {
 //                        e.printStackTrace();
@@ -348,13 +342,18 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 } else {
                     File f = new File(RNFetchBlobFS.normalizePath(orgPath));
                     try {
+                        if(!f.exists())
+                            f.createNewFile();
+                        contentLength = f.length();
                         return new FileInputStream(f);
-                    } catch (FileNotFoundException e) {
+                    } catch (Exception e) {
                         callback.invoke(e.getLocalizedMessage(), null);
                     }
                 }
             } else {
-                return new ByteArrayInputStream(Base64.decode(body, 0));
+                byte[] bytes = Base64.decode(body, 0);
+                contentLength = bytes.length;
+                return new ByteArrayInputStream(bytes);
             }
         }
         return null;

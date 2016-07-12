@@ -66,7 +66,9 @@ describe('Upload multipart/form-data', (report, done) => {
       { name : 'field2', data : 'hello2 !!'}
     ])
   .then((resp) => {
+    console.log(resp.json())
     resp = resp.json()
+
     report(
       <Assert key="check posted form data #1" expect="hello !!" actual={resp.fields.field1}/>,
       <Assert key="check posted form data #2" expect="hello2 !!" actual={resp.fields.field2}/>,

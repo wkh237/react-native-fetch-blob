@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Base64;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
@@ -17,7 +18,6 @@ import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-import com.loopj.android.http.Base64;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -158,7 +158,7 @@ public class RNFetchBlobFS {
 
                     switch (encoding.toLowerCase()) {
                         case "base64" :
-                            promise.resolve(Base64.encodeToString(bytes, 0));
+                            promise.resolve(Base64.encodeToString(bytes, Base64.NO_WRAP));
                             break;
                         case "ascii" :
                             WritableArray asciiResult = Arguments.createArray();
@@ -700,7 +700,7 @@ public class RNFetchBlobFS {
             return data.getBytes(Charset.forName("US-ASCII"));
         }
         else if(encoding.equalsIgnoreCase("base64")) {
-            return Base64.decode(data, 0);
+            return Base64.decode(data, Base64.NO_WRAP);
         }
         else if(encoding.equalsIgnoreCase("utf8")) {
             return data.getBytes(Charset.forName("UTF-8"));

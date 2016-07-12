@@ -121,8 +121,8 @@ function fetch(...args:any):Promise {
       }
     })
 
-    let subscription = emitter.addListener('RNFetchBlobProgress-upload', (e) => {
-      if(e.taskId === taskId && promise.onProgress) {
+    let subscriptionUpload = emitter.addListener('RNFetchBlobProgress-upload', (e) => {
+      if(e.taskId === taskId && promise.onUploadProgress) {
         promise.onUploadProgress(e.written, e.total)
       }
     })
@@ -132,6 +132,7 @@ function fetch(...args:any):Promise {
 
       // task done, remove event listener
       subscription.remove()
+      subscriptionUpload.remove()
       if(err)
         reject(new Error(err, data))
       else {

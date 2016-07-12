@@ -27,8 +27,8 @@ const  dirs = RNFetchBlob.fs.dirs
 
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
-describe('massive HTTP request', (report, done) => {
-  try {
+false && describe('massive HTTP request', (report, done) => {
+  return
   let promises = []
   let progress = []
   let begin = Date.now()
@@ -61,8 +61,66 @@ describe('massive HTTP request', (report, done) => {
     // Timer.clearInterval(it)
     done()
   })
-} catch(err) {
-  console.log(err)
-}
 
+})
+
+RNTest.config({
+  group : '0.7.0',
+  run : true,
+  expand : false,
+  timeout : 600000,
+})('Upload and download large file', (report, done) => {
+  let filename = '22mb-dummy-' + Date.now()
+  let begin = -1
+  let begin2 = -1
+  let deb = Date.now()
+  RNFetchBlob.config({
+    fileCache : true
+  })
+  .fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`)
+  .progress((now, total) => {
+    if(begin === -1)
+      begin = Date.now()
+    if(Date.now() - deb < 1000)
+      return
+    deb = Date.now()
+    report(<Info uid="200" key="progress">
+      <Text>
+        {`download ${now} / ${total} bytes (${Math.floor(now / (Date.now() - begin))} kb/s)`}
+      </Text>
+    </Info>)
+  })
+  .then((res) => {
+    try {
+    deb = Date.now()
+    // let promise =  RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/raw`, {
+    let promise =  RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+      Authorization : `Bearer ${DROPBOX_TOKEN}`,
+      'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
+      'Content-Type' : 'application/octet-stream',
+    }, RNFetchBlob.wrap(res.path()))
+    promise.uploadProgress((now, total) => {
+      if(Date.now() - deb < 1000)
+        return
+      deb = Date.now()
+      if(begin2 === -1)
+        begin2 = Date.now()
+      let speed = Math.floor(now / (Date.now() - begin2))
+      report(<Info uid="100"  key="progress">
+        <Text>
+          {`upload ${now} / ${total} bytes (${speed} kb/s)`}
+          {` ${Math.floor((total-now)/speed/1000)} seconds left`}
+        </Text>
+      </Info>)
+    })
+    return promise
+  } catch(err) { console.log(err) }
+  })
+  .then((res) => {
+    report(<Assert
+      key="upload should success without crashing app"
+      expect={filename}
+      actual={res.json().name}/>)
+    done()
+  })
 })
