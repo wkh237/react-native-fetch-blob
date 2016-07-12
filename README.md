@@ -44,6 +44,10 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
+### For React Native >= 0.29
+
+The Android application template has changed in [react-native@0.29](https://github.com/facebook/react-native/releases/tag/v0.29.0) our rnpm link script may not working properly, if you encounters some error, please follow these instructions, Thanks @dphov, also see related issue  [#51](https://github.com/wkh237/react-native-fetch-blob/issues/51)
+
 Add this code to `MainApplication.java`
 
 ```diff
