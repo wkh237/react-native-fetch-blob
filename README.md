@@ -52,12 +52,12 @@ Add this code to `MainApplication.java`
 
 ```diff
 ...
-+ import com.RNFetchBlob.RNFetchBlobPackage;
++ import com.RNFetchBlob.RNFetchBlobPackage;                                                                                 
 ...
 protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
-+          new RNFetchBlobPackage()
++          new RNFetchBlobPackage()                                                                                         
       );
     }
   };
@@ -569,6 +569,7 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.6.3 | Fix performance issue on IOS, increase max concurrent request limitation from 1. |
 | 0.6.2 | Add support of asset file and camera roll files, Support custom MIME type when sending multipart request, thanks @smartt |
 | 0.6.1 | Fix #37 progress report API issue on IOS |
 | 0.6.0 | Add readFile and writeFile API for easier file access, also added Android download manager support. |
