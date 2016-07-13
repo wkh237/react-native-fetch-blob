@@ -1,4 +1,4 @@
-# react-native-fetch-blob [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/express.svg?maxAge=2592000&style=flat-square)]() [![npm](https://img.shields.io/badge/inProgress-0.7.0-yellow.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/milestones)
+# react-native-fetch-blob ![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/express.svg?maxAge=2592000&style=flat-square)]() [![npm](https://img.shields.io/badge/inProgress-0.7.0-yellow.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/milestones)
 
 A module provides upload, download, and files access API. Supports file stream read/write for process large files.
 
@@ -44,11 +44,31 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
+### For React Native >= 0.29
+
+The Android application template has changed in [react-native@0.29](https://github.com/facebook/react-native/releases/tag/v0.29.0) our rnpm link script may not working properly, if you encounters some error, please follow these instructions, Thanks @dphov, also see related issue  [#51](https://github.com/wkh237/react-native-fetch-blob/issues/51)
+
+Add this code to `MainApplication.java`
+
+```diff
+...
++ import com.RNFetchBlob.RNFetchBlobPackage;
+...
+protected List<ReactPackage> getPackages() {
+      return Arrays.<ReactPackage>asList(
+          new MainReactPackage(),
++          new RNFetchBlobPackage()
+      );
+    }
+  };
+...
+```
+
 **Grant Permission to External storage for Android 5.0 or lower**
 
-Mechanism about granting Android permissions has slightly different since Android 6.0 released, please refer to [Officail Document](https://developer.android.com/training/permissions/requesting.html).
+Mechanism about granting Android permissions has slightly different since Android 6.0 released, please refer to [Official Document](https://developer.android.com/training/permissions/requesting.html).
 
-If you're going to access external storage (say, SD card storage) for `Android 5.0` (or lower) devices, you might have to add the following line to `AndroidManifetst.xml`.
+If you're going to access external storage (say, SD card storage) for `Android 5.0` (or lower) devices, you might have to add the following line to `AndroidManifest.xml`.
 
 ```diff
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -110,7 +130,7 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
 
 #### Download to storage directly
 
-The simplest way is give a `fileCach` option to config, and set it to `true`. This will let the incoming response data stored in a temporary path **wihout** any file extension.
+The simplest way is give a `fileCache` option to config, and set it to `true`. This will let the incoming response data stored in a temporary path **without** any file extension.
 
 **These files won't be removed automatically, please refer to [Cache File Management](#user-content-cache-file-management)**
 
@@ -149,7 +169,7 @@ RNFetchBlob
     console.log('The file saved to ', res.path())
     // Beware that when using a file path as Image source on Android,
     // you must prepend "file://"" before the file path
-    imageView = <Image source={{ uri : Platform.OS === 'android' ? 'file://' : '' + res.path() }}/>
+    imageView = <Image source={{ uri : Platform.OS === 'android' ? 'file://' + res.path()  : '' + res.path() }}/>
   })
 ```
 
@@ -297,7 +317,7 @@ What if you want to upload a file in some field ? Just like [upload a file from 
 
 #### Upload/Download progress
 
-In `version >= 0.4.2` it is possible to know the upload/download progress. On Anroid, only download progress is supported. See [wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogresseventlistenerpromisernfetchblobresponse) for more information.
+In `version >= 0.4.2` it is possible to know the upload/download progress. On Android, only download progress is supported. See [wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogresseventlistenerpromisernfetchblobresponse) for more information.
 
 ```js
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
@@ -401,7 +421,7 @@ RNFetchBlob.config({
 
 File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However we realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need these APIs for there cases.
 
-Before get started using file APIs we recommend read [Differences between File Source](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#differences-between-file-source) first.
+Before start using file APIs, we recommend read [Differences between File Source](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#differences-between-file-source) first.
 
 File Access APIs
 - [asset (0.6.2)](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#assetfilenamestringstring)
