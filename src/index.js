@@ -1,7 +1,7 @@
 /**
  * @name react-native-fetch-blob
  * @author wkh237
- * @version 0.5.0
+ * @version 0.7.0
  * @flow
  */
 
@@ -179,6 +179,8 @@ class FetchBlobResponse {
   json : () => any;
   base64 : () => any;
   flush : () => void;
+  session : (name:string) => RNFetchBlobSession | null;
+  readFile : (encode: 'base64' | 'utf8' | 'ascii') => ?Promise;
   readStream : (
     encode: 'utf8' | 'ascii' | 'base64',
   ) => RNFetchBlobStream | null;
@@ -223,7 +225,10 @@ class FetchBlobResponse {
      * @return {Promise}
      */
     this.flush = () => {
-      return unlink(this.path())
+      let path = this.path()
+      if(!path)
+        return
+      return unlink(path)
     }
     /**
      * get path of response temp file
@@ -234,7 +239,7 @@ class FetchBlobResponse {
         return this.data
       return null
     }
-    this.session = (name) => {
+    this.session = (name:string):RNFetchBlobSession | null => {
       if(this.type === 'path')
         return session(name).add(this.data)
       else {

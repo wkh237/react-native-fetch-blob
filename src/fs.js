@@ -1,7 +1,7 @@
 /**
  * @name react-native-fetch-blob-fs
  * @author wkh237
- * @version 0.1.0
+ * @version 0.7.0
  * @flow
  */
 
@@ -143,7 +143,7 @@ function mkdir(path:string):Promise {
  * @param  {'base64' | 'utf8' | 'ascii'} encoding Encoding of read stream.
  * @return {Promise<Array<number> | string>}
  */
-function readFile(path:string, encoding:string, bufferSize:number):Promise<any> {
+function readFile(path:string, encoding:string, bufferSize:?number):Promise<any> {
   if(typeof path !== 'string')
     return Promise.reject('Invalid argument "path" ')
   return RNFetchBlob.readFile(path, encoding)
