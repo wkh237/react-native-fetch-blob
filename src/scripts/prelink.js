@@ -9,11 +9,11 @@ if (!hasNecessaryFile) {
   throw 'RNFetchBlob could not found link Android automatically, some files could not be found.'
 }
 
-var package = fs.readFileSync(PACKAGE_JSON);
+var package = JSON.parse(fs.readFileSync(PACKAGE_JSON));
 var APP_NAME = package.name;
 var APPLICATION_MAIN = process.cwd() + '/android/app/src/main/java/com/' + APP_NAME.toLocaleLowerCase() + '/MainApplication.java';
 
-if(!fs.existsSync('APPLICATION_MAIN')) {
+if(!fs.existsSync(APPLICATION_MAIN)) {
   throw 'RNFetchBlob could not found link Android automatically, MainApplication.java not found in path : ' + APPLICATION_MAIN
 }
 
@@ -23,7 +23,12 @@ console.log('RNFetchBlob detected app version .. ' + VERSION);
 if(VERSION >= 0.29) {
   console.log('RNFetchBlob patching MainApplication.java .. ');
   var main = fs.readFileSync(APPLICATION_MAIN);
-  main = main.replace('new MainReactPackage()', 'new RNFetchBlobPackage(),\n           new MainReactPackage()');
+  if(String(main).match('new RNFetchBlobPackage()') !== null) {
+    console.log('skipped');
+    return
+  }
+  main = String(main).replace('new MainReactPackage()', 'new RNFetchBlobPackage(),\n           new MainReactPackage()');
+  main = String(main).replace('import com.facebook.react.ReactApplication;', 'import com.facebook.react.ReactApplication;\nimport com.RNFetchBlob.RNFetchBlobPackage;')
   fs.writeFileSync(APPLICATION_MAIN, main);
   console.log('RNFetchBlob patching MainApplication.java .. ok')
 
