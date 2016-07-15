@@ -44,9 +44,9 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
-### For React Native >= 0.29
+### For React Native 0.29.0
 
-The Android application template has changed in [react-native@0.29](https://github.com/facebook/react-native/releases/tag/v0.29.0) our rnpm link script may not working properly, if you encounters some error, please follow these instructions, Thanks @dphov, also see related issue  [#51](https://github.com/wkh237/react-native-fetch-blob/issues/51)
+If you're using react-native `0.29.0`, the package won't be able to link through `rnpm link`, and you might see the error screen similar to [#51](https://github.com/wkh237/react-native-fetch-blob/issues/51), this is because a [a bug in 0.29.0](https://github.com/facebook/react-native/commit/4dabb575b1b311ba541fae7eabbd49f08b5391b3), someone has already fixed  it, so you can upgrade to `0.29.1` to fix it, or just manually add the package yourself.
 
 Add this code to `MainApplication.java`
 
