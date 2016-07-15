@@ -569,6 +569,7 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.6.4 | Fix rnpm link script. |
 | 0.6.3 | Fix performance issue on IOS, increase max concurrent request limitation from 1. |
 | 0.6.2 | Add support of asset file and camera roll files, Support custom MIME type when sending multipart request, thanks @smartt |
 | 0.6.1 | Fix #37 progress report API issue on IOS |
