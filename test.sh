@@ -40,6 +40,9 @@ cd "${TEST_APP_PATH}"
 npm install --save "${CWD}/src"
 rnpm link
 
+# copy android assets
+cp ./test/assets/ ./RNFetchBlobTest/android/app/src/main/
+
 # start RN
 cd "${TEST_APP_PATH}"
 if [ "$#" == 4 ]; then
