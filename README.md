@@ -2,7 +2,7 @@
 
 A module provides upload, download, and files access API. Supports file stream read/write for process large files.
 
-**Why do we need this**
+**Rationale**
 
 React Native does not support `Blob` object at this moment, which means if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [facebook/react-native#854](https://github.com/facebook/react-native/issues/854).
 
@@ -46,7 +46,7 @@ rnpm link
 
 ### For React Native 0.29.0
 
-If you're using react-native `0.29.0`, the package won't be able to link through `rnpm link`, and you might see the error screen similar to [#51](https://github.com/wkh237/react-native-fetch-blob/issues/51), this is because a [a bug in 0.29.0](https://github.com/facebook/react-native/commit/4dabb575b1b311ba541fae7eabbd49f08b5391b3), someone has already fixed  it, so you can upgrade to `0.29.1` to fix it, or just manually add the package yourself.
+> If you're using react-native `0.29.0`, the package won't be able to link through `rnpm link`, and you might see the error screen similar to [#51](https://github.com/wkh237/react-native-fetch-blob/issues/51), this is because a [a bug in 0.29.0](https://github.com/facebook/react-native/commit/4dabb575b1b311ba541fae7eabbd49f08b5391b3), someone has already fixed  it, we recommended to upgrade to `0.29.1`, or you can just manually add the package yourself.
 
 Add this code to `MainApplication.java`
 
