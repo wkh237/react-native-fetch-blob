@@ -130,7 +130,7 @@ describe('PUT request test', (report, done) => {
       { name : 'field1', data : 'hello !!'},
       { name : 'field2', data : 'hello2 !!'}
     ])
-    .progress((written, total) => {
+    .uploadProgress((written, total) => {
       actual = written
       expect = total
     })

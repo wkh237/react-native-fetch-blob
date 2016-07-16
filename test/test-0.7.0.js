@@ -17,7 +17,7 @@ import {
 const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
-  group : '0.6.3',
+  group : '0.7.0',
   run : true,
   expand : true,
   timeout : 300000000,
@@ -27,33 +27,7 @@ const  dirs = RNFetchBlob.fs.dirs
 
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
-false && describe('massive HTTP request', (report, done) => {
-
-  let promises = []
-  let progress = []
-  let begin = Date.now()
-  for(let i=0; i<500;i++) {
-    let p = RNFetchBlob
-    .config({fileCache : true})
-    .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
-    promises.push(p)
-  }
-  Promise.all(promises).then((resps) => {
-    for(let i in resps) {
-      fs.unlink(resps[i].path())
-    }
-    report(<Info key={`time = ${(Date.now() - begin) / 1000} sec`}></Info>)
-    done()
-  })
-
-})
-
-RNTest.config({
-  group : '0.7.0',
-  run : true,
-  expand : false,
-  timeout : 600000,
-})('Upload and download large file', (report, done) => {
+describe('Upload and download large file', (report, done) => {
   let filename = '22mb-dummy-' + Date.now()
   let begin = -1
   let begin2 = -1

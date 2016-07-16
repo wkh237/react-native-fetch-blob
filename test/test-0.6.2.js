@@ -32,6 +32,7 @@ describe('upload asset from camera roll', (report, done) => {
   let tick = Date.now()
   CameraRoll.getPhotos({first : 10})
     .then((resp) => {
+      console.log('cameraroll', JSON.stringify(resp))
       let url = resp.edges[0].node.image.uri
       photo = url
       return RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
