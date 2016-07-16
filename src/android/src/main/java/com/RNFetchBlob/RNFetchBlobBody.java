@@ -1,6 +1,8 @@
 package com.RNFetchBlob;
 
+import android.net.Uri;
 import android.util.Base64;
+import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -12,6 +14,7 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -88,7 +91,7 @@ public class RNFetchBlobBody extends RequestBody{
                                     InputStream in = ctx.getAssets().open(assetName);
                                     pipeStreamToSink(in, sink);
                                 } catch (IOException e) {
-
+                                    Log.e("RNFetchBlob", "Failed to create form data asset :" + orgPath + ", " + e.getLocalizedMessage() );
                                 }
                             }
                             // data from normal files
@@ -97,6 +100,9 @@ public class RNFetchBlobBody extends RequestBody{
                                 if(file.exists()) {
                                     FileInputStream fs = new FileInputStream(file);
                                     pipeStreamToSink(fs, sink);
+                                }
+                                else {
+                                    Log.e("RNFetchBlob", "Failed to create form data from path :" + orgPath + "file not exists.");
                                 }
                             }
                         }
@@ -127,20 +133,6 @@ public class RNFetchBlobBody extends RequestBody{
                 break;
             case SingleFile:
                 pipeStreamToSink(requestStream, sink);
-//                byte [] chunk = new byte[10240];
-//                int read = requestStream.read(chunk, 0, 10240);
-//                sink.write(chunk, 0, read);
-//                bytesWritten += read;
-//                while(read > 0) {
-//                    read = requestStream.read(chunk, 0, 10240);
-//                    if(read > 0) {
-//                        sink.write(chunk, 0, read);
-//                        bytesWritten += read;
-//                        emitUploadProgress(bytesWritten, contentLength);
-//                    }
-//
-//                }
-//                requestStream.close();
                 break;
         }
         buffer.flush();
@@ -149,7 +141,9 @@ public class RNFetchBlobBody extends RequestBody{
     private void pipeStreamToSink(InputStream stream, BufferedSink sink) throws IOException {
         byte [] chunk = new byte[10240];
         int read = stream.read(chunk, 0, 10240);
-        sink.write(chunk, 0, read);
+        if(read > 0) {
+            sink.write(chunk, 0, read);
+        }
         bytesWritten += read;
         while(read > 0) {
             read = stream.read(chunk, 0, 10240);
@@ -174,6 +168,8 @@ public class RNFetchBlobBody extends RequestBody{
                 .emit(RNFetchBlobConst.EVENT_UPLOAD_PROGRESS, args);
     }
 
+
+
     /**
      * Compute a proximate content length for form data
      * @return
@@ -191,16 +187,18 @@ public class RNFetchBlobBody extends RequestBody{
                 if (data.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
                     String orgPath = data.substring(RNFetchBlobConst.FILE_PREFIX.length());
                     orgPath = RNFetchBlobFS.normalizePath(orgPath);
-                    // path starts with content://
+                    // path starts with asset://
                     if (RNFetchBlobFS.isAsset(orgPath)) {
                         try {
                             String assetName = orgPath.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
-                            long length = ctx.getAssets().openFd(assetName).getLength();
+                            long length = ctx.getAssets().open(assetName).available();
                             total += length;
                         } catch (IOException e) {
 
                         }
-                    } else {
+                    }
+                    // general files
+                    else {
                         File file = new File(RNFetchBlobFS.normalizePath(orgPath));
                         total += file.length();
                     }

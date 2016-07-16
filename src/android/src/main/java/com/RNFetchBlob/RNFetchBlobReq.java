@@ -2,6 +2,7 @@ package com.RNFetchBlob;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -116,9 +117,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     String key = it.nextKey();
                     req.addRequestHeader(key, headers.getString(key));
                 }
-                DownloadManager dm = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
+                Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
+                DownloadManager dm = (DownloadManager) appCtx.getSystemService(Context.DOWNLOAD_SERVICE);
                 downloadManagerId = dm.enqueue(req);
-                ctx.registerReceiver(this, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+                appCtx.registerReceiver(this, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
                 return;
             }
 
@@ -146,7 +148,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         OkHttpClient.Builder client;
 
-//        try {
+        try {
             // use trusty SSL socket
             if (this.options.trusty) {
                 client = RNFetchBlobUtils.getUnsafeOkHttpClient();
@@ -173,7 +175,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             // set request body
             switch (requestType) {
                 case SingleFile:
-                    InputStream dataStream= buildOctetBody(rawRequestBody);
+                    InputStream dataStream = buildOctetBody(rawRequestBody);
                     builder.method(method, new RNFetchBlobBody(
                             taskId,
                             RequestType.SingleFile,
@@ -200,7 +202,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
             final Request req = builder.build();
 
-//             create response handler
+//          create response handler
             client.addInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
@@ -262,10 +264,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             });
 
 
-//        } catch (Exception error) {
-//            error.printStackTrace();
-//            callback.invoke("RNFetchBlob request error: " + error.getMessage() + error.getCause());
-//        }
+        } catch (Exception error) {
+            error.printStackTrace();
+            callback.invoke("RNFetchBlob request error: " + error.getMessage() + error.getCause());
+        }
     }
 
     /**
@@ -283,11 +285,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
                 break;
             case FileStorage:
-                // write chunk
-                try {
+                try{
                     resp.body().bytes();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (Exception ignored) {
+
                 }
                 callback.invoke(null, this.destPath);
                 break;
@@ -364,17 +365,18 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
+            Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
             long id = intent.getExtras().getLong(DownloadManager.EXTRA_DOWNLOAD_ID);
             if (id == this.downloadManagerId) {
                 DownloadManager.Query query = new DownloadManager.Query();
                 query.setFilterById(downloadManagerId);
-                DownloadManager dm = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
+                DownloadManager dm = (DownloadManager) appCtx.getSystemService(Context.DOWNLOAD_SERVICE);
                 dm.query(query);
                 Cursor c = dm.query(query);
                 if (c.moveToFirst()) {
                     String contentUri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
                     Uri uri = Uri.parse(contentUri);
-                    Cursor cursor = ctx.getContentResolver().query(uri, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
+                    Cursor cursor = appCtx.getContentResolver().query(uri, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
                     if (cursor != null) {
                         cursor.moveToFirst();
                         String filePath = cursor.getString(0);

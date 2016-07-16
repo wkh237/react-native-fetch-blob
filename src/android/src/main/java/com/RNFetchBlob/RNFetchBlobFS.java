@@ -1,5 +1,7 @@
 package com.RNFetchBlob;
 
+import android.app.LoaderManager;
+import android.content.ContentResolver;
 import android.content.CursorLoader;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
@@ -7,6 +9,7 @@ import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Base64;
 
@@ -779,15 +782,18 @@ public class RNFetchBlobFS {
             return path;
         }
         else if (path.startsWith(RNFetchBlobConst.FILE_PREFIX_CONTENT)) {
-            String[] proj = { MediaStore.Images.Media.DATA };
-            Uri contentUri = Uri.parse(path);
-            CursorLoader loader = new CursorLoader(RNFetchBlob.RCTContext, contentUri, proj, null, null, null);
-            Cursor cursor = loader.loadInBackground();
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            String result = cursor.getString(column_index);
-            cursor.close();
-            return result;
+            String filePath = null;
+            Uri uri = Uri.parse(path);
+            if (uri != null && "content".equals(uri.getScheme())) {
+                ContentResolver resolver = RNFetchBlob.RCTContext.getContentResolver();
+                Cursor cursor = resolver.query(uri, new String[] { MediaStore.Images.ImageColumns.DATA }, null, null, null);
+                cursor.moveToFirst();
+                filePath = cursor.getString(0);
+                cursor.close();
+            } else {
+                filePath = uri.getPath();
+            }
+            return filePath;
         }
         return path;
     }
