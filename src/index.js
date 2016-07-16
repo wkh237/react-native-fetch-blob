@@ -149,16 +149,18 @@ function fetch(...args:any):Promise {
 
   })
 
-  // extend Promise object, add a `progress` method for register progress event
-  // handler.
+  // extend Promise object, add `progress`, `uploadProgress`, and `cancel`
+  // method for register progress event handler and cancel request.
   promise.progress = (fn) => {
     promise.onProgress = fn
     return promise
   }
-
   promise.uploadProgress = (fn) => {
     promise.onUploadProgress = fn
     return promise
+  }
+  promise.cancel = (fn) => {
+    RNFetchBlob.cancelRequest(taskId, fn)
   }
 
   return promise

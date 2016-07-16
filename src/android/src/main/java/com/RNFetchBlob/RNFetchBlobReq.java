@@ -182,13 +182,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             // set request body
             switch (requestType) {
                 case SingleFile:
-                    InputStream dataStream = buildOctetBody(rawRequestBody);
                     builder.method(method, new RNFetchBlobBody(
                             taskId,
                             RequestType.SingleFile,
-                            null,
-                            dataStream,
-                            contentLength,
+                            rawRequestBody,
                             RNFetchBlobConst.MIME_OCTET
                     ));
                     break;
@@ -197,8 +194,6 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                             taskId,
                             RequestType.Form,
                             rawRequestBodyArray,
-                            null,
-                            0,
                             MediaType.parse("multipart/form-data; boundary=RNFetchBlob-" + taskId)
                     ));
                     break;
@@ -324,51 +319,6 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         if(body != null) {
             this.contentType = MediaType.parse(options.mime);
             return RequestBody.create(this.contentType, body);
-        }
-        return null;
-
-    }
-
-    /**
-     * Get InputStream of request body when request body contains a single file.
-     *
-     * @param body Body in string format
-     * @return InputStream When there's no request body, returns null
-     */
-    InputStream buildOctetBody(String body) {
-        // set body for POST and PUT
-        if (body != null && (method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put"))) {
-            this.contentType = RNFetchBlobConst.MIME_OCTET;
-            byte[] blob;
-            // upload from storage
-            if (body.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
-                String orgPath = body.substring(RNFetchBlobConst.FILE_PREFIX.length());
-                orgPath = RNFetchBlobFS.normalizePath(orgPath);
-                // upload file from assets
-                if (RNFetchBlobFS.isAsset(orgPath)) {
-                    try {
-                        String assetName = orgPath.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
-                        contentLength = RNFetchBlob.RCTContext.getAssets().openFd(assetName).getLength();
-                        return RNFetchBlob.RCTContext.getAssets().open(assetName);
-                    } catch (IOException e) {
-//                        e.printStackTrace();
-                    }
-                } else {
-                    File f = new File(RNFetchBlobFS.normalizePath(orgPath));
-                    try {
-                        if(!f.exists())
-                            f.createNewFile();
-                        contentLength = f.length();
-                        return new FileInputStream(f);
-                    } catch (Exception e) {
-                        callback.invoke(e.getLocalizedMessage(), null);
-                    }
-                }
-            } else {
-                byte[] bytes = Base64.decode(body, 0);
-                contentLength = bytes.length;
-                return new ByteArrayInputStream(bytes);
-            }
         }
         return null;
 

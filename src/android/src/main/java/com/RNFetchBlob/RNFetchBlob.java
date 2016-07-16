@@ -151,8 +151,13 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void cancel(String taskId) {
-        RNFetchBlobReq.cancelTask(taskId);
+    public void cancelRequest(String taskId, Callback callback) {
+        try {
+            RNFetchBlobReq.cancelTask(taskId);
+            callback.invoke(null, taskId);
+        } catch (Exception ex) {
+            callback.invoke(ex.getLocalizedMessage(), null);
+        }
     }
 
     @ReactMethod
