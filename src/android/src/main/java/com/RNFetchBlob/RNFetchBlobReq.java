@@ -2,7 +2,6 @@ package com.RNFetchBlob;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -21,17 +20,15 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 
 import okhttp3.Call;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
-import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -54,6 +51,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         KeepInMemory,
         FileStorage
     };
+
+    static HashMap<String, Call> taskTable = new HashMap<>();
 
     MediaType contentType = RNFetchBlobConst.MIME_OCTET;
     ReactApplicationContext ctx;
@@ -92,6 +91,14 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             requestType = RequestType.Form;
         else
             requestType = RequestType.WithoutBody;
+    }
+
+    public static void cancelTask(String taskId) {
+        if(taskTable.containsKey(taskId)) {
+            Call call = taskTable.get(taskId);
+            call.cancel();
+            taskTable.remove(taskId);
+        }
     }
 
     @Override
@@ -146,14 +153,14 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         else if(this.options.fileCache == true)
             this.destPath = RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey);
 
-        OkHttpClient.Builder client;
+        OkHttpClient.Builder clientBuilder;
 
         try {
             // use trusty SSL socket
             if (this.options.trusty) {
-                client = RNFetchBlobUtils.getUnsafeOkHttpClient();
+                clientBuilder = RNFetchBlobUtils.getUnsafeOkHttpClient();
             } else {
-                client = new OkHttpClient.Builder();
+                clientBuilder = new OkHttpClient.Builder();
             }
 
             final Request.Builder builder = new Request.Builder();
@@ -203,7 +210,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             final Request req = builder.build();
 
 //          create response handler
-            client.addInterceptor(new Interceptor() {
+            clientBuilder.addInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
                 Response originalResponse = chain.proceed(req);
@@ -233,7 +240,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
             });
 
-            client.build().newCall(req).enqueue(new okhttp3.Callback() {
+            OkHttpClient client = clientBuilder.build();
+            Call call = client.newCall(req);
+            taskTable.put(taskId, call);
+            call.enqueue(new okhttp3.Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
                     callback.invoke(e.getLocalizedMessage(), null);
@@ -266,6 +276,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         } catch (Exception error) {
             error.printStackTrace();
+            taskTable.remove(taskId);
             callback.invoke("RNFetchBlob request error: " + error.getMessage() + error.getCause());
         }
     }
@@ -300,6 +311,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
                 break;
         }
+        if(taskTable.containsKey(taskId))
+            taskTable.remove(taskId);
     }
 
     /**

@@ -151,6 +151,11 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void cancel(String taskId) {
+        RNFetchBlobReq.cancelTask(taskId);
+    }
+
+    @ReactMethod
     public void fetchBlob(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, final Callback callback) {
         new RNFetchBlobReq(options, taskId, method, url, headers, body, null, callback).run();
     }
