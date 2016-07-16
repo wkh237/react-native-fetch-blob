@@ -56,6 +56,13 @@ app.use('/upload-form', function(req, res, next) {
   // })
 })
 
+var count = 0
+
+app.use(function(req, res, next) {
+  console.log(req.url, ++count);
+  next();
+})
+
 app.use(upload.any())
 app.use('/public', express.static('./public'))
 // for redirect test
