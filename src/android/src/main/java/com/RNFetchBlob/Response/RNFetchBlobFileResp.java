@@ -68,6 +68,7 @@ public class RNFetchBlobFileResp extends ResponseBody {
             count++;
             byte [] bytes = new byte[(int) byteCount];
             long read = originalBody.byteStream().read(bytes, 0, (int) byteCount);
+            bytesUploaded += read > 0 ? read : 0;
             if(read > 0) {
                 bytesUploaded += read;
                 ofStream.write(bytes, 0, (int) read);

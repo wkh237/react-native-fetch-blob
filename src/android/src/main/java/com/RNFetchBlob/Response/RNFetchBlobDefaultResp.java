@@ -61,8 +61,9 @@ public class RNFetchBlobDefaultResp extends ResponseBody {
 
         @Override
         public long read(Buffer sink, long byteCount) throws IOException {
-            bytesRead += byteCount;
+
             long read =  mOriginalSource.read(sink, byteCount);
+            bytesRead += read;
             WritableMap args = Arguments.createMap();
             args.putString("taskId", mTaskId);
             args.putString("written", String.valueOf(bytesRead));
