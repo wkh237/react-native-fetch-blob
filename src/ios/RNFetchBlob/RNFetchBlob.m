@@ -347,6 +347,12 @@ RCT_EXPORT_METHOD(getEnvironmentDirs:(RCTResponseSenderBlock) callback) {
                ]);
 }
 
+RCT_EXPORT_METHOD(cancelRequest:(NSString *)taskId callback:(RCTResponseSenderBlock)callback) {
+    [RNFetchBlobNetwork cancelRequest:taskId];
+    callback(@[[NSNull null], taskId]);
+    
+}
+
 #pragma mark RNFetchBlob private methods
 
 

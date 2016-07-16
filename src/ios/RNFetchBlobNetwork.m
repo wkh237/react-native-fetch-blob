@@ -21,6 +21,8 @@
 //
 ////////////////////////////////////////
 
+NSMutableDictionary * taskTable;
+
 @interface RNFetchBlobNetwork ()
 {
     BOOL * respFile;
@@ -52,6 +54,9 @@ NSOperationQueue *taskQueue;
     self = [super init];
     if(taskQueue == nil) {
         taskQueue = [[NSOperationQueue alloc] init];
+    }
+    if(taskTable == nil) {
+        taskTable = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
@@ -109,7 +114,7 @@ NSOperationQueue *taskQueue;
         respFile = NO;
     }
     NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
-    
+    [taskTable setValue:task forKey:taskId];
     [task resume];
     
     // network status indicator
@@ -189,13 +194,20 @@ NSOperationQueue *taskQueue;
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didSendBodyData:(int64_t)bytesSent totalBytesSent:(int64_t)totalBytesWritten totalBytesExpectedToSend:(int64_t)totalBytesExpectedToWrite
 {
     [self.bridge.eventDispatcher
-     sendDeviceEventWithName:@"RNFetchBlobProgress"
+     sendDeviceEventWithName:@"RNFetchBlobProgress-upload"
      body:@{
             @"taskId": taskId,
             @"written": [NSString stringWithFormat:@"%d", totalBytesWritten],
             @"total": [NSString stringWithFormat:@"%d", bodyLength]
             }
      ];
+}
+
++ (void) cancelRequest:(NSString *)taskId
+{
+    NSURLSessionDataTask * task = (NSURLSessionDataTask *)[taskTable objectForKey:taskId];
+    if(task != nil && task.state == NSURLSessionTaskStateRunning)
+        [task cancel];
 }
 
 //- (void) application:(UIApplication *)application handleEventsForBackgroundURLSession:(NSString *)identifier completionHandler:(void (^)())completionHandler {

@@ -160,6 +160,7 @@ function fetch(...args:any):Promise {
     return promise
   }
   promise.cancel = (fn) => {
+    fn = fn || function(){}
     RNFetchBlob.cancelRequest(taskId, fn)
   }
 

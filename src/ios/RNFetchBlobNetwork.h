@@ -35,6 +35,7 @@ typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse 
 - (void) sendRequest;
 
 + (NSMutableDictionary  * _Nullable ) normalizeHeaders:(NSDictionary * _Nullable)headers;
++ (void) cancelRequest:(NSString *)taskId;
 - (void) sendRequest:(NSDictionary  * _Nullable )options contentLength:(long)contentLength bridge:(RCTBridge * _Nullable)bridgeRef taskId:(NSString * _Nullable)taskId withRequest:(NSURLRequest * _Nullable)req callback:(_Nullable RCTResponseSenderBlock) callback;
 
 
