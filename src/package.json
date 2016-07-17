@@ -15,6 +15,7 @@
     "blob",
     "fs",
     "upload",
+    "file",
     "download",
     "filestream",
     "image header"
