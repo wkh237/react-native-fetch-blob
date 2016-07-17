@@ -3,7 +3,7 @@
 A module provides upload, download, and files access API. Supports file stream read/write for process large files.
 
 ## TOC
-* [Rationale](#user-content-rationale)
+* [About](#user-content-about)
 * [Backward Compatible](#user-content-backward-compatible)
 * [Installation](#user-content-installation)
 * [Recipes](#user-content-recipes)
@@ -17,9 +17,10 @@ A module provides upload, download, and files access API. Supports file stream r
  * [Manage cached files](#user-content-cache-file-management)
  * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
+* [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting)
 * [Development](#user-content-development)
  
-## Rationale
+## About
 
 React Native does not support `Blob` object at this moment, which means if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [facebook/react-native#854](https://github.com/facebook/react-native/issues/854).
 
@@ -64,6 +65,7 @@ protected List<ReactPackage> getPackages() {
   };
 ...
 ```
+> If you still having problem on installing this package, please check the [trouble shooting page](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting) or [file an issue](https://github.com/wkh237/react-native-fetch-blob/issues/new)
 
 **Grant Permission to External storage for Android 5.0 or lower**
 
