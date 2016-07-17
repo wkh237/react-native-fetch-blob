@@ -1,6 +1,7 @@
 package com.RNFetchBlob.Response;
 
-import com.RNFetchBlob.RNFetchBlob;
+import android.util.Log;
+
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.WritableMap;
@@ -26,7 +27,7 @@ public class RNFetchBlobFileResp extends ResponseBody {
     String mTaskId;
     ResponseBody originalBody;
     String mPath;
-    long bytesUploaded = 0;
+    long bytesDownloaded = 0;
     ReactApplicationContext rctContext;
     FileOutputStream ofStream;
 
@@ -62,19 +63,17 @@ public class RNFetchBlobFileResp extends ResponseBody {
     }
 
     private class ProgressReportingSource implements Source {
-        int count = 0;
         @Override
         public long read(Buffer sink, long byteCount) throws IOException {
-            count++;
             byte [] bytes = new byte[(int) byteCount];
             long read = originalBody.byteStream().read(bytes, 0, (int) byteCount);
-            bytesUploaded += read > 0 ? read : 0;
+            bytesDownloaded += read > 0 ? read : 0;
+            Log.i("bytes downloaded", String.valueOf(byteCount) +"/"+ String.valueOf(read) + "=" + String.valueOf(bytesDownloaded));
             if(read > 0) {
-                bytesUploaded += read;
                 ofStream.write(bytes, 0, (int) read);
                 WritableMap args = Arguments.createMap();
                 args.putString("taskId", mTaskId);
-                args.putString("written", String.valueOf(bytesUploaded));
+                args.putString("written", String.valueOf(bytesDownloaded));
                 args.putString("total", String.valueOf(contentLength()));
                 rctContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                         .emit("RNFetchBlobProgress", args);

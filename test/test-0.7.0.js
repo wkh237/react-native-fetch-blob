@@ -45,47 +45,20 @@ describe('Upload and download large file', (report, done) => {
     deb = Date.now()
     report(<Info uid="200" key="progress">
       <Text>
-        {`download ${now} / ${total} bytes (${Math.floor(now / (Date.now() - begin))} kb/s)`}
+        {`download ${now} / ${total} bytes (${Math.floor(now / (Date.now() - begin))} kb/s) ${(100*now/total).toFixed(2)}%`}
       </Text>
     </Info>)
   })
   .then((res) => {
     bigfile = res.path()
+    return fs.stat(bigfile)
+  })
+  .then((stat) => {
+    report(<Info key="big file stat">
+      <Text>{JSON.stringify(stat)}</Text>
+    </Info>)
     done()
   })
-  // .then((res) => {
-  //   bigfile = res.path()
-  //   try {
-  //   deb = Date.now()
-  //   let promise =  RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
-  //     Authorization : `Bearer ${DROPBOX_TOKEN}`,
-  //     'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
-  //     'Content-Type' : 'application/octet-stream',
-  //   }, RNFetchBlob.wrap(res.path()))
-  //   promise.uploadProgress((now, total) => {
-  //     if(Date.now() - deb < 1000)
-  //       return
-  //     deb = Date.now()
-  //     if(begin2 === -1)
-  //       begin2 = Date.now()
-  //     let speed = Math.floor(now / (Date.now() - begin2))
-  //     report(<Info uid="100"  key="progress">
-  //       <Text>
-  //         {`upload ${now} / ${total} bytes (${speed} kb/s)`}
-  //         {` ${Math.floor((total-now)/speed/1000)} seconds left`}
-  //       </Text>
-  //     </Info>)
-  //   })
-  //   return promise
-  // } catch(err) { console.log(err) }
-  // })
-  // .then((res) => {
-  //   report(<Assert
-  //     key="upload should success without crashing app"
-  //     expect={filename}
-  //     actual={res.json().name}/>)
-  //   done()
-  // })
 })
 
 describe('cancel task should work properly', (report, done) => {
@@ -93,12 +66,13 @@ describe('cancel task should work properly', (report, done) => {
   let bytesWitten = 0
   let deb = Date.now()
   let begin = -1
-  let promise =  RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+  let task =  RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
     Authorization : `Bearer ${DROPBOX_TOKEN}`,
     'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
     'Content-Type' : 'application/octet-stream',
   }, RNFetchBlob.wrap(bigfile))
-  promise.uploadProgress((now, total) => {
+
+  task.uploadProgress((now, total) => {
     bytesWitten = now
     if(Date.now() - deb < 1000)
       return
@@ -115,7 +89,7 @@ describe('cancel task should work properly', (report, done) => {
   })
   let checkpoint1 = 0
   Timer.setTimeout(() => {
-    promise.cancel()
+    task.cancel()
   }, 5000)
   Timer.setTimeout(() => {
     checkpoint1 = bytesWitten
@@ -124,17 +98,22 @@ describe('cancel task should work properly', (report, done) => {
     report(<Assert key="data should not write to stream after task is canceled"
       expect={checkpoint1}
       actual={bytesWitten}/>)
-    done()
+    fs.unlink(bigfile).then(() => {
+      done()
+    })
   }, 10000)
-  promise.then((res) => {
-    report(
-      <Assert key="task not canceled"
-        expected={false}
+
+  task
+    .then((res) => {
+      report(
+        <Assert key="task not canceled"
+          expected={false}
+          actual={true}/>)
+    })
+    .catch((resp) => {
+      report(<Assert key="task cancelled rejection should be catachable"
+        expect={true}
         actual={true}/>)
-  })
-  promise.catch((resp) => {
-    report(<Assert key="task cancelled rejection should be catachable"
-      expect={true}
-      actual={true}/>)
-  })
+    })
+
 })
