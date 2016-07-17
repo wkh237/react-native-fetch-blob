@@ -19,7 +19,7 @@ A module provides upload, download, and files access API. Supports file stream r
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
 * [Development](#user-content-development)
  
-**Rationale**
+## Rationale
 
 React Native does not support `Blob` object at this moment, which means if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [facebook/react-native#854](https://github.com/facebook/react-native/issues/854).
 
@@ -27,7 +27,7 @@ For some use cases, you might get into trouble. For example, displaying an image
 
 This module was designed to be a substitution of `Blob`, there's a set of APIs including basic file system CRUD method, and file stream reader/writer. Also it has a special `fetch` implementation that supports binary request/response body.
 
-**Backward Compatible**
+## Backward Compatible
 
 All updates are `backward-compatible` generally you don't have to change existing code unless you're going to use new APIs. But we recommend pre `0.5.0` users consider upgrade the package to latest version, since we have introduced new APIs can either `upload` or `download` files simply using a file path. It's much more memory efficent in some use case. We've also introduced `fs` APIs for access files, and `file stream` API that helps you read/write files (especially for **large ones**), see [Examples](#user-content-recipes) bellow. This module implements native methods, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
 
