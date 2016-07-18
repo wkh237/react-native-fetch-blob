@@ -161,6 +161,8 @@ function fetch(...args:any):Promise {
   }
   promise.cancel = (fn) => {
     fn = fn || function(){}
+    subscription.remove()
+    subscriptionUpload.remove()
     RNFetchBlob.cancelRequest(taskId, fn)
   }
 
