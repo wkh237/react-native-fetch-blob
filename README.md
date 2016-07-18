@@ -30,7 +30,7 @@ This module was designed to be a substitution of `Blob`, there's a set of APIs i
 
 ## Backward Compatible
 
-All updates are `backward-compatible` generally you don't have to change existing code unless you're going to use new APIs. But we recommend pre `0.5.0` users consider upgrade the package to latest version, since we have introduced new APIs can either `upload` or `download` files simply using a file path. It's much more memory efficent in some use case. We've also introduced `fs` APIs for access files, and `file stream` API that helps you read/write files (especially for **large ones**), see [Examples](#user-content-recipes) bellow. This module implements native methods, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
+All updates are `backward-compatible` generally you don't have to change existing code unless you're going to use new APIs. But we recommend pre `0.5.0` users consider upgrade the package to latest version, since we have introduced new APIs can either `upload` or `download` files simply using a file path. It's much more memory efficent in some use case. We've also introduced `fs` APIs for access files, and `file stream` API that helps you read/write files (especially for **large ones**), see [Examples](#user-content-recipes) bellow. This module implements native methods, supports both Android (uses same native library as offical RN fetch API [OkHttp](https://github.com/square/okhttp)) and IOS.
 
 ## Installation
 
@@ -572,6 +572,7 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.7.0 | Add support of Android upload progress, and remove AsyncHttpClient dependency from Android native implementation. |
 | 0.6.4 | Fix rnpm link script. |
 | 0.6.3 | Fix performance issue on IOS, increase max concurrent request limitation from 1. |
 | 0.6.2 | Add support of asset file and camera roll files, Support custom MIME type when sending multipart request, thanks @smartt |
