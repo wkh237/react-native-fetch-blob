@@ -1,4 +1,4 @@
-# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/express.svg?maxAge=2592000&style=flat-square)]() 
+# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/express.svg?maxAge=2592000&style=flat-square)]()
 
 A project committed to make file acess and transfer easier and effiecient for React Native developers.
 
@@ -20,7 +20,7 @@ A project committed to make file acess and transfer easier and effiecient for Re
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
 * [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting)
 * [Development](#user-content-development)
- 
+
 ## About
 
 React Native does not support `Blob` object at this moment, which means if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [facebook/react-native#854](https://github.com/facebook/react-native/issues/854).
@@ -603,6 +603,7 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.7.1 | Fix #57 ios module could not compile on ios version <= 9.3 |
 | 0.7.0 | Add support of Android upload progress, and remove AsyncHttpClient dependency from Android native implementation. |
 | 0.6.4 | Fix rnpm link script. |
 | 0.6.3 | Fix performance issue on IOS, increase max concurrent request limitation from 1. |
