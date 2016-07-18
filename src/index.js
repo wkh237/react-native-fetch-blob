@@ -34,6 +34,7 @@ const {
   mv,
   cp
 } = fs
+import polyfill from './polyfill'
 
 const emitter = DeviceEventEmitter
 const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
@@ -298,5 +299,6 @@ export default {
   config,
   session,
   fs,
-  wrap
+  wrap,
+  polyfill
 }

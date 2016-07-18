@@ -38,6 +38,7 @@ node -e "var fs=require('fs'); var pkg = JSON.parse(fs.readFileSync('./RNFetchBl
 # install module
 cd "${TEST_APP_PATH}"
 npm install --save "${CWD}/src"
+npm install --save firebase
 rnpm link
 
 # copy android assets
