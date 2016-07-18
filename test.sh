@@ -41,7 +41,7 @@ npm install --save "${CWD}/src"
 rnpm link
 
 # copy android assets
-cp ./test/assets/ ./RNFetchBlobTest/android/app/src/main/
+cp -R ./test/assets/ ./RNFetchBlobTest/android/app/src/main/
 
 # start RN
 cd "${TEST_APP_PATH}"
