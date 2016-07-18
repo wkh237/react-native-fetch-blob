@@ -320,13 +320,18 @@ What if you want to upload a file in some field ? Just like [upload a file from 
 
 #### Upload/Download progress
 
-In `version >= 0.4.2` it is possible to know the upload/download progress. On Android, only download progress is supported. See [wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogresseventlistenerpromisernfetchblobresponse) for more information.
+In `version >= 0.4.2` it is possible to know the upload/download progress. After `0.7.0` IOS and Android upload progress are supported.
 
 ```js
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
       ... some headers,
       'Content-Type' : 'octet-stream'
     }, base64DataString)
+    // listen to upload progress event
+    .uploadProgress((written, total) => {
+        console.log('uploaded', written / total)
+    })
+    // listen to download progress event
     .progress((received, total) => {
         console.log('progress', received / total)
     })
@@ -336,6 +341,23 @@ In `version >= 0.4.2` it is possible to know the upload/download progress. On An
     .catch((err) => {
       // ...
     })
+```
+
+#### Cancel Request
+
+After `0.7.0` it is possible to cancel a HTTP request. When the request cancel, it will definately throws an promise rejection, be sure to catch it.
+
+```js
+let task = RNFetchBlob.fetch('GET', 'http://example.com/file/1')
+
+task.then(() => { ... })
+    // handle request cancelled rejection
+    .catch((err) => {
+        console.log(err)
+    })
+// cancel the request, the callback function is optional
+task.cancel((err) => { ... })
+
 ```
 
 #### Android Media Scanner, and Download Manager Support
