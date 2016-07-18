@@ -37,11 +37,12 @@ node -e "var fs=require('fs'); var pkg = JSON.parse(fs.readFileSync('./RNFetchBl
 
 # install module
 cd "${TEST_APP_PATH}"
-npm install --save "${CWD}/src"
+# npm install --save "${CWD}/src"
+npm install --save react-native-fetch-blob@0.7.0-dev.1
 rnpm link
 
 # copy android assets
-cp -R ./test/assets/ ./RNFetchBlobTest/android/app/src/main/
+cp -R ./test/assets/ ./RNFetchBlobTest/android/app/src/main/assets/
 
 # start RN
 cd "${TEST_APP_PATH}"

@@ -13,15 +13,14 @@ var package = JSON.parse(fs.readFileSync(PACKAGE_JSON));
 var APP_NAME = package.name;
 var APPLICATION_MAIN = process.cwd() + '/android/app/src/main/java/com/' + APP_NAME.toLocaleLowerCase() + '/MainApplication.java';
 
-if(!fs.existsSync(APPLICATION_MAIN)) {
-  throw 'RNFetchBlob could not found link Android automatically, MainApplication.java not found in path : ' + APPLICATION_MAIN
-}
-
 var VERSION = checkVersion();
 console.log('RNFetchBlob detected app version .. ' + VERSION);
 
 if(VERSION >= 0.29) {
   console.log('RNFetchBlob patching MainApplication.java .. ');
+  if(!fs.existsSync(APPLICATION_MAIN)) {
+    throw 'RNFetchBlob could not link Android automatically, MainApplication.java not found in path : ' + APPLICATION_MAIN
+  }
   var main = fs.readFileSync(APPLICATION_MAIN);
   if(String(main).match('new RNFetchBlobPackage()') !== null) {
     console.log('skipped');
