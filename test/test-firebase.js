@@ -16,6 +16,10 @@ import {
 } from 'react-native';
 
 const fs = RNFetchBlob.fs
+const Blob = RNFetchBlob.polyfill.Blob
+window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
+window.Blob = Blob
+
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
   group : 'firebase',
@@ -45,10 +49,10 @@ describe('firebase login', (report, done) => {
       console.log('firebase sigin failed', err)
     })
   firebase.auth().onAuthStateChanged((user) => {
-    report(<Assert key="login success"
+    report(<Assert key="login status" uid="100"
       expect={user !== undefined}
       actual={user}/>,
-    <Info key="user content">
+    <Info key="user content" uid="user data">
       <Text>{JSON.stringify(user)}</Text>
     </Info>)
     done()
@@ -59,9 +63,9 @@ describe('firebase login', (report, done) => {
 describe('upload file to firebase', (report, done) => {
 
   try {
-    
+
     let storage = firebase.storage().ref()
-    let task = storage.file(`testdata/firebase-test-${Platform.OS}.png`).put(webFile, metadata)
+    let task = storage.child(`testdata/firebase-test-${Platform.OS}.png`).put(new Blob('hello !'), { contentType : 'text/plain' })
 
     task.on('state_change', null, (err) => {
 

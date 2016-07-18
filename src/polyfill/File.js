@@ -10,7 +10,7 @@ import Blob from './Blob.js'
 export default class File extends Blob {
 
   constructor() {
-    
+    super()
   }
 
 }

@@ -5,6 +5,7 @@
  * Web API Blob object polyfill.
  */
 import fs from '../fs.js'
+import getUUID from '../utils/uuid'
 
 export default class Blob {
 
@@ -24,8 +25,8 @@ export default class Blob {
     }
     else if(typeof data === 'string') {
       // content from file
-      if(data.startsWith('RNFetchBlob-file://') {
-        enode = 'uri'
+      if(data.startsWith('RNFetchBlob-file://')) {
+        encode = 'uri'
       }
       // BASE64 encoded
       else {
@@ -54,11 +55,13 @@ export default class Blob {
    * @return {Blob}
    */
   slice(start:?number, end:?number, encoding:?string):Blob {
+    console.log('slice called')
     return fs.slice(this.cacheName, getBlobName(), contentType, start, end)
   }
 
   /**
    * Release the resource of the Blob object.
+   * @nonstandard
    * @return {Promise}
    */
   close() {
@@ -73,5 +76,5 @@ export default class Blob {
  * @return {string} Temporary filename
  */
 function getBlobName() {
-
+  return 'blob-' + getUUID()
 }
