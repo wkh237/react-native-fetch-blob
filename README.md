@@ -11,6 +11,7 @@ A module provides upload, download, and files access API. Supports file stream r
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
  * [Upload/Download progress](#user-content-uploaddownload-progress)
+ * [Cancel HTTP request](#user-content-cancel-request)
  * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
