@@ -1,10 +1,29 @@
-# react-native-fetch-blob [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/express.svg?maxAge=2592000&style=flat-square)]() [![npm](https://img.shields.io/badge/inProgress-0.7.0-yellow.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/milestones)
+# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/express.svg?maxAge=2592000&style=flat-square)]() [![npm](https://img.shields.io/badge/inProgress-0.7.0-yellow.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/milestones)
 
 A module provides upload, download, and files access API. Supports file stream read/write for process large files.
 
 ## [Please check our github for updated document](https://github.com/wkh237/react-native-fetch-blob)
 
-**Why do we need this**
+## TOC
+* [About](#user-content-about)
+* [Backward Compatible](#user-content-backward-compatible)
+* [Installation](#user-content-installation)
+* [Recipes](#user-content-recipes)
+ * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
+ * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
+ * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
+ * [Upload/Download progress](#user-content-uploaddownload-progress)
+ * [Cancel HTTP request](#user-content-cancel-request)
+ * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
+ * [File access](#user-content-file-access)
+ * [File stream](#user-content-file-stream)
+ * [Manage cached files](#user-content-cache-file-management)
+ * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
+* [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
+* [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting)
+* [Development](#user-content-development)
+
+## About
 
 React Native does not support `Blob` object at this moment, which means if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [facebook/react-native#854](https://github.com/facebook/react-native/issues/854).
 
@@ -12,25 +31,9 @@ For some use cases, you might get into trouble. For example, displaying an image
 
 This module was designed to be a substitution of `Blob`, there's a set of APIs including basic file system CRUD method, and file stream reader/writer. Also it has a special `fetch` implementation that supports binary request/response body.
 
-**Backward Compatible**
+## Backward Compatible
 
-All updates are `backward-compatible` generally you don't have to change existing code unless you're going to use new APIs. But we recommend pre `0.5.0` users consider upgrade the package to latest version, since we have introduced new APIs can either `upload` or `download` files simply using a file path. It's much more memory efficent in some use case. We've also introduced `fs` APIs for access files, and `file stream` API that helps you read/write files (especially for **large ones**), see [Examples](#user-content-recipes) bellow. This module implements native methods, supports both Android (uses awesome native library  [AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client])) and IOS.
-
-## TOC
-
-* [Installation](#user-content-installation)
-* [Recipes](#user-content-recipes)
- * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
- * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
- * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
- * [Upload/Download progress](#user-content-uploaddownload-progress)
- * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
- * [File access](#user-content-file-access)
- * [File stream](#user-content-file-stream)
- * [Manage cached files](#user-content-cache-file-management)
- * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
-* [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
-* [Development](#user-content-development)
+All updates are `backward-compatible` generally you don't have to change existing code unless you're going to use new APIs. But we recommend pre `0.5.0` users consider upgrade the package to latest version, since we have introduced new APIs can either `upload` or `download` files simply using a file path. It's much more memory efficent in some use case. We've also introduced `fs` APIs for access files, and `file stream` API that helps you read/write files (especially for **large ones**), see [Examples](#user-content-recipes) bellow. This module implements native methods, supports both Android (uses same native library as offical RN fetch API [OkHttp](https://github.com/square/okhttp)) and IOS.
 
 ## Installation
 
@@ -46,11 +49,32 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
+### For React Native >= 0.29.0 (Android)
+
+> If you're using react-native >= `0.29.0`, the package might not be able to link through `rnpm link`, and you might see an error screen similar to [#51](https://github.com/wkh237/react-native-fetch-blob/issues/51), this is because a [a bug in 0.29.0](https://github.com/facebook/react-native/commit/4dabb575b1b311ba541fae7eabbd49f08b5391b3), someone has already fixed it, but the solution does not work on our project, you may have to manually add the package yourself.
+
+Add this code to `MainApplication.java`
+
+```diff
+...
++ import com.RNFetchBlob.RNFetchBlobPackage;                                                                                 
+...
+protected List<ReactPackage> getPackages() {
+      return Arrays.<ReactPackage>asList(
+          new MainReactPackage(),
++          new RNFetchBlobPackage()                                                                                         
+      );
+    }
+  };
+...
+```
+> If you still having problem on installing this package, please check the [trouble shooting page](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting) or [file an issue](https://github.com/wkh237/react-native-fetch-blob/issues/new)
+
 **Grant Permission to External storage for Android 5.0 or lower**
 
-Mechanism about granting Android permissions has slightly different since Android 6.0 released, please refer to [Officail Document](https://developer.android.com/training/permissions/requesting.html).
+Mechanism about granting Android permissions has slightly different since Android 6.0 released, please refer to [Official Document](https://developer.android.com/training/permissions/requesting.html).
 
-If you're going to access external storage (say, SD card storage) for `Android 5.0` (or lower) devices, you might have to add the following line to `AndroidManifetst.xml`.
+If you're going to access external storage (say, SD card storage) for `Android 5.0` (or lower) devices, you might have to add the following line to `AndroidManifest.xml`.
 
 ```diff
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -112,7 +136,7 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
 
 #### Download to storage directly
 
-The simplest way is give a `fileCach` option to config, and set it to `true`. This will let the incoming response data stored in a temporary path **wihout** any file extension.
+The simplest way is give a `fileCache` option to config, and set it to `true`. This will let the incoming response data stored in a temporary path **without** any file extension.
 
 **These files won't be removed automatically, please refer to [Cache File Management](#user-content-cache-file-management)**
 
@@ -151,7 +175,7 @@ RNFetchBlob
     console.log('The file saved to ', res.path())
     // Beware that when using a file path as Image source on Android,
     // you must prepend "file://"" before the file path
-    imageView = <Image source={{ uri : Platform.OS === 'android' ? 'file://' : '' + res.path() }}/>
+    imageView = <Image source={{ uri : Platform.OS === 'android' ? 'file://' + res.path()  : '' + res.path() }}/>
   })
 ```
 
@@ -299,13 +323,18 @@ What if you want to upload a file in some field ? Just like [upload a file from 
 
 #### Upload/Download progress
 
-In `version >= 0.4.2` it is possible to know the upload/download progress. On Anroid, only download progress is supported. See [wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogresseventlistenerpromisernfetchblobresponse) for more information.
+In `version >= 0.4.2` it is possible to know the upload/download progress. After `0.7.0` IOS and Android upload progress are supported.
 
 ```js
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
       ... some headers,
       'Content-Type' : 'octet-stream'
     }, base64DataString)
+    // listen to upload progress event
+    .uploadProgress((written, total) => {
+        console.log('uploaded', written / total)
+    })
+    // listen to download progress event
     .progress((received, total) => {
         console.log('progress', received / total)
     })
@@ -315,6 +344,23 @@ In `version >= 0.4.2` it is possible to know the upload/download progress. On An
     .catch((err) => {
       // ...
     })
+```
+
+#### Cancel Request
+
+After `0.7.0` it is possible to cancel a HTTP request. When the request cancel, it will definately throws an promise rejection, be sure to catch it.
+
+```js
+let task = RNFetchBlob.fetch('GET', 'http://example.com/file/1')
+
+task.then(() => { ... })
+    // handle request cancelled rejection
+    .catch((err) => {
+        console.log(err)
+    })
+// cancel the request, the callback function is optional
+task.cancel((err) => { ... })
+
 ```
 
 #### Android Media Scanner, and Download Manager Support
@@ -403,7 +449,7 @@ RNFetchBlob.config({
 
 File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However we realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need these APIs for there cases.
 
-Before get started using file APIs we recommend read [Differences between File Source](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#differences-between-file-source) first.
+Before start using file APIs, we recommend read [Differences between File Source](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#differences-between-file-source) first.
 
 File Access APIs
 - [asset (0.6.2)](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#assetfilenamestringstring)
@@ -551,6 +597,9 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.7.0 | Add support of Android upload progress, and remove AsyncHttpClient dependency from Android native implementation. |
+| 0.6.4 | Fix rnpm link script. |
+| 0.6.3 | Fix performance issue on IOS, increase max concurrent request limitation from 1. |
 | 0.6.2 | Add support of asset file and camera roll files, Support custom MIME type when sending multipart request, thanks @smartt |
 | 0.6.1 | Fix #37 progress report API issue on IOS |
 | 0.6.0 | Add readFile and writeFile API for easier file access, also added Android download manager support. |
