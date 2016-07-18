@@ -1,9 +1,7 @@
-/**
- * @name react-native-fetch-blob-fs
- * @author wkh237
- * @version 0.7.0
- * @flow
- */
+// Copyright 2016 wkh237@github. All rights reserved.
+// Use of this source code is governed by a MIT-style license that can be
+// found in the LICENSE file.
+// @flow
 
 import {
   NativeModules,

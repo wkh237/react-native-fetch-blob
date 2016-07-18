@@ -1,9 +1,7 @@
-/**
- * @name react-native-fetch-blob
- * @author wkh237
- * @version 0.7.0
- * @flow
- */
+// Copyright 2016 wkh237@github. All rights reserved.
+// Use of this source code is governed by a MIT-style license that can be
+// found in the LICENSE file.
+// @flow
 
 import {
   NativeModules,
@@ -163,6 +161,8 @@ function fetch(...args:any):Promise {
   }
   promise.cancel = (fn) => {
     fn = fn || function(){}
+    subscription.remove()
+    subscriptionUpload.remove()
     RNFetchBlob.cancelRequest(taskId, fn)
   }
 
@@ -202,7 +202,7 @@ class FetchBlobResponse {
      */
     this.blob = (contentType:string, sliceSize:number) => {
       console.warn('FetchBlobResponse.blob() is deprecated and has no funtionality.')
-      return null
+      return this
     }
     /**
      * Convert result to text.
