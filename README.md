@@ -51,7 +51,7 @@ rnpm link
 
 If rnpm link command failed to link the package automatically, you might try manually link the package.
 
-Edit add package to`android/settings.gradle`
+Open `android/settings.gradle`, and add these lines which will app RNFetchBlob Android project dependency to your app.
 
 ```diff
 include ':app'      
@@ -59,7 +59,7 @@ include ':app'
 + project(':react-native-fetch-blob').projectDir = new File(rootProject.projectDir,' ../node_modules/react-native-fetch-blob/android')                        
 ```
 
-Add this code to `MainApplication.java`
+Add this line to `MainApplication.java`, so that RNFetchBlob package becomes part of react native package.
 
 ```diff
 ...
