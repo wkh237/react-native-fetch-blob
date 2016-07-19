@@ -113,9 +113,22 @@ Beginning in Android 6.0 (API level 23), users grant permissions to apps while t
 
 ## Recipes
 
+ES6
+
+The module uses ES6 style export statement, simply use `import` to load the module.
+
 ```js
 import RNFetchBlob from 'react-native-fetch-blob'
 ```
+
+ES5
+
+If you're using ES5 require statement to load the module, please add `default`. See [here](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting#rnfetchblobfetch-is-not-a-function) for more detail.
+
+```
+var RNFetchBlob = require('react-native-fetch-blob').default
+```
+
 #### Download example : Fetch files that needs authorization token
 
 ```js
