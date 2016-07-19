@@ -47,7 +47,7 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
-### Manually link package
+### Manually link the package (Android)
 
 If rnpm link command failed to link the package automatically, you might try manually link the package.
 
