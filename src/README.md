@@ -1,6 +1,6 @@
-# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/express.svg?maxAge=2592000&style=flat-square)]() [![npm](https://img.shields.io/badge/inProgress-0.7.0-yellow.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/milestones)
+# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/express.svg?maxAge=2592000&style=flat-square)]()
 
-A module provides upload, download, and files access API. Supports file stream read/write for process large files.
+A project committed to make file acess and transfer easier and effiecient for React Native developers.
 
 ## [Please check our github for updated document](https://github.com/wkh237/react-native-fetch-blob)
 
@@ -49,11 +49,19 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
-### For React Native >= 0.29.0 (Android)
+### Manually link the package (Android)
 
-> If you're using react-native >= `0.29.0`, the package might not be able to link through `rnpm link`, and you might see an error screen similar to [#51](https://github.com/wkh237/react-native-fetch-blob/issues/51), this is because a [a bug in 0.29.0](https://github.com/facebook/react-native/commit/4dabb575b1b311ba541fae7eabbd49f08b5391b3), someone has already fixed it, but the solution does not work on our project, you may have to manually add the package yourself.
+If rnpm link command failed to link the package automatically, you might try manually link the package.
 
-Add this code to `MainApplication.java`
+Open `android/settings.gradle`, and add these lines which will app RNFetchBlob Android project dependency to your app.
+
+```diff
+include ':app'      
++ include ':react-native-fetch-blob'                                                                                                  
++ project(':react-native-fetch-blob').projectDir = new File(rootProject.projectDir,' ../node_modules/react-native-fetch-blob/android')                        
+```
+
+Add this line to `MainApplication.java`, so that RNFetchBlob package becomes part of react native package.
 
 ```diff
 ...
@@ -107,9 +115,22 @@ Beginning in Android 6.0 (API level 23), users grant permissions to apps while t
 
 ## Recipes
 
+ES6
+
+The module uses ES6 style export statement, simply use `import` to load the module.
+
 ```js
 import RNFetchBlob from 'react-native-fetch-blob'
 ```
+
+ES5
+
+If you're using ES5 require statement to load the module, please add `default`. See [here](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting#rnfetchblobfetch-is-not-a-function) for more detail.
+
+```
+var RNFetchBlob = require('react-native-fetch-blob').default
+```
+
 #### Download example : Fetch files that needs authorization token
 
 ```js
@@ -597,6 +618,7 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.7.2 | Fix cancel request bug |
 | 0.7.1 | Fix #57 ios module could not compile on ios version <= 9.3 |
 | 0.7.0 | Add support of Android upload progress, and remove AsyncHttpClient dependency from Android native implementation. |
 | 0.6.4 | Fix rnpm link script. |
