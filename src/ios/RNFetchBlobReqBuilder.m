@@ -95,7 +95,10 @@
                     {
                         [RNFetchBlobFS readFile:orgPath encoding:@"utf8" resolver:nil rejecter:nil onComplete:^(NSData *content) {
                             [request setHTTPBody:content];
-                            [mheaders setValue:@"application/octet-stream" forKey:@"content-type"];
+                            if([mheaders valueForKey:@"content-type"] == nil)
+                            {
+                                [mheaders setValue:@"application/octet-stream" forKey:@"content-type"];
+                            }
                             [request setHTTPMethod: method];
                             [request setAllHTTPHeaderFields:mheaders];
                             onComplete(request, [content length]);
@@ -111,7 +114,10 @@
                     [request setHTTPBody:blobData];
                 }
                 
-                [mheaders setValue:@"application/octet-stream" forKey:@"content-type"];
+                if([mheaders valueForKey:@"content-type"] == nil)
+                {
+                    [mheaders setValue:@"application/octet-stream" forKey:@"content-type"];
+                }
                 
             }
         }

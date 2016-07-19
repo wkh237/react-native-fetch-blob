@@ -19,6 +19,7 @@ export default class XMLHttpRequest extends EventTarget{
   readyState : number;
   response : any;
   responseText : any;
+  responseHeaders : any;
   responseType : '' | 'arraybuffer' | 'blob' | 'document' | 'json' | 'text';
   // TODO : not suppoted for now
   responseURL : null;
@@ -38,21 +39,20 @@ export default class XMLHttpRequest extends EventTarget{
   // `cancel` methods.
   _task: any;
 
-  constructor() {
+  constructor(...args) {
     super()
-    console.log('---------------------------------')
-    console.log('XMLHttpRequest constructor called')
+    console.log('XMLHttpRequest constructor called', args)
     this._config = {}
     this._args = {}
     this._headers = {}
     this.readyState = 0
     this.response = null
     this.responseText = null
+    this.responseHeaders = null
   }
 
   // XMLHttpRequest.open, always async, user and password not supported.
   open(method:string, url:string, async:true, user:any, password:any) {
-    console.log('---------------------------------')
     console.log('XMLHttpRequest open called', method, url, async, user, password)
     this._method = method
     this._url = url
@@ -61,10 +61,10 @@ export default class XMLHttpRequest extends EventTarget{
       this.onload()
     if(this.onloadstart)
       this.onloadstart()
+    this._invokeOnStateChange()
   }
 
   addEventListener(event, listener) {
-    console.log('---------------------------------')
     console.log('XMLHttpRequest add listener', event, listener.toString())
     this.addEventListener(event, listener)
   }
@@ -74,13 +74,20 @@ export default class XMLHttpRequest extends EventTarget{
    * @param  {any} body Body in RNfetchblob flavor
    */
   send(body) {
-    console.log('---------------------------------')
     console.log('XMLHttpRequest send called', body)
-    let [_method, _url, _headers] = this
+    let {_method, _url, _headers } = this
     console.log('sending request with args', _method, _url, _headers, body)
 
     this._task = RNFetchBlob.fetch(_method, _url, _headers, body)
     this._task
+        .stateChange((e) => {
+          console.log('state change')
+          if(e.state === "2") {
+            this.readyState = 2
+            this.responseHeaders = e.headers
+          }
+          this._invokeOnStateChange()
+        })
         .uploadProgress(this._progressEvent)
         .onProgress(this._progressEvent)
         .then(this._onDone)
@@ -97,8 +104,9 @@ export default class XMLHttpRequest extends EventTarget{
   }
 
   abort() {
-    console.log('---------------------------------')
     console.log('XMLHttpRequest abort called', this._task)
+    if(!this._task)
+      return
     this._task.cancel((err) => {
       let e = {
         timeStamp : Date.now(),
@@ -117,16 +125,24 @@ export default class XMLHttpRequest extends EventTarget{
     })
   }
 
-  getResponseHeader(field:string):string | null{
+  getResponseHeader(field:string):string | null {
+
+    if(!this.responseHeaders)
+      return null
+    return this.responseHeaders[field] || null
 
   }
 
   getAllResponseHeaders():string | null {
 
-  }
-
-  set onreadystatechange(handler:() => void) {
-    this.onreadystatechange = handler
+    if(!this.responseHeaders)
+      return null
+    let result = ''
+    let respHeaders = this.responseHeaders
+    for(let i in respHeaders) {
+      result += `${i}:${respHeaders[i]}\r\n`
+    }
+    return result
   }
 
   _progressEvent(send:number, total:number) {
@@ -143,8 +159,11 @@ export default class XMLHttpRequest extends EventTarget{
   }
 
   _onError(err) {
+    console.log('XMLHttpRequest error', err)
     this.statusText = err
-
+    this.status = String(err).match(/\d+/)
+    this.status = this.status ? Math.floor(this.status) : 404
+    this.readyState = 4
     if(String(err).match('timeout') !== null) {
       if(this.ontimeout)
         this.ontimeout()
@@ -155,10 +174,13 @@ export default class XMLHttpRequest extends EventTarget{
         detail : err
       })
     }
+    this._invokeOnStateChange()
   }
 
   _onDone(resp) {
+    console.log('XMLHttpRequest done', resp.text())
     this.statusText = '200 OK'
+    this.status = 200
     switch(resp.type) {
       case 'base64' :
       this.responseType = 'text'
@@ -170,6 +192,13 @@ export default class XMLHttpRequest extends EventTarget{
       this.response = resp.blob()
       break;
     }
+    this.readyState = 4
+    this._invokeOnStateChange()
+  }
+
+  _invokeOnStateChange() {
+    if(this.onreadystatechange)
+      this.onreadystatechange()
   }
 
 }

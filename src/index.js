@@ -109,26 +109,27 @@ function fetch(...args:any):Promise {
   // create task ID for receiving progress event
   let taskId = getUUID()
   let options = this || {}
+  let subscription, subscriptionUpload, stateEvent
 
   let promise = new Promise((resolve, reject) => {
     let [method, url, headers, body] = [...args]
     let nativeMethodName = Array.isArray(body) ? 'fetchBlobForm' : 'fetchBlob'
 
     // on progress event listener
-    let subscription = emitter.addListener('RNFetchBlobProgress', (e) => {
+    subscription = emitter.addListener('RNFetchBlobProgress', (e) => {
       if(e.taskId === taskId && promise.onProgress) {
         promise.onProgress(e.written, e.total)
       }
     })
 
-    let subscriptionUpload = emitter.addListener('RNFetchBlobProgress-upload', (e) => {
+    subscriptionUpload = emitter.addListener('RNFetchBlobProgress-upload', (e) => {
       if(e.taskId === taskId && promise.onUploadProgress) {
         promise.onUploadProgress(e.written, e.total)
       }
     })
 
-    let stateEvent = emitter.addListener('RNFetchBlobState', (e) => {
-      if(e.taskId === taskId && promise.onUploadProgress) {
+    stateEvent = emitter.addListener('RNFetchBlobState', (e) => {
+      if(e.taskId === taskId && promise.onStateChange) {
         promise.onStateChange(e)
       }
     })
@@ -166,10 +167,15 @@ function fetch(...args:any):Promise {
     promise.onUploadProgress = fn
     return promise
   }
+  promise.stateChange = (fn) => {
+    promise.onStateChange = fn
+    return promise
+  }
   promise.cancel = (fn) => {
     fn = fn || function(){}
     subscription.remove()
     subscriptionUpload.remove()
+    stateEvent.remove()
     RNFetchBlob.cancelRequest(taskId, fn)
   }
 
