@@ -135,6 +135,20 @@ NSOperationQueue *taskQueue;
 - (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler
 {
     expectedBytes = [response expectedContentLength];
+ 
+    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
+    if ([response respondsToSelector:@selector(allHeaderFields)])
+    {
+        NSDictionary *headers = [httpResponse allHeaderFields];
+        [self.bridge.eventDispatcher
+         sendDeviceEventWithName: EVENT_STATE_CHANGE
+         body:@{
+                @"taskId": taskId,
+                @"state": @"2",
+                @"headers": headers
+            }
+         ];
+    }
     
     if(respFile == YES)
     {

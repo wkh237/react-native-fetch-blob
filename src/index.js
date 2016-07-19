@@ -127,12 +127,19 @@ function fetch(...args:any):Promise {
       }
     })
 
+    let stateEvent = emitter.addListener('RNFetchBlobState', (e) => {
+      if(e.taskId === taskId && promise.onUploadProgress) {
+        promise.onStateChange(e)
+      }
+    })
+
     let req = RNFetchBlob[nativeMethodName]
     req(options, taskId, method, url, headers || {}, body, (err, data) => {
 
       // task done, remove event listener
       subscription.remove()
       subscriptionUpload.remove()
+      stateEvent.remove()
       if(err)
         reject(new Error(err, data))
       else {
