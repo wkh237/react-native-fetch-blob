@@ -47,11 +47,11 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
-### Manually link package
+### Manually link the package (Android)
 
 If rnpm link command failed to link the package automatically, you might try manually link the package.
 
-Edit add package to`android/settings.gradle`
+Open `android/settings.gradle`, and add these lines which will app RNFetchBlob Android project dependency to your app.
 
 ```diff
 include ':app'      
@@ -59,7 +59,7 @@ include ':app'
 + project(':react-native-fetch-blob').projectDir = new File(rootProject.projectDir,' ../node_modules/react-native-fetch-blob/android')                        
 ```
 
-Add this code to `MainApplication.java`
+Add this line to `MainApplication.java`, so that RNFetchBlob package becomes part of react native package.
 
 ```diff
 ...
@@ -113,9 +113,22 @@ Beginning in Android 6.0 (API level 23), users grant permissions to apps while t
 
 ## Recipes
 
+ES6
+
+The module uses ES6 style export statement, simply use `import` to load the module.
+
 ```js
 import RNFetchBlob from 'react-native-fetch-blob'
 ```
+
+ES5
+
+If you're using ES5 require statement to load the module, please add `default`. See [here](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting#rnfetchblobfetch-is-not-a-function) for more detail.
+
+```
+var RNFetchBlob = require('react-native-fetch-blob').default
+```
+
 #### Download example : Fetch files that needs authorization token
 
 ```js
@@ -603,6 +616,7 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.7.2 | Fix cancel request bug |
 | 0.7.1 | Fix #57 ios module could not compile on ios version <= 9.3 |
 | 0.7.0 | Add support of Android upload progress, and remove AsyncHttpClient dependency from Android native implementation. |
 | 0.6.4 | Fix rnpm link script. |
