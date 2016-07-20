@@ -110,13 +110,22 @@
                 }
                 // otherwise convert it as BASE64 data string
                 else {
-                    blobData = [[NSData alloc] initWithBase64EncodedString:body options:0];
-                    [request setHTTPBody:blobData];
-                }
-                
-                if([mheaders valueForKey:@"content-type"] == nil)
-                {
-                    [mheaders setValue:@"application/octet-stream" forKey:@"content-type"];
+                    // the body is BASE64 encoded string
+                    if(([mheaders valueForKey:@"content-type"] == nil && [mheaders valueForKey:@"Content-Type"] == nil) ||
+                       ([[[mheaders valueForKey:@"content-type"] lowercaseString] isEqualToString:@"application/octet-stream"] ||
+                        [[[mheaders valueForKey:@"Content-Type"] lowercaseString] isEqualToString:@"application/octet-stream"]))
+                    {
+                        blobData = [[NSData alloc] initWithBase64EncodedString:body options:0];
+                        [mheaders setValue:@"application/octet-stream" forKey:@"Content-Type"];
+                        [request setHTTPBody:blobData];
+                        size = [blobData length];
+                    }
+                    // use the body string as is
+                    else
+                    {
+                        size = [body length];
+                        [request setHTTPBody: [body dataUsingEncoding:NSUTF8StringEncoding]];
+                    }
                 }
                 
             }

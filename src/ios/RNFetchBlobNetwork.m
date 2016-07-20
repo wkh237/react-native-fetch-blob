@@ -137,15 +137,36 @@ NSOperationQueue *taskQueue;
     expectedBytes = [response expectedContentLength];
  
     NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
+    NSInteger statusCode = [(NSHTTPURLResponse *)response statusCode];
     if ([response respondsToSelector:@selector(allHeaderFields)])
     {
         NSDictionary *headers = [httpResponse allHeaderFields];
+        NSString * respType = [[headers valueForKey:@"Content-Type"] lowercaseString];
+        if([headers valueForKey:@"Content-Type"] != nil)
+        {
+            if([respType containsString:@"text/plain"])
+            {
+                respType = @"text";
+            }
+            else if([respType containsString:@"application/json"])
+            {
+                respType = @"json";
+            }
+            else
+            {
+                respType = @"blob";
+            }
+        }
+        else
+            respType = @"";
         [self.bridge.eventDispatcher
          sendDeviceEventWithName: EVENT_STATE_CHANGE
          body:@{
                 @"taskId": taskId,
                 @"state": @"2",
-                @"headers": headers
+                @"headers": headers,
+                @"respType" : respType,
+                @"status": [NSString stringWithFormat:@"%d", statusCode ]
             }
          ];
     }
@@ -200,6 +221,7 @@ NSOperationQueue *taskQueue;
     }
     // base64 response
     else {
+        NSString * res = [[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding];
         callback(@[error == nil ? [NSNull null] : [error localizedDescription], [respData base64EncodedStringWithOptions:0]]);
     }
 }
