@@ -42,6 +42,7 @@ npm install --save react-native-fetch-blob@0.7.0-dev.1
 rnpm link
 
 # copy android assets
+cd ${CWD}
 cp -R ./test/assets/ ./RNFetchBlobTest/android/app/src/main/assets/
 
 # start RN

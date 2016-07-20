@@ -597,6 +597,7 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.7.1 | Fix #57 ios module could not compile on ios version <= 9.3 |
 | 0.7.0 | Add support of Android upload progress, and remove AsyncHttpClient dependency from Android native implementation. |
 | 0.6.4 | Fix rnpm link script. |
 | 0.6.3 | Fix performance issue on IOS, increase max concurrent request limitation from 1. |

@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.util.Base64;
+import android.util.Log;
 
 import com.RNFetchBlob.Response.RNFetchBlobDefaultResp;
 import com.RNFetchBlob.Response.RNFetchBlobFileResp;
@@ -34,6 +35,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.FormBody;
 
 /**
  * Created by wkh237 on 2016/6/21.
@@ -42,6 +44,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
     enum RequestType  {
         Form,
+		Encoded,
         SingleFile,
         WithoutBody,
         Others
@@ -85,7 +88,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         else
             responseType = ResponseType.KeepInMemory;
 
-        if (body != null)
+        if (body != null && headers.hasKey("content-type") && "application/x-www-form-urlencoded".equals(headers.getString("content-type")))
+			requestType = RequestType.Encoded;
+		else if (body != null)
             requestType = RequestType.SingleFile;
         else if (arrayBody != null)
             requestType = RequestType.Form;
@@ -135,23 +140,26 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         // find cached result if `key` property exists
         String cacheKey = this.taskId;
-//        if (this.options.key != null) {
-//            cacheKey = RNFetchBlobUtils.getMD5(this.options.key);
-//            if (cacheKey == null) {
-//                cacheKey = this.taskId;
-//            }
-//
-//            File file = new File(RNFetchBlobFS.getTmpPath(ctx, cacheKey));
-//            if (file.exists()) {
-//                callback.invoke(null, file.getAbsolutePath());
-//                return;
-//            }
-//        }
+		String ext = this.options.appendExt != "" ? "." + this.options.appendExt : "";
+
+       	if (this.options.key != null) {
+           cacheKey = RNFetchBlobUtils.getMD5(this.options.key);
+           if (cacheKey == null) {
+               cacheKey = this.taskId;
+           }
+
+           File file = new File(RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey) + ext);
+
+           if (file.exists()) {
+               callback.invoke(null, file.getAbsolutePath());
+               return;
+           }
+       }
 
         if(this.options.path != null)
             this.destPath = this.options.path;
         else if(this.options.fileCache == true)
-            this.destPath = RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey);
+            this.destPath = RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey) + ext;
 
         OkHttpClient.Builder clientBuilder;
 
@@ -197,6 +205,21 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                             MediaType.parse("multipart/form-data; boundary=RNFetchBlob-" + taskId)
                     ));
                     break;
+				case Encoded:
+					// rawRequestBody has an expected format of
+					// key1=value1&key2=value&...
+					FormBody.Builder formBuilder = new FormBody.Builder();
+
+					String[] pairs = rawRequestBody.split("&");
+					for ( String pair : pairs ) {
+						String[] kv = pair.split("=");
+						formBuilder.add(kv[0], kv[1]);
+					}
+
+					RequestBody body = formBuilder.build();
+
+					builder.method(method, body);
+					break;
                 case WithoutBody:
                     builder.method(method, null);
                     break;

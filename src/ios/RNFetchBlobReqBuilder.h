@@ -29,6 +29,15 @@
                      body:(NSString *)body
                onComplete:(void(^)(NSURLRequest * req, long bodyLength))onComplete;
 
++(void) buildEncodedRequest:(NSDictionary *)options
+                      taskId:(NSString *)taskId
+                      method:(NSString *)method
+                         url:(NSString *)url
+                     headers:(NSDictionary *)headers
+                        form:(NSString *)body
+                  onComplete:(void(^)(NSURLRequest * req, long bodyLength))onComplete;
+
+
 @end
 
 #endif /* RNFetchBlobReqBuilder_h */
