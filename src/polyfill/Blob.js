@@ -2,47 +2,94 @@
 // Use of this source code is governed by a MIT-style license that can be
 // found in the LICENSE file.
 
+import RNFetchBlob from '../index.js'
 import fs from '../fs.js'
 import getUUID from '../utils/uuid'
 
+const blobCacheDir = fs.dirs.DocumentDir + '/RNFetchBlob-blob/'
+
+/**
+ * A RNFetchBlob style Blob polyfill class, this is a Blob which compatible to
+ * Response object attain fron RNFetchBlob.fetch.
+ */
 export default class Blob {
 
   cacheName:string;
   type:string;
   size:number;
 
+  _ref:string = null;
+  _blobCreated:boolean = false;
+  _onCreated:() => void;
+
+  static Instances:any = {}
+
   // legacy constructor
   constructor(data:any, mime:?string) {
     this.cacheName = getBlobName()
     this.type = mime
-
-    let encode = 'utf8'
-    // plain text content
-    if(mime === 'text/plain') {
-      this.size = data ? data.length : 0
-    }
-    else if(typeof data === 'string') {
+    if(typeof data === 'string') {
       // content from file
       if(data.startsWith('RNFetchBlob-file://')) {
-        encode = 'uri'
+        this._ref = data
+        this._blobCreated = true
       }
-      // BASE64 encoded
+      // content from variable need create file
       else {
-        encode = 'base64'
+        this._ref = RNFetchBlob.wrap(blobCacheDir + this.cacheName)
+        let encoding = 'utf8'
+        if(typeof data === 'string' && String(mime).match('application/octet') )
+          encoding = 'base64'
+        else if(Array.isArray(data))
+          encoding = 'ascii'
+
+        this.init(data, encoding)
+          .then(() => {
+            if(typeof this._onCreated === 'function')
+              this._onCreated()
+            _blobCreated = true
+          })
+          .catch((err) => {
+            console.log('RNFetchBlob cannot create Blob', err)
+          })
       }
     }
-    // create cache entry for Blob object
-    fs.createFile(this.cacheName, data, encode)
+    else {
+      console.log('TODO')
+    }
+  }
+
+  onCreated(fn:() => void) {
+    console.log('register blob onCreated', fn)
+    if(this._blobCreated)
+      fn()
+    else
+      this._onCreated = fn
   }
 
   /**
-   * Write data to Blob object
-   * @param  {string | Array} data Data that will write to Blob object
-   * @param  {string} encoding Encoding of data to be written
+   * Create blob file cache
+   * @nonstandard
+   * @param  {string | Array} data Data to create Blob file
+   * @param  {'base64' | 'utf8' | 'ascii'} encoding RNFetchBlob fs encoding
    * @return {Promise}
    */
-  write(data:string | Array<number>, encoding:'base64' | 'utf8' | 'ascii' | 'uri'):Promise {
-    return fs.write(this.cacheName, data, encoding)
+  init(data, encoding):Promise {
+    console.log('blob init called')
+    return fs.exists(blobCacheDir).then((exist) => {
+      if(!exist)
+        return fs.mkdir(blobCacheDir).then(() => fs.createFile(this._ref, data, encoding))
+      else
+        return fs.createFile(this._ref, data, encoding)
+    })
+  }
+
+  /**
+   * @nonstandard
+   * @return {string} Blob file reference which can be consumed by RNFetchBlob fs
+   */
+  getRNFetchBlobRef() {
+    return this._ref
   }
 
   /**
@@ -54,7 +101,7 @@ export default class Blob {
    */
   slice(start:?number, end:?number, encoding:?string):Blob {
     console.log('slice called')
-    return fs.slice(this.cacheName, getBlobName(), contentType, start, end)
+    // return fs.slice(this.cacheName, getBlobName(), contentType, start, end)
   }
 
   /**
@@ -63,7 +110,7 @@ export default class Blob {
    * @return {Promise}
    */
   close() {
-    fs.unlink(this.cacheName)
+    return fs.unlink(this._ref)
   }
 
 
