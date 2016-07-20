@@ -799,5 +799,3 @@ public class RNFetchBlobFS {
     }
 
 }
-
-

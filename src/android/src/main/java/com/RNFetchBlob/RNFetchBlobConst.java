@@ -11,7 +11,7 @@ public class RNFetchBlobConst {
     public static final String FILE_PREFIX = "RNFetchBlob-file://";
     public static final MediaType MIME_OCTET = MediaType.parse("application/octet-stream");
     public static final MediaType MIME_MULTIPART = MediaType.parse("multipart/form-data");
+	public static final MediaType MIME_ENCODED = MediaType.parse("application/x-www-form-urlencoded");
     public static final String FILE_PREFIX_BUNDLE_ASSET = "bundle-assets://";
     public static final String FILE_PREFIX_CONTENT = "content://";
-
 }
