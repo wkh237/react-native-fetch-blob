@@ -1,21 +1,39 @@
 export default class Log {
 
   _name:string;
+  _isEnable:boolean = true
+  _level:number = 0
 
   constructor(name:string) {
     this._name = name
   }
 
-  info(...args) {
-    console.log(this._name, '-info:', ...args)
+  level(val:number) {
+    this._level = val
+  }
+
+  enable() {
+    this._isEnable = true
+  }
+
+  disable() {
+    this._isEnable = false
+  }
+
+  verbose(...args) {
+    this._isEnable && this._level > 2 && console.log(this._name, 'verbose:', ...args)
   }
 
   debug(...args) {
-    console.log(this._name, '-debug:', ...args)
+    this._isEnable && this._level > 1 && console.log(this._name, 'debug:', ...args)
+  }
+
+  info(...args) {
+    this._isEnable && this._level > 0 && console.log(this._name, 'info:', ...args)
   }
 
   error(...args) {
-    console.log(this._name, '-error:', ...args)
+    this._isEnable && this._level > -1 && console.log(this._name, 'error:', ...args)
   }
 
 }

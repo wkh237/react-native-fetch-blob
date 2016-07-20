@@ -4,6 +4,12 @@
 
 import RNFetchBlob from '../index.js'
 import XMLHttpRequestEventTarget from './XMLHttpRequestEventTarget.js'
+import Log from '../utils/log.js'
+import Blob from './Blob.js'
+
+const log = new Log('XMLHttpRequest')
+
+log.level(3)
 
 const UNSENT = 0
 const OPENED = 1
@@ -61,7 +67,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
 
   constructor(...args) {
     super()
-    console.log('XMLHttpRequest constructor called', args)
+    log.verbose('XMLHttpRequest constructor called', args)
     this._config = {}
     this._args = {}
     this._headers = {}
@@ -69,7 +75,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
 
   // XMLHttpRequest.open, always async, user and password not supported.
   open(method:string, url:string, async:true, user:any, password:any) {
-    console.log('XMLHttpRequest open ', method, url, async, user, password)
+    log.verbose('XMLHttpRequest open ', method, url, async, user, password)
     this._method = method
     this._url = url
     this.readyState = XMLHttpRequest.OPENED
@@ -80,10 +86,16 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
    * @param  {any} body Body in RNfetchblob flavor
    */
   send(body) {
-    console.log('XMLHttpRequest send ', body)
+    log.verbose('XMLHttpRequest send ', body)
     let {_method, _url, _headers } = this
-    console.log('sending request with args', _method, _url, _headers, body)
+    log.verbose('sending request with args', _method, _url, _headers, body)
+
     this._upload = new XMLHttpRequestEventTarget()
+    log.verbose(typeof body, body instanceof FormData)
+    if(Array.isArray(body)) {
+      // TODO
+    }
+
     this.dispatchEvent('loadstart')
     if(this.onloadstart)
       this.onloadstart()
@@ -98,17 +110,17 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   overrideMimeType(mime:string) {
-    console.log('XMLHttpRequest overrideMimeType', mime)
+    log.verbose('XMLHttpRequest overrideMimeType', mime)
     this._headers['content-type'] = mime
   }
 
   setRequestHeader(name, value) {
-    console.log('XMLHttpRequest set header', name, value)
+    log.verbose('XMLHttpRequest set header', name, value)
     this._headers[name] = value
   }
 
   abort() {
-    console.log('XMLHttpRequest abort ')
+    log.verbose('XMLHttpRequest abort ')
     if(!this._task)
       return
     this._task.cancel((err) => {
@@ -130,7 +142,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   getResponseHeader(field:string):string | null {
-    console.log('XMLHttpRequest get header', field)
+    log.verbose('XMLHttpRequest get header', field)
     if(!this.responseHeaders)
       return null
     return this.responseHeaders[field] || null
@@ -138,7 +150,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   getAllResponseHeaders():string | null {
-    console.log('XMLHttpRequest get all headers')
+    log.verbose('XMLHttpRequest get all headers')
     if(!this.responseHeaders)
       return null
     let result = ''
@@ -150,7 +162,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   _headerReceived(e) {
-    console.log('header received ', e)
+    log.verbose('header received ', e)
     this.responseURL = this._url
     if(e.state === "2") {
       this.readyState = XMLHttpRequest.HEADERS_RECEIVED
@@ -162,7 +174,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   _progressEvent(send:number, total:number) {
-    console.log(this.readyState)
+    log.verbose(this.readyState)
     if(this.readyState === XMLHttpRequest.HEADERS_RECEIVED)
       this.readyState = XMLHttpRequest.LOADING
     let lengthComputable = false
@@ -179,7 +191,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   _onError(err) {
-    console.log('XMLHttpRequest error', err)
+    log.verbose('XMLHttpRequest error', err)
     this.statusText = err
     this.status = String(err).match(/\d+/)
     this.status = this.status ? Math.floor(this.status) : 404
@@ -199,7 +211,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   _onDone(resp) {
-    console.log('XMLHttpRequest done', resp.text())
+    log.verbose('XMLHttpRequest done', resp.text())
     this.statusText = '200 OK'
     this._status = 200
     switch(resp.type) {
@@ -228,17 +240,17 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   set onreadystatechange(fn:() => void) {
-    console.log('XMLHttpRequest set onreadystatechange', fn.toString())
+    log.verbose('XMLHttpRequest set onreadystatechange', fn.toString())
     this._onreadystatechange = fn
   }
 
   set readyState(val:number) {
 
-    console.log('XMLHttpRequest ready state changed to ', val)
+    log.verbose('XMLHttpRequest ready state changed to ', val)
     this._readyState = val
     if(this._onreadystatechange) {
-      console.log('trigger onreadystatechange event', this._readyState)
-      console.log(this._onreadystatechange)
+      log.verbose('trigger onreadystatechange event', this._readyState)
+      log.verbose(this._onreadystatechange)
       this.dispatchEvent('readystatechange', )
       if(this._onreadystatechange)
         this._onreadystatechange()
@@ -246,12 +258,12 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   get readyState() {
-    console.log('get readyState', this._readyState)
+    log.verbose('get readyState', this._readyState)
     return this._readyState
   }
 
   get status() {
-    console.log('get status', this._status)
+    log.verbose('get status', this._status)
     return this._status
   }
 
@@ -260,52 +272,52 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   get statusText() {
-    console.log('get statusText', this._statusText)
+    log.verbose('get statusText', this._statusText)
     return this._statusText
   }
 
   set response(val) {
-    console.log('set response', val)
+    log.verbose('set response', val)
     this._response = val
   }
 
   get response() {
-    console.log('get response', this._response)
+    log.verbose('get response', this._response)
     return this._response
   }
 
   get responseText() {
-    console.log('get responseText', this._responseText)
+    log.verbose('get responseText', this._responseText)
     return this._responseText
   }
 
   get responseURL() {
-    console.log('get responseURL', this._responseURL)
+    log.verbose('get responseURL', this._responseURL)
     return this._responseURL
   }
 
   get responseHeaders() {
-    console.log('get responseHeaders', this._responseHeaders)
+    log.verbose('get responseHeaders', this._responseHeaders)
     return this._responseHeaders
   }
 
   set timeout(val) {
-    console.log('set timeout', this._timeout)
+    log.verbose('set timeout', this._timeout)
     this._timeout = val
   }
 
   get timeout() {
-    console.log('get timeout', this._timeout)
+    log.verbose('get timeout', this._timeout)
     return this._timeout
   }
 
   get upload() {
-    console.log('get upload', this._upload)
+    log.verbose('get upload', this._upload)
     return this._upload
   }
 
   get responseType() {
-    console.log('get response type', this._responseType)
+    log.verbose('get response type', this._responseType)
     return this._responseType
   }
 

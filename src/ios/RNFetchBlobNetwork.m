@@ -74,8 +74,8 @@ NSOperationQueue *taskQueue;
     return mheaders;
 }
 
-- (NSString *)md5 {
-    const char* str = [self UTF8String];
+- (NSString *)md5:(NSString *)input {
+    const char* str = [input UTF8String];
     unsigned char result[CC_MD5_DIGEST_LENGTH];
     CC_MD5(str, (CC_LONG)strlen(str), result);
 
@@ -120,14 +120,14 @@ NSOperationQueue *taskQueue;
 
 		NSString* cacheKey = taskId;
 		if (key != nil) {
-			cacheKey = [key md5];
+            cacheKey = [self md5:key];
 			if (cacheKey == nil) {
 				cacheKey = taskId;
 			}
 
 			destPath = [RNFetchBlobFS getTempPath:cacheKey withExtension:[self.options valueForKey:CONFIG_FILE_EXT]];
             if ([[NSFileManager defaultManager] fileExistsAtPath:destPath]) {
-				callback([NSNull null], destPath]);
+				callback(@[[NSNull null], destPath]);
                 return;
             }
 		}

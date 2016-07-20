@@ -80,22 +80,22 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                   headers:(NSDictionary *)headers
                   body:(NSString *)body callback:(RCTResponseSenderBlock)callback)
 {
-	NSString *cType = [headers valueForKey:"content-type"]
-	if (cType != nil && cType == @"application/x-www-form-urlencoded") {
-		[RNFetchBlobReqBuilder buildEncodedRequest:options taskId:taskId method:method url:url headers:headers body:body onComplete:^(NSURLRequest *req, long bodyLength) {
-	        // send HTTP request
-	        RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-	        [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
-	        utils = nil;
-	    }];
-	} else {
+    NSString *cType = [headers valueForKey:@"content-type"];
+//	if (cType != nil && cType == @"application/x-www-form-urlencoded") {
+//		[RNFetchBlobReqBuilder buildEncodedRequest:options taskId:taskId method:method url:url headers:headers body:body onComplete:^(NSURLRequest *req, long bodyLength) {
+//	        // send HTTP request
+//	        RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
+//	        [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+//	        utils = nil;
+//	    }];
+//	} else {
 		[RNFetchBlobReqBuilder buildOctetRequest:options taskId:taskId method:method url:url headers:headers body:body onComplete:^(NSURLRequest *req, long bodyLength) {
 	        // send HTTP request
 	        RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
 	        [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
 	        utils = nil;
 	    }];
-	}
+//	}
 }
 
 RCT_EXPORT_METHOD(createFile:(NSString *)path data:(NSString *)data encoding:(NSString *)encoding callback:(RCTResponseSenderBlock)callback) {

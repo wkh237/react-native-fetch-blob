@@ -134,6 +134,12 @@ function fetch(...args:any):Promise {
       }
     })
 
+    // When the request body comes from Blob polyfill, we should use special its ref
+    // as the request body
+    if( body instanceof Blob && body.isRNFetchBlobPolyfill) {
+      body = body.getRNFetchBlobRef()
+    }
+
     let req = RNFetchBlob[nativeMethodName]
     req(options, taskId, method, url, headers || {}, body, (err, data) => {
 

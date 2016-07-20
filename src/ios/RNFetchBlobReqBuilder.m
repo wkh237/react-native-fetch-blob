@@ -138,18 +138,19 @@
     });
 }
 
-+(void) buildEncodedRequest:(NSDictionary *)options
-                   taskId:(NSString *)taskId
-                   method:(NSString *)method
-                      url:(NSString *)url
-                  headers:(NSDictionary *)headers
-                     body:(NSString *)body
-               onComplete:(void(^)(NSURLRequest * req, long bodyLength))onComplete
-{
-	NSMutableData * formData = [[NSMutableData alloc] init];
-	[formData appendData:[[NSString stringWithFormat:@"%@", body] dataUsingEncoding:NSUTF8StringEncoding]];
-	onComplete(formData);
-}
+//+(void) buildEncodedRequest:(NSDictionary *)options
+//                   taskId:(NSString *)taskId
+//                   method:(NSString *)method
+//                      url:(NSString *)url
+//                  headers:(NSDictionary *)headers
+//                     body:(NSString *)body
+//               onComplete:(void(^)(NSURLRequest * req, long bodyLength))onComplete
+//{
+//	NSMutableData * formData = [[NSMutableData alloc] init];
+//    
+//	[formData appendData:[[NSString stringWithFormat:@"%@", body] dataUsingEncoding:NSUTF8StringEncoding]];
+//	onComplete(formData);
+//}
 
 
 +(void) buildFormBody:(NSArray *)form boundary:(NSString *)boundary onComplete:(void(^)(NSData * formData))onComplete

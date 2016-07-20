@@ -19,7 +19,7 @@ extern NSString *const CONFIG_FILE_PATH = @"path";
 extern NSString *const CONFIG_FILE_EXT = @"appendExt";
 extern NSString *const CONFIG_TRUSTY = @"trusty";
 extern NSString *const CONFIG_INDICATOR = @"indicator";
-extern NSString *const CONFIG_KEY = "@key";
+extern NSString *const CONFIG_KEY = @"key";
 
 extern NSString *const EVENT_STATE_CHANGE = @"RNFetchBlobState";
 extern NSString *const MSG_EVENT = @"RNFetchBlobMessage";

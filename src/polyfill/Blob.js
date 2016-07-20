@@ -5,8 +5,12 @@
 import RNFetchBlob from '../index.js'
 import fs from '../fs.js'
 import getUUID from '../utils/uuid'
+import Log from '../utils/log.js'
 
+const log = new Log('Blob')
 const blobCacheDir = fs.dirs.DocumentDir + '/RNFetchBlob-blob/'
+
+log.level(3)
 
 /**
  * A RNFetchBlob style Blob polyfill class, this is a Blob which compatible to
@@ -17,6 +21,7 @@ export default class Blob {
   cacheName:string;
   type:string;
   size:number;
+  isRNFetchBlobPolyfill:boolean = true;
 
   _ref:string = null;
   _blobCreated:boolean = false;
@@ -26,8 +31,12 @@ export default class Blob {
 
   // legacy constructor
   constructor(data:any, mime:?string) {
+
     this.cacheName = getBlobName()
+    this.isRNFetchBlobPolyfill = true
     this.type = mime
+    log.verbose('Blob constructor called' , data, 'mime', mime)
+
     if(typeof data === 'string') {
       // content from file
       if(data.startsWith('RNFetchBlob-file://')) {
@@ -36,6 +45,7 @@ export default class Blob {
       }
       // content from variable need create file
       else {
+        log.verbose('create Blob cache file ..')
         this._ref = RNFetchBlob.wrap(blobCacheDir + this.cacheName)
         let encoding = 'utf8'
         if(typeof data === 'string' && String(mime).match('application/octet') )
@@ -45,22 +55,26 @@ export default class Blob {
 
         this.init(data, encoding)
           .then(() => {
+            log.verbose('init executed ')
             if(typeof this._onCreated === 'function')
-              this._onCreated()
-            _blobCreated = true
+              this._onCreated(this)
           })
           .catch((err) => {
-            console.log('RNFetchBlob cannot create Blob', err)
+            log.error('RNFetchBlob cannot create Blob', err)
           })
       }
     }
+    // TODO : handle mixed blob array
+    else if(Array.isArray(data)) {
+
+    }
     else {
-      console.log('TODO')
+      log.verbose('TODO: else')
     }
   }
 
   onCreated(fn:() => void) {
-    console.log('register blob onCreated', fn)
+    log.verbose('register blob onCreated')
     if(this._blobCreated)
       fn()
     else
@@ -75,13 +89,27 @@ export default class Blob {
    * @return {Promise}
    */
   init(data, encoding):Promise {
-    console.log('blob init called')
-    return fs.exists(blobCacheDir).then((exist) => {
-      if(!exist)
-        return fs.mkdir(blobCacheDir).then(() => fs.createFile(this._ref, data, encoding))
-      else
-        return fs.createFile(this._ref, data, encoding)
+    return new Promise((resolve, reject) => {
+      fs.exists(blobCacheDir)
+        .then((exist) => {
+          log.verbose('blob cache folder exist', blobCacheDir, exist)
+          let path = String(this._ref).replace('RNFetchBlob-file://', '')
+          log.verbose('create cache file', path)
+          if(!exist)
+            return fs.mkdir(blobCacheDir)
+                     .then(() => fs.createFile(path, data, encoding))
+          else
+            return fs.createFile(path, data, encoding)
+        })
+        .then(() => {
+          this._blobCreated = true
+          resolve()
+        })
+        .catch((err) => {
+          reject(err)
+        })
     })
+
   }
 
   /**
@@ -100,7 +128,7 @@ export default class Blob {
    * @return {Blob}
    */
   slice(start:?number, end:?number, encoding:?string):Blob {
-    console.log('slice called')
+    log.verbose('slice called')
     // return fs.slice(this.cacheName, getBlobName(), contentType, start, end)
   }
 
@@ -113,7 +141,6 @@ export default class Blob {
     return fs.unlink(this._ref)
   }
 
-
 }
 
 /**
@@ -122,4 +149,14 @@ export default class Blob {
  */
 function getBlobName() {
   return 'blob-' + getUUID()
+}
+
+/**
+ * Create a file according to given array. The element in array can be a number,
+ * Blob, string.
+ * @param  {Array} dataArray An array contains different types of data.
+ * @return {string}      The blob file reference
+ */
+function createMixedBlobData(dataArray) {
+  // TODO : mixed blob data creator
 }

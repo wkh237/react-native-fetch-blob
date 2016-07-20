@@ -20,6 +20,7 @@ const Blob = RNFetchBlob.polyfill.Blob
 
 window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
 window.Blob = Blob
+window.FormData = RNFetchBlob.polyfill.FormData
 
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
@@ -61,13 +62,11 @@ describe('firebase login', (report, done) => {
   })
 })
 
-
 describe('upload file to firebase', (report, done) => {
 
   try {
     let blob = new Blob(RNTest.prop('image'), 'application/octet-binary')
     blob.onCreated(() => {
-      console.log('BINGO')
       let storage = firebase.storage().ref()
       let task = storage
         .child(`testdata/firebase-test-${Platform.OS}.png`)
