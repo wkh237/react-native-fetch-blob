@@ -17,6 +17,7 @@ import {
 
 const fs = RNFetchBlob.fs
 const Blob = RNFetchBlob.polyfill.Blob
+
 window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
 window.Blob = Blob
 
@@ -48,6 +49,7 @@ describe('firebase login', (report, done) => {
     .catch((err) => {
       console.log('firebase sigin failed', err)
     })
+
   firebase.auth().onAuthStateChanged((user) => {
     report(<Assert key="login status" uid="100"
       expect={true}
@@ -60,27 +62,34 @@ describe('firebase login', (report, done) => {
 })
 
 
-// describe('upload file to firebase', (report, done) => {
-//
-//   try {
-//     let storage = firebase.storage().ref()
-//     let task = storage
-//       .child(`testdata/firebase-test-${Platform.OS}.png`)
-//       .put(new Blob(file, 'image/png'), { contentType : 'image/png' })
-//
-//     task.on('state_change', null, (err) => {
-//
-//     }, () => {
-//       report(<Assert key="upload success"
-//         expect={true}
-//         actual={true}/>,
-//       <Info key="uploaded file stat" >
-//         <Text>{task.snapshot.totalBytes}</Text>
-//         <Text>{JSON.stringify(task.snapshot.metadata)}</Text>
-//       </Info>)
-//     })
-//   } catch(ex) {
-//     console.log('firebase polyfill error', ex)
-//   }
-//
-// })
+describe('upload file to firebase', (report, done) => {
+
+  try {
+    let blob = new Blob(RNTest.prop('image'), 'application/octet-binary')
+    blob.onCreated(() => {
+      console.log('BINGO')
+      let storage = firebase.storage().ref()
+      let task = storage
+        .child(`testdata/firebase-test-${Platform.OS}.png`)
+        .put(blob, { contentType : 'image/png' })
+
+      task.on('state_change', null, (err) => {
+
+      }, () => {
+        report(<Assert key="upload success"
+          expect={true}
+          actual={true}/>,
+        <Info key="uploaded file stat" >
+          <Text>{task.snapshot.totalBytes}</Text>
+          <Text>{JSON.stringify(task.snapshot.metadata)}</Text>
+        </Info>)
+        done()
+      })
+
+    })
+
+  } catch(ex) {
+    console.log('firebase polyfill error', ex)
+  }
+
+})
