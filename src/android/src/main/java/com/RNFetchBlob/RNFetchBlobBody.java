@@ -20,6 +20,7 @@ import java.util.HashMap;
 
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
+import okhttp3.FormBody;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ForwardingSink;
@@ -71,11 +72,14 @@ public class RNFetchBlobBody extends RequestBody{
             case SingleFile:
                 writeOctetData(sink);
                 break;
+			case Encoded:
+				writeEncodedData(sink);
+				break;
         }
         buffer.flush();
     }
 
-    private void writeFormData(BufferedSink sink) throws IOException {
+	private void writeFormData(BufferedSink sink) throws IOException {
         String boundary = "RNFetchBlob-" + mTaskId;
         ArrayList<FormField> fields = countFormDataLength();
         ReactApplicationContext ctx = RNFetchBlob.RCTContext;
@@ -183,6 +187,33 @@ public class RNFetchBlobBody extends RequestBody{
             pipeStreamToSink(requestStream, sink);
 
     }
+
+
+	/**
+     * Write form-encoded data to request body
+     * @param sink
+     */
+	 // This is NOT working since sink.write, creates a Transfer-Encoding: chunked
+	 // header, which is not expected from servers
+	private void writeEncodedData(BufferedSink sink) throws IOException {
+		FormBody.Builder body = new FormBody.Builder();
+
+		// String[] pairs = rawBody.split("&");
+		// for ( String pair : pairs ) {
+		// 	String[] kv = pair.split("=");
+		// 	body.add(kv[0], kv[1]);
+		// }
+		// body.build().writeTo(sink);
+
+		// String header = "Content-Disposition: form-data; \r\n";
+		// String header = "Content-Type: application/x-www-form-urlencoded\r\n\r\n";
+		// sink.write(header.getBytes());
+		// byte[] fieldData = field.data.getBytes();
+		// bytesWritten += fieldData.length;
+		sink.write(rawBody.getBytes());
+
+
+	}
 
     /**
      * Pipe input stream to request body output stream

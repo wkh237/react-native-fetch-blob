@@ -14,6 +14,7 @@
 #import "RNFetchBlobFS.h"
 #import "RNFetchBlobNetwork.h"
 #import "RNFetchBlobConst.h"
+#import <CommonCrypto/CommonDigest.h>
 
 ////////////////////////////////////////
 //
@@ -64,13 +65,25 @@ NSOperationQueue *taskQueue;
 
 // removing case from headers
 + (NSMutableDictionary *) normalizeHeaders:(NSDictionary *)headers {
-    
+
     NSMutableDictionary * mheaders = [[NSMutableDictionary alloc]init];
     for(NSString * key in headers) {
         [mheaders setValue:[headers valueForKey:key] forKey:[key lowercaseString]];
     }
-    
+
     return mheaders;
+}
+
+- (NSString *)md5 {
+    const char* str = [self UTF8String];
+    unsigned char result[CC_MD5_DIGEST_LENGTH];
+    CC_MD5(str, (CC_LONG)strlen(str), result);
+
+    NSMutableString *ret = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH*2];
+    for(int i = 0; i<CC_MD5_DIGEST_LENGTH; i++) {
+        [ret appendFormat:@"%02x",result[i]];
+    }
+    return ret;
 }
 
 // send HTTP request
@@ -88,25 +101,41 @@ NSOperationQueue *taskQueue;
     self.expectedBytes = 0;
     self.receivedBytes = 0;
     self.options = options;
-    
+
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
     NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
+	NSString * key = [self.options valueForKey:CONFIG_KEY];
     NSURLSession * session;
-    
+
     bodyLength = contentLength;
-    
+
     // the session trust any SSL certification
 
     NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
     session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:[NSOperationQueue mainQueue]];
-    
+
     if(path != nil || [self.options valueForKey:CONFIG_USE_TEMP]!= nil)
     {
         respFile = YES;
+
+		NSString* cacheKey = taskId;
+		if (key != nil) {
+			cacheKey = [key md5];
+			if (cacheKey == nil) {
+				cacheKey = taskId;
+			}
+
+			destPath = [RNFetchBlobFS getTempPath:cacheKey withExtension:[self.options valueForKey:CONFIG_FILE_EXT]];
+            if ([[NSFileManager defaultManager] fileExistsAtPath:destPath]) {
+				callback([NSNull null], destPath]);
+                return;
+            }
+		}
+
         if(path != nil)
             destPath = path;
-        else
-            destPath = [RNFetchBlobFS getTempPath:taskId withExtension:[self.options valueForKey:CONFIG_FILE_EXT]];
+        // else
+        //     destPath = [RNFetchBlobFS getTempPath:cacheKey withExtension:[self.options valueForKey:CONFIG_FILE_EXT]];
     }
     else
     {
@@ -116,7 +145,7 @@ NSOperationQueue *taskQueue;
     NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
     [taskTable setValue:task forKey:taskId];
     [task resume];
-    
+
     // network status indicator
     if([[options objectForKey:CONFIG_INDICATOR] boolValue] == YES)
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
@@ -170,7 +199,7 @@ NSOperationQueue *taskQueue;
             }
          ];
     }
-    
+
     if(respFile == YES)
     {
         NSFileManager * fm = [NSFileManager defaultManager];
@@ -198,7 +227,7 @@ NSOperationQueue *taskQueue;
     {
         [writeStream write:[data bytes] maxLength:[data length]];
     }
-    
+
     [self.bridge.eventDispatcher
      sendDeviceEventWithName:@"RNFetchBlobProgress"
      body:@{
@@ -207,7 +236,7 @@ NSOperationQueue *taskQueue;
             @"total": [NSString stringWithFormat:@"%d", expectedBytes]
             }
      ];
-    
+
 }
 
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
@@ -247,7 +276,7 @@ NSOperationQueue *taskQueue;
 }
 
 //- (void) application:(UIApplication *)application handleEventsForBackgroundURLSession:(NSString *)identifier completionHandler:(void (^)())completionHandler {
-//    
+//
 //}
 
 //- (void) URLSessionDidFinishEventsForBackgroundURLSession:(NSURLSession *)session

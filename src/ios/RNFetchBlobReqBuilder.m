@@ -14,7 +14,7 @@
 
 @interface RNFetchBlobReqBuilder()
 {
-    
+
 }
 @end
 
@@ -36,7 +36,7 @@
     NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
     NSTimeInterval timeStamp = [[NSDate date] timeIntervalSince1970];
     NSNumber * timeStampObj = [NSNumber numberWithDouble: timeStamp];
-    
+
     // generate boundary
     NSString * boundary = [NSString stringWithFormat:@"RNFetchBlob%d", timeStampObj];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -58,7 +58,7 @@
             [request setAllHTTPHeaderFields:mheaders];
             onComplete(request, [formData length]);
         }];
-        
+
     });
 }
 
@@ -76,7 +76,7 @@
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
                                     initWithURL:[NSURL
                                                  URLWithString: encodedUrl]];
-    
+
     NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
     // move heavy task to another thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -86,7 +86,7 @@
         if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
             // generate octet-stream body
             if(body != nil) {
-                
+
                 // when body is a string contains file path prefix, try load file from the path
                 if([body hasPrefix:FILE_PREFIX]) {
                     NSString * orgPath = [body substringFromIndex:[FILE_PREFIX length]];
@@ -130,13 +130,27 @@
                 
             }
         }
-        
+
         [request setHTTPMethod: method];
         [request setAllHTTPHeaderFields:mheaders];
-        
+
         onComplete(request, size);
     });
 }
+
++(void) buildEncodedRequest:(NSDictionary *)options
+                   taskId:(NSString *)taskId
+                   method:(NSString *)method
+                      url:(NSString *)url
+                  headers:(NSDictionary *)headers
+                     body:(NSString *)body
+               onComplete:(void(^)(NSURLRequest * req, long bodyLength))onComplete
+{
+	NSMutableData * formData = [[NSMutableData alloc] init];
+	[formData appendData:[[NSString stringWithFormat:@"%@", body] dataUsingEncoding:NSUTF8StringEncoding]];
+	onComplete(formData);
+}
+
 
 +(void) buildFormBody:(NSArray *)form boundary:(NSString *)boundary onComplete:(void(^)(NSData * formData))onComplete
 {
@@ -204,7 +218,7 @@
             }
             else
                 onComplete(formData);
-            
+
         };
         getFieldData([form objectAtIndex:i]);
     }
