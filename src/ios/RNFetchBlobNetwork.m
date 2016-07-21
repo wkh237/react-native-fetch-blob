@@ -134,8 +134,6 @@ NSOperationQueue *taskQueue;
 
         if(path != nil)
             destPath = path;
-        // else
-        //     destPath = [RNFetchBlobFS getTempPath:cacheKey withExtension:[self.options valueForKey:CONFIG_FILE_EXT]];
     }
     else
     {

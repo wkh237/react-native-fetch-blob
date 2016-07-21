@@ -25,7 +25,7 @@ export default class Blob {
 
   _ref:string = null;
   _blobCreated:boolean = false;
-  _onCreated:() => void;
+  _onCreated:Array<any> = [];
 
   static Instances:any = {}
 
@@ -35,86 +35,44 @@ export default class Blob {
     this.cacheName = getBlobName()
     this.isRNFetchBlobPolyfill = true
     this.type = mime
-    log.verbose('Blob constructor called' , data, 'mime', mime)
-
-    if(typeof data === 'string') {
-      // content from file
-      if(data.startsWith('RNFetchBlob-file://')) {
-        this._ref = data
-        this._blobCreated = true
-        if(typeof this._onCreated === 'function')
-          this._onCreated(this)
-      }
-      // content from variable need create file
-      else {
-        log.verbose('create Blob cache file ..')
-        this._ref = RNFetchBlob.wrap(blobCacheDir + this.cacheName)
-        let encoding = 'utf8'
-        if(typeof data === 'string' && String(mime).match('application/octet') )
-          encoding = 'base64'
-        else if(Array.isArray(data))
-          encoding = 'ascii'
-
-        this.init(data, encoding)
-            .then(() => {
-              log.verbose('init executed ')
-              if(typeof this._onCreated === 'function')
-                this._onCreated(this)
-            })
-            .catch((err) => {
-              log.error('RNFetchBlob cannot create Blob', err)
-            })
-      }
+    log.verbose('Blob constructor called', 'mime', mime)
+    this._ref = blobCacheDir + this.cacheName
+    let p = null
+    // content from file
+    if(typeof data === 'string' && data.startsWith('RNFetchBlob-file://')) {
+      log.verbose('create Blob cache file from file path')
+      this._ref = data
+      p = Promise.resolve()
     }
-    // TODO : handle mixed blob array
+    // content from variable need create file
+    else if(typeof data === 'string') {
+      log.verbose('create Blob cache file from string')
+      let encoding = 'utf8'
+      if(String(mime).match('application/octet'))
+        encoding = 'base64'
+      else if(Array.isArray(data))
+        encoding = 'ascii'
+      // create cache file
+      p = fs.writeFile(this._ref, data, encoding)
+
+    }
+    // when input is an array of mixed data types, create a file cache
     else if(Array.isArray(data)) {
-      this._ref = RNFetchBlob.wrap(blobCacheDir + this.cacheName)
-      createMixedBlobData(this._ref, data)
-        .then(() => {
-          if(typeof this._onCreated === 'function')
-            this._onCreated(this)
-        })
+      log.verbose('create Blob cache file from mixed array', data)
+      p = createMixedBlobData(this._ref, data)
     }
+    p && p.then(() => {
+      this._invokeOnCreateEvent()
+    })
+    .catch((err) => {
+      log.error('RNFetchBlob cannot create Blob : '+ this._ref)
+    })
 
   }
 
   onCreated(fn:() => void) {
-    log.verbose('register blob onCreated')
-    if(this._blobCreated)
-      fn()
-    else
-      this._onCreated = fn
-  }
-
-  /**
-   * Create blob file cache
-   * @nonstandard
-   * @param  {string | Array} data Data to create Blob file
-   * @param  {'base64' | 'utf8' | 'ascii'} encoding RNFetchBlob fs encoding
-   * @return {Promise}
-   */
-  init(data, encoding):Promise {
-    return new Promise((resolve, reject) => {
-      fs.exists(blobCacheDir)
-        .then((exist) => {
-          log.verbose('blob cache folder exist', blobCacheDir, exist)
-          let path = String(this._ref).replace('RNFetchBlob-file://', '')
-          log.verbose('create cache file', path)
-          if(!exist)
-            return fs.mkdir(blobCacheDir)
-                     .then(() => fs.createFile(path, data, encoding))
-          else
-            return fs.createFile(path, data, encoding)
-        })
-        .then(() => {
-          this._blobCreated = true
-          resolve()
-        })
-        .catch((err) => {
-          reject(err)
-        })
-    })
-
+    log.verbose('register blob onCreated', this._onCreated.length)
+    this._onCreated.push(fn)
   }
 
   /**
@@ -146,6 +104,21 @@ export default class Blob {
     return fs.unlink(this._ref)
   }
 
+  clearCache() {
+
+  }
+
+  _invokeOnCreateEvent() {
+    log.verbose('invoke create event')
+    this._blobCreated = true
+    let fns = this._onCreated
+    for(let i in fns) {
+      if(typeof fns[i] === 'function')
+        fns[i](this)
+    }
+    delete this._onCreated
+  }
+
 }
 
 /**
@@ -164,15 +137,21 @@ function getBlobName() {
  * @return {Promise}
  */
 function createMixedBlobData(ref, dataArray) {
-  let p = fs.createFile(ref, '')
+  let p = fs.writeFile(ref, '')
+  let args = []
   for(let i in dataArray) {
     let part = dataArray[i]
     if(part instanceof Blob)
-      p.then(() => fs.appendFile(ref, part.getRNFetchBlobRef()), 'uri')
+      args.push([ref, part.getRNFetchBlobRef(), 'uri'])
+    else if(typeof part === 'string')
+      args.push([ref, part, 'utf8'])
     else if (Array.isArray(part))
-      p.then(() => fs.appendFile(ref), part, 'ascii')
-    else
-      p.then(() => fs.appendFile(ref), part, 'utf8')
+      args.push([ref, part, 'ascii'])
   }
-  return p
+  return p.then(() => {
+    let promises = args.map((p) => {
+      return fs.appendFile.call(this, ...p)
+    })
+    return Promise.all(promises)
+  })
 }

@@ -213,49 +213,32 @@ NSMutableDictionary *fileStreams = nil;
         encoding = [encoding lowercaseString];
         if(![fm fileExistsAtPath:folder]) {
             [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:&err];
+            [fm createFileAtPath:path contents:nil attributes:nil];
         }
-        // if file exists, write file using encoding
-        if(![fm fileExistsAtPath:path]) {
-            if([encoding isEqualToString:@"base64"]){
-                NSData * byteData = [[NSData alloc] initWithBase64EncodedString:data options:0];
-                [fm createFileAtPath:path contents:byteData attributes:NULL];
-            }
-            // write file from file
-            else if([encoding isEqualToString:@"uri"]) {
-                [[self class] writeFileFromFile:data toFile:path append:append];
-                resolve([NSNull null]);
-                return;
-            }
-            //TODO: from buffer
-            // else if ([encoding isEqualToString:@"buffer"]){
-            // }
-            // write data as UTF8 string
-            else
-                [fm createFileAtPath:path contents:[data dataUsingEncoding:NSUTF8StringEncoding] attributes:NULL];
+        if(err != nil) {
+            reject(@"RNFetchBlob writeFile Error", @"could not create file at path", path);
+            return;
         }
-        // file does not exists, create one
+        NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
+        NSData * content = nil;
+        if([encoding isEqualToString:@"base64"]) {
+            content = [[NSData alloc] initWithBase64EncodedString:data options:0];
+        }
+        else if([encoding isEqualToString:@"uri"]) {
+            [[self class] writeFileFromFile:data toFile:path append:append];
+            resolve([NSNull null]);
+            return;
+        }
         else {
-            NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
-            NSData * content = nil;
-            if([encoding isEqualToString:@"base64"]) {
-                content = [[NSData alloc] initWithBase64EncodedString:data options:0];
-            }
-            else if([encoding isEqualToString:@"uri"]) {
-                [[self class] writeFileFromFile:data toFile:path append:append];
-                resolve([NSNull null]);
-                return;
-            }
-            else {
-                content = [data dataUsingEncoding:NSUTF8StringEncoding];
-            }
-            if(append == YES) {
-                [fileHandle seekToEndOfFile];
-                [fileHandle writeData:content];
-                [fileHandle closeFile];
-            }
-            else {
-                [content writeToFile:path atomically:YES];
-            }
+            content = [data dataUsingEncoding:NSUTF8StringEncoding];
+        }
+        if(append == YES) {
+            [fileHandle seekToEndOfFile];
+            [fileHandle writeData:content];
+            [fileHandle closeFile];
+        }
+        else {
+            [content writeToFile:path atomically:YES];
         }
         fm = nil;
         resolve([NSNull null]);

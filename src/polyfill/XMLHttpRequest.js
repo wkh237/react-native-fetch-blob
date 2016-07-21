@@ -92,8 +92,9 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
 
     this._upload = new XMLHttpRequestEventTarget()
     log.verbose(typeof body, body instanceof FormData)
-    if(Array.isArray(body)) {
-      // TODO
+
+    if(body instanceof Blob) {
+      body = RNFetchBlob.wrap(body.getRNFetchBlobRef())
     }
 
     this.dispatchEvent('loadstart')
@@ -211,7 +212,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   _onDone(resp) {
-    log.verbose('XMLHttpRequest done', resp.text())
+    log.verbose('XMLHttpRequest done', this)
     this.statusText = '200 OK'
     this._status = 200
     switch(resp.type) {

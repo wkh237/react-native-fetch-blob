@@ -86,7 +86,13 @@
         if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
             // generate octet-stream body
             if(body != nil) {
-
+                
+                // when headers does not contain a key named "content-type" (case ignored), use default content type
+                if([[self class] getHeaderIgnoreCases:@"content-type" fromHeaders:mheaders] == nil)
+                {
+                    [mheaders setValue:@"application/octet-stream" forKey:@"Content-Type"];
+                }
+                
                 // when body is a string contains file path prefix, try load file from the path
                 if([body hasPrefix:FILE_PREFIX]) {
                     NSString * orgPath = [body substringFromIndex:[FILE_PREFIX length]];
@@ -95,10 +101,6 @@
                     {
                         [RNFetchBlobFS readFile:orgPath encoding:@"utf8" resolver:nil rejecter:nil onComplete:^(NSData *content) {
                             [request setHTTPBody:content];
-                            if([mheaders valueForKey:@"content-type"] == nil)
-                            {
-                                [mheaders setValue:@"application/octet-stream" forKey:@"content-type"];
-                            }
                             [request setHTTPMethod: method];
                             [request setAllHTTPHeaderFields:mheaders];
                             onComplete(request, [content length]);
@@ -110,24 +112,22 @@
                 }
                 // otherwise convert it as BASE64 data string
                 else {
-                    // the body is BASE64 encoded string
-                    if(([mheaders valueForKey:@"content-type"] == nil && [mheaders valueForKey:@"Content-Type"] == nil) ||
-                       ([[[mheaders valueForKey:@"content-type"] lowercaseString] isEqualToString:@"application/octet-stream"] ||
-                        [[[mheaders valueForKey:@"Content-Type"] lowercaseString] isEqualToString:@"application/octet-stream"]))
+                    
+                    NSString * cType = [[self class]getHeaderIgnoreCases:@"content-type" fromHeaders:mheaders];
+                    // when content-type is application/octet* decode body string using BASE64 decoder
+                    if([[cType lowercaseString] hasPrefix:@"application/octet"])
                     {
                         blobData = [[NSData alloc] initWithBase64EncodedString:body options:0];
-                        [mheaders setValue:@"application/octet-stream" forKey:@"Content-Type"];
                         [request setHTTPBody:blobData];
                         size = [blobData length];
                     }
-                    // use the body string as is
+                    // otherwise use the body as-is
                     else
                     {
                         size = [body length];
                         [request setHTTPBody: [body dataUsingEncoding:NSUTF8StringEncoding]];
                     }
                 }
-                
             }
         }
 
@@ -137,21 +137,6 @@
         onComplete(request, size);
     });
 }
-
-//+(void) buildEncodedRequest:(NSDictionary *)options
-//                   taskId:(NSString *)taskId
-//                   method:(NSString *)method
-//                      url:(NSString *)url
-//                  headers:(NSDictionary *)headers
-//                     body:(NSString *)body
-//               onComplete:(void(^)(NSURLRequest * req, long bodyLength))onComplete
-//{
-//	NSMutableData * formData = [[NSMutableData alloc] init];
-//    
-//	[formData appendData:[[NSString stringWithFormat:@"%@", body] dataUsingEncoding:NSUTF8StringEncoding]];
-//	onComplete(formData);
-//}
-
 
 +(void) buildFormBody:(NSArray *)form boundary:(NSString *)boundary onComplete:(void(^)(NSData * formData))onComplete
 {
@@ -223,6 +208,17 @@
         };
         getFieldData([form objectAtIndex:i]);
     }
+}
+
++(NSString *) getHeaderIgnoreCases:(NSString *)field fromHeaders:(NSMutableArray *) headers {
+    
+    NSString * normalCase = [headers valueForKey:field];
+    NSString * ignoredCase = [headers valueForKey:[field lowercaseString]];
+    if( normalCase != nil)
+        return normalCase;
+    else
+        return ignoredCase;
+    
 }
 
 
