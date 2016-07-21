@@ -23,9 +23,9 @@ A project committed to make file acess and transfer easier and effiecient for Re
 
 ## About
 
-This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854), because React Native does not support `Blob` object and it will cause some problem when sending and receiving binary data. There's aleady [a PR ](https://github.com/facebook/react-native/pull/8324) merged into RN master branch which will probably solving the issue in the near future. 
+This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854), because React Native does not support `Blob` object and it will cause some problem when sending and receiving binary data. There's aleady [a PR ](https://github.com/facebook/react-native/pull/8324) merged into RN master branch which will probably solving the issue in the near future.
 
-Now, this project is committed to make file acess and transfer more easier and more effiecient for React Native developers. We've implemented lot of file access function which plays well with our network module. For example, it can upload and download data directly into/from file system, which is much more performant than converting data to BASE64 string and sending them through React JS Bridge, and file stream support so that you can read large file without causing OOM error. 
+Now, this project is committed to make file acess and transfer more easier and more effiecient for React Native developers. We've implemented lot of file access function which plays well with our network module. For example, it can upload and download data directly into/from file system, which is much more performant than converting data to BASE64 string and sending them through React JS Bridge, and file stream support so that you can read large file without causing OOM error.
 
 ## Backward Compatible
 
@@ -614,6 +614,7 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.7.3 | Fix OkHttp dependency issue in version < 0.29 |
 | 0.7.2 | Fix cancel request bug |
 | 0.7.1 | Fix #57 ios module could not compile on ios version <= 9.3 |
 | 0.7.0 | Add support of Android upload progress, and remove AsyncHttpClient dependency from Android native implementation. |
