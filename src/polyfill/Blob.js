@@ -42,6 +42,8 @@ export default class Blob {
       if(data.startsWith('RNFetchBlob-file://')) {
         this._ref = data
         this._blobCreated = true
+        if(typeof this._onCreated === 'function')
+          this._onCreated(this)
       }
       // content from variable need create file
       else {
@@ -54,23 +56,26 @@ export default class Blob {
           encoding = 'ascii'
 
         this.init(data, encoding)
-          .then(() => {
-            log.verbose('init executed ')
-            if(typeof this._onCreated === 'function')
-              this._onCreated(this)
-          })
-          .catch((err) => {
-            log.error('RNFetchBlob cannot create Blob', err)
-          })
+            .then(() => {
+              log.verbose('init executed ')
+              if(typeof this._onCreated === 'function')
+                this._onCreated(this)
+            })
+            .catch((err) => {
+              log.error('RNFetchBlob cannot create Blob', err)
+            })
       }
     }
     // TODO : handle mixed blob array
     else if(Array.isArray(data)) {
+      this._ref = RNFetchBlob.wrap(blobCacheDir + this.cacheName)
+      createMixedBlobData(this._ref, data)
+        .then(() => {
+          if(typeof this._onCreated === 'function')
+            this._onCreated(this)
+        })
+    }
 
-    }
-    else {
-      log.verbose('TODO: else')
-    }
   }
 
   onCreated(fn:() => void) {
@@ -153,10 +158,21 @@ function getBlobName() {
 
 /**
  * Create a file according to given array. The element in array can be a number,
- * Blob, string.
+ * Blob, String, Array.
+ * @param  {string} ref File path reference
  * @param  {Array} dataArray An array contains different types of data.
- * @return {string}      The blob file reference
+ * @return {Promise}
  */
-function createMixedBlobData(dataArray) {
-  // TODO : mixed blob data creator
+function createMixedBlobData(ref, dataArray) {
+  let p = fs.createFile(ref, '')
+  for(let i in dataArray) {
+    let part = dataArray[i]
+    if(part instanceof Blob)
+      p.then(() => fs.appendFile(ref, part.getRNFetchBlobRef()), 'uri')
+    else if (Array.isArray(part))
+      p.then(() => fs.appendFile(ref), part, 'ascii')
+    else
+      p.then(() => fs.appendFile(ref), part, 'utf8')
+  }
+  return p
 }
