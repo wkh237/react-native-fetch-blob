@@ -23,11 +23,9 @@ A project committed to make file acess and transfer easier and effiecient for Re
 
 ## About
 
-React Native does not support `Blob` object at this moment, which means if you're going to send/receive binary data via `fetch` API, that might not work as you expect. See [facebook/react-native#854](https://github.com/facebook/react-native/issues/854).
+This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854), because React Native does not support `Blob` object and it will cause some problem when sending and receiving binary data. There's aleady [a PR ](https://github.com/facebook/react-native/pull/8324) merged into RN master branch which will probably solving the issue in the near future. 
 
-For some use cases, you might get into trouble. For example, displaying an image that requires a specific field in headers (ex. "Authorization : Bearer ...") or body, so you can't just pass the image uri to `Image` component because that will probably returns a 401 response. Or you're going to upload binary data which generated from JS, the server will get an empry body due to [this issue](https://github.com/facebook/react-native/issues/854). With help of APIs provided by this module, you can send HTTP request with any headers, and decide how to handle the response/reqeust data without worry about if it is not supported by `fetch` API. The response data can be just simply converted into BASE64 string, or stored to a file directly so that you can read it by using file access APIs such as readFile, readStream.
-
-This module was designed to be a substitution of `Blob`, there's a set of APIs including basic file system CRUD method, and file stream reader/writer. Also it has a special `fetch` implementation that supports binary request/response body.
+Now, this project is committed to make file acess and transfer more easier and more effiecient for React Native developers. We've implemented lot of file access function which plays well with our network module. For example, it can upload and download data directly into/from file system, which is much more performant than converting data to BASE64 string and sending them through React JS Bridge, and file stream support so that you can read large file without causing OOM error. 
 
 ## Backward Compatible
 
