@@ -35,6 +35,7 @@ const {
 } = fs
 import polyfill from './polyfill'
 
+const Blob = polyfill.Blob
 const emitter = DeviceEventEmitter
 const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
 

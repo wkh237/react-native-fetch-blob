@@ -14,4 +14,7 @@ public class RNFetchBlobConst {
 	public static final MediaType MIME_ENCODED = MediaType.parse("application/x-www-form-urlencoded");
     public static final String FILE_PREFIX_BUNDLE_ASSET = "bundle-assets://";
     public static final String FILE_PREFIX_CONTENT = "content://";
+    public static final String DATA_ENCODE_URI = "uri";
+    public static final String DATA_ENCODE_BASE64 = "base64";
+    public static final String DATA_ENCODE_UTF8 = "utf8";
 }
