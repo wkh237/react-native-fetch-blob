@@ -152,7 +152,8 @@ RCT_EXPORT_METHOD(exists:(NSString *)path callback:(RCTResponseSenderBlock)callb
 }
 
 RCT_EXPORT_METHOD(writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
-    [RNFetchBlobFS writeFile:path encoding:encoding data:data append:append resolver:resolve rejecter:reject];
+    
+    [RNFetchBlobFS writeFile:path encoding:[NSString stringWithString:encoding] data:data append:append resolver:resolve rejecter:reject];
 })
 
 RCT_EXPORT_METHOD(writeFileArray:(NSString *)path data:(NSArray *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {

@@ -39,7 +39,7 @@ NSMutableDictionary *fileStreams = nil;
 
 // static member getter
 + (NSArray *) getFileStreams {
-
+    
     if(fileStreams == nil)
         fileStreams = [[NSMutableDictionary alloc] init];
     return fileStreams;
@@ -58,7 +58,7 @@ NSMutableDictionary *fileStreams = nil;
     {
         assetURI = [assetURI stringByReplacingOccurrencesOfString:ASSET_PREFIX withString:@""];
         assetURI = [[NSBundle mainBundle] pathForResource: [assetURI stringByDeletingPathExtension]
-                                               ofType: [assetURI pathExtension]];
+                                                   ofType: [assetURI pathExtension]];
     }
     return assetURI;
 }
@@ -84,12 +84,12 @@ NSMutableDictionary *fileStreams = nil;
 }
 
 + (NSString *) getTempPath {
-
+    
     return [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingString:@"/RNFetchBlob_tmp"];
 }
 
 + (NSString *) getTempPath:(NSString*)taskId withExtension:(NSString *)ext {
-
+    
     NSString * documentDir = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
     NSString * filename = [NSString stringWithFormat:@"/RNFetchBlob_tmp/RNFetchBlobTmp_%@", taskId];
     if(ext != nil)
@@ -185,30 +185,65 @@ NSMutableDictionary *fileStreams = nil;
     }
 }
 
-+ (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
++ (void) writeFileFromFile:(NSString *)src toFile:(NSString *)dest append:(BOOL)append
+{
+    NSInputStream * is = [[NSInputStream alloc] initWithFileAtPath:src];
+    NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:append];
+    [is open];
+    [os open];
+    uint8_t buffer[10240];
+    int read = [is read:buffer maxLength:10240];
+    while(read > 0) {
+        [os write:buffer maxLength:read];
+        read = [is read:buffer maxLength:10240];
+    }
+    [os close];
+    [is close];
+}
+
++ (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject
+{
+    NSLog(encoding);
     @try {
         NSFileManager * fm = [NSFileManager defaultManager];
         NSError * err = nil;
         // check if the folder exists, if not exists, create folders recursively
         // after the folders created, write data into the file
         NSString * folder = [path stringByDeletingLastPathComponent];
+        encoding = [encoding lowercaseString];
         if(![fm fileExistsAtPath:folder]) {
             [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:&err];
         }
-        // if file exists, write file by encoding and strategy
+        // if file exists, write file using encoding
         if(![fm fileExistsAtPath:path]) {
-            if([[encoding lowercaseString] isEqualToString:@"base64"]){
+            if([encoding isEqualToString:@"base64"]){
                 NSData * byteData = [[NSData alloc] initWithBase64EncodedString:data options:0];
                 [fm createFileAtPath:path contents:byteData attributes:NULL];
             }
+            // write file from file
+            else if([encoding isEqualToString:@"uri"]) {
+                [[self class] writeFileFromFile:data toFile:path append:append];
+                resolve([NSNull null]);
+                return;
+            }
+            //TODO: from buffer
+            // else if ([encoding isEqualToString:@"buffer"]){
+            // }
+            // write data as UTF8 string
             else
                 [fm createFileAtPath:path contents:[data dataUsingEncoding:NSUTF8StringEncoding] attributes:NULL];
         }
+        // file does not exists, create one
         else {
             NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
             NSData * content = nil;
-            if([[encoding lowercaseString] isEqualToString:@"base64"]) {
+            if([encoding isEqualToString:@"base64"]) {
                 content = [[NSData alloc] initWithBase64EncodedString:data options:0];
+            }
+            else if([encoding isEqualToString:@"uri"]) {
+                [[self class] writeFileFromFile:data toFile:path append:append];
+                resolve([NSNull null]);
+                return;
             }
             else {
                 content = [data dataUsingEncoding:NSUTF8StringEncoding];
@@ -443,11 +478,11 @@ NSMutableDictionary *fileStreams = nil;
         [self.outStream close];
         self.outStream = nil;
     }
-
+    
 }
 
 - (void)readWithPath:(NSString *)path useEncoding:(NSString *)encoding bufferSize:(int) bufferSize {
-
+    
     self.inStream = [[NSInputStream alloc] initWithFileAtPath:path];
     self.inStream.delegate = self;
     self.encoding = encoding;
@@ -483,25 +518,25 @@ NSMutableDictionary *fileStreams = nil;
         [[RNFetchBlobFS getFileStreams] setValue:nil forKey:self.streamId];
         self.streamId = nil;
     }
-
+    
 }
 
 #pragma mark RNFetchBlobFS read stream delegate
 
 - (void)stream:(NSStream *)stream handleEvent:(NSStreamEvent)eventCode {
-
+    
     NSString * streamEventCode = [NSString stringWithFormat:@"RNFetchBlobStream+%@", self.path];
-
+    
     switch(eventCode) {
-
-        // write stream event
+            
+            // write stream event
         case NSStreamEventHasSpaceAvailable:
         {
-
-
+            
+            
         }
-
-        // read stream incoming chunk
+            
+            // read stream incoming chunk
         case NSStreamEventHasBytesAvailable:
         {
             NSMutableData * chunkData = [[NSMutableData alloc] init];
@@ -535,13 +570,13 @@ NSMutableDictionary *fileStreams = nil;
                             [asciiArray addObject:[NSNumber numberWithChar:bytePtr[i]]];
                         }
                     }
-
+                    
                     [self.bridge.eventDispatcher
                      sendDeviceEventWithName:streamEventCode
                      body: @{
                              @"event": FS_EVENT_DATA,
                              @"detail": asciiArray
-                            }
+                             }
                      ];
                     return;
                 }
@@ -560,7 +595,7 @@ NSMutableDictionary *fileStreams = nil;
                      ];
                     return;
                 }
-
+                
                 [self.bridge.eventDispatcher
                  sendDeviceEventWithName:streamEventCode
                  body:@{
@@ -581,8 +616,8 @@ NSMutableDictionary *fileStreams = nil;
             }
             break;
         }
-
-        // stream error
+            
+            // stream error
         case NSStreamEventErrorOccurred:
         {
             [self.bridge.eventDispatcher
@@ -594,9 +629,9 @@ NSMutableDictionary *fileStreams = nil;
              ];
             break;
         }
-
+            
     }
-
+    
 }
 
 + (void) getPathFromUri:(NSString *)uri completionHandler:(void(^)(NSString * path, ALAssetRepresentation *asset)) onComplete
