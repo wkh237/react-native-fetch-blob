@@ -64,31 +64,36 @@ describe('firebase login', (report, done) => {
 
 describe('upload file to firebase', (report, done) => {
 
-  try {
-    let blob = new Blob(RNTest.prop('image'), 'application/octet-binary')
-    blob.onCreated(() => {
-      let storage = firebase.storage().ref()
-      let task = storage
-        .child(`testdata/firebase-test-${Platform.OS}.png`)
-        .put(blob, { contentType : 'image/png' })
-
-      task.on('state_change', null, (err) => {
-
-      }, () => {
+  // create Blob from BASE64 data
+  let blob = new Blob(RNTest.prop('image'), 'image/png;BASE64')
+  let testImage = `firebase-test-${Platform.OS}-${new Date().toLocaleString()}.png`
+  RNTest.prop('firebase-image', testImage)
+  // start test after Blob created
+  blob.onCreated(() => {
+    let storage = firebase.storage().ref('rnfbtest')
+    let task = storage
+      .child(RNTest.prop('firebase-image'))
+      .put(blob, { contentType : 'image/png' })
+      .then((snapshot) => {
         report(<Assert key="upload success"
           expect={true}
           actual={true}/>,
         <Info key="uploaded file stat" >
-          <Text>{task.snapshot.totalBytes}</Text>
-          <Text>{JSON.stringify(task.snapshot.metadata)}</Text>
+          <Text>{snapshot.totalBytes}</Text>
+          <Text>{JSON.stringify(snapshot.metadata)}</Text>
         </Info>)
         done()
       })
+  })
+})
 
-    })
-
-  } catch(ex) {
-    console.log('firebase polyfill error', ex)
-  }
-
+describe('download firebase storage item', (report, done) => {
+  let storage = firebase.storage().ref('rnfbtest/' + RNTest.prop('firebase-image'))
+  storage.getDownloadURL().then((url) => {
+    console.log(url)
+    report(<Info key="image viewer">
+      <Image style={styles.image} source={{uri : url}}/>
+    </Info>)
+    done()
+  })
 })
