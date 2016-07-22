@@ -154,7 +154,8 @@ function fetch(...args:any):Promise {
       else {
         let rnfbEncode = 'base64'
         // response data is saved to storage
-        if(options.path || options.fileCache || options.addAndroidDownloads || options.key) {
+        if(options.path || options.fileCache || options.addAndroidDownloads
+          || options.key || options.auto && info.respType === 'blob') {
           rnfbEncode = 'path'
           if(options.session)
             session(options.session).add(data)

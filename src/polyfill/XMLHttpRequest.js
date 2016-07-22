@@ -33,6 +33,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   _statusText : string;
   _timeout : number = 0;
   _upload : XMLHttpRequestEventTarget;
+  _sendFlag : boolean = false;
 
   // RNFetchBlob compatible data structure
   _config : RNFetchBlobConfig;
@@ -86,6 +87,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
    * @param  {any} body Body in RNfetchblob flavor
    */
   send(body) {
+    this._sendFlag = true
     log.verbose('XMLHttpRequest send ', body)
     let {_method, _url, _headers } = this
     log.verbose('sending request with args', _method, _url, _headers, body)
@@ -101,7 +103,8 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     if(this.onloadstart)
       this.onloadstart()
 
-    this._task = RNFetchBlob.fetch(_method, _url, _headers, body)
+    this._task = RNFetchBlob.config({ auto: true })
+                            .fetch(_method, _url, _headers, body)
     this._task
         .stateChange(this._headerReceived.bind(this))
         .uploadProgress(this._progressEvent.bind(this))
@@ -117,6 +120,12 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
 
   setRequestHeader(name, value) {
     log.verbose('XMLHttpRequest set header', name, value)
+    if(this._readyState !== OPENED && this._sendFlag) {
+      throw `InvalidStateError : Calling setRequestHeader in wrong state  ${this._readyState}`
+    }
+    if(/[^\u0000-\u00ff]/.test(name) || typeof name !== 'string') {
+      throw `TypeError : Invalid header field name ${name}`
+    }
     this._headers[name] = value
   }
 

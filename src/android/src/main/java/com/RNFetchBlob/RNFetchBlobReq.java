@@ -23,6 +23,7 @@ import com.facebook.react.bridge.WritableMap;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -311,8 +312,29 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         switch (responseType) {
             case KeepInMemory:
                 try {
-                    byte [] b = resp.body().bytes();
-                    callback.invoke(null, getResponseInfo(resp), android.util.Base64.encodeToString(b,Base64.NO_WRAP));
+                    // For XMLHttpRequest, automatic response data storing strategy, when response
+                    // header is not `application/json` or `text/plain`, write response data to
+                    // file system.
+                    if(isBlobResponse(resp) && options.auto == true) {
+                        String dest = RNFetchBlobFS.getTmpPath(ctx, taskId);
+                        InputStream ins = resp.body().byteStream();
+                        FileOutputStream os = new FileOutputStream(new File(dest));
+                        byte [] buffer = new byte[10240];
+                        int read = ins.read(buffer);
+                        os.write(buffer,0,read);
+                        while(read > 0) {
+                            os.write(buffer,0,read);
+                            read = ins.read(buffer);
+                        }
+                        ins.close();
+                        os.close();
+                        WritableMap info = getResponseInfo(resp);
+                        callback.invoke(null, info, dest);
+                    }
+                    else {
+                        byte[] b = resp.body().bytes();
+                        callback.invoke(null, getResponseInfo(resp), android.util.Base64.encodeToString(b, Base64.NO_WRAP));
+                    }
                 } catch (IOException e) {
                     callback.invoke("RNFetchBlob failed to encode response data to BASE64 string.", null);
                 }
@@ -365,6 +387,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             info.putString("respType", "text");
         }
         return info;
+    }
+
+    private boolean isBlobResponse(Response resp) {
+        Headers h = resp.headers();
+        boolean isText = !getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("text/plain");
+        boolean isJSON = !getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("application/json");
+        return  !(isJSON || isText);
     }
 
     private String getHeaderIgnoreCases(Headers headers, String field) {

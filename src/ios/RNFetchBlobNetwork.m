@@ -185,6 +185,11 @@ NSOperationQueue *taskQueue;
             else
             {
                 respType = @"blob";
+                // for XMLHttpRequest, switch response data handling strategy automatically
+                if([options valueForKey:@"auto"] == YES) {
+                    respFile = YES;
+                    destPath = [RNFetchBlobFS getTempPath:taskId withExtension:@""];
+                }
             }
         }
         else
