@@ -222,12 +222,11 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
             this._response = resp.json()
         }
         else {
-          this._responseType = resp.text()
+          this._responseText = resp.text()
           this._response = this.responseText
         }
       break;
       case 'path' :
-        this.responseType = 'blob'
         this.response = resp.blob()
       break;
     }

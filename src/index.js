@@ -13,7 +13,8 @@ import {
 import type {
   RNFetchBlobNative,
   RNFetchBlobConfig,
-  RNFetchBlobStream
+  RNFetchBlobStream,
+  RNFetchBlobResponseInfo
 } from './types'
 import fs from './fs'
 import getUUID from './utils/uuid'
@@ -142,7 +143,7 @@ function fetch(...args:any):Promise {
     }
 
     let req = RNFetchBlob[nativeMethodName]
-    req(options, taskId, method, url, headers || {}, body, (err, data) => {
+    req(options, taskId, method, url, headers || {}, body, (err, info, data) => {
 
       // task done, remove event listener
       subscription.remove()
@@ -151,14 +152,16 @@ function fetch(...args:any):Promise {
       if(err)
         reject(new Error(err, data))
       else {
-        let respType = 'base64'
+        let rnfbEncode = 'base64'
         // response data is saved to storage
         if(options.path || options.fileCache || options.addAndroidDownloads || options.key) {
-          respType = 'path'
+          rnfbEncode = 'path'
           if(options.session)
             session(options.session).add(data)
         }
-        resolve(new FetchBlobResponse(taskId, respType, data))
+        info = Object.assign({}, info, { rnfbEncode })
+
+        resolve(new FetchBlobResponse(taskId, info, data))
       }
     })
 
@@ -204,16 +207,22 @@ class FetchBlobResponse {
   json : () => any;
   base64 : () => any;
   flush : () => void;
+  respInfo : RNFetchBlobResponseInfo;
   session : (name:string) => RNFetchBlobSession | null;
   readFile : (encode: 'base64' | 'utf8' | 'ascii') => ?Promise;
   readStream : (
     encode: 'utf8' | 'ascii' | 'base64',
   ) => RNFetchBlobStream | null;
 
-  constructor(taskId:string, type:'base64' | 'path', data:any) {
+  constructor(taskId:string, info:RNFetchBlobResponseInfo, data:any) {
     this.data = data
     this.taskId = taskId
-    this.type = type
+    this.type = info.rnfbEncode
+    this.respInfo = info
+
+    this.info = ():RNFetchBlobResponseInfo => {
+      return this.respInfo
+    }
     /**
      * Convert result to javascript Blob object.
      * @param  {string} contentType MIME type of the blob object.
