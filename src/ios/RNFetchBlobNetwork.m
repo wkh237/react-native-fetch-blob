@@ -30,6 +30,7 @@ NSMutableDictionary * taskTable;
     NSString * destPath;
     NSOutputStream * writeStream;
     long bodyLength;
+    NSMutableDictionary * respInfo;
 }
 
 @end
@@ -134,6 +135,8 @@ NSOperationQueue *taskQueue;
 
         if(path != nil)
             destPath = path;
+        else
+            destPath = [RNFetchBlobFS getTempPath:cacheKey withExtension:[self.options valueForKey:CONFIG_FILE_EXT]];
     }
     else
     {
@@ -186,15 +189,16 @@ NSOperationQueue *taskQueue;
         }
         else
             respType = @"";
+        respInfo = @{
+                     @"taskId": taskId,
+                     @"state": @"2",
+                     @"headers": headers,
+                     @"respType" : respType,
+                     @"status": [NSString stringWithFormat:@"%d", statusCode ]
+                     };
         [self.bridge.eventDispatcher
          sendDeviceEventWithName: EVENT_STATE_CHANGE
-         body:@{
-                @"taskId": taskId,
-                @"state": @"2",
-                @"headers": headers,
-                @"respType" : respType,
-                @"status": [NSString stringWithFormat:@"%d", statusCode ]
-            }
+         body:respInfo
          ];
     }
 
@@ -241,15 +245,24 @@ NSOperationQueue *taskQueue;
     NSLog([error localizedDescription]);
     self.error = error;
     [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
+    
+    NSString * respType = [respInfo valueForKey:@"respType"];
+    
     if(respFile == YES)
     {
         [writeStream close];
-        callback(@[error == nil ? [NSNull null] : [error localizedDescription], destPath]);
+        callback(@[error == nil ? [NSNull null] : [error localizedDescription],
+                   respInfo == nil ? [NSNull null] : respInfo,
+                   destPath
+                   ]);
     }
     // base64 response
     else {
         NSString * res = [[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding];
-        callback(@[error == nil ? [NSNull null] : [error localizedDescription], [respData base64EncodedStringWithOptions:0]]);
+        callback(@[error == nil ? [NSNull null] : [error localizedDescription],
+                   respInfo == nil ? [NSNull null] : respInfo,
+                   [respData base64EncodedStringWithOptions:0]
+                   ]);
     }
 }
 

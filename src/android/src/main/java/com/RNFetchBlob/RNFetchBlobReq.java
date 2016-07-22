@@ -12,11 +12,13 @@ import android.util.Log;
 
 import com.RNFetchBlob.Response.RNFetchBlobDefaultResp;
 import com.RNFetchBlob.Response.RNFetchBlobFileResp;
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
+import com.facebook.react.bridge.WritableMap;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -28,6 +30,7 @@ import java.net.URL;
 import java.util.HashMap;
 
 import okhttp3.Call;
+import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -36,6 +39,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.FormBody;
+import okhttp3.internal.framed.Header;
 
 /**
  * Created by wkh237 on 2016/6/21.
@@ -308,7 +312,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             case KeepInMemory:
                 try {
                     byte [] b = resp.body().bytes();
-                    callback.invoke(null, android.util.Base64.encodeToString(b,Base64.NO_WRAP));
+                    callback.invoke(null, getResponseInfo(resp), android.util.Base64.encodeToString(b,Base64.NO_WRAP));
                 } catch (IOException e) {
                     callback.invoke("RNFetchBlob failed to encode response data to BASE64 string.", null);
                 }
@@ -319,11 +323,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 } catch (Exception ignored) {
 
                 }
-                callback.invoke(null, this.destPath);
+                callback.invoke(null, getResponseInfo(resp), this.destPath);
                 break;
             default:
                 try {
-                    callback.invoke(null, new String(resp.body().bytes(), "UTF-8"));
+                    callback.invoke(null, getResponseInfo(resp), new String(resp.body().bytes(), "UTF-8"));
                 } catch (IOException e) {
                     callback.invoke("RNFetchBlob failed to encode response data to UTF8 string.", null);
                 }
@@ -331,6 +335,42 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         }
         if(taskTable.containsKey(taskId))
             taskTable.remove(taskId);
+    }
+
+    private WritableMap getResponseInfo(Response resp) {
+        WritableMap info = Arguments.createMap();
+        info.putInt("status", resp.code());
+        info.putString("state", "2");
+        info.putString("taskId", this.taskId);
+        WritableMap headers = Arguments.createMap();
+        for(int i =0;i< resp.headers().size();i++) {
+            headers.putString(resp.headers().name(i), resp.headers().value(i));
+        }
+        info.putMap("headers", headers);
+        Headers h = resp.headers();
+        if(getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("text/plain"))
+        {
+            info.putString("respType", "text");
+        }
+        else if(getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("application/json"))
+        {
+            info.putString("respType", "json");
+        }
+        else if(getHeaderIgnoreCases(h, "content-type").length() < 1)
+        {
+            info.putString("respType", "blob");
+        }
+        else
+        {
+            info.putString("respType", "text");
+        }
+        return info;
+    }
+
+    private String getHeaderIgnoreCases(Headers headers, String field) {
+        String val = headers.get(field);
+        if(val != null) return val;
+        return headers.get(field.toLowerCase()) == null ? "" : headers.get(field.toLowerCase());
     }
 
     /**
