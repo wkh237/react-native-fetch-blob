@@ -74,6 +74,7 @@ public class RNFetchBlobFS {
                     String path = args[0];
                     String encoding = args[1];
                     String data = args[2];
+                    int written = 0;
                     File f = new File(path);
                     File dir = f.getParentFile();
                     if(!dir.exists())
@@ -90,16 +91,21 @@ public class RNFetchBlobFS {
                         FileInputStream fin = new FileInputStream(src);
                         byte [] buffer = new byte [10240];
                         int read = fin.read(buffer);
+                        written = read;
                         while(read > 0) {
                             fout.write(buffer, 0, read);
                             read = fin.read(buffer);
+                            written += read;
                         }
                         fin.close();
                     }
-                    else
-                        fout.write(stringToBytes(data, encoding));
+                    else {
+                        byte[] bytes = stringToBytes(data, encoding);
+                        fout.write(bytes);
+                        written = bytes.length;
+                    }
                     fout.close();
-                    promise.resolve(Arguments.createArray());
+                    promise.resolve(written);
                 } catch (Exception e) {
                     promise.reject("RNFetchBlob writeFileError", e.getLocalizedMessage());
                 }
@@ -133,7 +139,7 @@ public class RNFetchBlobFS {
                     }
                     os.write(bytes);
                     os.close();
-                    promise.resolve(null);
+                    promise.resolve(data.size());
                 } catch (Exception e) {
                     promise.reject("RNFetchBlob writeFileError", e.getLocalizedMessage());
                 }

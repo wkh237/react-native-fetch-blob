@@ -185,20 +185,24 @@ NSMutableDictionary *fileStreams = nil;
     }
 }
 
-+ (void) writeFileFromFile:(NSString *)src toFile:(NSString *)dest append:(BOOL)append
++ (NSNumber *) writeFileFromFile:(NSString *)src toFile:(NSString *)dest append:(BOOL)append
 {
     NSInputStream * is = [[NSInputStream alloc] initWithFileAtPath:src];
     NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:append];
     [is open];
     [os open];
     uint8_t buffer[10240];
+    long written = 0;
     int read = [is read:buffer maxLength:10240];
+    written += read;
     while(read > 0) {
         [os write:buffer maxLength:read];
         read = [is read:buffer maxLength:10240];
+        written += read;
     }
     [os close];
     [is close];
+    return [NSNumber numberWithLong:written];
 }
 
 + (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject
@@ -225,8 +229,8 @@ NSMutableDictionary *fileStreams = nil;
             content = [[NSData alloc] initWithBase64EncodedString:data options:0];
         }
         else if([encoding isEqualToString:@"uri"]) {
-            [[self class] writeFileFromFile:data toFile:path append:append];
-            resolve([NSNull null]);
+            NSNumber* size = [[self class] writeFileFromFile:data toFile:path append:append];
+            resolve(size);
             return;
         }
         else {
@@ -241,7 +245,8 @@ NSMutableDictionary *fileStreams = nil;
             [content writeToFile:path atomically:YES];
         }
         fm = nil;
-        resolve([NSNull null]);
+        
+        resolve([NSNumber numberWithInteger:[content length]]);
     }
     @catch (NSException * e)
     {
@@ -283,7 +288,7 @@ NSMutableDictionary *fileStreams = nil;
         }
         free(bytes);
         fm = nil;
-        resolve([NSNull null]);
+        resolve([NSNumber numberWithInteger: data.count]);
     }
     @catch (NSException * e)
     {
