@@ -2,6 +2,8 @@
 
 A project committed to make file acess and transfer easier and effiecient for React Native developers.
 
+**You will need react-native 0.27+ to use 0.7.0+ version**
+
 ## TOC
 * [About](#user-content-about)
 * [Backward Compatible](#user-content-backward-compatible)
