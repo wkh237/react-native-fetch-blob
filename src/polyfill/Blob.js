@@ -8,7 +8,7 @@ import getUUID from '../utils/uuid'
 import Log from '../utils/log.js'
 
 const log = new Log('Blob')
-const blobCacheDir = fs.dirs.DocumentDir + '/RNFetchBlob-blob/'
+const blobCacheDir = fs.dirs.DocumentDir + '/RNFetchBlob-blobs/'
 
 log.level(3)
 
@@ -42,28 +42,35 @@ export default class Blob {
    * given `mime`. However, the blob creation is asynchronously, to register
    * event `onCreated` is need to ensure the Blob is creadted.
    * @param  {any} data Content of Blob object
-   * @param  {string} mime Content type of Blob object, `text/plain` by default
+   * @param  {any} mime Content type settings of Blob object, `text/plain`
+   *                    by default
    */
-  constructor(data:any, mime='text/plain':?string) {
-
+  constructor(data:any, cType:any) {
+    cType = cType || {}
     this.cacheName = getBlobName()
     this.isRNFetchBlobPolyfill = true
-    this.type = mime
-    log.verbose('Blob constructor called', 'mime', mime, 'type', typeof data, 'length', data.length)
+    this.type = cType.type || 'text/plain'
+    log.verbose('Blob constructor called', 'mime', this.type, 'type', typeof data, 'length', data.length)
     this._ref = blobCacheDir + this.cacheName
     let p = null
+    if(data instanceof Blob) {
+      log.verbose('create Blob cache file from Blob object')
+      this._ref = data.getRNFetchBlobRef()
+      p = fs.stat(String(this._ref).replace('RNFetchBlob-file://'))
+            .then((stat) =>  Promise.resolve(stat.size))
+    }
     // if the data is a string starts with `RNFetchBlob-file://`, append the
     // Blob data from file path
-    if(typeof data === 'string' && data.startsWith('RNFetchBlob-file://')) {
+    else if(typeof data === 'string' && data.startsWith('RNFetchBlob-file://')) {
       log.verbose('create Blob cache file from file path')
       this._ref = data
-      p = fs.stat(data.replace('RNFetchBlob-file://'))
+      p = fs.stat(String(this._ref).replace('RNFetchBlob-file://'))
             .then((stat) =>  Promise.resolve(stat.size))
     }
     // content from variable need create file
     else if(typeof data === 'string') {
       let encoding = 'utf8'
-      mime = String(mime)
+      let mime = String(this.type)
       // when content type contains application/octet* or *;base64, RNFetchBlob
       // fs will treat it as BASE64 encoded string binary data
       if(/(application\/octet|\;base64)/i.test(mime))
@@ -76,6 +83,10 @@ export default class Blob {
             .then((size) => Promise.resolve(size))
 
     }
+    // TODO : ArrayBuffer support
+    // else if (data instanceof ArrayBuffer ) {
+    //
+    // }
     // when input is an array of mixed data types, create a file cache
     else if(Array.isArray(data)) {
       log.verbose('create Blob cache file from mixed array', data)
@@ -83,7 +94,8 @@ export default class Blob {
     }
     else {
       data = data.toString()
-      p = Promise.resolve(data.length)
+      p = fs.writeFile(this._ref, data, 'utf8')
+            .then((size) => Promise.resolve(size))
     }
     p && p.then((size) => {
       this.size = size
@@ -176,6 +188,10 @@ function createMixedBlobData(ref, dataArray) {
       args.push([ref, part.getRNFetchBlobRef(), 'uri'])
     else if(typeof part === 'string')
       args.push([ref, part, 'utf8'])
+    // TODO : ArrayBuffer
+    // else if (part instanceof ArrayBuffer) {
+    //
+    // }
     else if (Array.isArray(part))
       args.push([ref, part, 'ascii'])
   }
