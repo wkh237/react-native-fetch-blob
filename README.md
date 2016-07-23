@@ -40,13 +40,16 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
-### To Use 0.7.0+ you will need to upgrade your App to 0.29.2+ (Android)
+### To Use 0.7.0+ you will need to upgrade your App to 0.27+ (Android)
 
-In `0.7.0` we have removed Android AsyncHttpClient dependency and use OkHttp3+ dependency in react-native, therefore older version project (which uses OkHttp2) will not be compatible. To upgrade your project 
+In `0.7.0` we have removed Android AsyncHttpClient dependency and use OkHttp3+ dependency in react-native, therefore older project (pre 0.27 versions use OkHttp2) will not be compatible. As for 0.29 projects, since rnpm link is broken in 0.29, it's recommended to upgrade too (otherwise you may need to manually link Android project). 
+
+To upgrade your project 
 
 ```
 $ react-native upgrade
 ```
+
 
 ### Manually link the package (Android)
 
