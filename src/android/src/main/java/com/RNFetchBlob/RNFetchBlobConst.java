@@ -8,6 +8,7 @@ import okhttp3.MediaType;
 public class RNFetchBlobConst {
     public static final String EVENT_UPLOAD_PROGRESS = "RNFetchBlobProgress-upload";
     public static final String EVENT_PROGRESS = "RNFetchBlobProgress";
+    public static final String EVENT_HTTP_STATE = "RNFetchBlobState";
     public static final String FILE_PREFIX = "RNFetchBlob-file://";
     public static final MediaType MIME_OCTET = MediaType.parse("application/octet-stream");
     public static final MediaType MIME_MULTIPART = MediaType.parse("multipart/form-data");

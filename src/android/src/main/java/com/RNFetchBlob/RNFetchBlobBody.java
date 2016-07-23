@@ -72,8 +72,8 @@ public class RNFetchBlobBody extends RequestBody{
             case SingleFile:
                 writeOctetData(sink);
                 break;
-			case Encoded:
-				writeEncodedData(sink);
+            case AsIs:
+				writeRawData(sink);
 				break;
         }
         buffer.flush();
@@ -190,29 +190,11 @@ public class RNFetchBlobBody extends RequestBody{
 
 
 	/**
-     * Write form-encoded data to request body
+     * Write data to request body as-is
      * @param sink
      */
-	 // This is NOT working since sink.write, creates a Transfer-Encoding: chunked
-	 // header, which is not expected from servers
-	private void writeEncodedData(BufferedSink sink) throws IOException {
-		FormBody.Builder body = new FormBody.Builder();
-
-		// String[] pairs = rawBody.split("&");
-		// for ( String pair : pairs ) {
-		// 	String[] kv = pair.split("=");
-		// 	body.add(kv[0], kv[1]);
-		// }
-		// body.build().writeTo(sink);
-
-		// String header = "Content-Disposition: form-data; \r\n";
-		// String header = "Content-Type: application/x-www-form-urlencoded\r\n\r\n";
-		// sink.write(header.getBytes());
-		// byte[] fieldData = field.data.getBytes();
-		// bytesWritten += fieldData.length;
+	private void writeRawData(BufferedSink sink) throws IOException {
 		sink.write(rawBody.getBytes());
-
-
 	}
 
     /**

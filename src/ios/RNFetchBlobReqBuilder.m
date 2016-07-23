@@ -30,7 +30,9 @@
                          form:(NSArray *)form
                    onComplete:(void(^)(NSURLRequest * req, long bodyLength))onComplete
 {
-    NSString * encodedUrl = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    //    NSString * encodedUrl = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    NSString * encodedUrl = url;
+    
     // send request
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString: encodedUrl]];
     NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
@@ -71,11 +73,11 @@
                      body:(NSString *)body
                onComplete:(void(^)(NSURLRequest * req, long bodyLength))onComplete
 {
-    NSString * encodedUrl = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+//    NSString * encodedUrl = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    NSString * encodedUrl = url;
     // send request
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
-                                    initWithURL:[NSURL
-                                                 URLWithString: encodedUrl]];
+                                    initWithURL:[NSURL URLWithString: encodedUrl]];
 
     NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
     // move heavy task to another thread
@@ -115,7 +117,7 @@
                     
                     NSString * cType = [[self class]getHeaderIgnoreCases:@"content-type" fromHeaders:mheaders];
                     // when content-type is application/octet* decode body string using BASE64 decoder
-                    if([[cType lowercaseString] hasPrefix:@"application/octet"])
+                    if([[cType lowercaseString] hasPrefix:@"application/octet"] || [[cType lowercaseString] containsString:@";base64"])
                     {
                         blobData = [[NSData alloc] initWithBase64EncodedString:body options:0];
                         [request setHTTPBody:blobData];

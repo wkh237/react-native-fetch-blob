@@ -153,15 +153,15 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
 
   getResponseHeader(field:string):string | null {
     log.verbose('XMLHttpRequest get header', field)
-    if(!this.responseHeaders)
+    if(!this._responseHeaders)
       return null
     return this.responseHeaders[field] || null
 
   }
 
   getAllResponseHeaders():string | null {
-    log.verbose('XMLHttpRequest get all headers')
-    if(!this.responseHeaders)
+    log.verbose('XMLHttpRequest get all headers',this._task.taskId, this._responseHeaders)
+    if(!this._responseHeaders)
       return null
     let result = ''
     let respHeaders = this.responseHeaders
@@ -172,14 +172,14 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   _headerReceived(e) {
-    log.verbose('header received ', e)
+    log.verbose('header received ', this._task.taskId, e)
     this.responseURL = this._url
     if(e.state === "2") {
-      this.readyState = XMLHttpRequest.HEADERS_RECEIVED
-      this.responseHeaders = e.headers
+      this._readyState = XMLHttpRequest.HEADERS_RECEIVED
+      this._responseHeaders = e.headers
       this._responseText = e.status
       this._responseType = e.respType || ''
-      this.status = Math.floor(e.status)
+      this._status = Math.floor(e.status)
     }
   }
 
@@ -221,7 +221,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   _onDone(resp) {
-    log.verbose('XMLHttpRequest done', this)
+    log.verbose('XMLHttpRequest done', this._task.taskId, this)
     this.statusText = '200 OK'
     this._status = 200
     switch(resp.type) {
@@ -306,7 +306,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   get responseHeaders() {
-    log.verbose('get responseHeaders', this._responseHeaders)
+    log.verbose('get responseHeaders', this._task.taskId, this._responseHeaders)
     return this._responseHeaders
   }
 

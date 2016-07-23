@@ -16,6 +16,7 @@ import okhttp3.OkHttpClient;
  * Created by wkh237 on 2016/7/11.
  */
 public class RNFetchBlobUtils {
+
     public static String getMD5(String input) {
         String result = null;
 

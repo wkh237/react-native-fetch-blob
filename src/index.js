@@ -143,6 +143,7 @@ function fetch(...args:any):Promise {
     }
 
     let req = RNFetchBlob[nativeMethodName]
+
     req(options, taskId, method, url, headers || {}, body, (err, info, data) => {
 
       // task done, remove event listener
@@ -160,7 +161,8 @@ function fetch(...args:any):Promise {
           if(options.session)
             session(options.session).add(data)
         }
-        info = Object.assign({}, info, { rnfbEncode })
+        info = info || {}
+        info.rnfbEncode = rnfbEncode
 
         resolve(new FetchBlobResponse(taskId, info, data))
       }
@@ -189,6 +191,7 @@ function fetch(...args:any):Promise {
     stateEvent.remove()
     RNFetchBlob.cancelRequest(taskId, fn)
   }
+  promise.taskId = taskId
 
   return promise
 

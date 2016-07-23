@@ -173,7 +173,6 @@ function writeFile(path:string, data:string | Array<number>, encoding:?string):P
 
 function appendFile(path:string, data:string | Array<number>, encoding:?string):Promise {
   encoding = encoding || 'utf8'
-  console.log('fs append file', data, encoding)
   if(typeof path !== 'string')
     return Promise.reject('Invalid argument "path" ')
   if(encoding.toLocaleLowerCase() === 'ascii') {

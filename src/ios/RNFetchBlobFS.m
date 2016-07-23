@@ -234,7 +234,7 @@ NSMutableDictionary *fileStreams = nil;
             return;
         }
         else {
-            content = [data dataUsingEncoding:NSUTF8StringEncoding];
+            content = [data dataUsingEncoding:NSISOLatin1StringEncoding];
         }
         if(append == YES) {
             [fileHandle seekToEndOfFile];

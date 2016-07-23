@@ -19,6 +19,7 @@ import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -41,6 +42,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.FormBody;
 import okhttp3.internal.framed.Header;
+import okhttp3.internal.http.OkHeaders;
 
 /**
  * Created by wkh237 on 2016/6/21.
@@ -49,8 +51,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
     enum RequestType  {
         Form,
-		Encoded,
         SingleFile,
+        AsIs,
         WithoutBody,
         Others
     };
@@ -88,14 +90,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         this.rawRequestBody = body;
         this.rawRequestBodyArray = arrayBody;
 
-        if(this.options.fileCache == true || this.options.path != null)
+        if(this.options.fileCache || this.options.path != null)
             responseType = ResponseType.FileStorage;
         else
             responseType = ResponseType.KeepInMemory;
 
-        if (body != null && headers.hasKey("content-type") && "application/x-www-form-urlencoded".equals(headers.getString("content-type")))
-			requestType = RequestType.Encoded;
-		else if (body != null)
+
+		if (body != null)
             requestType = RequestType.SingleFile;
         else if (arrayBody != null)
             requestType = RequestType.Form;
@@ -182,6 +183,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
+
+            HashMap<String, String> mheaders = new HashMap<>();
             // set headers
             if (headers != null) {
                 ReadableMapKeySetIterator it = headers.keySetIterator();
@@ -189,42 +192,60 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     String key = it.nextKey();
                     String value = headers.getString(key);
                     builder.header(key, value);
+                    mheaders.put(key,value);
                 }
             }
+
+            if(method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put")) {
+                String cType = getHeaderIgnoreCases(mheaders, "content-type").toLowerCase();
+
+                if(cType == null) {
+                    builder.header("Content-Type", "application/octet-stream");
+                    requestType = RequestType.SingleFile;
+                }
+                if(rawRequestBody != null) {
+                    if(rawRequestBody.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
+                        requestType = RequestType.SingleFile;
+                    }
+                    else if (cType.contains(";base64") || cType.startsWith("application/octet")) {
+                        requestType = RequestType.SingleFile;
+                    } else {
+                        requestType = RequestType.AsIs;
+                    }
+                }
+            }
+            else {
+                requestType = RequestType.WithoutBody;
+            }
+
 
             // set request body
             switch (requestType) {
                 case SingleFile:
                     builder.method(method, new RNFetchBlobBody(
                             taskId,
-                            RequestType.SingleFile,
+                            requestType,
                             rawRequestBody,
-                            RNFetchBlobConst.MIME_OCTET
+                            MediaType.parse(getHeaderIgnoreCases(mheaders, "content-type"))
+                    ));
+                    break;
+                case AsIs:
+                    builder.method(method, new RNFetchBlobBody(
+                            taskId,
+                            requestType,
+                            rawRequestBody,
+                            MediaType.parse(getHeaderIgnoreCases(mheaders, "content-type"))
                     ));
                     break;
                 case Form:
                     builder.method(method, new RNFetchBlobBody(
                             taskId,
-                            RequestType.Form,
+                            requestType,
                             rawRequestBodyArray,
                             MediaType.parse("multipart/form-data; boundary=RNFetchBlob-" + taskId)
                     ));
                     break;
-				case Encoded:
-					// rawRequestBody has an expected format of
-					// key1=value1&key2=value&...
-					FormBody.Builder formBuilder = new FormBody.Builder();
 
-					String[] pairs = rawRequestBody.split("&");
-					for ( String pair : pairs ) {
-						String[] kv = pair.split("=");
-						formBuilder.add(kv[0], kv[1]);
-					}
-
-					RequestBody body = formBuilder.build();
-
-					builder.method(method, body);
-					break;
                 case WithoutBody:
                     builder.method(method, null);
                     break;
@@ -309,6 +330,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
      * @param resp OkHttp response object
      */
     private void done(Response resp) {
+        emitStateEvent(getResponseInfo(resp));
         switch (responseType) {
             case KeepInMemory:
                 try {
@@ -402,18 +424,15 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         return headers.get(field.toLowerCase()) == null ? "" : headers.get(field.toLowerCase());
     }
 
-    /**
-     * Build request body by given string
-     * @param body Content of request body in UTF8 string format.
-     * @return
-     */
-    RequestBody buildRawBody(String body) {
-        if(body != null) {
-            this.contentType = MediaType.parse(options.mime);
-            return RequestBody.create(this.contentType, body);
-        }
-        return null;
+    private String getHeaderIgnoreCases(HashMap<String,String> headers, String field) {
+        String val = headers.get(field);
+        if(val != null) return val;
+        return headers.get(field.toLowerCase()) == null ? "" : headers.get(field.toLowerCase());
+    }
 
+    private void emitStateEvent(WritableMap args) {
+        RNFetchBlob.RCTContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit(RNFetchBlobConst.EVENT_HTTP_STATE, args);
     }
 
     @Override
@@ -436,10 +455,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         cursor.moveToFirst();
                         String filePath = cursor.getString(0);
                         cursor.close();
-                        this.callback.invoke(null, filePath);
+                        this.callback.invoke(null, null, filePath);
                     }
                     else
-                        this.callback.invoke(null, null);
+                        this.callback.invoke(null, null, null);
                 }
             }
         }
