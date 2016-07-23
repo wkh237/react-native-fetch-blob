@@ -65,7 +65,7 @@ describe('firebase login', (report, done) => {
 describe('upload file to firebase', (report, done) => {
 
   // create Blob from BASE64 data
-  let blob = new Blob(RNTest.prop('image'), 'image/png;BASE64')
+  let blob = new Blob(RNTest.prop('image'), { type : 'image/png;BASE64'})
   let testImage = `firebase-test-${Platform.OS}-${new Date().toLocaleString()}.png`
   RNTest.prop('firebase-image', testImage)
   // start test after Blob created
