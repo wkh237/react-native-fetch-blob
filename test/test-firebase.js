@@ -66,7 +66,7 @@ describe('upload file to firebase', (report, done) => {
 
   // create Blob from BASE64 data
   let blob = new Blob(RNTest.prop('image'), { type : 'image/png;BASE64'})
-  let testImage = `firebase-test-${Platform.OS}-${new Date().toLocaleString()}.png`
+  let testImage = `firebase-test-${Platform.OS}-${new Date()}.png`
   RNTest.prop('firebase-image', testImage)
   // start test after Blob created
   blob.onCreated(() => {
@@ -75,6 +75,7 @@ describe('upload file to firebase', (report, done) => {
       .child(RNTest.prop('firebase-image'))
       .put(blob, { contentType : 'image/png' })
       .then((snapshot) => {
+        console.log(snapshot.metadata)
         report(<Assert key="upload success"
           expect={true}
           actual={true}/>,

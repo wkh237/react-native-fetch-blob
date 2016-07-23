@@ -27,7 +27,7 @@ const  dirs = RNFetchBlob.fs.dirs
 
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
-describe('massive HTTP request', (report, done) => {
+false && describe('massive HTTP request', (report, done) => {
 
   let promises = []
   let progress = []

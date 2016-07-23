@@ -53,14 +53,7 @@ describe('URI encoding support', (report, done) => {
         />)
       done()
     })
-
 })
-// 
-// describe('automatic response data handing test', (report, done) => {
-//
-//
-//
-// })
 
 function getASCIIArray(str) {
   let r = []

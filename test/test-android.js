@@ -106,6 +106,7 @@ describe('android download manager', (report, done) => {
     report(
       <Assert key="download manager complete handler" expect={true} actual={true}/>
     )
+    console.log('woo',resp)
     return resp.readStream('ascii')
   })
   .then((stream) => {
