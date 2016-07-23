@@ -38,7 +38,6 @@ NSMutableDictionary * taskTable;
 @implementation RNFetchBlobNetwork
 
 NSOperationQueue *taskQueue;
-
 @synthesize taskId;
 @synthesize expectedBytes;
 @synthesize receivedBytes;
@@ -56,6 +55,7 @@ NSOperationQueue *taskQueue;
     self = [super init];
     if(taskQueue == nil) {
         taskQueue = [[NSOperationQueue alloc] init];
+        taskQueue.maxConcurrentOperationCount = 10;
     }
     if(taskTable == nil) {
         taskTable = [[NSMutableDictionary alloc] init];
@@ -113,7 +113,7 @@ NSOperationQueue *taskQueue;
     // the session trust any SSL certification
 
     NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
-    session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:[NSOperationQueue mainQueue]];
+    session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:taskQueue];
 
     if(path != nil || [self.options valueForKey:CONFIG_USE_TEMP]!= nil)
     {
@@ -209,15 +209,21 @@ NSOperationQueue *taskQueue;
 
     if(respFile == YES)
     {
-        NSFileManager * fm = [NSFileManager defaultManager];
-        NSString * folder = [destPath stringByDeletingLastPathComponent];
-        if(![fm fileExistsAtPath:folder]) {
-            [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:nil];
+        @try{
+            NSFileManager * fm = [NSFileManager defaultManager];
+            NSString * folder = [destPath stringByDeletingLastPathComponent];
+            if(![fm fileExistsAtPath:folder]) {
+                [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:nil];
+            }
+            [fm createFileAtPath:destPath contents:[[NSData alloc] init] attributes:nil];
+            writeStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:YES];
+            [writeStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+            [writeStream open];
         }
-        [fm createFileAtPath:destPath contents:[[NSData alloc] init] attributes:nil];
-        writeStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:YES];
-        [writeStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
-        [writeStream open];
+        @catch(NSException * ex)
+        {
+            NSLog(@"write file error");
+        }
     }
     completionHandler(NSURLSessionResponseAllow);
 }
@@ -255,6 +261,9 @@ NSOperationQueue *taskQueue;
     
     if(respFile == YES)
     {
+        if(error != nil) {
+            NSLog([error localizedDescription]);
+        }
         [writeStream close];
         callback(@[error == nil ? [NSNull null] : [error localizedDescription],
                    respInfo == nil ? [NSNull null] : respInfo,

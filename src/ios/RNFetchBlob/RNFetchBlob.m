@@ -81,21 +81,13 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                   body:(NSString *)body callback:(RCTResponseSenderBlock)callback)
 {
     NSString *cType = [headers valueForKey:@"content-type"];
-//	if (cType != nil && cType == @"application/x-www-form-urlencoded") {
-//		[RNFetchBlobReqBuilder buildEncodedRequest:options taskId:taskId method:method url:url headers:headers body:body onComplete:^(NSURLRequest *req, long bodyLength) {
-//	        // send HTTP request
-//	        RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-//	        [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
-//	        utils = nil;
-//	    }];
-//	} else {
-		[RNFetchBlobReqBuilder buildOctetRequest:options taskId:taskId method:method url:url headers:headers body:body onComplete:^(NSURLRequest *req, long bodyLength) {
-	        // send HTTP request
-	        RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-	        [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
-	        utils = nil;
-	    }];
-//	}
+    
+    [RNFetchBlobReqBuilder buildOctetRequest:options taskId:taskId method:method url:url headers:headers body:body onComplete:^(NSURLRequest *req, long bodyLength) {
+        // send HTTP request
+        RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
+        [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+        utils = nil;
+    }];
 }
 
 RCT_EXPORT_METHOD(createFile:(NSString *)path data:(NSString *)data encoding:(NSString *)encoding callback:(RCTResponseSenderBlock)callback) {
@@ -175,7 +167,6 @@ RCT_EXPORT_METHOD(writeStream:(NSString *)path withEncoding:(NSString *)encoding
 
 RCT_EXPORT_METHOD(writeArrayChunk:(NSString *)streamId withArray:(NSArray *)dataArray callback:(RCTResponseSenderBlock) callback) {
     RNFetchBlobFS *fs = [[RNFetchBlobFS getFileStreams] valueForKey:streamId];
-//    char bytes[[dataArray count]];
     char * bytes = (char *) malloc([dataArray count]);
     for(int i = 0; i < dataArray.count; i++) {
         bytes[i] = [[dataArray objectAtIndex:i] charValue];
