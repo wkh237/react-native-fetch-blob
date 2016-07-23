@@ -4,7 +4,6 @@ A project committed to make file acess and transfer easier and effiecient for Re
 
 ## TOC
 * [About](#user-content-about)
-* [Backward Compatible](#user-content-backward-compatible)
 * [Installation](#user-content-installation)
 * [Recipes](#user-content-recipes)
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
@@ -27,10 +26,6 @@ This project was initially for solving the issue [facebook/react-native#854](htt
 
 Now, this project is committed to make file acess and transfer more easier and more effiecient for React Native developers. We've implemented lot of file access function which plays well with our network module. For example, it can upload and download data directly into/from file system, which is much more performant (especially for large ones) than converting data to BASE64 passing them around through React JS Bridge, also, file stream support so that you can read large file not causing OOM error.
 
-## Backward Compatible
-
-All updates are `backward-compatible` generally you don't have to change existing code unless you're going to use new APIs. But it's recommended pre `0.5.0` users consider upgrade the package to latest version, since we have introduced new APIs can either `upload` or `download` files simply using a file path. It's much more memory efficent in some use case. We've also introduced `fs` APIs for access files, and `file stream` API that helps you read/write files (especially for **large ones**), see [Examples](#user-content-recipes) bellow. This module implements native methods, supports both Android (uses same native library as offical RN fetch API [OkHttp](https://github.com/square/okhttp)) and IOS.
-
 ## Installation
 
 Install package from npm
@@ -44,6 +39,19 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 ```sh
 rnpm link
 ```
+
+### To Use 0.7.0+ you will need to upgrade your App to 0.27+ (Android)
+
+In `0.7.0` we have removed Android AsyncHttpClient dependency and use OkHttp3+ dependency in react-native, therefore older project (pre 0.27 versions use OkHttp2) will not be compatible. As for 0.29 projects, since rnpm link is broken in 0.29, it's recommended to upgrade too (otherwise you may need to manually link Android project). 
+
+To upgrade your project 
+
+```
+$ react-native upgrade
+```
+
+you will need run `rnpm link` again after upgrade.
+
 
 ### Manually link the package (Android)
 
