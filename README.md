@@ -614,6 +614,7 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.7.4 | Fix app crash problem in version > 0.27 |
 | 0.7.3 | Fix OkHttp dependency issue in version < 0.29 |
 | 0.7.2 | Fix cancel request bug |
 | 0.7.1 | Fix #57 ios module could not compile on ios version <= 9.3 |
