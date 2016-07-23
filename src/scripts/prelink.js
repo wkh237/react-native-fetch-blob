@@ -12,6 +12,7 @@ if (!hasNecessaryFile) {
 var package = JSON.parse(fs.readFileSync(PACKAGE_JSON));
 var APP_NAME = package.name;
 var APPLICATION_MAIN = process.cwd() + '/android/app/src/main/java/com/' + APP_NAME.toLocaleLowerCase() + '/MainApplication.java';
+var PACKAGE_GRADLE = process.cwd() + '/node_modules/react-native-fetch-blob/android/build.gradle'
 
 var VERSION = checkVersion();
 console.log('RNFetchBlob detected app version .. ' + VERSION);
@@ -28,9 +29,14 @@ if(VERSION >= 0.29) {
   }
   main = String(main).replace('new MainReactPackage()', 'new RNFetchBlobPackage(),\n           new MainReactPackage()');
   main = String(main).replace('import com.facebook.react.ReactApplication;', 'import com.facebook.react.ReactApplication;\nimport com.RNFetchBlob.RNFetchBlobPackage;')
+
   fs.writeFileSync(APPLICATION_MAIN, main);
   console.log('RNFetchBlob patching MainApplication.java .. ok')
 
+}
+
+if(VERSION < 0.27) {
+  console.log('You project version is '+ VERSION + 'which does not meet requirement of react-native-fetch-blob 7.0+, please upgrade your application template to react-native 0.27+, otherwise Android application will not working.')
 }
 
 // set file access permission for Android < 6.0
