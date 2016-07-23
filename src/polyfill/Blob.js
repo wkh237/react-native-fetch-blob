@@ -49,7 +49,7 @@ export default class Blob {
     this.cacheName = getBlobName()
     this.isRNFetchBlobPolyfill = true
     this.type = mime
-    log.verbose('Blob constructor called', 'mime', mime)
+    log.verbose('Blob constructor called', 'mime', mime, 'type', typeof data, 'length', data.length)
     this._ref = blobCacheDir + this.cacheName
     let p = null
     // if the data is a string starts with `RNFetchBlob-file://`, append the
@@ -62,16 +62,16 @@ export default class Blob {
     }
     // content from variable need create file
     else if(typeof data === 'string') {
-      log.verbose('create Blob cache file from string')
       let encoding = 'utf8'
-      let mime = String(mime)
+      mime = String(mime)
       // when content type contains application/octet* or *;base64, RNFetchBlob
       // fs will treat it as BASE64 encoded string binary data
-      if(mime.match(/application\/octet/i) || mime.match(/\;base64/i))
+      if(/(application\/octet|\;base64)/i.test(mime))
         encoding = 'base64'
       else
         data = data.toString()
       // create cache file
+      log.verbose('create Blob cache file from string', 'encode', encoding)
       p = fs.writeFile(this._ref, data, encoding)
             .then((size) => Promise.resolve(size))
 
@@ -184,6 +184,7 @@ function createMixedBlobData(ref, dataArray) {
       return fs.appendFile.call(this, ...p)
     })
     return Promise.all(promises).then((sizes) => {
+      console.log('blob write size', sizes)
       for(let i in sizes) {
         size += sizes[i]
       }
