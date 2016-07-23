@@ -50,6 +50,8 @@ To upgrade your project
 $ react-native upgrade
 ```
 
+you will need run `rnpm link` again after upgrade.
+
 
 ### Manually link the package (Android)
 
