@@ -6,6 +6,7 @@ A project committed to make file acess and transfer easier and effiecient for Re
 * [About](#user-content-about)
 * [Installation](#user-content-installation)
 * [Recipes](#user-content-recipes)
+ * [Regular Request](#user-content-regular-request)
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
@@ -16,6 +17,7 @@ A project committed to make file acess and transfer easier and effiecient for Re
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-cache-file-management)
  * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
+ * [Web API Polyfills](#user-content-web-api-polyfills)
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
 * [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting)
 * [Development](#user-content-development)
@@ -134,6 +136,10 @@ If you're using ES5 require statement to load the module, please add `default`. 
 ```
 var RNFetchBlob = require('react-native-fetch-blob').default
 ```
+
+#### Regular Request
+
+TODO
 
 #### Download example : Fetch files that needs authorization token
 
@@ -618,10 +624,15 @@ RNFetchBlob.config({
 })
 ```
 
+#### Web API Polyfills
+
+TODO
+
 ## Changes
 
 | Version | |
 |---|---|
+| 0.8.0 | Added Web API polyfills, support regular request, add buffer API |
 | 0.7.4 | Fix app crash problem in version > 0.27 |
 | 0.7.3 | Fix OkHttp dependency issue in version < 0.29 |
 | 0.7.2 | Fix cancel request bug |
