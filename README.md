@@ -40,19 +40,6 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
-### To Use 0.7.0+ you will need to upgrade your App to 0.27+ (Android)
-
-In `0.7.0` we have removed Android AsyncHttpClient dependency and use OkHttp3+ dependency in react-native, therefore older project (pre 0.27 versions use OkHttp2) will not be compatible. As for 0.29 projects, since rnpm link is broken in 0.29, it's recommended to upgrade too (otherwise you may need to manually link Android project). 
-
-To upgrade your project 
-
-```
-$ react-native upgrade
-```
-
-you will need run `rnpm link` again after upgrade.
-
-
 ### Manually link the package (Android)
 
 If rnpm link command failed to link the package automatically, you might try manually link the package.
@@ -622,6 +609,7 @@ RNFetchBlob.config({
 
 | Version | |
 |---|---|
+| 0.7.5 | Fix installation script that make it compatible to react-native < 0.28 |
 | 0.7.4 | Fix app crash problem in version > 0.27 |
 | 0.7.3 | Fix OkHttp dependency issue in version < 0.29 |
 | 0.7.2 | Fix cancel request bug |
