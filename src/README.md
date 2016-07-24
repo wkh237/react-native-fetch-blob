@@ -2,6 +2,8 @@
 
 A project committed to make file acess and transfer easier and effiecient for React Native developers.
 
+# [Please visit out Github page for latest document](https://github.com/wkh237/react-native-fetch-blob)
+
 ## TOC
 * [About](#user-content-about)
 * [Installation](#user-content-installation)
@@ -39,6 +41,17 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 ```sh
 rnpm link
 ```
+
+### version 0.7.0+ does not work with react-native 0.27 (Android)
+
+On 0.7.5, we have fixed Android OkHttp dependency issue on pre 0.28 projects excepted 0.27, 0.29.0, and 0.29.1. For 0.29.0 and 0.29.1 it's because `rnpm link` is broken in these versions, you may need to manually link Android package. It is recommended to upgrade you project if possible
+
+```
+$ react-native upgrade
+```
+
+After the project upgraded, run `rnpm link` again.
+
 
 ### Manually link the package (Android)
 
