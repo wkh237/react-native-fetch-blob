@@ -42,17 +42,15 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
-### To Use 0.7.0+ you will need to upgrade your App to 0.27+ (Android)
+### version 0.7.0+ does not work with react-native 0.27 (Android)
 
-In `0.7.0` we have removed Android AsyncHttpClient dependency and use OkHttp3+ dependency in react-native, therefore older project (pre 0.27 versions use OkHttp2) will not be compatible. As for 0.29 projects, since rnpm link is broken in 0.29, it's recommended to upgrade too (otherwise you may need to manually link Android project). 
-
-To upgrade your project 
+On 0.7.5, we have fixed Android OkHttp dependency issue on pre 0.28 projects excepted 0.27, 0.29.0, and 0.29.1. For 0.29.0 and 0.29.1 it's because `rnpm link` is broken in these versions, you may need to manually link Android package. It is recommended to upgrade you project if possible
 
 ```
 $ react-native upgrade
 ```
 
-you will need run `rnpm link` again after upgrade.
+After the project upgraded, run `rnpm link` again.
 
 
 ### Manually link the package (Android)
@@ -633,6 +631,7 @@ TODO
 | Version | |
 |---|---|
 | 0.8.0 | Added Web API polyfills, support regular request, add buffer API |
+| 0.7.5 | Fix installation script that make it compatible to react-native < 0.28 |
 | 0.7.4 | Fix app crash problem in version > 0.27 |
 | 0.7.3 | Fix OkHttp dependency issue in version < 0.29 |
 | 0.7.2 | Fix cancel request bug |
