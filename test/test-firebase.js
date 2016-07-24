@@ -98,3 +98,38 @@ describe('download firebase storage item', (report, done) => {
     done()
   })
 })
+
+let tier2FileName = `firebase-test-${Platform.OS}-github2.jpg`
+
+describe('upload using file path', (report, done) => {
+  RNFetchBlob
+    .config({ fileCache : true, appendExt : 'jpg' })
+    .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
+    .then((resp) => {
+      report(<Info key="test image">
+        <Image style={styles.image} source={{uri : prefix + resp.path()}}/>
+      </Info>)
+      let blob = new Blob(RNFetchBlob.wrap(resp.path()), { type : 'image/jpg' })
+      blob.onCreated(() => {
+        firebase.storage().ref('rnfbtest')
+          .child(tier2FileName)
+          .put(blob, { contentType : 'image/jpg' })
+          .then(() => {
+            report(<Assert key="upload finished" />)
+            done()
+          })
+      })
+    })
+})
+
+describe('verify uploaded file', (report, done) => {
+  firebase.storage().ref('rnfbtest/' + tier2FileName)
+    .getDownloadURL()
+    .then((url) => {
+      console.log(url)
+      report(<Info key="image viewer">
+        <Image style={styles.image} source={{uri : url}}/>
+      </Info>)
+      done()
+    })
+})

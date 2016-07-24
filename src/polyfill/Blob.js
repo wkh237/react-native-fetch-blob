@@ -55,17 +55,31 @@ export default class Blob {
     let p = null
     if(data instanceof Blob) {
       log.verbose('create Blob cache file from Blob object')
-      this._ref = data.getRNFetchBlobRef()
-      p = fs.stat(String(this._ref).replace('RNFetchBlob-file://'))
-            .then((stat) =>  Promise.resolve(stat.size))
+      let size = 0
+      this._ref = String(data.getRNFetchBlobRef())
+      let orgPath = this._ref
+      p = fs.exists(orgPath)
+            .then((exist) =>  {
+              if(exist)
+                return fs.writeFile(orgPath, data, 'uri')
+                         .then((size) => Promise.resolve(size))
+                         .catch((err) => {
+                           throw `RNFetchBlob Blob file creation error, ${err}`
+                         })
+              else
+                throw `could not create Blob from path ${orgPath}, file not exists`
+            })
     }
     // if the data is a string starts with `RNFetchBlob-file://`, append the
     // Blob data from file path
     else if(typeof data === 'string' && data.startsWith('RNFetchBlob-file://')) {
-      log.verbose('create Blob cache file from file path')
-      this._ref = data
-      p = fs.stat(String(this._ref).replace('RNFetchBlob-file://'))
-            .then((stat) =>  Promise.resolve(stat.size))
+      log.verbose('create Blob cache file from file path', data)
+      this._ref = String(data).replace('RNFetchBlob-file://', '')
+      let orgPath = this._ref
+      p = fs.stat(orgPath)
+            .then((stat) =>  {
+                return Promise.resolve(stat.size)
+            })
     }
     // content from variable need create file
     else if(typeof data === 'string') {
@@ -197,6 +211,7 @@ function createMixedBlobData(ref, dataArray) {
   }
   return p.then(() => {
     let promises = args.map((p) => {
+      log.verbose('mixed blob write', ...p)
       return fs.appendFile.call(this, ...p)
     })
     return Promise.all(promises).then((sizes) => {
