@@ -122,14 +122,29 @@ describe('upload using file path', (report, done) => {
     })
 })
 
+let directURL = null
+
 describe('verify uploaded file', (report, done) => {
   firebase.storage().ref('rnfbtest/' + tier2FileName)
     .getDownloadURL()
     .then((url) => {
-      console.log(url)
-      report(<Info key="image viewer">
-        <Image style={styles.image} source={{uri : url}}/>
-      </Info>)
+      directURL = url
+      report(
+        <Info key="image viewer">
+          <Image style={styles.image} source={{uri : url}}/>
+        </Info>)
       done()
     })
+})
+
+describe('download to base64', (report, done) => {
+  RNFetchBlob.fetch('GET', directURL).then((resp) => {
+    report(
+      <Info key="image data">
+        <Image
+          style={styles.image}
+          source={{uri : 'data:image/jpg;base64 ,'+ resp.base64()}}/>
+      </Info>)
+    done()
+  })
 })
