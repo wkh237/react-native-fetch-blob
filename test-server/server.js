@@ -108,6 +108,17 @@ app.post('/upload-form', formUpload)
 
 app.put('/upload-form', formUpload)
 
+// for XHR tests
+//
+app.all('/xhr-code/:code', (req, res) => {
+  console.log('code = ', req.params.code)
+  res.status(Math.floor(req.params.code)).send()
+})
+
+app.all('/xhr-header', (req, res) => {
+  res.send(req.headers)
+})
+
 function formUpload(req, res) {
   console.log(req.headers)
   console.log(req.body)
