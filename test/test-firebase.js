@@ -26,7 +26,7 @@ const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
   group : 'firebase',
   run : true,
-  expand : true,
+  expand : false,
   timeout : 300000000,
 })
 const { TEST_SERVER_URL, TEST_SERVER_URL_SSL, DROPBOX_TOKEN, styles } = prop()
@@ -66,7 +66,7 @@ describe('upload file to firebase', (report, done) => {
 
   // create Blob from BASE64 data
   let blob = new Blob(RNTest.prop('image'), { type : 'image/png;BASE64'})
-  let testImage = `firebase-test-${Platform.OS}-${new Date()}.png`
+  let testImage = `firebase-test-${Platform.OS}-${Date.now()}.png`
   RNTest.prop('firebase-image', testImage)
   // start test after Blob created
   blob.onCreated(() => {

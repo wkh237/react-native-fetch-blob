@@ -117,7 +117,11 @@ export default class TestContext {
 
       // run test body
       new Promise((done) => {
-        this.fn.bind(this)(update, done)
+        try {
+          this.fn.bind(this)(update, done)
+        } catch(err) {
+            console.warn(err.stach)
+        }
       })
       .then((...res) => {
         if(!expired) {
