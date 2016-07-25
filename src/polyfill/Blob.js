@@ -130,7 +130,10 @@ export default class Blob {
    */
   onCreated(fn:() => void) {
     log.verbose('register blob onCreated', this._onCreated.length)
-    this._onCreated.push(fn)
+    if(!this._blobCreated)
+      this._onCreated.push(fn)
+    else
+      fn(this)
   }
 
   /**

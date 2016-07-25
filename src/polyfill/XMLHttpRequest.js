@@ -24,13 +24,13 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   _readyState : number = UNSENT;
   _response : any = '';
   _responseText : any = '';
-  _responseHeaders : any = '';
+  _responseHeaders : any = {};
   _responseType : '' | 'arraybuffer' | 'blob' | 'document' | 'json' | 'text' = '';
   // TODO : not suppoted for now
   _responseURL : null = '';
   _responseXML : null = '';
-  _status : number;
-  _statusText : string;
+  _status : number = 0;
+  _statusText : string = '';
   _timeout : number = 0;
   _upload : XMLHttpRequestEventTarget;
   _sendFlag : boolean = false;
@@ -74,11 +74,21 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     this._headers = {}
   }
 
-  // XMLHttpRequest.open, always async, user and password not supported.
+
+  /**
+   * XMLHttpRequest.open, always async, user and password not supported. When
+   * this method invoked, headers should becomes empty again.
+   * @param  {string} method Request method
+   * @param  {string} url Request URL
+   * @param  {true} async Always async
+   * @param  {any} user NOT SUPPORTED
+   * @param  {any} password NOT SUPPORTED
+   */
   open(method:string, url:string, async:true, user:any, password:any) {
     log.verbose('XMLHttpRequest open ', method, url, async, user, password)
     this._method = method
     this._url = url
+    this._headers = {}
     this.readyState = XMLHttpRequest.OPENED
   }
 
@@ -87,6 +97,10 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
    * @param  {any} body Body in RNfetchblob flavor
    */
   send(body) {
+
+    if(this._readyState !== XMLHttpRequest.OPENED)
+      throw 'InvalidStateError : XMLHttpRequest is not opened yet.'
+
     this._sendFlag = true
     log.verbose('XMLHttpRequest send ', body)
     let {_method, _url, _headers } = this
@@ -123,8 +137,19 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     if(this._readyState !== OPENED && this._sendFlag) {
       throw `InvalidStateError : Calling setRequestHeader in wrong state  ${this._readyState}`
     }
-    if(/[^\u0000-\u00ff]/.test(name) || typeof name !== 'string') {
-      throw `TypeError : Invalid header field name ${name}`
+    // UNICODE SHOULD NOT PASS
+    if(typeof name !== 'string' || /[^\u0000-\u00ff]/.test(name)) {
+      throw 'TypeError : header field name should be a string'
+    }
+    //
+    let invalidPatterns = [
+      /[\(\)\>\<\@\,\:\\\/\[\]\?\=\}\{\s\ \u007f\;\t\0\v\r]/,
+      /tt/
+    ]
+    for(let i in invalidPatterns) {
+      if(invalidPatterns[i].test(name) || typeof name !== 'string') {
+        throw `SyntaxError : Invalid header field name ${name}`
+      }
     }
     this._headers[name] = value
   }
@@ -160,9 +185,9 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   getAllResponseHeaders():string | null {
-    log.verbose('XMLHttpRequest get all headers',this._task.taskId, this._responseHeaders)
+    log.verbose('XMLHttpRequest get all headers', this._responseHeaders)
     if(!this._responseHeaders)
-      return null
+      return ''
     let result = ''
     let respHeaders = this.responseHeaders
     for(let i in respHeaders) {
@@ -202,10 +227,10 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
 
   _onError(err) {
     log.verbose('XMLHttpRequest error', err)
-    this.statusText = err
-    this.status = String(err).match(/\d+/)
-    this.status = this.status ? Math.floor(this.status) : 404
-    this.readyState = XMLHttpRequest.DONE
+    this._statusText = err
+    this._status = String(err).match(/\d+/)
+    this._status = this._status ? Math.floor(this.status) : 404
+    this._readyState = XMLHttpRequest.DONE
     if(String(err).match('timeout') !== null) {
       this.dispatchEvent('timeout')
       if(this.ontimeout)
@@ -223,7 +248,6 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   _onDone(resp) {
     log.verbose('XMLHttpRequest done', this._task.taskId, this)
     this.statusText = '200 OK'
-    this._status = 200
     switch(resp.type) {
       case 'base64' :
         if(this.responseType === 'json') {
@@ -306,7 +330,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   get responseHeaders() {
-    log.verbose('get responseHeaders', this._task.taskId, this._responseHeaders)
+    log.verbose('get responseHeaders', this._responseHeaders)
     return this._responseHeaders
   }
 
