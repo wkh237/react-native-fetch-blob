@@ -20,12 +20,13 @@ const Blob = RNFetchBlob.polyfill.Blob
 window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
 window.Blob = Blob
 window.FormData = RNFetchBlob.polyfill.FormData
+window.ProgressEvent = RNFetchBlob.polyfill.ProgressEvent
 
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
   group : 'XMLHttpRequest',
   run : true,
-  expand : true,
+  expand : false,
   timeout : 20000,
 })
 const { TEST_SERVER_URL, TEST_SERVER_URL_SSL, DROPBOX_TOKEN, styles } = prop()
@@ -114,17 +115,19 @@ describe('HTTP error should not throw error event', (report, done) => {
 
   done()
 
+  let count = 0
   function onError(method, code) {
     let xhr = new XMLHttpRequest()
     xhr.open(method, `${TEST_SERVER_URL}/xhr-code/${code}`)
     xhr.onreadystatechange = function() {
+      count++
       report(
         <Assert
-          key={`response data of ${method} ${code} should be empty`}
+          key={`#${count} response data of ${method} ${code} should be empty`}
           expect=""
           actual={xhr.response}/>,
         <Assert
-          key={`status of ${method} ${code} should be ${code}`}
+          key={`#${count} status of ${method} ${code} should be ${code}`}
           expect={code}
           actual={xhr.status}/>
       )
@@ -190,7 +193,6 @@ describe('invalid characters should not exists in header field', (report, done) 
   }
   var invalid_headers = ["(", ")", "<", ">", "@", ",", ";", ":", "\\",
                          "\"", "/", "[", "]", "?", "=", "{", "}", " ",
-                         /* HT already tested in the loop below */
                          "\u007f", "", "t\rt", "t\nt", "t: t", "t:t",
                          "t<t", "t t", " tt", ":tt", "\ttt", "\vtt", "t\0t",
                          "t\"t", "t,t", "t;t", "()[]{}", "a?B", "a=B"]
@@ -210,11 +212,86 @@ describe('invalid characters should not exists in header field', (report, done) 
 
 describe('invoke setRequestHeader() before open()', (report, done) => {
   try {
-    new XMLHttpRequest().setRequestHeader('foo', 'bar')
+    let xhr = new XMLHttpRequest()
+    xhr.setRequestHeader('foo', 'bar')
   } catch(err) {
-    report(<Assert key="should throw InvalidStateRrror"
-      expect={true}
-      actual={/invalidstateerror/i.test(err)}/>)
+    report(
+      <Info key="error message">
+        <Text>{err}</Text>
+      </Info>,
+      <Assert key="should throw InvalidStateError"
+        expect={true}
+        actual={/invalidstateerror/i.test(err)}/>)
       done()
   }
+})
+
+describe('upload progress event test', (report, done) => {
+  let xhr = new XMLHttpRequest()
+  let time = Date.now()
+  let msg =  `time=${time}`
+  xhr.upload.onprogress = function(e) {
+    report(
+      <Assert key="event object is an instance of ProgressEvent"
+        expect={true}
+        actual={e instanceof ProgressEvent}/>)
+  }
+  xhr.onreadystatechange = function() {
+    if(this.readyState == XMLHttpRequest.DONE) {
+      report(
+        <Assert key="reponse should correct"
+          expect={time}
+          actual={parseInt(xhr.response.time)}/>,
+        <Assert key="responseType should correct"
+          expect={'json'}
+          actual={xhr.responseType}/>)
+        done()
+    }
+  }
+  xhr.open('POST', `${TEST_SERVER_URL}/upload`)
+  xhr.overrideMimeType('application/x-www-form-urlencoded')
+  xhr.send(msg)
+
+})
+
+describe('timeout event catchable', (report, done) => {
+  let xhr = new XMLHttpRequest()
+  xhr.timeout = 1
+  xhr.ontimeout = function() {
+    report(
+      <Assert key="event catchable"
+        expect={true}
+        actual={true}/>)
+      done()
+  }
+  xhr.open('GET', `${TEST_SERVER_URL}/timeout/`)
+  xhr.send()
+
+})
+
+describe('upload progress event should not be triggered when body is empty', (report, done) => {
+  let xhr = new XMLHttpRequest()
+  xhr.upload.onloadstart = function() {
+    report(
+      <Assert key="loadstart event should not triggered"
+        expect={true}
+        actual={false}/>)
+  }
+  xhr.upload.onprogress = function() {
+    report(
+      <Assert key="progress event should not triggered"
+        expect={true}
+        actual={false}/>)
+  }
+  xhr.onreadystatechange = function() {
+    if(this.readyState == XMLHttpRequest.DONE) {
+      report(
+        <Assert key="Great! upload event not triggered"
+          expect={true}
+          actual={true}/>)
+      done()
+    }
+  }
+  xhr.open('GET', `${TEST_SERVER_URL}/pulbic/github.png`)
+  xhr.send()
 })

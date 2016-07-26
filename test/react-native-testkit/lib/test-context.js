@@ -120,7 +120,7 @@ export default class TestContext {
         try {
           this.fn.bind(this)(update, done)
         } catch(err) {
-            console.warn(err.stach)
+            console.warn(err.stack)
         }
       })
       .then((...res) => {
