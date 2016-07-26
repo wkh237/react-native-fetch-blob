@@ -37,6 +37,8 @@
                         form:(NSString *)body
                   onComplete:(void(^)(NSURLRequest * req, long bodyLength))onComplete;
 
++(NSString *) getHeaderIgnoreCases:(NSString *)field fromHeaders:(NSMutableArray *) headers;
+
 
 @end
 

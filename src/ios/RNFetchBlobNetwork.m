@@ -14,6 +14,7 @@
 #import "RNFetchBlobFS.h"
 #import "RNFetchBlobNetwork.h"
 #import "RNFetchBlobConst.h"
+#import "RNFetchBlobReqBuilder.h"
 #import <CommonCrypto/CommonDigest.h>
 
 ////////////////////////////////////////
@@ -113,8 +114,12 @@ NSOperationQueue *taskQueue;
     // the session trust any SSL certification
 
     NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
+    if([options valueForKey:@"timeout"] != nil)
+    {
+        defaultConfigObject.timeoutIntervalForRequest = [[options valueForKey:@"timeout"] floatValue];
+    }
     session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:taskQueue];
-
+    
     if(path != nil || [self.options valueForKey:CONFIG_USE_TEMP]!= nil)
     {
         respFile = YES;
@@ -171,10 +176,12 @@ NSOperationQueue *taskQueue;
     if ([response respondsToSelector:@selector(allHeaderFields)])
     {
         NSDictionary *headers = [httpResponse allHeaderFields];
-        NSString * respType = [[headers valueForKey:@"Content-Type"] lowercaseString];
+        NSString * respType = [[RNFetchBlobReqBuilder getHeaderIgnoreCases:@"content-type"
+                                                               fromHeaders:headers]
+                               lowercaseString];
         if([headers valueForKey:@"Content-Type"] != nil)
         {
-            if([respType containsString:@"text/plain"])
+            if([respType containsString:@"text/"])
             {
                 respType = @"text";
             }
@@ -199,6 +206,7 @@ NSOperationQueue *taskQueue;
                      @"state": @"2",
                      @"headers": headers,
                      @"respType" : respType,
+                     @"timeout" : @NO,
                      @"status": [NSString stringWithFormat:@"%d", statusCode ]
                      };
         [self.bridge.eventDispatcher
@@ -253,22 +261,22 @@ NSOperationQueue *taskQueue;
 }
 
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    NSLog([error localizedDescription]);
+    
     self.error = error;
     [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
     
     NSString * respType = [respInfo valueForKey:@"respType"];
+    if(error != nil) {
+        NSLog([error localizedDescription]);
+    }
     
     if(respFile == YES)
     {
-        if(error != nil) {
-            NSLog([error localizedDescription]);
-        }
         [writeStream close];
         callback(@[error == nil ? [NSNull null] : [error localizedDescription],
                    respInfo == nil ? [NSNull null] : respInfo,
                    destPath
-                   ]);
+                ]);
     }
     // base64 response
     else {
@@ -346,5 +354,6 @@ NSOperationQueue *taskQueue;
         }
     }
 }
+
 
 @end

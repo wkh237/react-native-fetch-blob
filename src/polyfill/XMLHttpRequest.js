@@ -6,6 +6,7 @@ import RNFetchBlob from '../index.js'
 import XMLHttpRequestEventTarget from './XMLHttpRequestEventTarget.js'
 import Log from '../utils/log.js'
 import Blob from './Blob.js'
+import ProgressEvent from './ProgressEvent.js'
 
 const log = new Log('XMLHttpRequest')
 
@@ -21,30 +22,42 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
 
   _onreadystatechange : () => void;
 
+  upload : XMLHttpRequestEventTarget = new XMLHttpRequestEventTarget();
+
+  // readonly
   _readyState : number = UNSENT;
   _response : any = '';
-  _responseText : any = '';
+  _responseText : any = null;
   _responseHeaders : any = {};
   _responseType : '' | 'arraybuffer' | 'blob' | 'document' | 'json' | 'text' = '';
-  // TODO : not suppoted for now
+  // TODO : not suppoted ATM
   _responseURL : null = '';
   _responseXML : null = '';
   _status : number = 0;
   _statusText : string = '';
   _timeout : number = 0;
-  _upload : XMLHttpRequestEventTarget;
   _sendFlag : boolean = false;
+  _uploadStarted : boolean = false;
 
   // RNFetchBlob compatible data structure
-  _config : RNFetchBlobConfig;
+  _config : RNFetchBlobConfig = {};
   _url : any;
   _method : string;
-  _headers: any;
+  _headers: any = {
+    'Content-Type' : 'text/plain'
+  };
   _body: any;
 
   // RNFetchBlob promise object, which has `progress`, `uploadProgress`, and
   // `cancel` methods.
   _task: any;
+
+  // constants
+  get UNSENT() { return UNSENT }
+  get OPENED() { return OPENED }
+  get HEADERS_RECEIVED() { return HEADERS_RECEIVED }
+  get LOADING() { return LOADING }
+  get DONE() { return DONE }
 
   static get UNSENT() {
     return UNSENT
@@ -66,12 +79,9 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     return DONE
   }
 
-  constructor(...args) {
+  constructor() {
     super()
-    log.verbose('XMLHttpRequest constructor called', args)
-    this._config = {}
-    this._args = {}
-    this._headers = {}
+    log.verbose('XMLHttpRequest constructor called')
   }
 
 
@@ -89,7 +99,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     this._method = method
     this._url = url
     this._headers = {}
-    this.readyState = XMLHttpRequest.OPENED
+    this._dispatchReadStateChange(XMLHttpRequest.OPENED)
   }
 
   /**
@@ -105,23 +115,22 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     log.verbose('XMLHttpRequest send ', body)
     let {_method, _url, _headers } = this
     log.verbose('sending request with args', _method, _url, _headers, body)
-
-    this._upload = new XMLHttpRequestEventTarget()
     log.verbose(typeof body, body instanceof FormData)
 
     if(body instanceof Blob) {
       body = RNFetchBlob.wrap(body.getRNFetchBlobRef())
     }
+    else if(typeof body === 'object') {
+      body = JSON.stringify(body)
+    }
 
-    this.dispatchEvent('loadstart')
-    if(this.onloadstart)
-      this.onloadstart()
-
-    this._task = RNFetchBlob.config({ auto: true })
-                            .fetch(_method, _url, _headers, body)
+    this._task = RNFetchBlob
+                  .config({ auto: true, timeout : this._timeout })
+                  .fetch(_method, _url, _headers, body)
+    this.dispatchEvent('load')
     this._task
         .stateChange(this._headerReceived.bind(this))
-        .uploadProgress(this._progressEvent.bind(this))
+        .uploadProgress(this._uploadProgressEvent.bind(this))
         .progress(this._progressEvent.bind(this))
         .catch(this._onError.bind(this))
         .then(this._onDone.bind(this))
@@ -129,12 +138,12 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
 
   overrideMimeType(mime:string) {
     log.verbose('XMLHttpRequest overrideMimeType', mime)
-    this._headers['content-type'] = mime
+    this._headers['Content-Type'] = mime
   }
 
   setRequestHeader(name, value) {
     log.verbose('XMLHttpRequest set header', name, value)
-    if(this._readyState !== OPENED && this._sendFlag) {
+    if(this._readyState !== OPENED || this._sendFlag) {
       throw `InvalidStateError : Calling setRequestHeader in wrong state  ${this._readyState}`
     }
     // UNICODE SHOULD NOT PASS
@@ -199,29 +208,36 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   _headerReceived(e) {
     log.verbose('header received ', this._task.taskId, e)
     this.responseURL = this._url
+    this.upload.dispatchEvent('loadend')
+    this.dispatchEvent('load')
     if(e.state === "2") {
-      this._readyState = XMLHttpRequest.HEADERS_RECEIVED
       this._responseHeaders = e.headers
-      this._responseText = e.status
+      this._statusText = e.status
       this._responseType = e.respType || ''
       this._status = Math.floor(e.status)
+      this._dispatchReadStateChange(XMLHttpRequest.HEADERS_RECEIVED)
     }
+  }
+
+  _uploadProgressEvent(send:number, total:number) {
+    console.log('_upload', this.upload)
+    if(!this._uploadStarted) {
+      this.upload.dispatchEvent('loadstart')
+      this._uploadStarted = true
+    }
+    if(send >= total)
+      this.upload.dispatchEvent('load')
+    this.upload.dispatchEvent('progress', new ProgressEvent(true, send, total))
   }
 
   _progressEvent(send:number, total:number) {
     log.verbose(this.readyState)
-    if(this.readyState === XMLHttpRequest.HEADERS_RECEIVED)
-      this.readyState = XMLHttpRequest.LOADING
+    if(this._readyState === XMLHttpRequest.HEADERS_RECEIVED)
+      this._dispatchReadStateChange(XMLHttpRequest.LOADING)
     let lengthComputable = false
-    let e = { lengthComputable }
     if(total && total >= 0)
-        e.lengthComputable = true
-    else {
-      Object.assign(e, { loaded : send, total })
-    }
-
-    if(this.onprogress)
-      this.onprogress(e)
+        lengthComputable = true
+    let e = new ProgressEvent(lengthComputable, send, total)
     this.dispatchEvent('progress', e)
   }
 
@@ -230,46 +246,51 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     this._statusText = err
     this._status = String(err).match(/\d+/)
     this._status = this._status ? Math.floor(this.status) : 404
-    this._readyState = XMLHttpRequest.DONE
-    if(String(err).match('timeout') !== null) {
+    this._dispatchReadStateChange(XMLHttpRequest.DONE)
+    if(err && String(err.message).match(/(timed\sout|timedout)/)) {
       this.dispatchEvent('timeout')
-      if(this.ontimeout)
-        this.ontimeout()
     }
-    else if(this.onerror) {
-      this.dispatchEvent('error')
-      this.onerror({
-        type : 'error',
-        detail : err
-      })
-    }
+    this.dispatchEvent('loadend')
+    this.dispatchEvent('error', {
+      type : 'error',
+      detail : err
+    })
+    this.clearEventListeners()
   }
 
   _onDone(resp) {
-    log.verbose('XMLHttpRequest done', this._task.taskId, this)
-    this.statusText = '200 OK'
-    switch(resp.type) {
-      case 'base64' :
-        if(this.responseType === 'json') {
+    log.verbose('XMLHttpRequest done', this._url, resp)
+    this._statusText = this._status
+    if(resp) {
+      switch(resp.type) {
+        case 'base64' :
+          if(this._responseType === 'json') {
+              this._responseText = resp.text()
+              this._response = resp.json()
+          }
+          else {
             this._responseText = resp.text()
-            this._response = resp.json()
-        }
-        else {
+            this._response = this.responseText
+          }
+        break;
+        case 'path' :
+          this.response = resp.blob()
+        break;
+        default :
           this._responseText = resp.text()
           this._response = this.responseText
-        }
-      break;
-      case 'path' :
-        this.response = resp.blob()
-      break;
+        break;
+      }
+      this.dispatchEvent('loadend')
+      this._dispatchReadStateChange(XMLHttpRequest.DONE)
     }
-    this.dispatchEvent('loadend')
-    if(this.onloadend)
-      this.onloadend()
-    this.dispatchEvent('load')
-    if(this._onload)
-      this._onload()
-    this.readyState = XMLHttpRequest.DONE
+    this.clearEventListeners()
+  }
+
+  _dispatchReadStateChange(state) {
+    this._readyState = state
+    if(typeof this._onreadystatechange === 'function')
+      this._onreadystatechange()
   }
 
   set onreadystatechange(fn:() => void) {
@@ -277,17 +298,8 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     this._onreadystatechange = fn
   }
 
-  set readyState(val:number) {
-
-    log.verbose('XMLHttpRequest ready state changed to ', val)
-    this._readyState = val
-    if(this._onreadystatechange) {
-      log.verbose('trigger onreadystatechange event', this._readyState)
-      log.verbose(this._onreadystatechange)
-      this.dispatchEvent('readystatechange', )
-      if(this._onreadystatechange)
-        this._onreadystatechange()
-    }
+  get onreadystatechange(fn:() => void) {
+    return this._onreadystatechange
   }
 
   get readyState() {
@@ -300,18 +312,9 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     return this._status
   }
 
-  set statusText(val) {
-    this._statusText = val
-  }
-
   get statusText() {
     log.verbose('get statusText', this._statusText)
     return this._statusText
-  }
-
-  set response(val) {
-    log.verbose('set response', val)
-    this._response = val
   }
 
   get response() {
@@ -342,11 +345,6 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   get timeout() {
     log.verbose('get timeout', this._timeout)
     return this._timeout
-  }
-
-  get upload() {
-    log.verbose('get upload', this._upload)
-    return this._upload
   }
 
   get responseType() {

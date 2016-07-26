@@ -19,6 +19,7 @@ import type {
 import fs from './fs'
 import getUUID from './utils/uuid'
 import base64 from 'base-64'
+import polyfill from './polyfill'
 const {
   RNFetchBlobSession,
   readStream,
@@ -34,7 +35,6 @@ const {
   mv,
   cp
 } = fs
-import polyfill from './polyfill'
 
 const Blob = polyfill.Blob
 const emitter = DeviceEventEmitter
@@ -151,7 +151,7 @@ function fetch(...args:any):Promise {
       subscriptionUpload.remove()
       stateEvent.remove()
       if(err)
-        reject(new Error(err, data))
+        reject(new Error(err, info))
       else {
         let rnfbEncode = 'base64'
         // response data is saved to storage
@@ -163,9 +163,9 @@ function fetch(...args:any):Promise {
         }
         info = info || {}
         info.rnfbEncode = rnfbEncode
-
         resolve(new FetchBlobResponse(taskId, info, data))
       }
+
     })
 
   })
@@ -228,14 +228,23 @@ class FetchBlobResponse {
       return this.respInfo
     }
     /**
-     * Convert result to javascript Blob object.
-     * @param  {string} contentType MIME type of the blob object.
-     * @param  {number} sliceSize   Slice size.
-     * @return {blob}             Return Blob object.
+     * Convert result to javascript RNFetchBlob object.
+     * @return {Promise<Blob>} Return a promise resolves Blob object.
      */
-    this.blob = (contentType:string, sliceSize:number) => {
-      console.warn('FetchBlobResponse.blob() is deprecated and has no funtionality.')
-      return this
+    this.blob = ():Promise<Blob> => {
+      return new Promise((resolve, reject) => {
+        if(this.type === 'base64') {
+          try {
+            let b = new polyfill.Blob(this.data, 'application/octet-stream;BASE64')
+            b.onCreated(() => {
+              console.log('####', b)
+              resolve(b)
+            })
+          } catch(err) {
+            reject(err)
+          }
+        }
+      })
     }
     /**
      * Convert result to text.

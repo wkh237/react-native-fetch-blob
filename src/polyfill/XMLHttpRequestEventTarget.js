@@ -1,6 +1,7 @@
 // Copyright 2016 wkh237@github. All rights reserved.
 // Use of this source code is governed by a MIT-style license that can be
 // found in the LICENSE file.
+
 import EventTarget from './EventTarget.js'
 import Log from '../utils/log.js'
 
@@ -10,17 +11,44 @@ log.disable()
 
 export default class XMLHttpRequestEventTarget extends EventTarget {
 
-  _onabort : (e:Event) => void;
-  _onerror : (e:Event) => void;
-  _onload : (e:Event) => void;
-  _onloadstart : (e:Event) => void;
-  _onprogress : (e:Event) => void;
-  _ontimeout : (e:Event) => void;
-  _onloadend : (e:Event) => void;
+  _onabort : (e:Event) => void = () => {};
+  _onerror : (e:Event) => void = () => {};
+  _onload : (e:Event) => void = () => {};
+  _onloadstart : (e:Event) => void = () => {};
+  _onprogress : (e:Event) => void = () => {};
+  _ontimeout : (e:Event) => void = () => {};
+  _onloadend : (e:Event) => void = () => {};
 
   constructor() {
     super()
     log.info('constructor called')
+  }
+
+  dispatchEvent(event:string, e:Event) {
+    super.dispatchEvent(event, e)
+    switch(event) {
+      case 'abort' :
+        this._onabort(e)
+      break;
+      case 'error' :
+        this._onerror(e)
+      break;
+      case 'load' :
+        this._onload(e)
+      break;
+      case 'loadstart' :
+        this._onloadstart(e)
+      break;
+      case 'loadend' :
+        this._onloadend(e)
+      break;
+      case 'progress' :
+        this._onprogress(e)
+      break;
+      case 'timeout' :
+        this._ontimeout(e)
+      break;
+    }
   }
 
   set onabort(fn:(e:Event) => void) {

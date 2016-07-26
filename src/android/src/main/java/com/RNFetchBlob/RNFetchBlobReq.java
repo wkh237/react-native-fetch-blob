@@ -28,8 +28,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Headers;
@@ -79,6 +81,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     long downloadManagerId;
     RequestType requestType;
     ResponseType responseType;
+    boolean timeout = false;
 
     public RNFetchBlobReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, final Callback callback) {
         this.method = method;
@@ -257,32 +260,41 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             clientBuilder.addInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
-                Response originalResponse = chain.proceed(req);
-                    ResponseBody extended;
-                switch (responseType) {
-                    case KeepInMemory:
-                        extended = new RNFetchBlobDefaultResp(
-                                RNFetchBlob.RCTContext,
-                                taskId,
-                                originalResponse.body());
-                        break;
-                    case FileStorage:
-                        extended = new RNFetchBlobFileResp(
-                                RNFetchBlob.RCTContext,
-                                taskId,
-                                originalResponse.body(),
-                                destPath);
-                        break;
-                    default:
-                        extended = new RNFetchBlobDefaultResp(
-                                RNFetchBlob.RCTContext,
-                                taskId,
-                                originalResponse.body());
-                        break;
-                }
-                return originalResponse.newBuilder().body(extended).build();
+                    try {
+                        Response originalResponse = chain.proceed(req);
+                        ResponseBody extended;
+                        switch (responseType) {
+                            case KeepInMemory:
+                                extended = new RNFetchBlobDefaultResp(
+                                        RNFetchBlob.RCTContext,
+                                        taskId,
+                                        originalResponse.body());
+                                break;
+                            case FileStorage:
+                                extended = new RNFetchBlobFileResp(
+                                        RNFetchBlob.RCTContext,
+                                        taskId,
+                                        originalResponse.body(),
+                                        destPath);
+                                break;
+                            default:
+                                extended = new RNFetchBlobDefaultResp(
+                                        RNFetchBlob.RCTContext,
+                                        taskId,
+                                        originalResponse.body());
+                                break;
+                        }
+                        return originalResponse.newBuilder().body(extended).build();
+                    } catch(SocketTimeoutException ex) {
+                        timeout = true;
+                    }
+                    return chain.proceed(chain.request());
                 }
             });
+            
+            if(options.timeout != -1) {
+                clientBuilder.connectTimeout(options.timeout, TimeUnit.SECONDS);
+            }
 
             OkHttpClient client = clientBuilder.build();
             Call call = client.newCall(req);
@@ -386,26 +398,23 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         info.putInt("status", resp.code());
         info.putString("state", "2");
         info.putString("taskId", this.taskId);
+        info.putBoolean("timeout", timeout);
         WritableMap headers = Arguments.createMap();
         for(int i =0;i< resp.headers().size();i++) {
             headers.putString(resp.headers().name(i), resp.headers().value(i));
         }
         info.putMap("headers", headers);
         Headers h = resp.headers();
-        if(getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("text/plain"))
-        {
+        if(getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("text/plain")) {
             info.putString("respType", "text");
         }
-        else if(getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("application/json"))
-        {
+        else if(getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("application/json")) {
             info.putString("respType", "json");
         }
-        else if(getHeaderIgnoreCases(h, "content-type").length() < 1)
-        {
+        else if(getHeaderIgnoreCases(h, "content-type").length() < 1) {
             info.putString("respType", "blob");
         }
-        else
-        {
+        else {
             info.putString("respType", "text");
         }
         return info;
@@ -413,7 +422,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
     private boolean isBlobResponse(Response resp) {
         Headers h = resp.headers();
-        boolean isText = !getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("text/plain");
+        boolean isText = !getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("text/");
         boolean isJSON = !getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("application/json");
         return  !(isJSON || isText);
     }
