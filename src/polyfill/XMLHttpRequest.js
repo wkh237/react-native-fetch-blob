@@ -123,6 +123,8 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     else if(typeof body === 'object') {
       body = JSON.stringify(body)
     }
+    else
+      body = body.toString()
 
     this._task = RNFetchBlob
                   .config({ auto: true, timeout : this._timeout })
@@ -208,8 +210,6 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   _headerReceived(e) {
     log.verbose('header received ', this._task.taskId, e)
     this.responseURL = this._url
-    this.upload.dispatchEvent('loadend')
-    this.dispatchEvent('load')
     if(e.state === "2") {
       this._responseHeaders = e.headers
       this._statusText = e.status
@@ -282,6 +282,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
         break;
       }
       this.dispatchEvent('loadend')
+      this.dispatchEvent('load')
       this._dispatchReadStateChange(XMLHttpRequest.DONE)
     }
     this.clearEventListeners()

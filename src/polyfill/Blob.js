@@ -6,6 +6,7 @@ import RNFetchBlob from '../index.js'
 import fs from '../fs.js'
 import getUUID from '../utils/uuid'
 import Log from '../utils/log.js'
+import EventTarget from './EventTarget'
 
 const log = new Log('Blob')
 const blobCacheDir = fs.dirs.DocumentDir + '/RNFetchBlob-blobs/'
@@ -16,7 +17,7 @@ log.level(3)
  * A RNFetchBlob style Blob polyfill class, this is a Blob which compatible to
  * Response object attain fron RNFetchBlob.fetch.
  */
-export default class Blob {
+export default class Blob extends EventTarget {
 
   cacheName:string;
   type:string;

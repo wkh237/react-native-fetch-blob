@@ -5,5 +5,5 @@ import FormData from './FormData.js'
 import ProgressEvent from './ProgressEvent'
 
 export default {
-  Blob, File, XMLHttpRequest, FormData, ProgressEvent
+  Blob, File, XMLHttpRequest, FormData, ProgressEvent, Event
 }

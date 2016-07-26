@@ -7,8 +7,10 @@ import Blob from './Blob.js'
 
 export default class File extends Blob {
 
-  constructor() {
-    super()
+  name : string = '';
+
+  constructor(data:any , cType:string) {
+    super(data, cType)
   }
 
 }
