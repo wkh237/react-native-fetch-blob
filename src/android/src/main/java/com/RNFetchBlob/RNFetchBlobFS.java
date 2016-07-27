@@ -647,12 +647,32 @@ public class RNFetchBlobFS {
         try {
             File dest = new File(path);
             boolean created = dest.createNewFile();
-            if(!created) {
-                callback.invoke("create file error: failed to create file at path `" + path + "` for its parent path may not exists");
-                return;
+            if(encoding.equals(RNFetchBlobConst.DATA_ENCODE_URI)) {
+                String orgPath = data.replace(RNFetchBlobConst.FILE_PREFIX, "");
+                File src = new File(orgPath);
+                if(!src.exists()) {
+                    callback.invoke("RNfetchBlob writeFileError", "source file : " + data + "not exists");
+                    return ;
+                }
+                FileInputStream fin = new FileInputStream(src);
+                OutputStream ostream = new FileOutputStream(dest);
+                byte [] buffer = new byte [10240];
+                int read = fin.read(buffer);
+                while(read > 0) {
+                    ostream.write(buffer, 0, read);
+                    read = fin.read(buffer);
+                }
+                fin.close();
+                ostream.close();
             }
-            OutputStream ostream = new FileOutputStream(dest);
-            ostream.write(RNFetchBlobFS.stringToBytes(data, encoding));
+            else {
+                if (!created) {
+                    callback.invoke("create file error: failed to create file at path `" + path + "` for its parent path may not exists");
+                    return;
+                }
+                OutputStream ostream = new FileOutputStream(dest);
+                ostream.write(RNFetchBlobFS.stringToBytes(data, encoding));
+            }
             callback.invoke(null, path);
         } catch(Exception err) {
             callback.invoke(err.getLocalizedMessage());
