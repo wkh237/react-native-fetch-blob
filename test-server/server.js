@@ -116,6 +116,7 @@ app.all('/xhr-code/:code', (req, res) => {
 })
 
 app.all('/xhr-header', (req, res) => {
+  console.log(req.headers)
   res.send(req.headers)
 })
 

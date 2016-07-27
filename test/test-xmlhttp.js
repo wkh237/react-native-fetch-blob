@@ -147,15 +147,15 @@ describe('HTTP error should not throw error event', (report, done) => {
 describe('request headers records should be cleared by open()', (report, done) => {
   let xhr = new XMLHttpRequest()
   xhr.open('GET', `${TEST_SERVER_URL}/xhr-header`)
-  xhr.setRequestHeader('header-test', '100')
+  xhr.setRequestHeader('value', '100')
   xhr.open('GET', `${TEST_SERVER_URL}/xhr-header`)
-  xhr.setRequestHeader('header-test', '200')
+  xhr.setRequestHeader('value', '200')
   xhr.send()
   xhr.onreadystatechange = function() {
     if(this.readyState == 4) {
       report(<Assert key="headers should be cleared by open()"
         expect={'200'}
-        actual={this.response['header-test']}/>)
+        actual={this.response['value']}/>)
       done()
     }
   }
@@ -256,9 +256,13 @@ describe('upload progress event test', (report, done) => {
 
 describe('timeout event catchable', (report, done) => {
   let xhr = new XMLHttpRequest()
+  let count = 0
   xhr.timeout = 1
   xhr.ontimeout = function() {
     report(
+      <Info key="event should only trigger once" uid="1000">
+        <Text>{count}</Text>
+      </Info>,
       <Assert key="event catchable"
         expect={true}
         actual={true}/>)
@@ -271,24 +275,33 @@ describe('timeout event catchable', (report, done) => {
 
 describe('upload progress event should not be triggered when body is empty', (report, done) => {
   let xhr = new XMLHttpRequest()
+  let count = 0
   xhr.upload.onloadstart = function() {
     report(
       <Assert key="loadstart event should not triggered"
+        uid="aaa"
         expect={true}
         actual={false}/>)
   }
   xhr.upload.onprogress = function() {
     report(
       <Assert key="progress event should not triggered"
+        uid="bbb"
         expect={true}
         actual={false}/>)
   }
   xhr.onreadystatechange = function() {
     if(this.readyState == XMLHttpRequest.DONE) {
+      count++
       report(
         <Assert key="Great! upload event not triggered"
+          uid="ccc"
           expect={true}
-          actual={true}/>)
+          actual={true}/>,
+        <Assert key="This should not triggered multiple times"
+          uid="ddd"
+          expect={1}
+          actual={count}/>)
       done()
     }
   }
