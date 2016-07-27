@@ -150,6 +150,7 @@ function fetch(...args:any):Promise {
       subscription.remove()
       subscriptionUpload.remove()
       stateEvent.remove()
+      info = info ? info : {}
       if(err)
         reject(new Error(err, info))
       else {

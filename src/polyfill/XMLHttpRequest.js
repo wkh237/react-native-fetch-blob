@@ -124,7 +124,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
       body = JSON.stringify(body)
     }
     else
-      body = body.toString()
+      body = body ? body.toString() : body
 
     this._task = RNFetchBlob
                   .config({ auto: true, timeout : this._timeout })
@@ -299,7 +299,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     this._onreadystatechange = fn
   }
 
-  get onreadystatechange(fn:() => void) {
+  get onreadystatechange() {
     return this._onreadystatechange
   }
 

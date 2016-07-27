@@ -82,6 +82,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     RequestType requestType;
     ResponseType responseType;
     boolean timeout = false;
+    WritableMap respInfo;
 
     public RNFetchBlobReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, final Callback callback) {
         this.method = method;
@@ -250,7 +251,12 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     break;
 
                 case WithoutBody:
-                    builder.method(method, null);
+                    if(method.equalsIgnoreCase("POST") || method.equalsIgnoreCase("PUT"))
+                    {
+                        builder.method(method, RequestBody.create(null, new byte[0]));
+                    }
+                    else
+                        builder.method(method, null);
                     break;
             }
 
@@ -291,23 +297,36 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     return chain.proceed(chain.request());
                 }
             });
-            
-            if(options.timeout != -1) {
+
+            if(options.timeout > 0) {
                 clientBuilder.connectTimeout(options.timeout, TimeUnit.SECONDS);
+                clientBuilder.readTimeout(options.timeout, TimeUnit.SECONDS);
             }
 
             OkHttpClient client = clientBuilder.build();
             Call call = client.newCall(req);
             taskTable.put(taskId, call);
             call.enqueue(new okhttp3.Callback() {
+
                 @Override
                 public void onFailure(Call call, IOException e) {
-                    callback.invoke(e.getLocalizedMessage(), null);
+                    if(respInfo == null) {
+                        respInfo = Arguments.createMap();
+                    }
+
+                    // check if this error caused by timeout
+                    if(e.getClass().equals(SocketTimeoutException.class)) {
+                        respInfo.putBoolean("timeout", true);
+                        callback.invoke("request timed out.", respInfo, null);
+                    }
+                    else
+                        callback.invoke(e.getLocalizedMessage(), respInfo, null);
                 }
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
                     ReadableMap notifyConfig = options.addAndroidDownloads;
+                    respInfo = getResponseInfo(response);
                     // Download manager settings
                     if(notifyConfig != null ) {
                         String title = "", desc = "", mime = "text/plain";
@@ -333,7 +352,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         } catch (Exception error) {
             error.printStackTrace();
             taskTable.remove(taskId);
-            callback.invoke("RNFetchBlob request error: " + error.getMessage() + error.getCause());
+            callback.invoke("RNFetchBlob request error: " + error.getMessage() + error.getCause(), this.respInfo);
         }
     }
 
@@ -405,10 +424,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         }
         info.putMap("headers", headers);
         Headers h = resp.headers();
-        if(getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("text/plain")) {
+        if(getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("text/")) {
             info.putString("respType", "text");
         }
-        else if(getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("application/json")) {
+        else if(getHeaderIgnoreCases(h, "content-type").contains("application/json")) {
             info.putString("respType", "json");
         }
         else if(getHeaderIgnoreCases(h, "content-type").length() < 1) {

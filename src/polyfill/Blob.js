@@ -47,6 +47,7 @@ export default class Blob extends EventTarget {
    *                    by default
    */
   constructor(data:any, cType:any) {
+    super()
     cType = cType || {}
     this.cacheName = getBlobName()
     this.isRNFetchBlobPolyfill = true
