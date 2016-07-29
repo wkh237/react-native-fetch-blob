@@ -498,8 +498,53 @@ NSMutableDictionary *fileStreams = nil;
     });
 }
 
+// Slice a file into another file, generally for support Blob implementation.
+- (void)slice:(NSString *)path
+         dest:(NSString *)dest
+        start:(NSNumber *)start
+          end:(NSNumber *)end
+        encod:(NSString *)encode
+     resolver:(RCTPromiseResolveBlock)resolve
+     rejecter:(RCTPromiseRejectBlock)reject
+{
+    long expected = [end longValue] - [start longValue];
+    long read = 0;
+    NSFileHandle * handle = [NSFileHandle fileHandleForReadingAtPath:path];
+    NSFileManager * fm = [NSFileManager defaultManager];
+    NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:NO];
+    [os open];
+    // abort for the source file not exists
+    if([fm fileExistsAtPath:path] == NO)
+    {
+        reject(@"RNFetchBlob slice failed", @"the file does not exists", path);
+        return;
+    }
+    long size = [fm attributesOfItemAtPath:path error:nil].fileSize;
+    // abort for the file size is less than start
+    if(size < start)
+    {
+        reject(@"RNFetchBlob slice failed", @"start is greater than file size", @"");
+        return;
+    }
+    if(![fm fileExistsAtPath:dest]) {
+        [fm createFileAtPath:dest contents:@"" attributes:nil];
+    }
+    [handle seekToFileOffset:start];
+    while(read < expected)
+    {
+        NSData * chunk = [handle readDataOfLength:10240];
+        read += [chunk length];
+        [os write:[chunk bytes] maxLength:10240];
+    }
+    [handle closeFile];
+    [os close];
+    resolve(dest);
+    
+}
+
 // close file read stream
-- (void)closeInStream {
+- (void)closeInStream
+{
     if(self.inStream != nil) {
         [self.inStream close];
         [self.inStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];

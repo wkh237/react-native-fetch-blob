@@ -24,6 +24,7 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -534,6 +535,39 @@ public class RNFetchBlobFS {
             arg.pushString(i);
         }
         callback.invoke(null, arg);
+    }
+
+    /**
+     * Create a file by slicing given file path
+     * @param src   Source file path
+     * @param dest  Destination of created file
+     * @param start Start byte offset in source file
+     * @param end   End byte offset
+     * @param encode
+     * @param callback
+     */
+    public static void slice(String src, String dest, int start, int end, String encode, Callback callback) {
+        try {
+            long expected = end - start;
+            long now = 0;
+            FileInputStream in = new FileInputStream(new File(src));
+            FileOutputStream out = new FileOutputStream(new File(dest));
+            in.skip(start);
+            byte [] buffer = new byte[10240];
+            while(now < expected) {
+                long read = in.read(buffer, 0, 10240);
+                if(read <= 0) {
+                    break;
+                }
+                now += read;
+                out.write(buffer, 0, (int) read);
+            }
+            in.close();
+            out.close();
+            callback.invoke(null, dest);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     static void lstat(String path, final Callback callback) {

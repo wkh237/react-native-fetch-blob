@@ -161,6 +161,11 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void slice(String src, String dest, int start, int end, String encode, Callback callback) {
+
+    }
+
+    @ReactMethod
     public void fetchBlob(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, final Callback callback) {
         new RNFetchBlobReq(options, taskId, method, url, headers, body, null, callback).run();
     }
