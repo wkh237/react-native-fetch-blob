@@ -88,9 +88,9 @@
         if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
             // generate octet-stream body
             if(body != nil) {
-                
+                NSString * cType = [[self class] getHeaderIgnoreCases:@"content-type" fromHeaders:mheaders];
                 // when headers does not contain a key named "content-type" (case ignored), use default content type
-                if([[self class] getHeaderIgnoreCases:@"content-type" fromHeaders:mheaders] == nil)
+                if(cType == nil)
                 {
                     [mheaders setValue:@"application/octet-stream" forKey:@"Content-Type"];
                 }

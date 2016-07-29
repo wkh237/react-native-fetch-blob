@@ -162,7 +162,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void slice(String src, String dest, int start, int end, String encode, Callback callback) {
-
+        RNFetchBlobFS.slice(src, dest, start, end, encode, callback);
     }
 
     @ReactMethod
