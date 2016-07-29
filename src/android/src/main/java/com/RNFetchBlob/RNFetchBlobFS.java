@@ -412,13 +412,24 @@ public class RNFetchBlobFS {
      */
     static void unlink(String path, Callback callback) {
         try {
-            boolean success = new File(path).delete();
-            callback.invoke( null, success);
+            RNFetchBlobFS.deleteRecursive(new File(path));
+            callback.invoke(null, true);
         } catch(Exception err) {
             if(err != null)
-            callback.invoke(err.getLocalizedMessage());
+            callback.invoke(err.getLocalizedMessage(), false);
         }
     }
+
+    static void deleteRecursive(File fileOrDirectory) {
+
+        if (fileOrDirectory.isDirectory()) {
+            for (File child : fileOrDirectory.listFiles()) {
+                deleteRecursive(child);
+            }
+        }
+        fileOrDirectory.delete();
+    }
+
     /**
      * Make a folder
      * @param path Source path
