@@ -1,4 +1,4 @@
-# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]() ![](https://img.shields.io/badge/inpPogress-0.8.0-yellow.svg?style=flat-square)
+# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]() 
 
 A project committed to make file acess and transfer easier and effiecient for React Native developers.
 
@@ -137,9 +137,36 @@ var RNFetchBlob = require('react-native-fetch-blob').default
 
 #### Regular Request
 
-TODO
+After `0.8.0` react-native-fetch-blob automatically decide how to send the body by checking `Content-Type` in header. 
+
+The rules are shown in the following sample
+
+```js
+import RNFetchblob from 'react-native-fetch-blob'
+
+// If body is an Array send as multipart form data
+RNFetchBlob.fetch('POST'),'http://upload.server.my' { /* whatever it is */  }, [{ name : 'field1', data : 'test' }])
+
+// If body is a string starts with prefix 'RNFetchBlob-file://' send request with input stream from the patg
+RNFetchBlob.fetch('POST'),'http://upload.server.my' { /* whatever it is */  }, 'RNFetchBlob-file://' + path)
+RNFetchBlob.fetch('POST'),'http://upload.server.my' { /* whatever it is */  }, RNFetchBlob.wrap(path))
+
+// If content-type contains `base64;` or `application/octet` the body will be decoded using BASE64 decoder 
+RNFetchBlob.fetch('POST','http://upload.server.my', { 'Content-Type' : 'anything;base64' }, BASE64_BODY)
+RNFetchBlob.fetch('POST','http://upload.server.my', { 'Content-Type' : 'application/octet-binary' }, BASE64_BODY)
+
+// Send the data as the string you given
+RNFetchBlob.fetch('POST', 'http://upload.server.my', { /*any content-type not matching above rules*/ 'Content-Type' : 'text/foo' }, data)
+RNFetchBlob.fetch('POST', 'http://upload.server.my', { 'text/plain' }, 'text in the body')
+RNFetchBlob.fetch('POST', 'http://upload.server.my', { 'application/json' }, JSON.stringify(some_data))
+
+```
+
+If no 'Content-Type' field in headers, it will use default content type `application/octet-stream` and convert given `body` to binary data using BASE64 decoder.
 
 #### Download example : Fetch files that needs authorization token
+
+Most simple way is download to memory and stored as BASE64 encoded string, this is handy when the response data is small.
 
 ```js
 
@@ -165,7 +192,7 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
 
 #### Download to storage directly
 
-The simplest way is give a `fileCache` option to config, and set it to `true`. This will let the incoming response data stored in a temporary path **without** any file extension.
+If the response data is large, that would be a bad idea to convert it into BASE64 string. The better solution is store the response data directly into file system. The simplest way is give a `fileCache` option to config, and set it to `true`. This will make incoming response data stored in a temporary path **without** any file extension.
 
 **These files won't be removed automatically, please refer to [Cache File Management](#user-content-cache-file-management)**
 
@@ -210,7 +237,7 @@ RNFetchBlob
 
 **Use Specific File Path**
 
-If you prefer a specific path rather than random generated one, you can use `path` option. We've added a constant [dirs](#user-content-dirs) in v0.5.0 that contains several common used directories.
+If you prefer a specific path rather than randomly generated one, you can use `path` option. We've added a constant [dirs](#user-content-dirs) in v0.5.0 that contains several common used directories.
 
 ```js
 let dirs = RNFetchBlob.fs.dirs
@@ -298,6 +325,10 @@ Elements have property `filename` will be transformed into binary format, otherw
   }, [
     // element with property `filename` will be transformed into `file` in form data
     { name : 'avatar', filename : 'avatar.png', data: binaryDataInBase64},
+    // custom content type
+    { name : 'avatar-png', filename : 'avatar-png.png', type:'image/png', data: binaryDataInBase64},
+    // part file from storage
+    { name : 'avatar-foo', filename : 'avatar-foo.png', type:'image/foo', data: RNFetchBlob.wrap(path_to_a_file)},
     // elements without property `filename` will be sent as plain text
     { name : 'name', data : 'user'},
     { name : 'info', data : JSON.stringify({
@@ -624,13 +655,17 @@ RNFetchBlob.config({
 
 #### Web API Polyfills
 
-TODO
+After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/react-native-fetch-blob/wiki/Web-API-Polyfills-(work-in-progress)) that makes some browser-based library available in RN. 
+
+- Blob
+- XMLHttpRequest (Use our implementation if you're going to use it with Blob)
+
 
 ## Changes
 
 | Version | |
 |---|---|
-| 0.8.0 | Added Web API polyfills, support regular request, add buffer API |
+| 0.8.0 | Added Web API polyfills, support regular request, added timeout option. |
 | 0.7.5 | Fix installation script that make it compatible to react-native < 0.28 |
 | 0.7.4 | Fix app crash problem in version > 0.27 |
 | 0.7.3 | Fix OkHttp dependency issue in version < 0.29 |
