@@ -23,6 +23,7 @@ export default class Blob extends EventTarget {
   type:string;
   size:number;
   isRNFetchBlobPolyfill:boolean = true;
+  multipartBoundary:string = null;
 
   _ref:string = null;
   _blobCreated:boolean = false;
@@ -84,14 +85,15 @@ export default class Blob extends EventTarget {
     // process FormData
     else if(data instanceof FormData) {
       log.verbose('create Blob cache file from FormData', data)
-      let boundary = `--RNFetchBlob-${this.cacheName}-${Date.now()}\r\n`
+      let boundary = `RNFetchBlob-${this.cacheName}-${Date.now()}`
+      this.multipartBoundary = boundary
       let parts = data.getParts()
       let formArray = []
       for(let i in parts) {
-        formArray.push(boundary)
+        formArray.push('\r\n--'+boundary+'\r\n')
         let part = parts[i]
         for(let j in part.headers) {
-          formArray.push(j + part.headers[j] + ';\r\n')
+          formArray.push(j + ': ' +part.headers[j] + ';\r\n')
         }
         formArray.push('\r\n')
         if(part.isRNFetchBlobPolyfill)
@@ -100,7 +102,7 @@ export default class Blob extends EventTarget {
           formArray.push(part.string)
       }
       log.verbose('FormData array', formArray)
-      formArray.push(boundary + '--')
+      formArray.push('\r\n--'+boundary+'--\r\n')
       p = createMixedBlobData(this._ref, formArray)
     }
     // if the data is a string starts with `RNFetchBlob-file://`, append the
@@ -125,9 +127,13 @@ export default class Blob extends EventTarget {
       else
         data = data.toString()
       // create cache file
+      this.type = String(this.type).replace(/;base64/ig, '')
       log.verbose('create Blob cache file from string', 'encode', encoding)
       p = fs.writeFile(this._ref, data, encoding)
-            .then((size) => Promise.resolve(size))
+            .then((size) => {
+              console.log('file bytes', size)
+              return Promise.resolve(size)
+            })
 
     }
     // TODO : ArrayBuffer support
@@ -240,8 +246,9 @@ function createMixedBlobData(ref, dataArray) {
   let size = 0
   for(let i in dataArray) {
     let part = dataArray[i]
-    if(part instanceof Blob)
-      args.push([ref, part.getRNFetchBlobRef(), 'uri'])
+    if(part.isRNFetchBlobPolyfill) {
+      args.push([ref, part._ref, 'uri'])
+    }
     else if(typeof part === 'string')
       args.push([ref, part, 'utf8'])
     // TODO : ArrayBuffer
