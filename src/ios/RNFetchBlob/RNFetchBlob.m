@@ -358,6 +358,14 @@ RCT_EXPORT_METHOD(cancelRequest:(NSString *)taskId callback:(RCTResponseSenderBl
 
 }
 
+RCT_EXPORT_METHOD(enableProgressReport:(NSString *)taskId {
+    [RNFetchBlobNetwork enableProgressReport:taskId];
+})
+
+RCT_EXPORT_METHOD(enableUploadProgressReport:(NSString *)taskId {
+    [RNFetchBlobNetwork enableUploadProgress:taskId];
+})
+
 RCT_EXPORT_METHOD(slice:(NSString *)src dest:(NSString *)dest start:(NSNumber *)start end:(NSNumber *)end resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject
 {
     [RNFetchBlobFS slice:src dest:dest start:start end:end encode:@"" resolver:resolve rejecter:reject];

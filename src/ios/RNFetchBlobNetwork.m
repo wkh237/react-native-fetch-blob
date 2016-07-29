@@ -24,6 +24,8 @@
 ////////////////////////////////////////
 
 NSMutableDictionary * taskTable;
+NSMutableDictionary * progressTable;
+NSMutableDictionary * uploadProgressTable;
 
 @interface RNFetchBlobNetwork ()
 {
@@ -61,12 +63,30 @@ NSOperationQueue *taskQueue;
     if(taskTable == nil) {
         taskTable = [[NSMutableDictionary alloc] init];
     }
+    if(progressTable == nil)
+    {
+        progressTable = [[NSMutableDictionary alloc] init];
+    }
+    if(uploadProgressTable == nil)
+    {
+        uploadProgressTable = [[NSMutableDictionary alloc] init];
+    }
     return self;
 }
 
++ (void) enableProgressReport:(NSString *) taskId
+{
+    [progressTable setValue:@YES forKey:taskId];
+}
+
++ (void) enableUploadProgress:(NSString *) taskId
+{
+    [uploadProgressTable setValue:@YES forKey:taskId];
+}
 
 // removing case from headers
-+ (NSMutableDictionary *) normalizeHeaders:(NSDictionary *)headers {
++ (NSMutableDictionary *) normalizeHeaders:(NSDictionary *)headers
+{
 
     NSMutableDictionary * mheaders = [[NSMutableDictionary alloc]init];
     for(NSString * key in headers) {
@@ -149,7 +169,7 @@ NSOperationQueue *taskQueue;
         respFile = NO;
     }
     NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
-    [taskTable setValue:task forKey:taskId];
+    [taskTable setValue:@{ @"task": task, KEY_REPORT_PROGRESS : @NO, KEY_REPORT_UPLOAD_PROGRESS : @NO} forKey:taskId];
     [task resume];
 
     // network status indicator
@@ -248,15 +268,18 @@ NSOperationQueue *taskQueue;
     {
         [writeStream write:[data bytes] maxLength:[data length]];
     }
-
-    [self.bridge.eventDispatcher
-     sendDeviceEventWithName:@"RNFetchBlobProgress"
-     body:@{
-            @"taskId": taskId,
-            @"written": [NSString stringWithFormat:@"%d", receivedBytes],
-            @"total": [NSString stringWithFormat:@"%d", expectedBytes]
-            }
-     ];
+    
+    if([progressTable valueForKey:taskId] == @YES)
+    {
+        [self.bridge.eventDispatcher
+         sendDeviceEventWithName:@"RNFetchBlobProgress"
+         body:@{
+                @"taskId": taskId,
+                @"written": [NSString stringWithFormat:@"%d", receivedBytes],
+                @"total": [NSString stringWithFormat:@"%d", expectedBytes]
+                }
+         ];
+    }
 
 }
 
@@ -286,24 +309,30 @@ NSOperationQueue *taskQueue;
                    [respData base64EncodedStringWithOptions:0]
                    ]);
     }
+    
+    [taskTable removeObjectForKey:taskId];
+    [uploadProgressTable removeObjectForKey:taskId];
+    [progressTable removeObjectForKey:taskId];
 }
 
 // upload progress handler
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didSendBodyData:(int64_t)bytesSent totalBytesSent:(int64_t)totalBytesWritten totalBytesExpectedToSend:(int64_t)totalBytesExpectedToWrite
 {
-    [self.bridge.eventDispatcher
-     sendDeviceEventWithName:@"RNFetchBlobProgress-upload"
-     body:@{
-            @"taskId": taskId,
-            @"written": [NSString stringWithFormat:@"%d", totalBytesWritten],
-            @"total": [NSString stringWithFormat:@"%d", bodyLength]
-            }
-     ];
+    if([uploadProgressTable valueForKey:taskId] == @YES) {
+        [self.bridge.eventDispatcher
+         sendDeviceEventWithName:@"RNFetchBlobProgress-upload"
+         body:@{
+                @"taskId": taskId,
+                @"written": [NSString stringWithFormat:@"%d", totalBytesWritten],
+                @"total": [NSString stringWithFormat:@"%d", bodyLength]
+                }
+         ];
+    }
 }
 
 + (void) cancelRequest:(NSString *)taskId
 {
-    NSURLSessionDataTask * task = (NSURLSessionDataTask *)[taskTable objectForKey:taskId];
+    NSURLSessionDataTask * task = (NSURLSessionDataTask *)[[taskTable objectForKey:taskId] objectForKey:@"task"];
     if(task != nil && task.state == NSURLSessionTaskStateRunning)
         [task cancel];
 }

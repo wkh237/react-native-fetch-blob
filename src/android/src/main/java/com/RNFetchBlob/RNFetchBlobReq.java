@@ -64,7 +64,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         FileStorage
     };
 
-    static HashMap<String, Call> taskTable = new HashMap<>();
+    public static HashMap<String, Call> taskTable = new HashMap<>();
+    static HashMap<String, Boolean> progressReport = new HashMap<>();
+    static HashMap<String, Boolean> uploadProgressReport = new HashMap<>();
 
     MediaType contentType = RNFetchBlobConst.MIME_OCTET;
     ReactApplicationContext ctx;
@@ -81,8 +83,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     long downloadManagerId;
     RequestType requestType;
     ResponseType responseType;
-    boolean timeout = false;
     WritableMap respInfo;
+    boolean timeout = false;
+    public boolean reportProgress = false;
+    public boolean reportUploadProgress = false;
 
     public RNFetchBlobReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, final Callback callback) {
         this.method = method;
@@ -304,7 +308,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             }
 
             OkHttpClient client = clientBuilder.build();
-            Call call = client.newCall(req);
+            Call call =  client.newCall(req);
             taskTable.put(taskId, call);
             call.enqueue(new okhttp3.Callback() {
 
@@ -321,6 +325,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     }
                     else
                         callback.invoke(e.getLocalizedMessage(), respInfo, null);
+                    removeTaskInfo();
                 }
 
                 @Override
@@ -354,6 +359,18 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             taskTable.remove(taskId);
             callback.invoke("RNFetchBlob request error: " + error.getMessage() + error.getCause(), this.respInfo);
         }
+    }
+
+    /**
+     * Remove cached information of the HTTP task
+     */
+    private void removeTaskInfo() {
+        if(taskTable.containsKey(taskId))
+            taskTable.remove(taskId);
+        if(uploadProgressReport.containsKey(taskId))
+            uploadProgressReport.remove(taskId);
+        if(progressReport.containsKey(taskId))
+            progressReport.remove(taskId);
     }
 
     /**
@@ -408,8 +425,17 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
                 break;
         }
-        if(taskTable.containsKey(taskId))
-            taskTable.remove(taskId);
+        removeTaskInfo();
+    }
+
+    public static boolean isReportProgress(String taskId) {
+        if(!progressReport.containsKey(taskId)) return false;
+        return progressReport.get(taskId);
+    }
+
+    public static boolean isReportUploadProgress(String taskId) {
+        if(!uploadProgressReport.containsKey(taskId)) return false;
+        return uploadProgressReport.get(taskId);
     }
 
     private WritableMap getResponseInfo(Response resp) {

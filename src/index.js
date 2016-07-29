@@ -175,10 +175,12 @@ function fetch(...args:any):Promise {
   // method for register progress event handler and cancel request.
   promise.progress = (fn) => {
     promise.onProgress = fn
+    RNFetchBlob.enableProgressReport(taskId)
     return promise
   }
   promise.uploadProgress = (fn) => {
     promise.onUploadProgress = fn
+    RNFetchBlob.enableUploadProgressReport(taskId)
     return promise
   }
   promise.stateChange = (fn) => {

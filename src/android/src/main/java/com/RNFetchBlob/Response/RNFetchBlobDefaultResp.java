@@ -1,6 +1,7 @@
 package com.RNFetchBlob.Response;
 
 import com.RNFetchBlob.RNFetchBlob;
+import com.RNFetchBlob.RNFetchBlobReq;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.WritableMap;
@@ -64,12 +65,14 @@ public class RNFetchBlobDefaultResp extends ResponseBody {
 
             long read =  mOriginalSource.read(sink, byteCount);
             bytesRead += read > 0 ? read : 0;
-            WritableMap args = Arguments.createMap();
-            args.putString("taskId", mTaskId);
-            args.putString("written", String.valueOf(bytesRead));
-            args.putString("total", String.valueOf(contentLength()));
-            rctContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                    .emit("RNFetchBlobProgress", args);
+            if(RNFetchBlobReq.isReportProgress(mTaskId)) {
+                WritableMap args = Arguments.createMap();
+                args.putString("taskId", mTaskId);
+                args.putString("written", String.valueOf(bytesRead));
+                args.putString("total", String.valueOf(contentLength()));
+                rctContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                        .emit("RNFetchBlobProgress", args);
+            }
             return read;
         }
 

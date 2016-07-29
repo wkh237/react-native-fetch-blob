@@ -36,6 +36,9 @@ extern NSString *const FS_EVENT_END;
 extern NSString *const FS_EVENT_WARN;
 extern NSString *const FS_EVENT_ERROR;
 
+extern NSString *const KEY_REPORT_PROGRESS;
+extern NSString *const KEY_REPORT_UPLOAD_PROGRESS;
+
 
 
 #endif /* RNFetchBlobConst_h */

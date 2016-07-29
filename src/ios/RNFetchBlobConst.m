@@ -30,3 +30,6 @@ extern NSString *const FS_EVENT_DATA = @"data";
 extern NSString *const FS_EVENT_END = @"end";
 extern NSString *const FS_EVENT_WARN = @"warn";
 extern NSString *const FS_EVENT_ERROR = @"error";
+
+extern NSString *const KEY_REPORT_PROGRESS = @"reportProgress";
+extern NSString *const KEY_REPORT_UPLOAD_PROGRESS = @"reportUploadProgress";

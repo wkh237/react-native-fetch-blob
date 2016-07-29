@@ -335,9 +335,11 @@ public class RNFetchBlobBody extends RequestBody{
             args.putString("written", String.valueOf(bytesWritten));
             args.putString("total", String.valueOf(contentLength));
 
-            // emit event to js context
-            RNFetchBlob.RCTContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                    .emit(RNFetchBlobConst.EVENT_UPLOAD_PROGRESS, args);
+            if(RNFetchBlobReq.isReportUploadProgress(mTaskId)) {
+                // emit event to js context
+                RNFetchBlob.RCTContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                        .emit(RNFetchBlobConst.EVENT_UPLOAD_PROGRESS, args);
+            }
         }
     }
 }
