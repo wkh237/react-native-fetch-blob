@@ -25,7 +25,7 @@ const  dirs = RNFetchBlob.fs.dirs
 
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
-describe('URI encoding support', (report, done) => {
+describe('fs URI encoding support', (report, done) => {
 
   let testData1 = `test date write file from file ${Date.now()}`
   let testData2 = `test date write file from file ${Date.now()*Math.random()}`
@@ -53,6 +53,10 @@ describe('URI encoding support', (report, done) => {
         />)
       done()
     })
+})
+
+describe('request timeout working properly', (report, done) => {
+  done()
 })
 
 function getASCIIArray(str) {

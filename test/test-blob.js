@@ -103,6 +103,9 @@ describe('blob clear cache test', (report, done) => {
   let expect = 'test-' + Date.now()
   Blob.clearCache()
       .then(() => Blob.build(expect))
+      .catch((err) => {
+        console.warn(err)
+      })
       .then((b) => fs.readFile(b.getRNFetchBlobRef(), 'utf8'))
       .then((data) => {
         report(
@@ -124,17 +127,22 @@ describe('blob clear cache test', (report, done) => {
 describe('create blob using FormData', (report, done) => {
   let form = new FormData()
   let fname = 'blob-test' + Date.now()
-  File.build(RNTest.prop('image'), { type:'image/png;base64' })
+  File.build('test.png', RNTest.prop('image'), { type:'image/png;base64' })
       .then((f) => {
-        f.name = 'test.png'
         form.append('name', fname)
         form.append('blob', f)
         return Blob.build(form)
       })
-      .then((b) => RNFetchBlob
-                    .fetch('POST', `${TEST_SERVER_URL}/upload-form`, {
-                      'content-type' : 'multipart/form-data; boundary='+b.multipartBoundary
-                    }, RNFetchBlob.wrap(b.getRNFetchBlobRef())))
+      .then((b) => {
+        let body = RNFetchBlob.wrap(b.getRNFetchBlobRef())
+        return RNFetchBlob.fetch(
+          'POST',
+          `${TEST_SERVER_URL}/upload-form`,
+          {
+            'content-type' : 'multipart/form-data; boundary='+b.multipartBoundary
+          },
+          body)
+      })
       .then((resp) => {
         report(
           <Assert key="form data verification #1"

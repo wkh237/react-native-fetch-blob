@@ -19,7 +19,6 @@ const Blob = RNFetchBlob.polyfill.Blob
 
 window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
 window.Blob = Blob
-window.FormData = RNFetchBlob.polyfill.FormData
 window.ProgressEvent = RNFetchBlob.polyfill.ProgressEvent
 
 const { Assert, Comparer, Info, prop } = RNTest
