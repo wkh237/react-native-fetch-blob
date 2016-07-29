@@ -27,6 +27,7 @@ export default class Blob extends EventTarget {
   _ref:string = null;
   _blobCreated:boolean = false;
   _onCreated:Array<any> = [];
+  _closed:boolean = false;
 
   /**
    * Static method that remove all files in Blob cache folder.
@@ -35,6 +36,12 @@ export default class Blob extends EventTarget {
    */
   static clearCache() {
     return fs.unlink(blobCacheDir).then(() => fs.mkdir(blobCacheDir))
+  }
+
+  static build(data:any, cType:any):Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      new Blob(data, cType).onCreated(resolve)
+    })
   }
 
   /**
@@ -52,10 +59,12 @@ export default class Blob extends EventTarget {
     this.cacheName = getBlobName()
     this.isRNFetchBlobPolyfill = true
     this.type = cType.type || 'text/plain'
-    log.verbose('Blob constructor called', 'mime', this.type, 'type', typeof data, 'length', data.length)
+    log.verbose('Blob constructor called', 'mime', this.type, 'type', typeof data, 'length', data?  data.length:0)
     this._ref = blobCacheDir + this.cacheName
     let p = null
-    if(data instanceof Blob) {
+    if(!data)
+      data = ''
+    if(data.isRNFetchBlobPolyfill) {
       log.verbose('create Blob cache file from Blob object')
       let size = 0
       this._ref = String(data.getRNFetchBlobRef())
@@ -71,6 +80,28 @@ export default class Blob extends EventTarget {
               else
                 throw `could not create Blob from path ${orgPath}, file not exists`
             })
+    }
+    // process FormData
+    else if(data instanceof FormData) {
+      log.verbose('create Blob cache file from FormData', data)
+      let boundary = `--RNFetchBlob-${this.cacheName}-${Date.now()}\r\n`
+      let parts = data.getParts()
+      let formArray = []
+      for(let i in parts) {
+        formArray.push(boundary)
+        let part = parts[i]
+        for(let j in part.headers) {
+          formArray.push(j + part.headers[j] + ';\r\n')
+        }
+        formArray.push('\r\n')
+        if(part.isRNFetchBlobPolyfill)
+          formArray.push(part)
+        else
+          formArray.push(part.string)
+      }
+      log.verbose('FormData array', formArray)
+      formArray.push(boundary + '--')
+      p = createMixedBlobData(this._ref, formArray)
     }
     // if the data is a string starts with `RNFetchBlob-file://`, append the
     // Blob data from file path
@@ -127,15 +158,16 @@ export default class Blob extends EventTarget {
    * Since Blob content will asynchronously write to a file during creation,
    * use this method to register an event handler for Blob initialized event.
    * @nonstandard
-   * @param  {[type]} fn:( [description]
-   * @return {[type]}      [description]
+   * @param  {(b:Blob) => void} An event handler invoked when Blob created
+   * @return {Blob} The Blob object instance itself
    */
-  onCreated(fn:() => void) {
+  onCreated(fn:() => void):Blob {
     log.verbose('register blob onCreated', this._onCreated.length)
     if(!this._blobCreated)
       this._onCreated.push(fn)
     else
       fn(this)
+    return this
   }
 
   /**
@@ -155,7 +187,9 @@ export default class Blob extends EventTarget {
    * @return {Blob}
    */
   slice(start:?number, end:?number, encoding:?string):Blob {
-    log.verbose('slice called')
+    if(this._closed)
+      throw 'Blob has been released.'
+    log.verbose('slice called', start, end, encoding)
     // TODO : fs.slice
     // return fs.slice(this.cacheName, getBlobName(), contentType, start, end)
   }
@@ -166,6 +200,9 @@ export default class Blob extends EventTarget {
    * @return {Promise}
    */
   close() {
+    if(this._closed)
+      return Promise.reject('Blob has been released.')
+    this._closed = true
     return fs.unlink(this._ref)
   }
 
