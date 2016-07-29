@@ -16,6 +16,7 @@ import {
 
 const fs = RNFetchBlob.fs
 const Blob = RNFetchBlob.polyfill.Blob
+const File = RNFetchBlob.polyfill.File
 
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
@@ -99,7 +100,7 @@ describe('create Blob without any agument', (report, done) => {
 })
 
 describe('blob clear cache test', (report, done) => {
-  let expect = 'test-'+Date.now()
+  let expect = 'test-' + Date.now()
   Blob.clearCache()
       .then(() => Blob.build(expect))
       .then((b) => fs.readFile(b.getRNFetchBlobRef(), 'utf8'))
@@ -116,6 +117,32 @@ describe('blob clear cache test', (report, done) => {
             key="should remain one file in cache directory."
             expect={1}
             actual={stat.length}/>)
+        done()
+      })
+})
+
+describe('create blob using FormData', (report, done) => {
+  let form = new FormData()
+  let fname = 'blob-test' + Date.now()
+  File.build(RNTest.prop('image'), { type:'image/png;base64' })
+      .then((f) => {
+        f.name = 'test.png'
+        form.append('name', fname)
+        form.append('blob', f)
+        return Blob.build(form)
+      })
+      .then((b) => RNFetchBlob
+                    .fetch('POST', `${TEST_SERVER_URL}/upload-form`, {
+                      'content-type' : 'multipart/form-data; boundary='+b.multipartBoundary
+                    }, RNFetchBlob.wrap(b.getRNFetchBlobRef())))
+      .then((resp) => {
+        report(
+          <Assert key="form data verification #1"
+            actual={resp.json().files[0].originalname}
+            expect={'test.png'}/>,
+          <Assert key="form data verification #2"
+            actual={resp.json().fields.name}
+            expect={fname}/>)
         done()
       })
 })

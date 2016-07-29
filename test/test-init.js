@@ -69,5 +69,5 @@ describe('GET image from server', (report, done) => {
 // require('./test-fs')
 // require('./test-xmlhttp')
 require('./test-blob')
-// require('./test-firebase')
+require('./test-firebase')
 // require('./test-android')

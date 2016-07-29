@@ -20,7 +20,6 @@ const Blob = RNFetchBlob.polyfill.Blob
 
 window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
 window.Blob = Blob
-window.FormData = RNFetchBlob.polyfill.FormData
 
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
