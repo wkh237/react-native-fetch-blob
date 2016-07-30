@@ -28,27 +28,30 @@ let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 let photo = null
 
 describe('upload asset from camera roll', (report, done) => {
-  let imgName = `image-from-camera-roll-${Platform.OS}.jpg`
+  let imgName = `image-from-camera-roll-${Platform.OS}-${Date.now()}.jpg`
   let tick = Date.now()
+  let tick2 = Date.now()
   CameraRoll.getPhotos({first : 10})
     .then((resp) => {
-      console.log('cameraroll', JSON.stringify(resp))
       let url = resp.edges[0].node.image.uri
+      console.log('CameraRoll',url)
       photo = url
       return RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
         Authorization : `Bearer ${DROPBOX_TOKEN}`,
         'Dropbox-API-Arg': `{\"path\": \"/rn-upload/${imgName}\",\"mode\": \"add\",\"autorename\": false,\"mute\": false}`,
         'Content-Type' : 'application/octet-stream',
       }, RNFetchBlob.wrap(url))
-      .progress((now, total) => {
-        if(Date.now() - tick < 1000)
+      .uploadProgress((now, total) => {
+        if(Date.now() - tick2 < 1000)
         return
-        report(<Info key="progress" uid="pg1">
+        report(<Info key="upload progress" uid="pg0">
           <Text>{`upload ${now} / ${total} ${Math.floor(now/total*100)}% `}</Text>
         </Info>)
+        tick2 = Date.now()
       })
     })
     .then((resp) => {
+      console.log(resp)
       resp = resp.json()
       report(
         <Assert key="confirm the file has been uploaded" expect={imgName} actual={resp.name}/>
