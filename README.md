@@ -13,7 +13,7 @@ A project committed to make file acess and data transfer easier, effiecient for 
 * [About](#user-content-about)
 * [Installation](#user-content-installation)
 * [Recipes](#user-content-recipes)
-* [HTTP Data Transfer]
+* HTTP Data Transfer
  * [Regular Request](#user-content-regular-request)
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
@@ -22,7 +22,7 @@ A project committed to make file acess and data transfer easier, effiecient for 
  * [Cancel HTTP request](#user-content-cancel-request)
  * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
  * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
-* [File Access]
+* File System
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-cache-file-management)
