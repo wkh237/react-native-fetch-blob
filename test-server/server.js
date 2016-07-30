@@ -63,6 +63,19 @@ app.use(function(req, res, next) {
   next();
 })
 
+app.all('/echo', (req, res) => {
+  var body = ''
+  req.on('data', (chunk) => {
+    body+=chunk
+  })
+  req.on('end', () => {
+    res.send({
+      headers :  req.headers,
+      body : body
+    })
+  })
+})
+
 app.use(upload.any())
 app.use('/public', express.static('./public'))
 // for redirect test
