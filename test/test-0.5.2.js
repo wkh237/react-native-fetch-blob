@@ -70,6 +70,7 @@ describe('POST request with params', (report, done) => {
         result += chunk
       })
       stream.onEnd(() => {
+        console.log(result)
         result = JSON.parse(result)
         report(<Assert key="param#1 should correct"
           expect={parseInt(time)}

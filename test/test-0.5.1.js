@@ -175,6 +175,7 @@ describe('Upload and download at the same time', (report, done) => {
         actual += chunk
       })
       stream.onEnd(() => {
+        console.log('###',actual)
         report(
           <Assert
             key="response data should be the filename"
