@@ -34,7 +34,7 @@
     NSString * encodedUrl = url;
     
     // send request
-    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString: encodedUrl]];
+    __block NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString: encodedUrl]];
     NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
     NSTimeInterval timeStamp = [[NSDate date] timeIntervalSince1970];
     NSNumber * timeStampObj = [NSNumber numberWithDouble: timeStamp];
@@ -42,7 +42,7 @@
     // generate boundary
     NSString * boundary = [NSString stringWithFormat:@"RNFetchBlob%d", timeStampObj];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSMutableData * postData = [[NSMutableData alloc] init];
+        __block NSMutableData * postData = [[NSMutableData alloc] init];
         // combine multipart/form-data body
         [[self class] buildFormBody:form boundary:boundary onComplete:^(NSData *formData) {
             if(formData != nil) {
@@ -71,15 +71,15 @@
                       url:(NSString *)url
                   headers:(NSDictionary *)headers
                      body:(NSString *)body
-               onComplete:(void(^)(NSURLRequest * req, long bodyLength))onComplete
+               onComplete:(void(^)(__weak NSURLRequest * req, long bodyLength))onComplete
 {
 //    NSString * encodedUrl = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSString * encodedUrl = url;
     // send request
-    NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
+    __block NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
                                     initWithURL:[NSURL URLWithString: encodedUrl]];
 
-    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
+    __block NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
     // move heavy task to another thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSMutableData * blobData;
@@ -88,7 +88,7 @@
         if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
             // generate octet-stream body
             if(body != nil) {
-                NSString * cType = [[self class] getHeaderIgnoreCases:@"content-type" fromHeaders:mheaders];
+                __block NSString * cType = [[self class] getHeaderIgnoreCases:@"content-type" fromHeaders:mheaders];
                 // when headers does not contain a key named "content-type" (case ignored), use default content type
                 if(cType == nil)
                 {
@@ -97,7 +97,7 @@
                 
                 // when body is a string contains file path prefix, try load file from the path
                 if([body hasPrefix:FILE_PREFIX]) {
-                    NSString * orgPath = [body substringFromIndex:[FILE_PREFIX length]];
+                    __block NSString * orgPath = [body substringFromIndex:[FILE_PREFIX length]];
                     orgPath = [RNFetchBlobFS getPathOfAsset:orgPath];
                     if([orgPath hasPrefix:AL_PREFIX])
                     {
@@ -115,7 +115,7 @@
                 // otherwise convert it as BASE64 data string
                 else {
                     
-                    NSString * cType = [[self class]getHeaderIgnoreCases:@"content-type" fromHeaders:mheaders];
+                    __block NSString * cType = [[self class]getHeaderIgnoreCases:@"content-type" fromHeaders:mheaders];
                     // when content-type is application/octet* decode body string using BASE64 decoder
                     if([[cType lowercaseString] hasPrefix:@"application/octet"] || [[cType lowercaseString] containsString:@";base64"])
                     {

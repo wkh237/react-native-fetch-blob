@@ -109,11 +109,11 @@ NSOperationQueue *taskQueue;
 }
 
 // send HTTP request
-- (void) sendRequest:(NSDictionary  * _Nullable )options
+- (void) sendRequest:(__weak NSDictionary  * _Nullable )options
        contentLength:(long) contentLength
               bridge:(RCTBridge * _Nullable)bridgeRef
               taskId:(NSString * _Nullable)taskId
-         withRequest:(NSURLRequest * _Nullable)req
+         withRequest:(__weak NSURLRequest * _Nullable)req
             callback:(_Nullable RCTResponseSenderBlock) callback
 {
     self.taskId = taskId;
@@ -127,19 +127,19 @@ NSOperationQueue *taskQueue;
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
     NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
 	NSString * key = [self.options valueForKey:CONFIG_KEY];
-    NSURLSession * session;
+    __block NSURLSession * session;
 
     bodyLength = contentLength;
 
     // the session trust any SSL certification
 
+    
     NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
     if([options valueForKey:@"timeout"] != nil)
     {
         defaultConfigObject.timeoutIntervalForRequest = [[options valueForKey:@"timeout"] floatValue];
     }
     session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:taskQueue];
-    
     if(path != nil || [self.options valueForKey:CONFIG_USE_TEMP]!= nil)
     {
         respFile = YES;
@@ -229,10 +229,13 @@ NSOperationQueue *taskQueue;
                      @"timeout" : @NO,
                      @"status": [NSString stringWithFormat:@"%d", statusCode ]
                      };
+        
         [self.bridge.eventDispatcher
          sendDeviceEventWithName: EVENT_STATE_CHANGE
          body:respInfo
-         ];
+        ];
+        headers = nil;
+        respInfo = nil;
     }
 
     if(respFile == YES)
@@ -259,7 +262,8 @@ NSOperationQueue *taskQueue;
 // download progress handler
 - (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data
 {
-    receivedBytes += [data length];
+    NSNumber * received = [NSNumber numberWithLong:[data length]];
+    receivedBytes += [received longValue];
     if(respFile == NO)
     {
         [respData appendData:data];
@@ -280,10 +284,18 @@ NSOperationQueue *taskQueue;
                 }
          ];
     }
+    received = nil;
 
 }
 
-- (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
+- (void) URLSession:(NSURLSession *)session didBecomeInvalidWithError:(nullable NSError *)error
+{
+    if([session isEqual:session])
+        session = nil;
+}
+
+- (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
+{
     
     self.error = error;
     [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
@@ -313,6 +325,9 @@ NSOperationQueue *taskQueue;
     [taskTable removeObjectForKey:taskId];
     [uploadProgressTable removeObjectForKey:taskId];
     [progressTable removeObjectForKey:taskId];
+    respData = nil;
+    receivedBytes = 0;
+    [session finishTasksAndInvalidate];
 }
 
 // upload progress handler

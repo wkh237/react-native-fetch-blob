@@ -304,9 +304,9 @@ NSMutableDictionary *fileStreams = nil;
     @try
     {
         [[self class] getPathFromUri:path completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
-            NSData * fileContent;
+            __block NSData * fileContent;
             NSError * err;
-            Byte * buffer;
+            __block Byte * buffer;
             if(asset != nil)
             {
                 buffer = malloc(asset.size);
@@ -672,10 +672,11 @@ NSMutableDictionary *fileStreams = nil;
     if([uri hasPrefix:AL_PREFIX])
     {
         NSURL *asseturl = [NSURL URLWithString:uri];
-        ALAssetsLibrary* assetslibrary = [[ALAssetsLibrary alloc] init];
+        __block ALAssetsLibrary* assetslibrary = [[ALAssetsLibrary alloc] init];
         [assetslibrary assetForURL:asseturl
                        resultBlock:^(ALAsset *asset) {
-                           onComplete(nil, [asset defaultRepresentation]);
+                           __block ALAssetRepresentation * present = [asset defaultRepresentation];
+                           onComplete(nil, present);
                        }
                       failureBlock:^(NSError *error) {
                           onComplete(nil, nil);
