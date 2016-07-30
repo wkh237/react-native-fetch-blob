@@ -1,17 +1,18 @@
 # react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]() 
 
-A project committed to make file acess and transfer easier and effiecient for React Native developers. 
+A project committed to make file acess and data transfer easier, effiecient for React Native developers. 
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
 - File API supports normal files, Asset files, and CameraRoll files
-- Native-to-native file manipulation, reduce JS bridging performance loss
+- Native-to-native file manipulation API, reduce JS bridging performance loss
 - Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN
 
 ## TOC
 * [About](#user-content-about)
 * [Installation](#user-content-installation)
 * [Recipes](#user-content-recipes)
+* [HTTP Data Transfer]
  * [Regular Request](#user-content-regular-request)
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
@@ -19,11 +20,12 @@ A project committed to make file acess and transfer easier and effiecient for Re
  * [Upload/Download progress](#user-content-uploaddownload-progress)
  * [Cancel HTTP request](#user-content-cancel-request)
  * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
+ * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
+* [File Access]
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-cache-file-management)
- * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
- * [Web API Polyfills](#user-content-web-api-polyfills)
+* [Web API Polyfills](#user-content-web-api-polyfills)
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
 * [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting)
 * [Development](#user-content-development)
