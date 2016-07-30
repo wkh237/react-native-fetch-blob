@@ -341,13 +341,13 @@ NSMutableDictionary *fileStreams = nil;
                     resolve([fileContent base64EncodedStringWithOptions:0]);
             }
             else if ([[encoding lowercaseString] isEqualToString:@"ascii"]) {
-//                NSMutableArray * resultArray = [NSMutableArray array];
-//                char * bytes = [fileContent bytes];
-//                for(int i=0;i<[fileContent length];i++) {
-//                    [resultArray addObject:[NSNumber numberWithChar:bytes[i]]];
-//                }
+                NSMutableArray * resultArray = [NSMutableArray array];
+                char * bytes = [fileContent bytes];
+                for(int i=0;i<[fileContent length];i++) {
+                    [resultArray addObject:[NSNumber numberWithChar:bytes[i]]];
+                }
                 if(resolve != nil)
-                    resolve([[NSString alloc] initWithData:fileContent encoding:NSASCIIStringEncoding]);
+                    resolve(@[resultArray]);
             }
         }];
     }
