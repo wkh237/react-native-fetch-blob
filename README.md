@@ -6,6 +6,7 @@ A project committed to make file acess and data transfer easier, effiecient for 
 - Transfer data directly from/to storage without BASE64 bridging
 - File API supports normal files, Asset files, and CameraRoll files
 - Native-to-native file manipulation API, reduce JS bridging performance loss
+- File stream support for dealing with large file
 - Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN
 
 ## TOC
