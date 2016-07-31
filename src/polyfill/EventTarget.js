@@ -6,6 +6,8 @@ import Log from '../utils/log.js'
 
 const log = new Log('EventTarget')
 
+log.disable()
+
 export default class EventTarget {
 
   listeners : any;
