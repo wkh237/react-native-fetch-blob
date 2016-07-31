@@ -34,9 +34,9 @@ A project committed to make file acess and data transfer easier, effiecient for 
 
 ## About
 
-This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854), because React Native does not support `Blob` object and it will cause some problem when sending and receiving binary data. There's aleady [a PR ](https://github.com/facebook/react-native/pull/8324) merged into RN master branch which will probably solving the issue in the near future.
+This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854), because React Native lack of `Blob` implementation and it will cause some problem when transfering binary data. Now, this project is committed to make file access and transfer more easier, effiecient for React Native developers. We've implemented highly customizable filesystem and network module which plays well together. For example, upload and download data directly from/to storage which is much more efficient in some cases(especially for large ones). The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
 
-Now, this project is committed to make file acess and transfer more easier and more effiecient for React Native developers. We've implemented lot of file access function which plays well with our network module. For example, it can upload and download data directly into/from file system, which is much more performant (especially for large ones) than converting data to BASE64 passing them around through React JS Bridge, also, file stream support so that you can read large file not causing OOM error.
+In `0.8.0` we introduced experimential Web API polyfills that make it possible to use browser-based libraries in React Native, for example, [FireBase JS SDK](https://github.com/wkh237/rn-firebase-storage-upload-sample)
 
 ## Installation
 
@@ -656,7 +656,7 @@ After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/reac
 
 **Reduce RCT Bridge Overhead and BASE64 Time**
 
-React Native connects JS and Native context by passing JSON through RCT bridge, therefore there will an overhead to convert data before they sent. When data is large, this will be quite a performance impact to your app. When upload and download large data it's better to use file storage instead of BASE64 encoding. The following chart shows how much faster when loading a data from storage than BASE64 encoded string on iphone 6.
+React Native connects JS and Native context by passing JSON through React bridge, therefore there will be an overhead to convert data before they sent. When data is large, this will be quite a performance impact to your app, it's recommended to use file storage instead of BASE64 if possible. The following chart shows how much faster when loading data from storage than BASE64 encoded string on iphone 6.
 
 <img src="img/performance_1.png" style="width : 100%"/>
 
@@ -665,6 +665,12 @@ React Native connects JS and Native context by passing JSON through RCT bridge, 
 Due to the [lack of typed array implementation in JavascriptCore, and limitation of React Native structure](https://github.com/facebook/react-native/issues/1424), to convert data to JS byte array spends lot of time. Use it only when needed, the following chart shows how much time it takes when reading a file with different encoding.
 
 <img src="img/performance_encoding.png" style="width : 100%"/>
+
+**Concate and Replacing Files**
+
+If you're going to concatenate files, you don't have to read the data to JS context anymore ! In `0.8.0` we introduced new encoding `uri` for writeFile and appendFile API. Which make it possible to done the whole process in native. 
+
+<img src="img/performance_f2f.png" style="width : 100%"/>
 
 ## Changes
 
