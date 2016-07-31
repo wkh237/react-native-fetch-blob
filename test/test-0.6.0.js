@@ -45,6 +45,7 @@ describe('writeFile and readFile test', (report, done) => {
     })
     .then(() => fs.readFile(path, 'ascii'))
     .then((actual) => {
+      console.log(getASCIIArray(data), actual)
       report(<Assert key="ascii content should correct"
         expect={getASCIIArray(data)}
         comparer={Comparer.equalToArray}
