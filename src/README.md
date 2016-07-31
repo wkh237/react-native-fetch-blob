@@ -1,32 +1,44 @@
-# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]() ![](https://img.shields.io/badge/inpPogress-0.8.0-yellow.svg?style=flat-square)
+# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]()
 
-A project committed to make file acess and transfer easier and effiecient for React Native developers.
+A project committed to make file acess and data transfer easier, effiecient for React Native developers.
 
-# [Please visit out Github page for latest document](https://github.com/wkh237/react-native-fetch-blob)
+# [Visit our Github for latest document](https://github.com/wkh237/react-native-fetch-blob)
+
+## Features
+- Transfer data directly from/to storage without BASE64 bridging
+- File API supports normal files, Asset files, and CameraRoll files
+- Native-to-native file manipulation API, reduce JS bridging performance loss
+- File stream support for dealing with large file
+- Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN
 
 ## TOC
 * [About](#user-content-about)
 * [Installation](#user-content-installation)
 * [Recipes](#user-content-recipes)
+* [HTTP Data Transfer](#user-content-http-data-transfer)
+ * [Regular Request](#user-content-regular-request)
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
  * [Upload/Download progress](#user-content-uploaddownload-progress)
  * [Cancel HTTP request](#user-content-cancel-request)
  * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
+ * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
+* [File System](#user-content-file-system)
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-cache-file-management)
- * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
+* [Web API Polyfills](#user-content-web-api-polyfills)
+* [Performance Tips](#user-content-performance-tips)
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
 * [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting)
 * [Development](#user-content-development)
 
 ## About
 
-This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854), because React Native does not support `Blob` object and it will cause some problem when sending and receiving binary data. There's aleady [a PR ](https://github.com/facebook/react-native/pull/8324) merged into RN master branch which will probably solving the issue in the near future.
+This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854), because React Native lack of `Blob` implementation and it will cause some problem when transfering binary data. Now, this project is committed to make file access and transfer more easier, effiecient for React Native developers. We've implemented highly customizable filesystem and network module which plays well together. For example, upload and download data directly from/to storage which is much more efficient in some cases(especially for large ones). The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
 
-Now, this project is committed to make file acess and transfer more easier and more effiecient for React Native developers. We've implemented lot of file access function which plays well with our network module. For example, it can upload and download data directly into/from file system, which is much more performant (especially for large ones) than converting data to BASE64 passing them around through React JS Bridge, also, file stream support so that you can read large file not causing OOM error.
+In `0.8.0` we introduced experimential Web API polyfills that make it possible to use browser-based libraries in React Native, for example, [FireBase JS SDK](https://github.com/wkh237/rn-firebase-storage-upload-sample)
 
 ## Installation
 
@@ -41,17 +53,6 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 ```sh
 rnpm link
 ```
-
-### version 0.7.0+ does not work with react-native 0.27 (Android)
-
-On 0.7.5, we have fixed Android OkHttp dependency issue on pre 0.28 projects excepted 0.27, 0.29.0, and 0.29.1. For 0.29.0 and 0.29.1 it's because `rnpm link` is broken in these versions, you may need to manually link Android package. It is recommended to upgrade you project if possible
-
-```
-$ react-native upgrade
-```
-
-After the project upgraded, run `rnpm link` again.
-
 
 ### Manually link the package (Android)
 
@@ -135,7 +136,27 @@ If you're using ES5 require statement to load the module, please add `default`. 
 var RNFetchBlob = require('react-native-fetch-blob').default
 ```
 
+### HTTP Data Transfer
+
+---
+
+#### Regular Request
+
+After `0.8.0` react-native-fetch-blob automatically decide how to send the body by checking its type and `Content-Type` in header. The rule is described in the following diagram
+
+<img src="img/RNFB-flow (1).png" style="width : 90%" />
+
+To sum up :
+
+- To send a form data, the `Content-Type` header won't take effect if the body is an `Array` because we will set proper content type for you.
+- To send binary data, you have two choices, use BASE64 encoded string or a file path which points to a file contains the body. The `Content-Type` header does not matters.
+ - The body is a BASE64 encoded string, the `Content-Type` header filed must containing substring`;BASE64` or `application/octet`  
+ - The body is a path point to a file, it must be a string starts with `RNFetchBlob-file://`, which can simply done by `RNFetchBlob.wrap(PATH_TO_THE_FILE)`
+- To send the body as-is, set a `Content-Type` header not containing `;BASE64` or `application/octet`.
+
 #### Download example : Fetch files that needs authorization token
+
+Most simple way is download to memory and stored as BASE64 encoded string, this is handy when the response data is small.
 
 ```js
 
@@ -161,7 +182,7 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
 
 #### Download to storage directly
 
-The simplest way is give a `fileCache` option to config, and set it to `true`. This will let the incoming response data stored in a temporary path **without** any file extension.
+If the response data is large, that would be a bad idea to convert it into BASE64 string. The better solution is store the response data directly into file system. The simplest way is give a `fileCache` option to config, and set it to `true`. This will make incoming response data stored in a temporary path **without** any file extension.
 
 **These files won't be removed automatically, please refer to [Cache File Management](#user-content-cache-file-management)**
 
@@ -206,7 +227,7 @@ RNFetchBlob
 
 **Use Specific File Path**
 
-If you prefer a specific path rather than random generated one, you can use `path` option. We've added a constant [dirs](#user-content-dirs) in v0.5.0 that contains several common used directories.
+If you prefer a specific path rather than randomly generated one, you can use `path` option. We've added a constant [dirs](#user-content-dirs) in v0.5.0 that contains several common used directories.
 
 ```js
 let dirs = RNFetchBlob.fs.dirs
@@ -294,6 +315,10 @@ Elements have property `filename` will be transformed into binary format, otherw
   }, [
     // element with property `filename` will be transformed into `file` in form data
     { name : 'avatar', filename : 'avatar.png', data: binaryDataInBase64},
+    // custom content type
+    { name : 'avatar-png', filename : 'avatar-png.png', type:'image/png', data: binaryDataInBase64},
+    // part file from storage
+    { name : 'avatar-foo', filename : 'avatar-foo.png', type:'image/foo', data: RNFetchBlob.wrap(path_to_a_file)},
     // elements without property `filename` will be sent as plain text
     { name : 'name', data : 'user'},
     { name : 'info', data : JSON.stringify({
@@ -470,6 +495,8 @@ RNFetchBlob.config({
 .then(...)
 ```
 
+### File System
+
 #### File Access
 
 File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However we realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need these APIs for there cases.
@@ -618,10 +645,40 @@ RNFetchBlob.config({
 })
 ```
 
+### Web API Polyfills
+
+After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/react-native-fetch-blob/wiki/Web-API-Polyfills-(work-in-progress)) that makes some browser-based library available in RN.
+
+- Blob
+- XMLHttpRequest (Use our implementation if you're going to use it with Blob)
+
+### Performance Tips
+
+---
+
+**Reduce RCT Bridge Overhead and BASE64 Time**
+
+React Native connects JS and Native context by passing JSON through React bridge, therefore there will be an overhead to convert data before they sent. When data is large, this will be quite a performance impact to your app, it's recommended to use file storage instead of BASE64 if possible. The following chart shows how much faster when loading data from storage than BASE64 encoded string on iphone 6.
+
+<img src="img/performance_1.png" style="width : 100%"/>
+
+**ASCII Encoding has /terrible Performance**
+
+Due to the [lack of typed array implementation in JavascriptCore, and limitation of React Native structure](https://github.com/facebook/react-native/issues/1424), to convert data to JS byte array spends lot of time. Use it only when needed, the following chart shows how much time it takes when reading a file with different encoding.
+
+<img src="img/performance_encoding.png" style="width : 100%"/>
+
+**Concate and Replacing Files**
+
+If you're going to concatenate files, you don't have to read the data to JS context anymore ! In `0.8.0` we introduced new encoding `uri` for writeFile and appendFile API. Which make it possible to done the whole process in native.
+
+<img src="img/performance_f2f.png" style="width : 100%"/>
+
 ## Changes
 
 | Version | |
 |---|---|
+| 0.8.0 | Added Web API polyfills, support regular request, added timeout option. |
 | 0.7.5 | Fix installation script that make it compatible to react-native < 0.28 |
 | 0.7.4 | Fix app crash problem in version > 0.27 |
 | 0.7.3 | Fix OkHttp dependency issue in version < 0.29 |
