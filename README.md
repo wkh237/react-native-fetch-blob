@@ -145,11 +145,11 @@ After `0.8.0` react-native-fetch-blob automatically decide how to send the body 
 
 To sum up :
 
-- If you're going to send a form data, the `Content-Type` header won't take effect if the body is an `Array` because we will set proper content type for you.
-- If you're going to send binary data, you have two choices, use BASE64 encoded string or a file path which points to a file contains the body. The `Content-Type` header does not matters.
- - If the body is a BASE64 encoded string, the `Content-Type` header filed must containing substring`;BASE64` or `application/octet`  
- - If the body is a path point to a file, it must be a string starts with `RNFetchBlob-file://`, which can simply done by `RNFetchBlob.wrap(PATH_TO_THE_FILE)`
-- If you're going to send the body as-is, set a `Content-Type` header not containing `;BASE64` or `application/octet`.
+- To send a form data, the `Content-Type` header won't take effect if the body is an `Array` because we will set proper content type for you.
+- To send binary data, you have two choices, use BASE64 encoded string or a file path which points to a file contains the body. The `Content-Type` header does not matters.
+ - The body is a BASE64 encoded string, the `Content-Type` header filed must containing substring`;BASE64` or `application/octet`  
+ - The body is a path point to a file, it must be a string starts with `RNFetchBlob-file://`, which can simply done by `RNFetchBlob.wrap(PATH_TO_THE_FILE)`
+- To send the body as-is, set a `Content-Type` header not containing `;BASE64` or `application/octet`. 
 
 #### Download example : Fetch files that needs authorization token
 
@@ -648,6 +648,14 @@ After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/reac
 
 - Blob
 - XMLHttpRequest (Use our implementation if you're going to use it with Blob)
+
+### Performance Tips
+
+React Native connects JS and Native context by passing JSON through RCT bridge, therefore there will an overhead to convert data before they sent. When data is large, this will be quite a performance impact to your app. When upload and download large data it's better to use file storage instead of BASE64 encoding. The following chart show how much faster when loading a data from storage than BASE64 encoded string on iphone 6.
+
+<img src="img/performance_1.png" style="width : 100%"/>
+
+TODO
 
 
 ## Changes
