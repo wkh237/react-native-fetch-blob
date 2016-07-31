@@ -150,7 +150,7 @@ After `0.8.0` react-native-fetch-blob automatically decide how to send the body 
 
 The rules are shown in the following diagram
 
-<img src="img/RNFB-flow.png" style="width : 90% />
+<img src="img/RNFB-flow (1).png" style="width : 90% />
 
 
 #### Download example : Fetch files that needs authorization token
