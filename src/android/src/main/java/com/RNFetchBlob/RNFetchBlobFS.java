@@ -20,6 +20,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.File;

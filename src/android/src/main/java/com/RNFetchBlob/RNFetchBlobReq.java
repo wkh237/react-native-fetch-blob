@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
+import okhttp3.ConnectionPool;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
@@ -67,6 +68,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     public static HashMap<String, Call> taskTable = new HashMap<>();
     static HashMap<String, Boolean> progressReport = new HashMap<>();
     static HashMap<String, Boolean> uploadProgressReport = new HashMap<>();
+    static ConnectionPool pool = new ConnectionPool(5, 30000, TimeUnit.MILLISECONDS);
 
     MediaType contentType = RNFetchBlobConst.MIME_OCTET;
     ReactApplicationContext ctx;
@@ -303,10 +305,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             });
 
             if(options.timeout > 0) {
-                clientBuilder.connectTimeout(options.timeout, TimeUnit.SECONDS);
-                clientBuilder.readTimeout(options.timeout, TimeUnit.SECONDS);
+                clientBuilder.connectTimeout(options.timeout, TimeUnit.MILLISECONDS);
+                clientBuilder.readTimeout(options.timeout, TimeUnit.MILLISECONDS);
             }
-
+            clientBuilder.connectionPool(pool);
             OkHttpClient client = clientBuilder.build();
             Call call =  client.newCall(req);
             taskTable.put(taskId, call);

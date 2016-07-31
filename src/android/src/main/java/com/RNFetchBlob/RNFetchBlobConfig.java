@@ -17,7 +17,7 @@ public class RNFetchBlobConfig {
     public String key;
     public String mime;
     public Boolean auto;
-    public long timeout = -1;
+    public long timeout = 30000;
 
     RNFetchBlobConfig(ReadableMap options) {
         if(options == null)

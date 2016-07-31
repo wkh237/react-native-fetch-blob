@@ -137,7 +137,7 @@ NSOperationQueue *taskQueue;
     NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
     if([options valueForKey:@"timeout"] != nil)
     {
-        defaultConfigObject.timeoutIntervalForRequest = [[options valueForKey:@"timeout"] floatValue];
+        defaultConfigObject.timeoutIntervalForRequest = [[options valueForKey:@"timeout"] floatValue]/1000;
     }
     session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:taskQueue];
     if(path != nil || [self.options valueForKey:CONFIG_USE_TEMP]!= nil)

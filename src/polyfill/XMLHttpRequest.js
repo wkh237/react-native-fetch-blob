@@ -339,8 +339,8 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   set timeout(val) {
+    this._timeout = val*1000
     log.verbose('set timeout', this._timeout)
-    this._timeout = val
   }
 
   get timeout() {
