@@ -26,8 +26,8 @@ A project committed to make file acess and data transfer easier, effiecient for 
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-cache-file-management)
-* [Performance Tips](#user-content-performance-tips)
 * [Web API Polyfills](#user-content-web-api-polyfills)
+* [Performance Tips](#user-content-performance-tips)
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
 * [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting)
 * [Development](#user-content-development)
@@ -652,12 +652,19 @@ After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/reac
 
 ### Performance Tips
 
-React Native connects JS and Native context by passing JSON through RCT bridge, therefore there will an overhead to convert data before they sent. When data is large, this will be quite a performance impact to your app. When upload and download large data it's better to use file storage instead of BASE64 encoding. The following chart show how much faster when loading a data from storage than BASE64 encoded string on iphone 6.
+---
+
+**Reduce RCT Bridge Overhead and BASE64 Time**
+
+React Native connects JS and Native context by passing JSON through RCT bridge, therefore there will an overhead to convert data before they sent. When data is large, this will be quite a performance impact to your app. When upload and download large data it's better to use file storage instead of BASE64 encoding. The following chart shows how much faster when loading a data from storage than BASE64 encoded string on iphone 6.
 
 <img src="img/performance_1.png" style="width : 100%"/>
 
-TODO
+**ASCII Encoding has /terrible Performance**
 
+Due to the [lack of typed array implementation in JavascriptCore, and limitation of React Native structure](https://github.com/facebook/react-native/issues/1424), to convert data to JS byte array spends lot of time. Use it only when needed, the following chart shows how much time it takes when reading a file with different encoding.
+
+<img src="img/performance_encode.png" style="width : 100%"/>
 
 ## Changes
 
