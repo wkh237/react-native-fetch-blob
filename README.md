@@ -1,6 +1,6 @@
 # react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]() 
 
-A project committed to make file acess and data transfer easier, effiecient for React Native developers. 
+A project committed to make file acess and data transfer easier, effiecient for React Native developers.
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
@@ -150,7 +150,7 @@ To sum up :
 - To send binary data, you have two choices, use BASE64 encoded string or a file path which points to a file contains the body. The `Content-Type` header does not matters.
  - The body is a BASE64 encoded string, the `Content-Type` header filed must containing substring`;BASE64` or `application/octet`  
  - The body is a path point to a file, it must be a string starts with `RNFetchBlob-file://`, which can simply done by `RNFetchBlob.wrap(PATH_TO_THE_FILE)`
-- To send the body as-is, set a `Content-Type` header not containing `;BASE64` or `application/octet`. 
+- To send the body as-is, set a `Content-Type` header not containing `;BASE64` or `application/octet`.
 
 #### Download example : Fetch files that needs authorization token
 
@@ -645,7 +645,7 @@ RNFetchBlob.config({
 
 ### Web API Polyfills
 
-After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/react-native-fetch-blob/wiki/Web-API-Polyfills-(work-in-progress)) that makes some browser-based library available in RN. 
+After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/react-native-fetch-blob/wiki/Web-API-Polyfills-(work-in-progress)) that makes some browser-based library available in RN.
 
 - Blob
 - XMLHttpRequest (Use our implementation if you're going to use it with Blob)
@@ -668,7 +668,7 @@ Due to the [lack of typed array implementation in JavascriptCore, and limitation
 
 **Concate and Replacing Files**
 
-If you're going to concatenate files, you don't have to read the data to JS context anymore ! In `0.8.0` we introduced new encoding `uri` for writeFile and appendFile API. Which make it possible to done the whole process in native. 
+If you're going to concatenate files, you don't have to read the data to JS context anymore ! In `0.8.0` we introduced new encoding `uri` for writeFile and appendFile API. Which make it possible to done the whole process in native.
 
 <img src="img/performance_f2f.png" style="width : 100%"/>
 
