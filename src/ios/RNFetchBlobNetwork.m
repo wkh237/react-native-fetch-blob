@@ -169,7 +169,7 @@ NSOperationQueue *taskQueue;
         respFile = NO;
     }
     NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
-    [taskTable setValue:@{ @"task": task, KEY_REPORT_PROGRESS : @NO, KEY_REPORT_UPLOAD_PROGRESS : @NO} forKey:taskId];
+    [taskTable setObject:task forKey:taskId];
     [task resume];
 
     // network status indicator
@@ -347,7 +347,7 @@ NSOperationQueue *taskQueue;
 
 + (void) cancelRequest:(NSString *)taskId
 {
-    NSURLSessionDataTask * task = (NSURLSessionDataTask *)[[taskTable objectForKey:taskId] objectForKey:@"task"];
+    NSURLSessionDataTask * task = [taskTable objectForKey:taskId];
     if(task != nil && task.state == NSURLSessionTaskStateRunning)
         [task cancel];
 }
