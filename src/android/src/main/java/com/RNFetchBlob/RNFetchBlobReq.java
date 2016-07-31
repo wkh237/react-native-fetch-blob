@@ -207,7 +207,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             }
 
             if(method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put")) {
-                String cType = getHeaderIgnoreCases(mheaders, "content-type").toLowerCase();
+                String cType = getHeaderIgnoreCases(mheaders, "Content-Type").toLowerCase();
 
                 if(cType == null) {
                     builder.header("Content-Type", "application/octet-stream");
@@ -217,7 +217,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     if(rawRequestBody.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
                         requestType = RequestType.SingleFile;
                     }
-                    else if (cType.contains(";base64") || cType.startsWith("application/octet")) {
+                    else if (cType.toLowerCase().contains(";base64") || cType.toLowerCase().startsWith("application/octet")) {
                         requestType = RequestType.SingleFile;
                     } else {
                         requestType = RequestType.AsIs;
