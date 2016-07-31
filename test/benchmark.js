@@ -31,7 +31,7 @@ false && describe('upload BASE64 v.s. Storage', (report, done) => {
 
   RNFetchBlob
     .config({ path : storageFile })
-    .fetch('get', target)
+    .fetch('GET', target)
     .then((res) => res.readFile('base64'))
     .then((data) => {
       b64data = data
@@ -170,8 +170,8 @@ false && describe('write file BASE64 v.s. URI', (report, done) => {
 
 describe('read file benchmark', (report, done) => {
 
-  let iteration = 200
-  let target = `${TEST_SERVER_URL}/public/6mb-dummy`
+  let iteration = 50
+  let target = `${TEST_SERVER_URL}/public/1mb-dummy`
   let source = dirs.DocumentDir + '/benchmark3-source'
   let res = {}
   RNFetchBlob.fetch('GET', target)
