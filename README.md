@@ -13,7 +13,7 @@ A project committed to make file acess and data transfer easier, effiecient for 
 * [About](#user-content-about)
 * [Installation](#user-content-installation)
 * [Recipes](#user-content-recipes)
-* HTTP Data Transfer
+* [HTTP Data Transfer](#user-content-http-data-transfer)
  * [Regular Request](#user-content-regular-request)
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
@@ -22,7 +22,7 @@ A project committed to make file acess and data transfer easier, effiecient for 
  * [Cancel HTTP request](#user-content-cancel-request)
  * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
  * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
-* File System
+* [File System](#user-content-file-system)
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-cache-file-management)
@@ -133,14 +133,23 @@ If you're using ES5 require statement to load the module, please add `default`. 
 var RNFetchBlob = require('react-native-fetch-blob').default
 ```
 
+### HTTP Data Transfer
+
+---
+
 #### Regular Request
 
-After `0.8.0` react-native-fetch-blob automatically decide how to send the body by checking `Content-Type` in header. 
-
-The rules are shown in the following diagram
+After `0.8.0` react-native-fetch-blob automatically decide how to send the body by checking its type and `Content-Type` in header. The rule is described in the following diagram
 
 <img src="img/RNFB-flow (1).png" style="width : 90%" />
 
+To sum up :
+
+- If you're going to send a form data, the `Content-Type` header won't take effect if the body is an `Array` because we will set proper content type for you.
+- If you're going to send binary data, you have two choices, use BASE64 encoded string or a file path which points to a file contains the body. The `Content-Type` header does not matters.
+ - If the body is a BASE64 encoded string, the `Content-Type` header filed must containing substring`;BASE64` or `application/octet`  
+ - If the body is a path point to a file, it must be a string starts with `RNFetchBlob-file://`, which can simply done by `RNFetchBlob.wrap(PATH_TO_THE_FILE)`
+- If you're going to send the body as-is, set a `Content-Type` header not containing `;BASE64` or `application/octet`.
 
 #### Download example : Fetch files that needs authorization token
 
@@ -483,6 +492,8 @@ RNFetchBlob.config({
 .then(...)
 ```
 
+### File System
+
 #### File Access
 
 File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However we realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need these APIs for there cases.
@@ -631,7 +642,7 @@ RNFetchBlob.config({
 })
 ```
 
-#### Web API Polyfills
+### Web API Polyfills
 
 After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/react-native-fetch-blob/wiki/Web-API-Polyfills-(work-in-progress)) that makes some browser-based library available in RN. 
 
