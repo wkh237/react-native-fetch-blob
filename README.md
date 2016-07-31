@@ -26,6 +26,7 @@ A project committed to make file acess and data transfer easier, effiecient for 
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-cache-file-management)
+* [Performance Tips](#user-content-performance-tips)
 * [Web API Polyfills](#user-content-web-api-polyfills)
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
 * [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting)
