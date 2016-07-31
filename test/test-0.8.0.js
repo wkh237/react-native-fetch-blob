@@ -56,7 +56,7 @@ describe('fs URI encoding support', (report, done) => {
 })
 
 describe('request timeout working properly', (report, done) => {
-  RNFetchBlob.config({ timeout : 1 })
+  RNFetchBlob.config({ timeout : 1000 })
   .fetch('GET', `${TEST_SERVER_URL}/timeout`)
   .then(() => {
     report(

@@ -100,10 +100,11 @@ false && describe('upload BASE64 v.s. Storage', (report, done) => {
 })
 
 
-false && describe('write file BASE64 v.s. URI', (report, done) => {
+describe('write file BASE64 v.s. URI', (report, done) => {
   let iteration = 200
-  let target = `${TEST_SERVER_URL}/public/6mb-dummy`
+  let target = `${TEST_SERVER_URL}/public/12k-dummy`
   let sourceURI = dirs.DocumentDir + '/benchmark2-source'
+  let writeTarget = dirs.DocumentDir +'/benchmark2-target'
   let sourceBASE64 = null
   let b64Res = 0
   let uriRes = 0
@@ -123,7 +124,8 @@ false && describe('write file BASE64 v.s. URI', (report, done) => {
             <Info key="benchmark progress" uid="report2">
               <Text style={{textAlign:'center'}}>BASE64 {count}/{iteration}</Text>
             </Info>)
-          return fs.writeFile(dirs.DocumentDir +'/benchmark2-target', sourceBASE64, 'base64')
+          return fs.readFile(sourceURI, 'base64')
+                   .then((data) => fs.writeFile(writeTarget, data))
         }
         else {
           b64Res = Date.now() - begin
@@ -144,7 +146,7 @@ false && describe('write file BASE64 v.s. URI', (report, done) => {
             <Info key="benchmark progress" uid="report2">
               <Text style={{textAlign:'center'}}>URI {count}/{iteration}</Text>
             </Info>)
-          return fs.writeFile(dirs.DocumentDir +'/benchmark2-target', sourceURI, 'uri')
+          return fs.writeFile(writeTarget, sourceURI, 'uri')
         }
         else {
           uriRes = Date.now() - begin
@@ -168,7 +170,7 @@ false && describe('write file BASE64 v.s. URI', (report, done) => {
 })
 
 
-describe('read file benchmark', (report, done) => {
+false && describe('read file benchmark', (report, done) => {
 
   let iteration = 50
   let target = `${TEST_SERVER_URL}/public/1mb-dummy`
