@@ -148,30 +148,10 @@ var RNFetchBlob = require('react-native-fetch-blob').default
 
 After `0.8.0` react-native-fetch-blob automatically decide how to send the body by checking `Content-Type` in header. 
 
-The rules are shown in the following sample
+The rules are shown in the following diagram
 
-```js
-import RNFetchblob from 'react-native-fetch-blob'
+<img src="img/RNFB-flow.png" style="width : 90% />
 
-// If body is an Array send as multipart form data
-RNFetchBlob.fetch('POST'),'http://upload.server.my' { /* whatever it is */  }, [{ name : 'field1', data : 'test' }])
-
-// If body is a string starts with prefix 'RNFetchBlob-file://' send request with input stream from the patg
-RNFetchBlob.fetch('POST'),'http://upload.server.my' { /* whatever it is */  }, 'RNFetchBlob-file://' + path)
-RNFetchBlob.fetch('POST'),'http://upload.server.my' { /* whatever it is */  }, RNFetchBlob.wrap(path))
-
-// If content-type contains `base64;` or `application/octet` the body will be decoded using BASE64 decoder 
-RNFetchBlob.fetch('POST','http://upload.server.my', { 'Content-Type' : 'anything;base64' }, BASE64_BODY)
-RNFetchBlob.fetch('POST','http://upload.server.my', { 'Content-Type' : 'application/octet-binary' }, BASE64_BODY)
-
-// Send the data as the string you given
-RNFetchBlob.fetch('POST', 'http://upload.server.my', { /*any content-type not matching above rules*/ 'Content-Type' : 'text/foo' }, data)
-RNFetchBlob.fetch('POST', 'http://upload.server.my', { 'text/plain' }, 'text in the body')
-RNFetchBlob.fetch('POST', 'http://upload.server.my', { 'application/json' }, JSON.stringify(some_data))
-
-```
-
-If no 'Content-Type' field in headers, it will use default content type `application/octet-stream` and convert given `body` to binary data using BASE64 decoder.
 
 #### Download example : Fetch files that needs authorization token
 
