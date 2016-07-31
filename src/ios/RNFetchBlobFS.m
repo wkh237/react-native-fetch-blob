@@ -347,7 +347,7 @@ NSMutableDictionary *fileStreams = nil;
                     [resultArray addObject:[NSNumber numberWithChar:bytes[i]]];
                 }
                 if(resolve != nil)
-                    resolve(@[resultArray]);
+                    resolve(resultArray);
             }
         }];
     }
