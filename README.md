@@ -664,7 +664,7 @@ React Native connects JS and Native context by passing JSON through RCT bridge, 
 
 Due to the [lack of typed array implementation in JavascriptCore, and limitation of React Native structure](https://github.com/facebook/react-native/issues/1424), to convert data to JS byte array spends lot of time. Use it only when needed, the following chart shows how much time it takes when reading a file with different encoding.
 
-<img src="img/performance_encode.png" style="width : 100%"/>
+<img src="img/performance_encoding.png" style="width : 100%"/>
 
 ## Changes
 
