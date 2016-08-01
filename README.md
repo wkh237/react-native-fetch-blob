@@ -654,7 +654,7 @@ After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/reac
 
 ---
 
-**Reduce RCT Bridge Overhead and BASE64 Time**
+**Reduce RCT Bridge and BASE64 Overheard **
 
 React Native connects JS and Native context by passing JSON through React bridge, therefore there will be an overhead to convert data before they sent. When data is large, this will be quite a performance impact to your app, it's recommended to use file storage instead of BASE64 if possible. The following chart shows how much faster when loading data from storage than BASE64 encoded string on iphone 6.
 
