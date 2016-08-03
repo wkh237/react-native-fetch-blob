@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 
 window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
-window.Blob = Blob
+window.Blob = RNFetchBlob.polyfill.Blob
 window.fetch = new RNFetchBlob.polyfill.Fetch({
   auto : true,
   binaryContentTypes : ['image/', 'video/', 'audio/']
@@ -45,4 +45,27 @@ describe('whatwg-fetch - GET should work correctly', (report, done) => {
     report(<Assert key="data should correct" expect={'你好!'} actual={data.data}/>)
     done()
   })
+})
+
+RNTest.config({
+  group : '0.8.2',
+  run : true,
+  expand : false,
+  timeout : 24000
+})('request should not retry after timed out', (report, done) => {
+
+  let count = 0
+  RNFetchBlob
+    .config({ timeout : 3000 })
+    .fetch('GET', `${TEST_SERVER_URL}/timeout`)
+    .then((res) => {
+      report(<Assert key="request should not success" expect={true} actual={false}/>)
+    })
+    .catch(() => {
+      count ++
+    })
+  setTimeout(() => {
+    report(<Assert key="request does not retry" expect={1} actual={count}/>)
+    done()
+  }, 12000)
 })
