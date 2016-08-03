@@ -309,6 +309,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 clientBuilder.readTimeout(options.timeout, TimeUnit.MILLISECONDS);
             }
             clientBuilder.connectionPool(pool);
+            clientBuilder.retryOnConnectionFailure(false);
             OkHttpClient client = clientBuilder.build();
             Call call =  client.newCall(req);
             taskTable.put(taskId, call);
