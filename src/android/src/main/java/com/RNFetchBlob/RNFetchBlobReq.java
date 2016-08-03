@@ -75,7 +75,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     public static HashMap<String, Call> taskTable = new HashMap<>();
     static HashMap<String, Boolean> progressReport = new HashMap<>();
     static HashMap<String, Boolean> uploadProgressReport = new HashMap<>();
-    static ConnectionPool pool = new ConnectionPool(5, 30000, TimeUnit.MILLISECONDS);
+    static ConnectionPool pool = new ConnectionPool();
 
     MediaType contentType = RNFetchBlobConst.MIME_OCTET;
     ReactApplicationContext ctx;
@@ -314,6 +314,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             if(options.timeout > 0) {
                 clientBuilder.connectTimeout(options.timeout, TimeUnit.MILLISECONDS);
                 clientBuilder.readTimeout(options.timeout, TimeUnit.MILLISECONDS);
+            }
+            else {
+                clientBuilder.connectTimeout(-1, TimeUnit.MILLISECONDS);
+                clientBuilder.readTimeout(-1, TimeUnit.MILLISECONDS);
             }
             clientBuilder.connectionPool(pool);
             clientBuilder.retryOnConnectionFailure(false);
