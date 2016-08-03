@@ -261,7 +261,7 @@ class FetchBlobResponse {
      * @return {object} Parsed javascript object.
      */
     this.json = ():any => {
-      return JSON.parse(base64.decode(this.data))
+      return JSON.parse(decodeURIComponent(base64.decode(this.data)))
     }
     /**
      * Return BASE64 string directly.

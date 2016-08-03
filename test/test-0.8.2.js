@@ -17,7 +17,7 @@ window.Blob = Blob
 window.fetch = new RNFetchBlob.polyfill.Fetch({
   auto : true,
   binaryContentTypes : ['image/', 'video/', 'audio/']
-}).provider.fetch
+}).build()
 
 const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
@@ -32,27 +32,17 @@ const dirs = RNFetchBlob.fs.dirs
 
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
-describe('unicode file access', (report, done) => {
-  let path = dirs.DocumentDir + '/chinese.tmp'
-  fs.writeFile(path, '你好!', 'utf8')
-    .then(() => fs.readFile(path, 'utf8'))
-    .then((data) => {
-      console.log(data)
-      done()
-    })
-})
-
 describe('whatwg-fetch - GET should work correctly', (report, done) => {
   console.log(fetch)
   fetch(`${TEST_SERVER_URL}/unicode`, {
     method : 'GET'
   })
   .then((res) => {
-    console.log('fetch resp',res)
-    return res.text()
+    return res.json()
   })
-  .then((blob) => {
-    console.log(blob)
+  .then((data) => {
+    console.log(data)
+    report(<Assert key="data should correct" expect={'你好!'} actual={data.data}/>)
     done()
   })
 })
