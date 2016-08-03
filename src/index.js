@@ -154,7 +154,7 @@ function fetch(...args:any):Promise {
       stateEvent.remove()
 
       if(err)
-        reject(new Error(err, info))
+        reject(new Error(err, respInfo))
       else {
         let rnfbEncode = 'base64'
         // response data is saved to storage
