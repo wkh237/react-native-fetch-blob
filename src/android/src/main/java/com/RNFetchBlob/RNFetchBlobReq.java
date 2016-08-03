@@ -30,6 +30,13 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -405,8 +412,24 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         callback.invoke(null, info, dest);
                     }
                     else {
+                        // we should check if the response data is a UTF8 string, because BASE64
+                        // encoding will somehow break the UTF8 string format. In order to encode
+                        // UTF8 string correctly, we should do URL encoding before BASE64.
+                        String utf8Str;
                         byte[] b = resp.body().bytes();
-                        callback.invoke(null, getResponseInfo(resp), android.util.Base64.encodeToString(b, Base64.NO_WRAP));
+                        CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
+                        try {
+                            encoder.encode(ByteBuffer.wrap(b).asCharBuffer());
+                            // if the data can be encoded to UTF8 append URL encode
+                            b = URLEncoder.encode(new String(b), "UTF-8").getBytes();
+                        }
+                        // This usually mean the data is binary data
+                        catch(CharacterCodingException e) {
+
+                        }
+                        finally {
+                            callback.invoke(null, getResponseInfo(resp), android.util.Base64.encodeToString(b, Base64.NO_WRAP));
+                        }
                     }
                 } catch (IOException e) {
                     callback.invoke("RNFetchBlob failed to encode response data to BASE64 string.", null);
