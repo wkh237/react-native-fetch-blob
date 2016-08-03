@@ -201,7 +201,21 @@ NSOperationQueue *taskQueue;
                                lowercaseString];
         if([headers valueForKey:@"Content-Type"] != nil)
         {
-            if([respType containsString:@"text/"])
+            NSArray * extraBlobCTypes = [options objectForKey:CONFIG_EXTRA_BLOB_CTYPE];
+            // If extra blob content type is not empty, check if response type matches
+            if( extraBlobCTypes !=  nil) {
+                for(NSString * substr in extraBlobCTypes)
+                {
+                    if([[respType lowercaseString] containsString:[substr lowercaseString]])
+                    {
+                        respType = @"blob";
+                        respFile = YES;
+                        destPath = [RNFetchBlobFS getTempPath:taskId withExtension:nil];
+                        break;
+                    }
+                }
+            }
+            else if([respType containsString:@"text/"])
             {
                 respType = @"text";
             }
@@ -315,11 +329,17 @@ NSOperationQueue *taskQueue;
     }
     // base64 response
     else {
-        NSString * res = [[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding];
+        NSString * utf8 = [[[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+        NSString * base64 = @"";
+        if(utf8 != nil)
+            base64 = [[utf8 dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+        else
+            base64 = [respData base64EncodedStringWithOptions:0];
         callback(@[error == nil ? [NSNull null] : [error localizedDescription],
                    respInfo == nil ? [NSNull null] : respInfo,
-                   [respData base64EncodedStringWithOptions:0]
-                   ]);
+                   base64
+                ]);
+        
     }
     
     [taskTable removeObjectForKey:taskId];

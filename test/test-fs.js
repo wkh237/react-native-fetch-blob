@@ -97,10 +97,11 @@ describe('create file API test', (report, done) => {
               d += chunk
             })
             stream.onEnd(() => {
-              report(<Assert
-                key="base64 content test"
-                expect={raw}
-                actual={d}/>)
+              report(
+                <Assert
+                  key="base64 content test"
+                  expect={raw}
+                  actual={d}/>)
                 done()
               })
         })

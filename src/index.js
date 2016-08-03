@@ -112,6 +112,7 @@ function fetch(...args:any):Promise {
   let taskId = getUUID()
   let options = this || {}
   let subscription, subscriptionUpload, stateEvent
+  let respInfo = {}
 
   let promise = new Promise((resolve, reject) => {
     let [method, url, headers, body] = [...args]
@@ -131,6 +132,7 @@ function fetch(...args:any):Promise {
     })
 
     stateEvent = emitter.addListener('RNFetchBlobState', (e) => {
+      respInfo = e
       if(e.taskId === taskId && promise.onStateChange) {
         promise.onStateChange(e)
       }
@@ -144,27 +146,26 @@ function fetch(...args:any):Promise {
 
     let req = RNFetchBlob[nativeMethodName]
 
-    req(options, taskId, method, url, headers || {}, body, (err, info, data) => {
+    req(options, taskId, method, url, headers || {}, body, (err, unsused, data) => {
 
       // task done, remove event listener
       subscription.remove()
       subscriptionUpload.remove()
       stateEvent.remove()
-      info = info ? info : {}
+
       if(err)
         reject(new Error(err, info))
       else {
         let rnfbEncode = 'base64'
         // response data is saved to storage
         if(options.path || options.fileCache || options.addAndroidDownloads
-          || options.key || options.auto && info.respType === 'blob') {
+          || options.key || options.auto && respInfo.respType === 'blob') {
           rnfbEncode = 'path'
           if(options.session)
             session(options.session).add(data)
         }
-        info = info || {}
-        info.rnfbEncode = rnfbEncode
-        resolve(new FetchBlobResponse(taskId, info, data))
+        respInfo.rnfbEncode = rnfbEncode
+        resolve(new FetchBlobResponse(taskId, respInfo, data))
       }
 
     })
@@ -240,7 +241,6 @@ class FetchBlobResponse {
           try {
             let b = new polyfill.Blob(this.data, 'application/octet-stream;BASE64')
             b.onCreated(() => {
-              console.log('####', b)
               resolve(b)
             })
           } catch(err) {
@@ -254,7 +254,7 @@ class FetchBlobResponse {
      * @return {string} Decoded base64 string.
      */
     this.text = ():string => {
-      return base64.decode(this.data)
+      return decodeURIComponent(base64.decode(this.data))
     }
     /**
      * Convert result to JSON object.

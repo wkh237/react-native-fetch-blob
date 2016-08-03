@@ -10,7 +10,7 @@ import ProgressEvent from './ProgressEvent.js'
 
 const log = new Log('XMLHttpRequest')
 
-log.disable()
+log.level(0)
 
 const UNSENT = 0
 const OPENED = 1
@@ -23,6 +23,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   _onreadystatechange : () => void;
 
   upload : XMLHttpRequestEventTarget = new XMLHttpRequestEventTarget();
+  static binaryContentTypes : Array<string> = [];
 
   // readonly
   _readyState : number = UNSENT;
@@ -79,6 +80,25 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     return DONE
   }
 
+  static addBinaryContentType(substr:string) {
+    for(let i in XMLHttpRequest.binaryContentTypes) {
+      if(new RegExp(substr,'i').test(XMLHttpRequest.binaryContentTypes[i])) {
+        return
+      }
+    }
+    XMLHttpRequest.binaryContentTypes.push(substr)
+
+  }
+
+  static removeBinaryContentType(val) {
+    for(let i in XMLHttpRequest.binaryContentTypes) {
+      if(new RegExp(substr,'i').test(XMLHttpRequest.binaryContentTypes[i])) {
+        XMLHttpRequest.binaryContentTypes.splice(i,1)
+        return
+      }
+    }
+  }
+
   constructor() {
     super()
     log.verbose('XMLHttpRequest constructor called')
@@ -127,9 +147,12 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
       body = body ? body.toString() : body
 
     this._task = RNFetchBlob
-                  .config({ auto: true, timeout : this._timeout })
+                  .config({
+                    auto: true,
+                    timeout : this._timeout,
+                    binaryContentTypes : XMLHttpRequest.binaryContentTypes
+                  })
                   .fetch(_method, _url, _headers, body)
-    this.dispatchEvent('load')
     this._task
         .stateChange(this._headerReceived.bind(this))
         .uploadProgress(this._uploadProgressEvent.bind(this))
@@ -281,8 +304,8 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
           this._response = this.responseText
         break;
       }
-      this.dispatchEvent('loadend')
       this.dispatchEvent('load')
+      this.dispatchEvent('loadend')
       this._dispatchReadStateChange(XMLHttpRequest.DONE)
     }
     this.clearEventListeners()
@@ -346,6 +369,11 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   get timeout() {
     log.verbose('get timeout', this._timeout)
     return this._timeout
+  }
+
+  set responseType(val) {
+    log.verbose('set response type', this._responseType)
+    this._responseType = val
   }
 
   get responseType() {

@@ -29,6 +29,7 @@ extern NSString *const CONFIG_FILE_EXT;
 extern NSString *const CONFIG_TRUSTY;
 extern NSString *const CONFIG_INDICATOR;
 extern NSString *const CONFIG_KEY;
+extern NSString *const CONFIG_EXTRA_BLOB_CTYPE;
 
 // fs events
 extern NSString *const FS_EVENT_DATA;

@@ -234,7 +234,7 @@ NSMutableDictionary *fileStreams = nil;
             return;
         }
         else {
-            content = [data dataUsingEncoding:NSISOLatin1StringEncoding];
+            content = [data dataUsingEncoding:NSUTF8StringEncoding];
         }
         if(append == YES) {
             [fileHandle seekToEndOfFile];
@@ -333,8 +333,13 @@ NSMutableDictionary *fileStreams = nil;
                 onComplete(fileContent);
             
             if([[encoding lowercaseString] isEqualToString:@"utf8"]) {
-                if(resolve != nil)
-                    resolve([[NSString alloc] initWithData:fileContent encoding:NSUTF8StringEncoding]);
+                if(resolve != nil) {
+                    NSString * utf8 = [[NSString alloc] initWithData:fileContent encoding:NSUTF8StringEncoding];
+                    if(utf8 == nil)
+                        resolve([[NSString alloc] initWithData:fileContent encoding:NSISOLatin1StringEncoding]);
+                    else
+                        resolve(utf8);
+                }
             }
             else if ([[encoding lowercaseString] isEqualToString:@"base64"]) {
                 if(resolve != nil)

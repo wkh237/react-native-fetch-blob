@@ -63,6 +63,10 @@ app.use(function(req, res, next) {
   next();
 })
 
+app.get('/unicode', (req, res) => {
+  res.send({ data:'你好!'})
+})
+
 app.all('/echo', (req, res) => {
   var body = ''
   req.on('data', (chunk) => {
