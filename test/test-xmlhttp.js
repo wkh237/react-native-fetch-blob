@@ -120,21 +120,23 @@ describe('HTTP error should not throw error event', (report, done) => {
     xhr.open(method, `${TEST_SERVER_URL}/xhr-code/${code}`)
     xhr.onreadystatechange = function() {
       count++
-      report(
-        <Assert
-          key={`#${count} response data of ${method} ${code} should be empty`}
-          expect=""
-          actual={xhr.response}/>,
-        <Assert
-          key={`#${count} status of ${method} ${code} should be ${code}`}
-          expect={code}
-          actual={xhr.status}/>
-      )
+      if(this.readyState == XMLHttpRequest.DONE) {
+        report(
+          <Assert
+            key={`#${count} response data of ${method} ${code} should be empty`}
+            expect=""
+            actual={xhr.response}/>,
+          <Assert
+            key={`#${count} status of ${method} ${code} should be ${code}`}
+            expect={code}
+            actual={xhr.status}/>
+        )
+      }
     }
     xhr.onerror = function() {
       report(
         <Assert
-          key={'HTTP error should not throw error event'}
+          key={`HTTP error ${code} should not throw error event`}
           expect={false}
           actual={true}/>)
     }
@@ -237,6 +239,7 @@ describe('upload progress event test', (report, done) => {
   }
   xhr.onreadystatechange = function() {
     if(this.readyState == XMLHttpRequest.DONE) {
+      console.log(xhr)
       report(
         <Assert key="reponse should correct"
           expect={time}
@@ -304,6 +307,6 @@ describe('upload progress event should not be triggered when body is empty', (re
       done()
     }
   }
-  xhr.open('GET', `${TEST_SERVER_URL}/pulbic/github.png`)
+  xhr.open('GET', `${TEST_SERVER_URL}/public/github.png`)
   xhr.send()
 })

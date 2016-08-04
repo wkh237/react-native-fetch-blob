@@ -32,8 +32,8 @@ const dirs = RNFetchBlob.fs.dirs
 
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
-describe('whatwg-fetch - GET should work correctly', (report, done) => {
-  console.log(fetch)
+describe('#73 unicode response BASE64 content test', (report, done) => {
+
   fetch(`${TEST_SERVER_URL}/unicode`, {
     method : 'GET'
   })
@@ -47,17 +47,33 @@ describe('whatwg-fetch - GET should work correctly', (report, done) => {
   })
 })
 
+describe('#73 unicode response content test', (report, done) => {
+  let expect = '中文!檔案\\u00測試 ABCDE 測試'
+  RNFetchBlob.config({ fileCache : true })
+    .fetch('GET', `${TEST_SERVER_URL}/public/utf8-dummy`, {
+      method : 'GET'
+    })
+    .then((res) => res.readFile('utf8'))
+    .then((data) => {
+      report(
+        <Assert key="data should correct"
+          expect={expect}
+          actual={data}/>)
+      done()
+    })
+})
+
 RNTest.config({
   group : '0.8.2',
   run : true,
-  expand : false,
+  expand : true,
   timeout : 24000
 })('request should not retry after timed out', (report, done) => {
 
   let count = 0
   RNFetchBlob
-    .config({ timeout : 3000 })
-    .fetch('GET', `${TEST_SERVER_URL}/timeout`)
+    // .config({timeout : 2000})
+    .fetch('GET', `${TEST_SERVER_URL}/timeout408`)
     .then((res) => {
       report(<Assert key="request should not success" expect={true} actual={false}/>)
     })

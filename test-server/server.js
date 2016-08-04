@@ -138,6 +138,7 @@ app.all('/xhr-code/:code', (req, res) => {
 
 app.all('/xhr-header', (req, res) => {
   console.log(req.headers)
+  res.header('Content-Type', 'application/json')
   res.send(req.headers)
 })
 
@@ -147,11 +148,13 @@ app.post('/upload', bodyParser.urlencoded({ extended : true }), (req, res) => {
   res.status(200).send(req.body)
 })
 
-app.all('/timeout', (req, res) => {
+app.all('/timeout408', (req, res) => {
   setTimeout(function() {
     res.status(408).send('request timed out.')
   }, 5000)
+})
 
+app.all('/timeout', (req, res) => {
 })
 
 function formUpload(req, res) {
