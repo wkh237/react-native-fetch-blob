@@ -137,9 +137,11 @@ NSOperationQueue *taskQueue;
 
     
     NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
-    if([options valueForKey:@"timeout"] != nil)
+    float timeout = [options valueForKey:@"timeout"] == nil ? -1 : [[options valueForKey:@"timeout"] floatValue];
+    NSLog(@"timeout = %f",timeout);
+    if(timeout > 0)
     {
-        defaultConfigObject.timeoutIntervalForRequest = [[options valueForKey:@"timeout"] floatValue]/1000;
+        defaultConfigObject.timeoutIntervalForRequest = timeout/1000;
     }
     defaultConfigObject.HTTPMaximumConnectionsPerHost = 10;
     session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:taskQueue];
@@ -196,21 +198,30 @@ NSOperationQueue *taskQueue;
  
     NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
     NSInteger statusCode = [(NSHTTPURLResponse *)response statusCode];
+    NSString * respType = @"";
     respStatus = statusCode;
     if ([response respondsToSelector:@selector(allHeaderFields)])
     {
         NSDictionary *headers = [httpResponse allHeaderFields];
-        NSString * respType = [[RNFetchBlobReqBuilder getHeaderIgnoreCases:@"content-type"
+        NSString * respCType = [[RNFetchBlobReqBuilder getHeaderIgnoreCases:@"Content-Type"
                                                                fromHeaders:headers]
                                lowercaseString];
-        if([headers valueForKey:@"Content-Type"] != nil)
+        if(respCType != nil)
         {
             NSArray * extraBlobCTypes = [options objectForKey:CONFIG_EXTRA_BLOB_CTYPE];
+            if([respCType containsString:@"text/"])
+            {
+                respType = @"text";
+            }
+            else if([respCType containsString:@"application/json"])
+            {
+                respType = @"json";
+            }
             // If extra blob content type is not empty, check if response type matches
-            if( extraBlobCTypes !=  nil) {
+            else if( extraBlobCTypes !=  nil) {
                 for(NSString * substr in extraBlobCTypes)
                 {
-                    if([[respType lowercaseString] containsString:[substr lowercaseString]])
+                    if([respCType containsString:[substr lowercaseString]])
                     {
                         respType = @"blob";
                         respFile = YES;
@@ -218,14 +229,6 @@ NSOperationQueue *taskQueue;
                         break;
                     }
                 }
-            }
-            else if([respType containsString:@"text/"])
-            {
-                respType = @"text";
-            }
-            else if([respType containsString:@"application/json"])
-            {
-                respType = @"json";
             }
             else
             {
@@ -238,7 +241,7 @@ NSOperationQueue *taskQueue;
             }
         }
         else
-            respType = @"";
+            respType = @"text";
         respInfo = @{
                      @"taskId": taskId,
                      @"state": @"2",
@@ -255,6 +258,8 @@ NSOperationQueue *taskQueue;
         headers = nil;
         respInfo = nil;
     }
+    else
+        NSLog(@"oops");
 
     if(respFile == YES)
     {
@@ -319,20 +324,20 @@ NSOperationQueue *taskQueue;
     self.error = error;
     NSString * errMsg = [NSNull null];
     NSString * respStr = [NSNull null];
-    NSString * respType = [respInfo valueForKey:@"respType"];
     
     [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-    if(error != nil)
-    {
-        errMsg = [error localizedDescription];
-    }
+    
     if(respInfo == nil)
     {
         respInfo = [NSNull null];
     }
     
+    if(error != nil)
+    {
+        errMsg = [error localizedDescription];
+    }
     // Fix #72 response with status code 200 ~ 299 considered as success
-    if(respStatus> 299 || respStatus < 200)
+    else if(respStatus> 299 || respStatus < 200)
     {
         errMsg = [NSString stringWithFormat:@"Request failed, status %d", respStatus];
     }

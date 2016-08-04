@@ -254,14 +254,31 @@ class FetchBlobResponse {
      * @return {string} Decoded base64 string.
      */
     this.text = ():string => {
-      return decodeURIComponent(base64.decode(this.data))
+      let res = this.data
+      try {
+        res = base64.decode(this.data)
+        res = decodeURIComponent(res)
+      } catch(err) {
+        console.warn(err)
+        res = ''
+      }
+      return res
     }
     /**
      * Convert result to JSON object.
      * @return {object} Parsed javascript object.
      */
     this.json = ():any => {
-      return JSON.parse(decodeURIComponent(base64.decode(this.data)))
+      let res = this.data
+      try {
+        res = base64.decode(this.data)
+        res = decodeURIComponent(res)
+        res = JSON.parse(res)
+      } catch(err) {
+        console.warn(err)
+        res = {}
+      }
+      return res
     }
     /**
      * Return BASE64 string directly.

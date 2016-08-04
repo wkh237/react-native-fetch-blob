@@ -23,7 +23,9 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   _onreadystatechange : () => void;
 
   upload : XMLHttpRequestEventTarget = new XMLHttpRequestEventTarget();
-  static binaryContentTypes : Array<string> = [];
+  static binaryContentTypes : Array<string> = [
+    'image/', 'video/', 'audio/'
+  ];
 
   // readonly
   _readyState : number = UNSENT;
@@ -145,7 +147,6 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     }
     else
       body = body ? body.toString() : body
-
     this._task = RNFetchBlob
                   .config({
                     auto: true,
@@ -243,7 +244,6 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   _uploadProgressEvent(send:number, total:number) {
-    console.log('_upload', this.upload)
     if(!this._uploadStarted) {
       this.upload.dispatchEvent('loadstart')
       this._uploadStarted = true
@@ -265,12 +265,16 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   _onError(err) {
+    let statusCode = Math.floor(this.status)
+    if(statusCode >= 100 && statusCode !== 408) {
+      return
+    }
     log.verbose('XMLHttpRequest error', err)
     this._statusText = err
     this._status = String(err).match(/\d+/)
     this._status = this._status ? Math.floor(this.status) : 404
     this._dispatchReadStateChange(XMLHttpRequest.DONE)
-    if(err && String(err.message).match(/(timed\sout|timedout)/)) {
+    if(err && String(err.message).match(/(timed\sout|timedout)/) || this._status == 408) {
       this.dispatchEvent('timeout')
     }
     this.dispatchEvent('loadend')
