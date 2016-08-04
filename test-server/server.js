@@ -108,6 +108,10 @@ app.delete('/hey', function(req, res) {
   res.send('man')
 })
 
+app.get('/stress/:id', function(req, res) {
+  res.sendFile(process.cwd() + '/public/github.png')
+})
+
 app.post('/mime', mimeCheck)
 app.put('/mime', mimeCheck)
 
@@ -137,13 +141,16 @@ app.all('/xhr-header', (req, res) => {
   res.send(req.headers)
 })
 
-app.post('/upload', bodyParser.urlencoded({ extended: true }), (req, res) => {
+app.post('/upload', bodyParser.urlencoded({ extended : true }), (req, res) => {
   console.log(JSON.stringify(req.headers))
   console.log(JSON.stringify(req.body))
   res.status(200).send(req.body)
 })
 
-app.all('/timeout', (res, req) => {
+app.all('/timeout', (req, res) => {
+  setTimeout(function() {
+    res.status(408).send('request timed out.')
+  }, 5000)
 
 })
 
