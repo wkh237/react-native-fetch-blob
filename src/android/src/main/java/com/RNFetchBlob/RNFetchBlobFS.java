@@ -237,7 +237,7 @@ public class RNFetchBlobFS {
      * @return
      */
     static public String getTmpPath(ReactApplicationContext ctx, String taskId) {
-        return ctx.getFilesDir() + "/RNFetchBlobTmp_" + taskId;
+        return RNFetchBlob.RCTContext.getFilesDir() + "/RNFetchBlobTmp_" + taskId;
     }
 
     /**

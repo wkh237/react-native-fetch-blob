@@ -275,7 +275,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
             final Request req = builder.build();
 
-//          create response handler
+            // Create response body depends on the responseType
             clientBuilder.addInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
@@ -304,23 +304,23 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                                 break;
                         }
                         return originalResponse.newBuilder().body(extended).build();
-                    } catch(SocketTimeoutException ex) {
+                    } catch(Exception ex) {
                         timeout = true;
                     }
                     return chain.proceed(chain.request());
                 }
             });
 
+
             if(options.timeout > 0) {
                 clientBuilder.connectTimeout(options.timeout, TimeUnit.MILLISECONDS);
                 clientBuilder.readTimeout(options.timeout, TimeUnit.MILLISECONDS);
             }
-            else {
-                clientBuilder.connectTimeout(-1, TimeUnit.MILLISECONDS);
-                clientBuilder.readTimeout(-1, TimeUnit.MILLISECONDS);
-            }
+
             clientBuilder.connectionPool(pool);
             clientBuilder.retryOnConnectionFailure(false);
+            clientBuilder.followRedirects(true);
+
             OkHttpClient client = clientBuilder.build();
             Call call =  client.newCall(req);
             taskTable.put(taskId, call);
@@ -328,11 +328,12 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
                 @Override
                 public void onFailure(Call call, IOException e) {
+                    cancelTask(taskId);
                     if(respInfo == null) {
                         respInfo = Arguments.createMap();
                     }
 
-                    // check if this error caused by timeout
+                    // check if this error caused by socket timeout
                     if(e.getClass().equals(SocketTimeoutException.class)) {
                         respInfo.putBoolean("timeout", true);
                         callback.invoke("request timed out.", respInfo, null);
@@ -345,7 +346,6 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
                     ReadableMap notifyConfig = options.addAndroidDownloads;
-                    respInfo = getResponseInfo(response);
                     // Download manager settings
                     if(notifyConfig != null ) {
                         String title = "", desc = "", mime = "text/plain";
@@ -371,7 +371,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         } catch (Exception error) {
             error.printStackTrace();
             taskTable.remove(taskId);
-            callback.invoke("RNFetchBlob request error: " + error.getMessage() + error.getCause(), this.respInfo);
+            callback.invoke("RNFetchBlob request error: " + error.getMessage() + error.getCause());
         }
     }
 
@@ -392,14 +392,15 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
      * @param resp OkHttp response object
      */
     private void done(Response resp) {
-        emitStateEvent(getResponseInfo(resp));
+        boolean isBlobResp = isBlobResponse(resp);
+        emitStateEvent(getResponseInfo(resp, isBlobResp));
         switch (responseType) {
             case KeepInMemory:
                 try {
                     // For XMLHttpRequest, automatic response data storing strategy, when response
                     // header is not `application/json` or `text/plain`, write response data to
                     // file system.
-                    if(isBlobResponse(resp) && options.auto == true) {
+                    if(isBlobResp && options.auto == true) {
                         String dest = RNFetchBlobFS.getTmpPath(ctx, taskId);
                         InputStream ins = resp.body().byteStream();
                         FileOutputStream os = new FileOutputStream(new File(dest));
@@ -412,27 +413,26 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         }
                         ins.close();
                         os.close();
-                        WritableMap info = getResponseInfo(resp);
-                        callback.invoke(null, info, dest);
+                        callback.invoke(null, null, dest);
                     }
                     else {
-                        // we should check if the response data is a UTF8 string, because BASE64
-                        // encoding will somehow break the UTF8 string format. In order to encode
-                        // UTF8 string correctly, we should do URL encoding before BASE64.
+                        // #73 Check if the response data contains valid UTF8 string, since BASE64
+                        // encoding will somehow break the UTF8 string format, to encode UTF8
+                        // string correctly, we should do URL encoding before BASE64.
                         String utf8Str;
                         byte[] b = resp.body().bytes();
                         CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
                         try {
                             encoder.encode(ByteBuffer.wrap(b).asCharBuffer());
                             // if the data can be encoded to UTF8 append URL encode
-                            b = URLEncoder.encode(new String(b), "UTF-8").getBytes();
+                            b = URLEncoder.encode(new String(b), "UTF-8").replace("+", "%20").getBytes();
                         }
                         // This usually mean the data is binary data
                         catch(CharacterCodingException e) {
 
                         }
                         finally {
-                            callback.invoke(null, getResponseInfo(resp), android.util.Base64.encodeToString(b, Base64.NO_WRAP));
+                            callback.invoke(null, null, android.util.Base64.encodeToString(b, Base64.NO_WRAP));
                         }
                     }
                 } catch (IOException e) {
@@ -441,15 +441,18 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 break;
             case FileStorage:
                 try{
+                    // In order to write response data to `destPath` we have to invoke this method.
+                    // It uses customized response body which is able to report download progress
+                    // and write response data to destination path.
                     resp.body().bytes();
                 } catch (Exception ignored) {
 
                 }
-                callback.invoke(null, getResponseInfo(resp), this.destPath);
+                callback.invoke(null, null, this.destPath);
                 break;
             default:
                 try {
-                    callback.invoke(null, getResponseInfo(resp), new String(resp.body().bytes(), "UTF-8"));
+                    callback.invoke(null, null, new String(resp.body().bytes(), "UTF-8"));
                 } catch (IOException e) {
                     callback.invoke("RNFetchBlob failed to encode response data to UTF8 string.", null);
                 }
@@ -458,17 +461,27 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         removeTaskInfo();
     }
 
+    /**
+     * Invoke this method to enable download progress reporting.
+     * @param taskId Task ID of the HTTP task.
+     * @return Task ID of the target task
+     */
     public static boolean isReportProgress(String taskId) {
         if(!progressReport.containsKey(taskId)) return false;
         return progressReport.get(taskId);
     }
 
+    /**
+     * Invoke this method to enable download progress reporting.
+     * @param taskId Task ID of the HTTP task.
+     * @return Task ID of the target task
+     */
     public static boolean isReportUploadProgress(String taskId) {
         if(!uploadProgressReport.containsKey(taskId)) return false;
         return uploadProgressReport.get(taskId);
     }
 
-    private WritableMap getResponseInfo(Response resp) {
+    private WritableMap getResponseInfo(Response resp, boolean isBlobResp) {
         WritableMap info = Arguments.createMap();
         info.putInt("status", resp.code());
         info.putString("state", "2");
@@ -480,26 +493,36 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         }
         info.putMap("headers", headers);
         Headers h = resp.headers();
-        if(getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("text/")) {
+        if(isBlobResp) {
+            info.putString("respType", "blob");
+        }
+        else if(getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("text/")) {
             info.putString("respType", "text");
         }
         else if(getHeaderIgnoreCases(h, "content-type").contains("application/json")) {
             info.putString("respType", "json");
         }
-        else if(getHeaderIgnoreCases(h, "content-type").length() < 1) {
-            info.putString("respType", "blob");
-        }
         else {
-            info.putString("respType", "text");
+            info.putString("respType", "");
         }
         return info;
     }
 
     private boolean isBlobResponse(Response resp) {
         Headers h = resp.headers();
-        boolean isText = !getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("text/");
-        boolean isJSON = !getHeaderIgnoreCases(h, "content-type").equalsIgnoreCase("application/json");
-        return  !(isJSON || isText);
+        String ctype = getHeaderIgnoreCases(h, "Content-Type");
+        boolean isText = !ctype.equalsIgnoreCase("text/");
+        boolean isJSON = !ctype.equalsIgnoreCase("application/json");
+        boolean isCustomBinary = false;
+        if(options.binaryContentTypes != null) {
+            for(int i = 0; i< options.binaryContentTypes.size();i++) {
+                if(ctype.toLowerCase().contains(options.binaryContentTypes.getString(i).toLowerCase())) {
+                    isCustomBinary = true;
+                    break;
+                }
+            }
+        }
+        return  (!(isJSON || isText)) || isCustomBinary;
     }
 
     private String getHeaderIgnoreCases(Headers headers, String field) {

@@ -247,6 +247,12 @@ class FetchBlobResponse {
             reject(err)
           }
         }
+        else {
+          polyfill.Blob.build(wrap(this.data))
+          .then((b) => {
+            resolve(b)
+          })
+        }
       })
     }
     /**

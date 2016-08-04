@@ -1,5 +1,6 @@
 package com.RNFetchBlob;
 
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 
 import java.util.HashMap;
@@ -17,7 +18,8 @@ public class RNFetchBlobConfig {
     public String key;
     public String mime;
     public Boolean auto;
-    public long timeout = 30000;
+    public long timeout = -1;
+    public ReadableArray binaryContentTypes = null;
 
     RNFetchBlobConfig(ReadableMap options) {
         if(options == null)
@@ -29,6 +31,8 @@ public class RNFetchBlobConfig {
         if(options.hasKey("addAndroidDownloads")) {
             this.addAndroidDownloads = options.getMap("addAndroidDownloads");
         }
+        if(options.hasKey("binaryContentTypes"))
+            this.binaryContentTypes = options.getArray("binaryContentTypes");
         this.key = options.hasKey("key") ? options.getString("key") : null;
         this.mime = options.hasKey("contentType") ? options.getString("contentType") : null;
         this.auto = options.hasKey("auto") ? options.getBoolean("auto") : false;
