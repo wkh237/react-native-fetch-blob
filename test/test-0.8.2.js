@@ -83,5 +83,5 @@ RNTest.config({
   setTimeout(() => {
     report(<Assert key="request does not retry" expect={1} actual={count}/>)
     done()
-  }, 12000)
+  }, 8000)
 })

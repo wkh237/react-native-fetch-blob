@@ -33,7 +33,7 @@ const { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles, image } = prop()
 
 const describe = RNTest.config({
   run : true,
-  expand : false,
+  expand : true,
   timeout : 5000,
 })
 
@@ -70,6 +70,6 @@ describe('GET image from server', (report, done) => {
 // require('./test-fs')
 require('./test-xmlhttp')
 // require('./test-blob')
-require('./test-firebase')
+// require('./test-firebase')
 // require('./test-android')
 // require('./benchmark')

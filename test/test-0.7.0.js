@@ -19,7 +19,7 @@ const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
   group : '0.7.0',
   run : true,
-  expand : true,
+  expand : false,
   timeout : 300000000,
 })
 const { TEST_SERVER_URL, TEST_SERVER_URL_SSL, DROPBOX_TOKEN, styles } = prop()
