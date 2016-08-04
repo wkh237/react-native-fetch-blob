@@ -207,7 +207,6 @@ NSMutableDictionary *fileStreams = nil;
 
 + (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject
 {
-    NSLog(encoding);
     @try {
         NSFileManager * fm = [NSFileManager defaultManager];
         NSError * err = nil;

@@ -23,9 +23,10 @@
 //
 ////////////////////////////////////////
 
-NSMutableDictionary * taskTable;
+NSMapTable * taskTable;
 NSMutableDictionary * progressTable;
 NSMutableDictionary * uploadProgressTable;
+
 
 @interface RNFetchBlobNetwork ()
 {
@@ -34,6 +35,7 @@ NSMutableDictionary * uploadProgressTable;
     NSOutputStream * writeStream;
     long bodyLength;
     NSMutableDictionary * respInfo;
+    NSInteger respStatus;
 }
 
 @end
@@ -61,7 +63,7 @@ NSOperationQueue *taskQueue;
         taskQueue.maxConcurrentOperationCount = 10;
     }
     if(taskTable == nil) {
-        taskTable = [[NSMutableDictionary alloc] init];
+        taskTable = [[NSMapTable alloc] init];
     }
     if(progressTable == nil)
     {
@@ -139,6 +141,7 @@ NSOperationQueue *taskQueue;
     {
         defaultConfigObject.timeoutIntervalForRequest = [[options valueForKey:@"timeout"] floatValue]/1000;
     }
+    defaultConfigObject.HTTPMaximumConnectionsPerHost = 10;
     session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:taskQueue];
     if(path != nil || [self.options valueForKey:CONFIG_USE_TEMP]!= nil)
     {
@@ -193,6 +196,7 @@ NSOperationQueue *taskQueue;
  
     NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
     NSInteger statusCode = [(NSHTTPURLResponse *)response statusCode];
+    respStatus = statusCode;
     if ([response respondsToSelector:@selector(allHeaderFields)])
     {
         NSDictionary *headers = [httpResponse allHeaderFields];
@@ -242,7 +246,7 @@ NSOperationQueue *taskQueue;
                      @"respType" : respType,
                      @"timeout" : @NO,
                      @"status": [NSString stringWithFormat:@"%d", statusCode ]
-                     };
+                    };
         
         [self.bridge.eventDispatcher
          sendDeviceEventWithName: EVENT_STATE_CHANGE
@@ -270,6 +274,7 @@ NSOperationQueue *taskQueue;
             NSLog(@"write file error");
         }
     }
+    
     completionHandler(NSURLSessionResponseAllow);
 }
 
@@ -312,42 +317,66 @@ NSOperationQueue *taskQueue;
 {
     
     self.error = error;
-    [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-    
+    NSString * errMsg = [NSNull null];
+    NSString * respStr = [NSNull null];
     NSString * respType = [respInfo valueForKey:@"respType"];
-    if(error != nil) {
-        NSLog([error localizedDescription]);
-    }
     
-    if(respFile == YES)
+    [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
+    if(error != nil)
     {
-        [writeStream close];
-        callback(@[error == nil ? [NSNull null] : [error localizedDescription],
-                   respInfo == nil ? [NSNull null] : respInfo,
-                   destPath
-                ]);
+        errMsg = [error localizedDescription];
     }
-    // base64 response
-    else {
-        NSString * utf8 = [[[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-        NSString * base64 = @"";
-        if(utf8 != nil)
-            base64 = [[utf8 dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
-        else
-            base64 = [respData base64EncodedStringWithOptions:0];
-        callback(@[error == nil ? [NSNull null] : [error localizedDescription],
-                   respInfo == nil ? [NSNull null] : respInfo,
-                   base64
-                ]);
-        
+    if(respInfo == nil)
+    {
+        respInfo = [NSNull null];
     }
     
-    [taskTable removeObjectForKey:taskId];
-    [uploadProgressTable removeObjectForKey:taskId];
-    [progressTable removeObjectForKey:taskId];
+    // Fix #72 response with status code 200 ~ 299 considered as success
+    if(respStatus> 299 || respStatus < 200)
+    {
+        errMsg = [NSString stringWithFormat:@"Request failed, status %d", respStatus];
+    }
+    else
+    {
+        if(respFile == YES)
+        {
+            [writeStream close];
+            respStr = destPath;
+        }
+        // base64 response
+        else {
+            // #73 fix unicode data encoding issue :
+            // when response type is BASE64, we should first try to encode the response data to UTF8 format
+            // if it turns out not to be `nil` that means the response data contains valid UTF8 string,
+            // in order to properly encode the UTF8 string, use URL encoding before BASE64 encoding.
+            NSString * urlEncoded = [[[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding]
+                                     stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+            NSString * base64 = @"";
+            if(urlEncoded != nil)
+                base64 = [[urlEncoded dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+            else
+                base64 = [respData base64EncodedStringWithOptions:0];
+            respStr = base64;
+            
+        }
+    }
+    
+    callback(@[ errMsg, respInfo, respStr ]);
+    
+    @synchronized(taskTable, uploadProgressTable, progressTable)
+    {
+        if([taskTable objectForKey:taskId] == nil)
+            NSLog(@"object released.");
+        else
+            [taskTable removeObjectForKey:taskId];
+        [uploadProgressTable removeObjectForKey:taskId];
+        [progressTable removeObjectForKey:taskId];
+    }
+    
     respData = nil;
     receivedBytes = 0;
     [session finishTasksAndInvalidate];
+
 }
 
 // upload progress handler
