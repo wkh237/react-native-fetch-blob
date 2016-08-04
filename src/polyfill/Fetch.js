@@ -2,6 +2,7 @@ import RNFetchBlob from '../index.js'
 import Log from '../utils/log.js'
 import fs from '../fs'
 import unicode from '../utils/unicode'
+import Blob from './Blob'
 
 const log = new Log('FetchPolyfill')
 
@@ -18,13 +19,14 @@ export default class Fetch {
 class RNFetchBlobFetchPolyfill {
 
   constructor(config:RNFetchBlobConfig) {
-    this.build = () => (url, options) => {
+    this.build = () => (url, options = {}) => {
       options.headers = options.headers || {}
       options['Content-Type'] = options.headers['Content-Type'] || options.headers['content-type']
       options['content-type'] = options.headers['Content-Type'] || options.headers['content-type']
       return RNFetchBlob.config(config)
         .fetch(options.method, url, options.headers, options.body)
         .then((resp) => {
+          log.verbose('response', resp)
           let info = resp.info()
           return Promise.resolve(new RNFetchBlobFetchRepsonse(resp))
         })
@@ -91,7 +93,21 @@ function readText(resp, info):Promise<string> {
   }
 }
 
+function readBlob(resp, info):Promise<object> {
+  log.verbose('readBlob', resp, info)
+  let cType = info.headers['Content-Type']
+  switch (info.rnfbEncode) {
+    case 'base64':
+      return Blob.build(resp.data, { type : `${cType};BASE64` })
+    case 'path':
+      return Blob.build(RNFetchBlob.wrap(resp.data), { type : `${cType}`})
+    default:
+      return Blob.build(resp.data, { type : `${cType}`})
+  }
+}
+
 function readJSON(resp, info):Promise<object> {
+  log.verbose('readJSON', resp, info)
   switch (info.rnfbEncode) {
     case 'base64':
       return Promise.resolve(resp.json())

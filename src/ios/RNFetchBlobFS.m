@@ -224,8 +224,13 @@ NSMutableDictionary *fileStreams = nil;
         }
         NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
         NSData * content = nil;
-        if([encoding isEqualToString:@"base64"]) {
+        if([encoding containsString:@"base64"]) {
             content = [[NSData alloc] initWithBase64EncodedString:data options:0];
+            if([encoding containsString:@"urlencode"])
+            {
+                NSString * decode = [[[NSString alloc] initWithData:content encoding:NSUTF8StringEncoding] stringByRemovingPercentEncoding];
+                content = [decode dataUsingEncoding:NSUTF8StringEncoding];
+            }
         }
         else if([encoding isEqualToString:@"uri"]) {
             NSNumber* size = [[self class] writeFileFromFile:data toFile:path append:append];

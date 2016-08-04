@@ -11,7 +11,7 @@ import EventTarget from './EventTarget'
 const log = new Log('Blob')
 const blobCacheDir = fs.dirs.DocumentDir + '/RNFetchBlob-blobs/'
 
-log.disable()
+log.level(3)
 
 /**
  * A RNFetchBlob style Blob polyfill class, this is a Blob which compatible to
@@ -123,7 +123,7 @@ export default class Blob extends EventTarget {
       // when content type contains application/octet* or *;base64, RNFetchBlob
       // fs will treat it as BASE64 encoded string binary data
       if(/(application\/octet|\;base64)/i.test(mime))
-        encoding = 'base64'
+        encoding = 'base64+urlencode'
       else
         data = data.toString()
       // create cache file

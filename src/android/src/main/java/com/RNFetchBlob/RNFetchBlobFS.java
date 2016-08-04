@@ -30,6 +30,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -792,8 +794,16 @@ public class RNFetchBlobFS {
         if(encoding.equalsIgnoreCase("ascii")) {
             return data.getBytes(Charset.forName("US-ASCII"));
         }
-        else if(encoding.equalsIgnoreCase("base64")) {
-            return Base64.decode(data, Base64.NO_WRAP);
+        else if(encoding.toLowerCase().contains("base64")) {
+            byte [] b = Base64.decode(data, Base64.NO_WRAP);
+            if(encoding.toLowerCase().contains("urlencode")) {
+                try {
+                    b = URLDecoder.decode(new String(b), "UTF-8").getBytes();
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+            }
+            return b;
         }
         else if(encoding.equalsIgnoreCase("utf8")) {
             return data.getBytes(Charset.forName("UTF-8"));

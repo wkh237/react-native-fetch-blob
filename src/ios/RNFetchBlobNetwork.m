@@ -138,7 +138,6 @@ NSOperationQueue *taskQueue;
     
     NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
     float timeout = [options valueForKey:@"timeout"] == nil ? -1 : [[options valueForKey:@"timeout"] floatValue];
-    NSLog(@"timeout = %f",timeout);
     if(timeout > 0)
     {
         defaultConfigObject.timeoutIntervalForRequest = timeout/1000;
