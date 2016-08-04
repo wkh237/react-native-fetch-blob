@@ -41,7 +41,6 @@ describe('#73 unicode response BASE64 content test', (report, done) => {
     return res.json()
   })
   .then((data) => {
-    console.log(data)
     report(<Assert key="data should correct" expect={'你好!'} actual={data.data}/>)
     done()
   })
@@ -63,25 +62,48 @@ describe('#73 unicode response content test', (report, done) => {
     })
 })
 
-RNTest.config({
+describe = RNTest.config({
   group : '0.8.2',
   run : true,
   expand : true,
   timeout : 24000
-})('request should not retry after timed out', (report, done) => {
+})
+
+describe('request should not retry after timed out', (report, done) => {
 
   let count = 0
-  RNFetchBlob
-    // .config({timeout : 2000})
-    .fetch('GET', `${TEST_SERVER_URL}/timeout408`)
-    .then((res) => {
-      report(<Assert key="request should not success" expect={true} actual={false}/>)
-    })
-    .catch(() => {
-      count ++
-    })
+  let task = RNFetchBlob
+    .fetch('GET', `${TEST_SERVER_URL}/timeout408/${Date.now()}`)
+  task.then((res) => {
+    report(<Assert key="request should not success" expect={true} actual={false}/>)
+  })
+  .catch(() => {
+    task.cancel()
+    count ++
+  })
   setTimeout(() => {
     report(<Assert key="request does not retry" expect={1} actual={count}/>)
     done()
-  }, 8000)
+  }, 12000)
+})
+
+describe = RNTest.config({
+  group : '0.8.2',
+  run : true,
+  expand : true,
+  timeout : 65000
+})
+
+describe('long live download or upload task won\'t timeout', (report, done) => {
+
+  RNFetchBlob.config({timeout : 0})
+  .fetch('GET', `${TEST_SERVER_URL}/long/`)
+  .then((res) => {
+    report(
+      <Assert key="download not terminated" expect={true} actual={true}/>,
+      <Info key={res.text()}/>)
+    done()
+  })
+
+
 })

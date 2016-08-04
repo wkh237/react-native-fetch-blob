@@ -148,10 +148,23 @@ app.post('/upload', bodyParser.urlencoded({ extended : true }), (req, res) => {
   res.status(200).send(req.body)
 })
 
-app.all('/timeout408', (req, res) => {
+app.all('/timeout408/:time', (req, res) => {
   setTimeout(function() {
     res.status(408).send('request timed out.')
   }, 5000)
+})
+
+app.all('/long', (req, res) => {
+  var count = 0;
+  var it = setInterval(() => {
+    console.log('write data', count)
+    res.write('a')
+    if(++count >60){
+      clearInterval(it)
+      res.end()
+    }
+  }, 1000);
+
 })
 
 app.all('/timeout', (req, res) => {
