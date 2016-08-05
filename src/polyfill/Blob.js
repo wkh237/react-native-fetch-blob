@@ -196,8 +196,21 @@ export default class Blob extends EventTarget {
     if(this._closed)
       throw 'Blob has been released.'
     log.verbose('slice called', start, end, encoding)
+    console.warn('RNFB#Blob.slice() is not implemented yet, to read Blob content, use Blob.readBlob(encoding:string) instead.')
     // TODO : fs.slice
     // return fs.slice(this.cacheName, getBlobName(), contentType, start, end)
+  }
+
+  /**
+   * Read data of the Blob object, this is not standard method.
+   * @nonstandard
+   * @param  {string} encoding Read data with encoding
+   * @return {Promise}
+   */
+  readBlob(encoding:string):Promise<any> {
+    if(this._closed)
+      throw 'Blob has been released.'
+    return fs.readFile(this._ref, encoding || 'utf8')
   }
 
   /**
