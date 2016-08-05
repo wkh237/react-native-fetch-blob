@@ -6,7 +6,8 @@ import Blob from './Blob'
 
 const log = new Log('FetchPolyfill')
 
-log.level(3)
+// log.level(3)
+log.disable()
 
 export default class Fetch {
 
@@ -20,16 +21,41 @@ class RNFetchBlobFetchPolyfill {
 
   constructor(config:RNFetchBlobConfig) {
     this.build = () => (url, options = {}) => {
+
+      let body = options.body
+      let promise = null
+      let blobCache = null
+
       options.headers = options.headers || {}
       options['Content-Type'] = options.headers['Content-Type'] || options.headers['content-type']
       options['content-type'] = options.headers['Content-Type'] || options.headers['content-type']
-      return RNFetchBlob.config(config)
-        .fetch(options.method, url, options.headers, options.body)
-        .then((resp) => {
-          log.verbose('response', resp)
-          let info = resp.info()
-          return Promise.resolve(new RNFetchBlobFetchRepsonse(resp))
+
+      // When the request body is an instance of FormData, create a Blob cache
+      // to upload the body.
+      if(body instanceof FormData) {
+        promise = Blob.build(body).then((b) => {
+          blobCache = b
+          return Promise.resolve(b.getRNFetchBlobRef())
         })
+      }
+      // When request body is a Blob, use file URI of the Blob as request body.
+      else if (body instanceof Blob)
+        promise = Promise.resolve(RNFetchBlob.wrap(body.getRNFetchBlobRef()))
+      // send it as-is, leave the native module decide how to send the body.
+      else
+        promise = Promise.resolve(body)
+
+      return promise
+          .then((body) => RNFetchBlob.config(config)
+          .fetch(options.method, url, options.headers, options.body))
+          .then((resp) => {
+            log.verbose('response', resp)
+            // release blob cache created when sending request
+            if(blobCache !== null && blobCache instanceof Blob)
+              blobCache.close()
+            let info = resp.info()
+            return Promise.resolve(new RNFetchBlobFetchRepsonse(resp))
+          })
     }
   }
 
@@ -75,7 +101,12 @@ class RNFetchBlobFetchRepsonse {
   }
 }
 
-
+/**
+ * Get response data as string.
+ * @param  {FetchBlobResponse} resp Response data object from RNFB fetch call.
+ * @param  {RNFetchBlobResponseInfo} info Response informations.
+ * @return {Promise<string>}
+ */
 function readText(resp, info):Promise<string> {
   switch (info.rnfbEncode) {
     case 'base64':
@@ -93,7 +124,14 @@ function readText(resp, info):Promise<string> {
   }
 }
 
-function readBlob(resp, info):Promise<object> {
+
+/**
+ * Get response data as RNFetchBlob Blob polyfill object.
+ * @param  {FetchBlobResponse} resp Response data object from RNFB fetch call.
+ * @param  {RNFetchBlobResponseInfo} info Response informations.
+ * @return {Promise<Blob>}
+ */
+function readBlob(resp, info):Promise<Blob> {
   log.verbose('readBlob', resp, info)
   let cType = info.headers['Content-Type']
   switch (info.rnfbEncode) {
@@ -106,6 +144,12 @@ function readBlob(resp, info):Promise<object> {
   }
 }
 
+/**
+ * Get response data as JSON object.
+ * @param  {FetchBlobResponse} resp Response data object from RNFB fetch call.
+ * @param  {RNFetchBlobResponseInfo} info Response informations.
+ * @return {Promise<object>}
+ */
 function readJSON(resp, info):Promise<object> {
   log.verbose('readJSON', resp, info)
   switch (info.rnfbEncode) {
