@@ -98,7 +98,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     public boolean reportUploadProgress = false;
 
     public RNFetchBlobReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, final Callback callback) {
-        this.method = method;
+        this.method = method.toUpperCase();
         this.options = new RNFetchBlobConfig(options);
         this.taskId = taskId;
         this.url = url;
@@ -404,14 +404,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         String dest = RNFetchBlobFS.getTmpPath(ctx, taskId);
                         InputStream ins = resp.body().byteStream();
                         FileOutputStream os = new FileOutputStream(new File(dest));
+                        int read;
                         byte [] buffer = new byte[10240];
-                        int read = ins.read(buffer);
-                        os.write(buffer,0,read);
-                        while(read > 0) {
-                            os.write(buffer,0,read);
-                            read = ins.read(buffer);
+                        while ((read = ins.read(buffer)) != -1) {
+                            os.write(buffer, 0, read);
                         }
                         ins.close();
+                        os.flush();
                         os.close();
                         callback.invoke(null, null, dest);
                     }

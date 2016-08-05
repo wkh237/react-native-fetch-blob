@@ -94,11 +94,10 @@ public class RNFetchBlobFS {
                         }
                         FileInputStream fin = new FileInputStream(src);
                         byte [] buffer = new byte [10240];
-                        int read = fin.read(buffer);
-                        written = read;
-                        while(read > 0) {
+                        int read;
+                        written = 0;
+                        while((read = fin.read(buffer)) > 0) {
                             fout.write(buffer, 0, read);
-                            read = fin.read(buffer);
                             written += read;
                         }
                         fin.close();
@@ -798,8 +797,9 @@ public class RNFetchBlobFS {
             byte [] b = Base64.decode(data, Base64.NO_WRAP);
             if(encoding.toLowerCase().contains("urlencode")) {
                 try {
-                    b = URLDecoder.decode(new String(b), "UTF-8").getBytes();
-                } catch (UnsupportedEncodingException e) {
+                    String encoded = URLDecoder.decode(new String(b), "UTF-8");
+                    b = encoded.getBytes();
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }

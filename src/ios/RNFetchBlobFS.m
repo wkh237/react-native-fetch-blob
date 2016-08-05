@@ -229,7 +229,10 @@ NSMutableDictionary *fileStreams = nil;
             if([encoding containsString:@"urlencode"])
             {
                 NSString * decode = [[[NSString alloc] initWithData:content encoding:NSUTF8StringEncoding] stringByRemovingPercentEncoding];
-                content = [decode dataUsingEncoding:NSUTF8StringEncoding];
+                if(decode != nil)
+                {
+                    content = [decode dataUsingEncoding:NSUTF8StringEncoding];
+                }
             }
         }
         else if([encoding isEqualToString:@"uri"]) {
