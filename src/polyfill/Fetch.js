@@ -45,17 +45,31 @@ class RNFetchBlobFetchPolyfill {
       else
         promise = Promise.resolve(body)
 
-      return promise
-          .then((body) => RNFetchBlob.config(config)
-          .fetch(options.method, url, options.headers, options.body))
-          .then((resp) => {
-            log.verbose('response', resp)
-            // release blob cache created when sending request
-            if(blobCache !== null && blobCache instanceof Blob)
-              blobCache.close()
-            let info = resp.info()
-            return Promise.resolve(new RNFetchBlobFetchRepsonse(resp))
+      // task is a progress reportable and cancellable Promise, however,
+      // task.then is not, so we have to extend task.then with progress and
+      // cancel function
+      let task = promise
+          .then((body) => {
+            return RNFetchBlob.config(config)
+            .fetch(options.method, url, options.headers, options.body)
           })
+
+      let statefulPromise = task.then((resp) => {
+        log.verbose('response', resp)
+        // release blob cache created when sending request
+        if(blobCache !== null && blobCache instanceof Blob)
+          blobCache.close()
+        let info = resp.info()
+        return Promise.resolve(new RNFetchBlobFetchRepsonse(resp))
+      })
+
+      // extend task.then progress with report and cancelling functions
+      statefulPromise.cancel = task.cancel
+      statefulPromise.progress = task.progress
+      statefulPromise.uploadProgress = task.uploadProgress
+
+      return statefulPromise
+
     }
   }
 

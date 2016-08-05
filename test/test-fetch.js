@@ -112,7 +112,7 @@ describe('GET request test : path -> any', (report, done) => {
 
 })
 
-describe('POST base64 body auto strategy', (report, done) => {
+describe('POST different types of body', (report, done) => {
 
   let image = RNTest.prop('image')
   let tmpPath = dirs.DocumentDir + '/tmp-' + Date.now()
@@ -121,14 +121,12 @@ describe('POST base64 body auto strategy', (report, done) => {
     let name = `fetch-replacement-${Platform.OS}-${Date.now()}.png`
     return pBody.then((body) =>
       fetch('https://content.dropboxapi.com/2/files/upload', {
-        method : method,
+        method : 'post',
         headers : {
           Authorization : `Bearer ${DROPBOX_TOKEN}`,
           'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+name+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
           'Content-Type' : 'application/octet-stream'
-        },
-        body : body
-      })
+        }, body })
     )
     .then((res) => {
       return res.json()
@@ -139,12 +137,42 @@ describe('POST base64 body auto strategy', (report, done) => {
   }
 
   let tests = [
-    upload('upload base64 encoded body', 'post', Promise.resolve(image)),
-    upload('upload Blob body', 'post', Blob.build(image, 'image/png;BASE64')),
-    upload('upload file path body', 'post', fs.writeFile(tmpPath, image, 'base64').then(() => Promise.resolve(RNFetchBlob.wrap(tmpPath))))
+    upload('upload base64 encoded body', Promise.resolve(image)),
+    upload('upload Blob body', Blob.build(image, 'image/png;BASE64')),
+    upload('upload file path body', fs.writeFile(tmpPath, image, 'base64').then(() => Promise.resolve(RNFetchBlob.wrap(tmpPath))))
   ]
 
   Promise.all(tests).then(() => done())
+
+})
+
+describe('check HTTP body correctness', (report, done) => {
+
+  let tmpPath = dirs.DocumentDir + '/tmp-' + Date.now()
+
+  function upload(pBody) {
+    return pBody.then((body) =>
+      fetch('https://content.dropboxapi.com/2/files/upload', {
+        method : 'POST',
+        headers : {
+          Authorization : `Bearer ${DROPBOX_TOKEN}`,
+          'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+name+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
+          'Content-Type' : 'application/octet-stream'
+        }, body })
+      .then((res) => res.json())
+      .then((info) => {
+        
+      })
+    )
+  }
+
+
+  let pUnicodeBody = fetch(`${TEST_SERVER_URL}/public/utf8-dummy`, { method : 'GET' })
+    .then((res) => res.text())
+
+  let tests = [
+    upload(pUnicodeBody)
+  ]
 
 
 })
