@@ -344,6 +344,7 @@ class FetchBlobResponse {
     this.readFile = (encode: 'base64' | 'utf8' | 'ascii') => {
       if(this.type === 'path') {
         encode = encode || 'utf8'
+
         return readFile(this.data, encode)
       }
       else {

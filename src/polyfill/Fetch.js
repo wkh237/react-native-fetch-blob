@@ -6,8 +6,8 @@ import Blob from './Blob'
 
 const log = new Log('FetchPolyfill')
 
-// log.level(3)
 log.disable()
+// log.level(3)
 
 export default class Fetch {
 
@@ -23,27 +23,34 @@ class RNFetchBlobFetchPolyfill {
     this.build = () => (url, options = {}) => {
 
       let body = options.body
-      let promise = null
+      let promise = Promise.resolve()
       let blobCache = null
 
       options.headers = options.headers || {}
-      options['Content-Type'] = options.headers['Content-Type'] || options.headers['content-type']
-      options['content-type'] = options.headers['Content-Type'] || options.headers['content-type']
+      let ctype = options['Content-Type'] || options['content-type']
+      let ctypeH = options.headers['Content-Type'] || options.headers['content-type']
+      options.headers['Content-Type'] = ctype || ctypeH
+      options.headers['content-type'] = ctype || ctypeH
+      options.method = options.method || 'GET'
 
-      // When the request body is an instance of FormData, create a Blob cache
-      // to upload the body.
-      if(body instanceof FormData) {
-        promise = Blob.build(body).then((b) => {
-          blobCache = b
-          return Promise.resolve(b.getRNFetchBlobRef())
-        })
+      if(body) {
+        // When the request body is an instance of FormData, create a Blob cache
+        // to upload the body.
+        if(body instanceof FormData) {
+          log.verbose('convert FormData to blob body')
+          promise = Blob.build(body).then((b) => {
+            blobCache = b
+            options.headers['Content-Type'] = 'multipart/form-data;boundary=' + b.multipartBoundary
+            return Promise.resolve(RNFetchBlob.wrap(b._ref))
+          })
+        }
+        // When request body is a Blob, use file URI of the Blob as request body.
+        else if (body.isRNFetchBlobPolyfill)
+          promise = Promise.resolve(RNFetchBlob.wrap(body.blobPath))
+        // send it as-is, leave the native module decide how to send the body.
+        else
+          promise = Promise.resolve(body)
       }
-      // When request body is a Blob, use file URI of the Blob as request body.
-      else if (body instanceof Blob)
-        promise = Promise.resolve(RNFetchBlob.wrap(body.getRNFetchBlobRef()))
-      // send it as-is, leave the native module decide how to send the body.
-      else
-        promise = Promise.resolve(body)
 
       // task is a progress reportable and cancellable Promise, however,
       // task.then is not, so we have to extend task.then with progress and
@@ -51,7 +58,7 @@ class RNFetchBlobFetchPolyfill {
       let task = promise
           .then((body) => {
             return RNFetchBlob.config(config)
-            .fetch(options.method, url, options.headers, options.body)
+            .fetch(options.method, url, options.headers, body)
           })
 
       let statefulPromise = task.then((resp) => {
@@ -59,7 +66,6 @@ class RNFetchBlobFetchPolyfill {
         // release blob cache created when sending request
         if(blobCache !== null && blobCache instanceof Blob)
           blobCache.close()
-        let info = resp.info()
         return Promise.resolve(new RNFetchBlobFetchRepsonse(resp))
       })
 
@@ -128,7 +134,6 @@ function readText(resp, info):Promise<string> {
       break
     case 'path':
       return resp.readFile('utf8').then((data) => {
-        data = unicode(data)
         return Promise.resolve(data)
       })
       break

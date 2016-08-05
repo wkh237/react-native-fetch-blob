@@ -11,7 +11,8 @@ import EventTarget from './EventTarget'
 const log = new Log('Blob')
 const blobCacheDir = fs.dirs.DocumentDir + '/RNFetchBlob-blobs/'
 
-log.level(3)
+log.disable()
+// log.level(3)
 
 /**
  * A RNFetchBlob style Blob polyfill class, this is a Blob which compatible to
@@ -43,6 +44,10 @@ export default class Blob extends EventTarget {
     return new Promise((resolve, reject) => {
       new Blob(data, cType).onCreated(resolve)
     })
+  }
+
+  get blobPath() {
+    return this._ref
   }
 
   /**
@@ -131,7 +136,6 @@ export default class Blob extends EventTarget {
       log.verbose('create Blob cache file from string', 'encode', encoding)
       p = fs.writeFile(this._ref, data, encoding)
             .then((size) => {
-              console.log('file bytes', size)
               return Promise.resolve(size)
             })
 
