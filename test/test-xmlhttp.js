@@ -156,7 +156,7 @@ describe('request headers records should be cleared by open()', (report, done) =
     if(this.readyState == 4) {
       report(<Assert key="headers should be cleared by open()"
         expect={'200'}
-        actual={this.response['value']}/>)
+        actual={this.response.value}/>)
       done()
     }
   }
@@ -239,11 +239,10 @@ describe('upload progress event test', (report, done) => {
   }
   xhr.onreadystatechange = function() {
     if(this.readyState == XMLHttpRequest.DONE) {
-      console.log(xhr)
       report(
         <Assert key="reponse should correct"
           expect={time}
-          actual={parseInt(xhr.response.time)}/>,
+          actual={Math.floor(xhr.response.time)}/>,
         <Assert key="responseType should correct"
           expect={'json'}
           actual={xhr.responseType}/>)
