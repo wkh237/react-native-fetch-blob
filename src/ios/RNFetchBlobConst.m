@@ -23,6 +23,9 @@ extern NSString *const CONFIG_KEY = @"key";
 extern NSString *const CONFIG_EXTRA_BLOB_CTYPE = @"binaryContentTypes";
 
 extern NSString *const EVENT_STATE_CHANGE = @"RNFetchBlobState";
+extern NSString *const EVENT_PROGRESS = @"RNFetchBlobProgress";
+extern NSString *const EVENT_PROGRESS_UPLOAD = @"RNFetchBlobProgress-upload";
+
 extern NSString *const MSG_EVENT = @"RNFetchBlobMessage";
 extern NSString *const MSG_EVENT_LOG = @"log";
 extern NSString *const MSG_EVENT_WARN = @"warn";

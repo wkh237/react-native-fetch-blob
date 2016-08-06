@@ -27,32 +27,42 @@ let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
 describe('fs URI encoding support', (report, done) => {
 
-  let testData1 = `test date write file from file ${Date.now()}`
-  let testData2 = `test date write file from file ${Date.now()*Math.random()}`
-  let file1 = dirs.DocumentDir + '/testFiletFile1' + Date.now()
-  let file2 = dirs.DocumentDir + '/testFiletFile2' + Date.now()
-  let init = [fs.createFile(file1, testData1, 'utf8'),
-              fs.createFile(file2, testData2, 'utf8')]
-  Promise.all(init)
-    .then(() => fs.appendFile(file1, file2, 'uri'))
-    .then(() => fs.readFile(file1, 'utf8'))
-    .then((data) => {
-      report(
-        <Assert key="append content from URI should be correct"
-          expect={testData1 + testData2}
-          actual={data}
-        />)
-      return fs.writeFile(file1, file2, 'uri')
-    })
-    .then(() => fs.readFile(file1, 'utf8'))
-    .then((data) => {
-      report(
-        <Assert key="write content from URI should be correct"
-          expect={testData2}
-          actual={data}
-        />)
-      done()
-    })
+  let testFiles = []
+  let sizes = []
+
+  RNFetchBlob.config({
+    fileCache : true
+  })
+  .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+  .then((res) => {
+    testFiles.push(res.path())
+    sizes.push(Math.floor(res.info().headers['Content-Length']))
+    return RNFetchBlob.config({fileCache : true}).fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
+  })
+  .then((res) => {
+    testFiles.push(res.path())
+    sizes.push(Math.floor(res.info().headers['Content-Length']))
+    return fs.appendFile(testFiles[0], testFiles[1], 'uri')
+  })
+  .then(() => fs.stat(testFiles[0]))
+  .then((stat) => {
+    report(
+      <Assert key="append content from URI should be correct"
+        expect={sizes[0] + sizes[1]}
+        actual={Math.floor(stat.size)}
+      />)
+    return fs.writeFile(testFiles[0], testFiles[1], 'uri')
+  })
+  .then(() => fs.stat(testFiles[0]))
+  .then((stat) => {
+    report(
+      <Assert key="replace content from URI should be correct"
+        expect={sizes[1]}
+        actual={Math.floor(stat.size)}
+      />)
+    done()
+  })
+
 })
 
 describe('request timeout working properly', (report, done) => {

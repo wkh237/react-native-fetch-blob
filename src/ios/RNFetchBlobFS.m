@@ -63,6 +63,8 @@ NSMutableDictionary *fileStreams = nil;
     return assetURI;
 }
 
+#pragma mark - system directories
+
 + (NSString *) getCacheDir {
     return [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
 }
@@ -97,6 +99,8 @@ NSMutableDictionary *fileStreams = nil;
     NSString * tempPath = [documentDir stringByAppendingString: filename];
     return tempPath;
 }
+
+#pragma mark - read asset stream
 
 - (void) startAssetReadStream:(NSString *)assetUrl
 {
@@ -185,6 +189,8 @@ NSMutableDictionary *fileStreams = nil;
     }
 }
 
+# pragma write file from file
+
 + (NSNumber *) writeFileFromFile:(NSString *)src toFile:(NSString *)dest append:(BOOL)append
 {
     NSInputStream * is = [[NSInputStream alloc] initWithFileAtPath:src];
@@ -204,6 +210,8 @@ NSMutableDictionary *fileStreams = nil;
     [is close];
     return [NSNumber numberWithLong:written];
 }
+
+# pragma mark - write file
 
 + (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject
 {
@@ -226,14 +234,6 @@ NSMutableDictionary *fileStreams = nil;
         NSData * content = nil;
         if([encoding containsString:@"base64"]) {
             content = [[NSData alloc] initWithBase64EncodedString:data options:0];
-            if([encoding containsString:@"urlencode"])
-            {
-                NSString * decode = [[[NSString alloc] initWithData:content encoding:NSUTF8StringEncoding] stringByRemovingPercentEncoding];
-                if(decode != nil)
-                {
-                    content = [decode dataUsingEncoding:NSUTF8StringEncoding];
-                }
-            }
         }
         else if([encoding isEqualToString:@"uri"]) {
             NSNumber* size = [[self class] writeFileFromFile:data toFile:path append:append];
@@ -260,6 +260,8 @@ NSMutableDictionary *fileStreams = nil;
         reject(@"RNFetchBlob writeFile Error", @"Error", [e description]);
     }
 }
+
+# pragma mark - write file (array)
 
 + (void) writeFileArray:(NSString *)path data:(NSArray *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
     @try {
@@ -302,6 +304,8 @@ NSMutableDictionary *fileStreams = nil;
         reject(@"RNFetchBlob writeFile Error", @"Error", [e description]);
     }
 }
+
+# pragma mark - read file
 
 + (void) readFile:(NSString *)path encoding:(NSString *)encoding
          resolver:(RCTPromiseResolveBlock)resolve
@@ -370,6 +374,8 @@ NSMutableDictionary *fileStreams = nil;
     }
 }
 
+# pragma mark - mkdir
+
 + (BOOL) mkdir:(NSString *) path {
     BOOL isDir;
     NSError * err = nil;
@@ -379,6 +385,8 @@ NSMutableDictionary *fileStreams = nil;
     }
     return err == nil;
 }
+
+# pragma mark - stat
 
 + (NSDictionary *) stat:(NSString *) path error:(NSError **) error {
     NSMutableDictionary *stat = [[NSMutableDictionary alloc] init];
@@ -401,6 +409,8 @@ NSMutableDictionary *fileStreams = nil;
              };
 }
 
+# pragma mark - exists
+
 + (BOOL) exists:(NSString *) path {
     return [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:NULL];
 }
@@ -422,6 +432,8 @@ NSMutableDictionary *fileStreams = nil;
     return self;
 }
 
+# pragma mark - open file stream
+
 // Create file stream for write data
 - (NSString *)openWithPath:(NSString *)destPath encode:(nullable NSString *)encode appendData:(BOOL)append {
     self.outStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:append];
@@ -433,6 +445,8 @@ NSMutableDictionary *fileStreams = nil;
     [RNFetchBlobFS setFileStream:self withId:uuid];
     return uuid;
 }
+
+# pragma mark - file stream write chunk
 
 // Write file chunk into an opened stream
 - (void)writeEncodeChunk:(NSString *) chunk {
@@ -678,6 +692,8 @@ NSMutableDictionary *fileStreams = nil;
     }
     
 }
+
+# pragma mark - get absolute path of resource
 
 + (void) getPathFromUri:(NSString *)uri completionHandler:(void(^)(NSString * path, ALAssetRepresentation *asset)) onComplete
 {

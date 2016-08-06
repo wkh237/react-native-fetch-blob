@@ -10,7 +10,8 @@ import ProgressEvent from './ProgressEvent.js'
 
 const log = new Log('XMLHttpRequest')
 
-log.level(2)
+log.disable()
+// log.level(2)
 
 const UNSENT = 0
 const OPENED = 1

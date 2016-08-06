@@ -110,14 +110,31 @@ class RNFetchBlobFetchRepsonse {
     return readJSON(this.rnfbResp, this.rnfbRespInfo)
   }
 
-  formData() {
-    log.verbose('to formData', this.rnfbResp, this.rnfbRespInfo)
-    return readFormData(this.rnfbResp, this.rnfbRespInfo)
-  }
-
   blob() {
     log.verbose('to blob', this.rnfbResp, this.rnfbRespInfo)
     return readBlob(this.rnfbResp, this.rnfbRespInfo)
+  }
+}
+
+/**
+ * Get response data as array.
+ * @param  {FetchBlobResponse} resp Response data object from RNFB fetch call.
+ * @param  {RNFetchBlobResponseInfo} info Response informations.
+ * @return {Promise<Array>}
+ */
+function readArrayBuffer(resp, info):Promise<Array> {
+  switch (info.rnfbEncode) {
+    case 'path':
+      return resp.readFile('ascii')
+      break
+    default:
+      let buffer = []
+      let str = resp.text()
+      for (let i in str) {
+        buffer[i] = str.charCodeAt(i);
+      }
+      return Promise.resolve(buffer)
+      break
   }
 }
 

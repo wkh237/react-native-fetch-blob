@@ -134,9 +134,8 @@ NSOperationQueue *taskQueue;
     bodyLength = contentLength;
 
     // the session trust any SSL certification
-
-    
     NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
+    // set request timeout
     float timeout = [options valueForKey:@"timeout"] == nil ? -1 : [[options valueForKey:@"timeout"] floatValue];
     if(timeout > 0)
     {
@@ -202,9 +201,7 @@ NSOperationQueue *taskQueue;
     if ([response respondsToSelector:@selector(allHeaderFields)])
     {
         NSDictionary *headers = [httpResponse allHeaderFields];
-        NSString * respCType = [[RNFetchBlobReqBuilder getHeaderIgnoreCases:@"Content-Type"
-                                                               fromHeaders:headers]
-                               lowercaseString];
+        NSString * respCType = [[RNFetchBlobReqBuilder getHeaderIgnoreCases:@"Content-Type" fromHeaders:headers] lowercaseString];
         if(respCType != nil)
         {
             NSArray * extraBlobCTypes = [options objectForKey:CONFIG_EXTRA_BLOB_CTYPE];
@@ -299,12 +296,12 @@ NSOperationQueue *taskQueue;
     if([progressTable valueForKey:taskId] == @YES)
     {
         [self.bridge.eventDispatcher
-         sendDeviceEventWithName:@"RNFetchBlobProgress"
+         sendDeviceEventWithName:EVENT_PROGRESS 
          body:@{
                 @"taskId": taskId,
                 @"written": [NSString stringWithFormat:@"%d", receivedBytes],
                 @"total": [NSString stringWithFormat:@"%d", expectedBytes]
-                }
+            }
          ];
     }
     received = nil;
@@ -376,7 +373,7 @@ NSOperationQueue *taskQueue;
     @synchronized(taskTable, uploadProgressTable, progressTable)
     {
         if([taskTable objectForKey:taskId] == nil)
-            NSLog(@"object released.");
+            NSLog(@"object released by ARC.");
         else
             [taskTable removeObjectForKey:taskId];
         [uploadProgressTable removeObjectForKey:taskId];
@@ -394,7 +391,7 @@ NSOperationQueue *taskQueue;
 {
     if([uploadProgressTable valueForKey:taskId] == @YES) {
         [self.bridge.eventDispatcher
-         sendDeviceEventWithName:@"RNFetchBlobProgress-upload"
+         sendDeviceEventWithName:EVENT_PROGRESS_UPLOAD
          body:@{
                 @"taskId": taskId,
                 @"written": [NSString stringWithFormat:@"%d", totalBytesWritten],

@@ -22,7 +22,7 @@ window.fetch = new RNFetchBlob.polyfill.Fetch({
 const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
-  group : '0.8.2',
+  group : '0.9.0',
   run : true,
   expand : true,
   timeout : 20000,
@@ -63,7 +63,7 @@ describe('#73 unicode response content test', (report, done) => {
 })
 
 describe = RNTest.config({
-  group : '0.8.2',
+  group : '0.9.0',
   run : true,
   expand : true,
   timeout : 24000
@@ -88,7 +88,7 @@ describe('request should not retry after timed out', (report, done) => {
 })
 
 describe = RNTest.config({
-  group : '0.8.2',
+  group : '0.9.0',
   run : true,
   expand : true,
   timeout : 65000
@@ -104,6 +104,5 @@ describe('long live download or upload task won\'t timeout', (report, done) => {
       <Info key={res.text()}/>)
     done()
   })
-
 
 })
