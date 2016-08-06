@@ -128,7 +128,7 @@ export default class Blob extends EventTarget {
       // when content type contains application/octet* or *;base64, RNFetchBlob
       // fs will treat it as BASE64 encoded string binary data
       if(/(application\/octet|\;base64)/i.test(mime))
-        encoding = 'base64+urlencode'
+        encoding = 'base64'
       else
         data = data.toString()
       // create cache file

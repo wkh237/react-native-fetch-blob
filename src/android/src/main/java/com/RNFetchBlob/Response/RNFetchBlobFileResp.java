@@ -2,6 +2,7 @@ package com.RNFetchBlob.Response;
 
 import android.util.Log;
 
+import com.RNFetchBlob.RNFetchBlobConst;
 import com.RNFetchBlob.RNFetchBlobReq;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -79,7 +80,7 @@ public class RNFetchBlobFileResp extends ResponseBody {
                 args.putString("written", String.valueOf(bytesDownloaded));
                 args.putString("total", String.valueOf(contentLength()));
                 rctContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit("RNFetchBlobProgress", args);
+                        .emit(RNFetchBlobConst.EVENT_PROGRESS, args);
             }
             return read;
         }

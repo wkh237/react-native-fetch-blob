@@ -10,7 +10,7 @@ import ProgressEvent from './ProgressEvent.js'
 
 const log = new Log('XMLHttpRequest')
 
-log.level(0)
+log.level(2)
 
 const UNSENT = 0
 const OPENED = 1
@@ -232,7 +232,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   _headerReceived(e) {
-    log.verbose('header received ', this._task.taskId, e)
+    log.debug('header received ', this._task.taskId, e)
     this.responseURL = this._url
     if(e.state === "2") {
       this._responseHeaders = e.headers
@@ -269,7 +269,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     if(statusCode >= 100 && statusCode !== 408) {
       return
     }
-    log.verbose('XMLHttpRequest error', err)
+    log.debug('XMLHttpRequest error', err)
     this._statusText = err
     this._status = String(err).match(/\d+/)
     this._status = this._status ? Math.floor(this.status) : 404
@@ -286,33 +286,35 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   _onDone(resp) {
-    log.verbose('XMLHttpRequest done', this._url, resp)
+    log.debug('XMLHttpRequest done', this._url, resp, this)
     this._statusText = this._status
+    let responseDataReady = () => {
+      this.dispatchEvent('load')
+      this.dispatchEvent('loadend')
+      this._dispatchReadStateChange(XMLHttpRequest.DONE)
+      this.clearEventListeners()
+    }
     if(resp) {
-      switch(resp.type) {
-        case 'base64' :
-          if(this._responseType === 'json') {
-              this._responseText = resp.text()
-              this._response = resp.json()
-          }
-          else {
-            this._responseText = resp.text()
-            this._response = this.responseText
-          }
+      let info = resp.respInfo || {}
+      switch(info.respType) {
+        case 'json' :
+          this._response = resp.json()
+          responseDataReady()
         break;
-        case 'path' :
-          this.response = resp.blob()
+        case 'blob' :
+          resp.blob().then((b) => {
+            this.response = b
+            responseDataReady()
+          })
         break;
         default :
           this._responseText = resp.text()
           this._response = this.responseText
+          responseDataReady()
         break;
       }
-      this.dispatchEvent('load')
-      this.dispatchEvent('loadend')
-      this._dispatchReadStateChange(XMLHttpRequest.DONE)
     }
-    this.clearEventListeners()
+
   }
 
   _dispatchReadStateChange(state) {

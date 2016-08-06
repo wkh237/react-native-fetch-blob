@@ -34,3 +34,8 @@ extern NSString *const FS_EVENT_ERROR = @"error";
 
 extern NSString *const KEY_REPORT_PROGRESS = @"reportProgress";
 extern NSString *const KEY_REPORT_UPLOAD_PROGRESS = @"reportUploadProgress";
+
+// response type
+extern NSString *const RESP_TYPE_BASE64 = @"base64";
+extern NSString *const RESP_TYPE_UTF8 = @"utf8";
+extern NSString *const RESP_TYPE_PATH = @"path";

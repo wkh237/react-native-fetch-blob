@@ -9,10 +9,15 @@ import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     static ReactApplicationContext RCTContext;
+    static LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
+    static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
 
     public RNFetchBlob(ReactApplicationContext reactContext) {
 
@@ -31,17 +36,29 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void createFile(String path, String content, String encode, Callback callback) {
-        RNFetchBlobFS.createFile(path, content, encode, callback);
+    public void createFile(final String path, final String content, final String encode, final Callback callback) {
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS.createFile(path, content, encode, callback);
+            }
+        });
+
     }
 
     @ReactMethod
-    public void createFileASCII(String path, ReadableArray dataArray, Callback callback) {
-        RNFetchBlobFS.createFileASCII(path, dataArray, callback);
+    public void createFileASCII(final String path, final ReadableArray dataArray, final Callback callback) {
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS.createFileASCII(path, dataArray, callback);
+            }
+        });
+
     }
 
     @ReactMethod
-    public void writeArrayChunk(String streamId, ReadableArray dataArray, Callback callback) {
+    public void writeArrayChunk(final String streamId, final ReadableArray dataArray, final Callback callback) {
         RNFetchBlobFS.writeArrayChunk(streamId, dataArray, callback);
     }
 
@@ -61,8 +78,14 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void cp(String path, String dest, Callback callback) {
-        RNFetchBlobFS.cp(path, dest, callback);
+    public void cp(final String path, final String dest, final Callback callback) {
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS.cp(path, dest, callback);
+            }
+        });
+
     }
 
     @ReactMethod
@@ -96,18 +119,34 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void readFile(String path, String encoding, Promise promise) {
-        RNFetchBlobFS.readFile(path, encoding, promise);
+    public void readFile(final String path, final String encoding, final Promise promise) {
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS.readFile(path, encoding, promise);
+            }
+        });
     }
 
     @ReactMethod
-    public void writeFileArray(String path, ReadableArray data, boolean append, Promise promise) {
-        RNFetchBlobFS.writeFile(path, data, append, promise);
+    public void writeFileArray(final String path, final ReadableArray data, final boolean append, final Promise promise) {
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS.writeFile(path, data, append, promise);
+            }
+        });
     }
 
     @ReactMethod
-    public void writeFile(String path, String encoding, String data, boolean append, Promise promise) {
-        RNFetchBlobFS.writeFile(path, encoding, data, append, promise);
+    public void writeFile(final String path, final String encoding, final String data, final boolean append, final Promise promise) {
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS.writeFile(path, encoding, data, append, promise);
+            }
+        });
+
     }
 
     @ReactMethod
@@ -121,21 +160,28 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void scanFile(ReadableArray pairs, Callback callback) {
-        int size = pairs.size();
-        String [] p = new String[size];
-        String [] m = new String[size];
-        for(int i=0;i<size;i++) {
-            ReadableMap pair = pairs.getMap(i);
-            if(pair.hasKey("path")) {
-                p[i] = pair.getString("path");
-                if(pair.hasKey("mime"))
-                    m[i] = pair.getString("mime");
-                else
-                    m[i] = null;
+    public void scanFile(final ReadableArray pairs, final Callback callback) {
+        final ReactApplicationContext ctx = this.getReactApplicationContext();
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                int size = pairs.size();
+                String [] p = new String[size];
+                String [] m = new String[size];
+                for(int i=0;i<size;i++) {
+                    ReadableMap pair = pairs.getMap(i);
+                    if(pair.hasKey("path")) {
+                        p[i] = pair.getString("path");
+                        if(pair.hasKey("mime"))
+                            m[i] = pair.getString("mime");
+                        else
+                            m[i] = null;
+                    }
+                }
+                new RNFetchBlobFS(ctx).scanFile(p, m, callback);
             }
-        }
-        new RNFetchBlobFS(this.getReactApplicationContext()).scanFile(p, m, callback);
+        });
+
     }
 
     @ReactMethod

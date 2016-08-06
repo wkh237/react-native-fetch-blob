@@ -1,6 +1,7 @@
 package com.RNFetchBlob.Response;
 
 import com.RNFetchBlob.RNFetchBlob;
+import com.RNFetchBlob.RNFetchBlobConst;
 import com.RNFetchBlob.RNFetchBlobReq;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -71,7 +72,7 @@ public class RNFetchBlobDefaultResp extends ResponseBody {
                 args.putString("written", String.valueOf(bytesRead));
                 args.putString("total", String.valueOf(contentLength()));
                 rctContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit("RNFetchBlobProgress", args);
+                        .emit(RNFetchBlobConst.EVENT_PROGRESS, args);
             }
             return read;
         }

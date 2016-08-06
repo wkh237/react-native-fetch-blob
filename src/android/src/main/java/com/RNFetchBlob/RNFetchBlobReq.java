@@ -8,7 +8,6 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.util.Base64;
-import android.util.Log;
 
 import com.RNFetchBlob.Response.RNFetchBlobDefaultResp;
 import com.RNFetchBlob.Response.RNFetchBlobFileResp;
@@ -21,9 +20,7 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +32,6 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -50,9 +46,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.FormBody;
-import okhttp3.internal.framed.Header;
-import okhttp3.internal.http.OkHeaders;
 
 /**
  * Created by wkh237 on 2016/6/21.
@@ -333,10 +326,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     // check if this error caused by socket timeout
                     if(e.getClass().equals(SocketTimeoutException.class)) {
                         respInfo.putBoolean("timeout", true);
-                        callback.invoke("request timed out.", respInfo, null);
+                        callback.invoke("request timed out.", null, null);
                     }
                     else
-                        callback.invoke(e.getLocalizedMessage(), respInfo, null);
+                        callback.invoke(e.getLocalizedMessage(), null, null);
                     removeTaskInfo();
                 }
 
@@ -408,8 +401,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         ins.close();
                         os.flush();
                         os.close();
-                        callback.invoke(null, null, dest);
+                        callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, dest);
                     }
+                    // response data directly pass to JS context as string.
                     else {
                         // #73 Check if the response data contains valid UTF8 string, since BASE64
                         // encoding will somehow break the UTF8 string format, to encode UTF8
@@ -418,14 +412,15 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
                         try {
                             encoder.encode(ByteBuffer.wrap(b).asCharBuffer());
-                            // if the data can be encoded to UTF8 append URL encode
-                            b = URLEncoder.encode(new String(b), "UTF-8").replace("+", "%20").getBytes();
+                            // if the data contains invalid characters the following lines will be
+                            // skipped.
+                            String utf8 = new String(b);
+                            callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, utf8);
                         }
                         // This usually mean the data is contains invalid unicode characters, it's
                         // binary data
-                        catch(CharacterCodingException ignored) {}
-                        finally {
-                            callback.invoke(null, null, android.util.Base64.encodeToString(b, Base64.NO_WRAP));
+                        catch(CharacterCodingException ignored) {
+                            callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_BASE64, android.util.Base64.encodeToString(b, Base64.NO_WRAP));
                         }
                     }
                 } catch (IOException e) {
@@ -439,11 +434,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     // and write response data to destination path.
                     resp.body().bytes();
                 } catch (Exception ignored) {}
-                callback.invoke(null, null, this.destPath);
+                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
                 break;
             default:
                 try {
-                    callback.invoke(null, null, new String(resp.body().bytes(), "UTF-8"));
+                    callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, new String(resp.body().bytes(), "UTF-8"));
                 } catch (IOException e) {
                     callback.invoke("RNFetchBlob failed to encode response data to UTF8 string.", null);
                 }
@@ -472,6 +467,12 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         return uploadProgressReport.get(taskId);
     }
 
+    /**
+     * Create response information object, conatins status code, headers, etc.
+     * @param resp
+     * @param isBlobResp
+     * @return
+     */
     private WritableMap getResponseInfo(Response resp, boolean isBlobResp) {
         WritableMap info = Arguments.createMap();
         info.putInt("status", resp.code());
@@ -499,6 +500,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         return info;
     }
 
+    /**
+     * Check if response data is binary data.
+     * @param resp OkHttp response.
+     * @return
+     */
     private boolean isBlobResponse(Response resp) {
         Headers h = resp.headers();
         String ctype = getHeaderIgnoreCases(h, "Content-Type");

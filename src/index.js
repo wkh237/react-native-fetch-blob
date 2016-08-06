@@ -87,6 +87,8 @@ function wrap(path:string):string {
  *                   If it exists, the absolute path is returned (no network
  *                   activity takes place )
  *                   If it doesn't exist, the file is downloaded as usual
+ *         @property {number} timeout
+ *                   Request timeout in millionseconds, by default it's 30000ms.
  *
  * @return {function} This method returns a `fetch` method instance.
  */
@@ -146,9 +148,20 @@ function fetch(...args:any):Promise {
 
     let req = RNFetchBlob[nativeMethodName]
 
-    req(options, taskId, method, url, headers || {}, body, (err, unsused, data) => {
+    /**
+     * Send request via native module, the response callback accepts three arguments
+     * @callback
+     * @param err {any} Error message or object, when the request success, this
+     *                  parameter should be `null`.
+     * @param rawType { 'utf8' | 'base64' | 'path'} RNFB request will be stored
+     *                  as UTF8 string, BASE64 string, or a file path reference
+     *                  in JS context, and this parameter indicates which one
+     *                  dose the response data presents.
+     * @param data {string} Response data or its reference.
+     */
+    req(options, taskId, method, url, headers || {}, body, (err, rawType, data) => {
 
-      // task done, remove event listener
+      // task done, remove event listeners
       subscription.remove()
       subscriptionUpload.remove()
       stateEvent.remove()
@@ -156,15 +169,13 @@ function fetch(...args:any):Promise {
       if(err)
         reject(new Error(err, respInfo))
       else {
-        let rnfbEncode = 'base64'
-        // response data is saved to storage
+        // response data is saved to storage, create a session for it
         if(options.path || options.fileCache || options.addAndroidDownloads
           || options.key || options.auto && respInfo.respType === 'blob') {
-          rnfbEncode = 'path'
           if(options.session)
             session(options.session).add(data)
         }
-        respInfo.rnfbEncode = rnfbEncode
+        respInfo.rnfbEncode = rawType
         resolve(new FetchBlobResponse(taskId, respInfo, data))
       }
 
@@ -208,7 +219,7 @@ class FetchBlobResponse {
 
   taskId : string;
   path : () => string | null;
-  type : 'base64' | 'path';
+  type : 'base64' | 'path' | 'utf8';
   data : any;
   blob : (contentType:string, sliceSize:number) => null;
   text : () => string;
@@ -236,22 +247,19 @@ class FetchBlobResponse {
      * @return {Promise<Blob>} Return a promise resolves Blob object.
      */
     this.blob = ():Promise<Blob> => {
+      let Blob = polyfill.Blob
+      let cType = info.headers['Content-Type'] || info.headers['content-type']
       return new Promise((resolve, reject) => {
-        if(this.type === 'base64') {
-          try {
-            let b = new polyfill.Blob(this.data, 'application/octet-stream;BASE64')
-            b.onCreated(() => {
-              resolve(b)
-            })
-          } catch(err) {
-            reject(err)
-          }
-        }
-        else {
-          polyfill.Blob.build(wrap(this.data))
-          .then((b) => {
-            resolve(b)
-          })
+        switch(this.type) {
+          case 'base64':
+            Blob.build(this.data, { type : cType + ';BASE64' }).then(resolve)
+          break
+          case 'path':
+            polyfill.Blob.build(wrap(this.data), { type : cType }).then(resolve)
+          break
+          default:
+            polyfill.Blob.build(this.data, { type : 'text/plain' }).then(resolve)
+          break
         }
       })
     }
@@ -261,37 +269,52 @@ class FetchBlobResponse {
      */
     this.text = ():string => {
       let res = this.data
-      try {
-        res = base64.decode(this.data)
-        res = decodeURIComponent(res)
-      } catch(err) {
-        console.warn(err)
-        res = ''
+      switch(this.type) {
+        case 'base64':
+          return base64.decode(this.data)
+        break
+        case 'path':
+          return fs.readFile(this.data, 'utf8')
+        break
+        default:
+          return this.data
+        break
       }
-      return res
     }
     /**
      * Convert result to JSON object.
      * @return {object} Parsed javascript object.
      */
     this.json = ():any => {
-      let res = this.data
-      try {
-        res = base64.decode(this.data)
-        res = decodeURIComponent(res)
-        res = JSON.parse(res)
-      } catch(err) {
-        console.warn(err)
-        res = {}
+      switch(this.type) {
+        case 'base64':
+          return JSON.parse(base64.decode(this.data))
+        break
+        case 'path':
+          return fs.readFile(this.data, 'utf8')
+                   .then((text) => Promise.resolve(JSON.parse(text)))
+        break
+        default:
+          return JSON.parse(this.data)
+        break
       }
-      return res
     }
     /**
      * Return BASE64 string directly.
      * @return {string} BASE64 string of response body.
      */
     this.base64 = ():string => {
-      return this.data
+      switch(this.type) {
+        case 'base64':
+          return this.data
+        break
+        case 'path':
+          return fs.readFile(this.data, 'base64')
+        break
+        default:
+          return base64.encode(this.data)
+        break
+      }
     }
     /**
      * Remove cahced file
@@ -299,7 +322,7 @@ class FetchBlobResponse {
      */
     this.flush = () => {
       let path = this.path()
-      if(!path)
+      if(!path || this.type !== 'path')
         return
       return unlink(path)
     }
@@ -312,6 +335,7 @@ class FetchBlobResponse {
         return this.data
       return null
     }
+
     this.session = (name:string):RNFetchBlobSession | null => {
       if(this.type === 'path')
         return session(name).add(this.data)

@@ -40,6 +40,11 @@ extern NSString *const FS_EVENT_ERROR;
 extern NSString *const KEY_REPORT_PROGRESS;
 extern NSString *const KEY_REPORT_UPLOAD_PROGRESS;
 
+// response type
+extern NSString *const RESP_TYPE_BASE64;
+extern NSString *const RESP_TYPE_UTF8;
+extern NSString *const RESP_TYPE_PATH;
+
 
 
 #endif /* RNFetchBlobConst_h */

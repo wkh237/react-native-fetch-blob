@@ -133,9 +133,7 @@ function readText(resp, info):Promise<string> {
       return Promise.resolve(resp.text())
       break
     case 'path':
-      return resp.readFile('utf8').then((data) => {
-        return Promise.resolve(data)
-      })
+      return resp.text()
       break
     default:
       return Promise.resolve(resp.text())
@@ -152,15 +150,7 @@ function readText(resp, info):Promise<string> {
  */
 function readBlob(resp, info):Promise<Blob> {
   log.verbose('readBlob', resp, info)
-  let cType = info.headers['Content-Type']
-  switch (info.rnfbEncode) {
-    case 'base64':
-      return Blob.build(resp.data, { type : `${cType};BASE64` })
-    case 'path':
-      return Blob.build(RNFetchBlob.wrap(resp.data), { type : `${cType}`})
-    default:
-      return Blob.build(resp.data, { type : `${cType}`})
-  }
+  return resp.blob()
 }
 
 /**
@@ -175,10 +165,8 @@ function readJSON(resp, info):Promise<object> {
     case 'base64':
       return Promise.resolve(resp.json())
     case 'path':
-      return resp.readFile('utf8').then((data) => {
-        return Promise.resolve(JSON.parse(data))
-      })
+      return resp.json()
     default:
-      return Promise.resolve(JSON.parse(resp.data))
+      return Promise.resolve(resp.json())
   }
 }

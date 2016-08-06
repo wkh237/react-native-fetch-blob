@@ -323,6 +323,7 @@ NSOperationQueue *taskQueue;
     self.error = error;
     NSString * errMsg = [NSNull null];
     NSString * respStr = [NSNull null];
+    NSString * rnfbRespType = @"";
     
     [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
     
@@ -345,6 +346,7 @@ NSOperationQueue *taskQueue;
         if(respFile == YES)
         {
             [writeStream close];
+            rnfbRespType = RESP_TYPE_PATH;
             respStr = destPath;
         }
         // base64 response
@@ -353,19 +355,23 @@ NSOperationQueue *taskQueue;
             // when response type is BASE64, we should first try to encode the response data to UTF8 format
             // if it turns out not to be `nil` that means the response data contains valid UTF8 string,
             // in order to properly encode the UTF8 string, use URL encoding before BASE64 encoding.
-            NSString * urlEncoded = [[[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding]
-                                     stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-            NSString * base64 = @"";
-            if(urlEncoded != nil)
-                base64 = [[urlEncoded dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+            NSString * utf8 = [[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding];
+            
+            if(utf8 != nil)
+            {
+                rnfbRespType = RESP_TYPE_UTF8;
+                respStr = utf8;
+            }
             else
-                base64 = [respData base64EncodedStringWithOptions:0];
-            respStr = base64;
+            {
+                rnfbRespType = RESP_TYPE_BASE64;
+                respStr = [respData base64EncodedStringWithOptions:0];
+            }
             
         }
     }
     
-    callback(@[ errMsg, respInfo, respStr ]);
+    callback(@[ errMsg, rnfbRespType, respStr]);
     
     @synchronized(taskTable, uploadProgressTable, progressTable)
     {
