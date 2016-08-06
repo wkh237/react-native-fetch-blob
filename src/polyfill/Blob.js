@@ -281,7 +281,7 @@ function createMixedBlobData(ref, dataArray) {
       return fs.appendFile.call(this, ...p)
     })
     return Promise.all(promises).then((sizes) => {
-      console.log('blob write size', sizes)
+      log.verbose('blob write size', sizes)
       for(let i in sizes) {
         size += sizes[i]
       }

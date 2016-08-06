@@ -77,7 +77,6 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     static HashMap<String, Boolean> uploadProgressReport = new HashMap<>();
     static ConnectionPool pool = new ConnectionPool();
 
-    MediaType contentType = RNFetchBlobConst.MIME_OCTET;
     ReactApplicationContext ctx;
     RNFetchBlobConfig options;
     String taskId;
@@ -94,8 +93,6 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     ResponseType responseType;
     WritableMap respInfo;
     boolean timeout = false;
-    public boolean reportProgress = false;
-    public boolean reportUploadProgress = false;
 
     public RNFetchBlobReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, final Callback callback) {
         this.method = method.toUpperCase();
@@ -398,8 +395,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             case KeepInMemory:
                 try {
                     // For XMLHttpRequest, automatic response data storing strategy, when response
-                    // header is not `application/json` or `text/plain`, write response data to
-                    // file system.
+                    // data is considered as binary data, write it to file system
                     if(isBlobResp && options.auto == true) {
                         String dest = RNFetchBlobFS.getTmpPath(ctx, taskId);
                         InputStream ins = resp.body().byteStream();
@@ -418,7 +414,6 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         // #73 Check if the response data contains valid UTF8 string, since BASE64
                         // encoding will somehow break the UTF8 string format, to encode UTF8
                         // string correctly, we should do URL encoding before BASE64.
-                        String utf8Str;
                         byte[] b = resp.body().bytes();
                         CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
                         try {
@@ -426,10 +421,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                             // if the data can be encoded to UTF8 append URL encode
                             b = URLEncoder.encode(new String(b), "UTF-8").replace("+", "%20").getBytes();
                         }
-                        // This usually mean the data is binary data
-                        catch(CharacterCodingException e) {
-
-                        }
+                        // This usually mean the data is contains invalid unicode characters, it's
+                        // binary data
+                        catch(CharacterCodingException ignored) {}
                         finally {
                             callback.invoke(null, null, android.util.Base64.encodeToString(b, Base64.NO_WRAP));
                         }
@@ -439,14 +433,12 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
                 break;
             case FileStorage:
-                try{
+                try {
                     // In order to write response data to `destPath` we have to invoke this method.
                     // It uses customized response body which is able to report download progress
                     // and write response data to destination path.
                     resp.body().bytes();
-                } catch (Exception ignored) {
-
-                }
+                } catch (Exception ignored) {}
                 callback.invoke(null, null, this.destPath);
                 break;
             default:
