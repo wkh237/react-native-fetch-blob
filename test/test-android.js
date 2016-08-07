@@ -173,3 +173,26 @@ describe('APK downloaded from Download Manager should correct', (report, done) =
   })
 
 })
+
+// issue #74
+describe('download file to specific location using DownloadManager', (report, done) => {
+  let dest = dirs.DCIMDir + '/android-download-test-' +Date.now() + '.png'
+  RNFetchBlob.config({
+    addAndroidDownloads : {
+      useDownloadManager : true,
+      path : dest,
+      mime : 'image/png',
+      title : 'android-download-path-test.png',
+      description : 'download to specific path #74'
+    }
+  })
+  .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+  .then((res) => fs.stat(res.path()))
+  .then((stat) => {
+    report(
+      <Assert key="file exists at the path"
+        expect={true} actual={true}/>,
+      <Assert key="file size correct"
+        expect="23975" actual={stat.size}/>)
+    done()
+  })

@@ -127,12 +127,14 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 Uri uri = Uri.parse(url);
                 DownloadManager.Request req = new DownloadManager.Request(uri);
                 req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-
-                if (options.addAndroidDownloads.hasKey("title")) {
+                if(options.addAndroidDownloads.hasKey("title")) {
                     req.setTitle(options.addAndroidDownloads.getString("title"));
                 }
-                if (options.addAndroidDownloads.hasKey("description")) {
+                if(options.addAndroidDownloads.hasKey("description")) {
                     req.setDescription(options.addAndroidDownloads.getString("description"));
+                }
+                if(options.addAndroidDownloads.hasKey("path")) {
+                    req.setDestinationUri(Uri.parse("file://" + options.addAndroidDownloads.getString("path")));
                 }
                 // set headers
                 ReadableMapKeySetIterator it = headers.keySetIterator();
@@ -558,14 +560,28 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     String contentUri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
                     Uri uri = Uri.parse(contentUri);
                     Cursor cursor = appCtx.getContentResolver().query(uri, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
+                    // use default destination of DownloadManager
                     if (cursor != null) {
                         cursor.moveToFirst();
                         String filePath = cursor.getString(0);
                         cursor.close();
                         this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
                     }
-                    else
-                        this.callback.invoke(null, null, null);
+                    // custom destination
+                    else {
+                        if(options.addAndroidDownloads.hasKey("path")) {
+                            try {
+                                String customDest = options.addAndroidDownloads.getString("path");
+                                boolean exists = new File(customDest).exists();
+                                if(!exists)
+                                    throw new Exception("Download manager download failed, the file does not downloaded to destination.");
+                                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, customDest);
+
+                            } catch(Exception ex) {
+                                this.callback.invoke(ex.getLocalizedMessage(), null, null);
+                            }
+                        }
+                    }
                 }
             }
         }
