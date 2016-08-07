@@ -106,7 +106,6 @@ describe('android download manager', (report, done) => {
     report(
       <Assert key="download manager complete handler" expect={true} actual={true}/>
     )
-    console.log('woo',resp)
     return resp.readStream('ascii')
   })
   .then((stream) => {
@@ -125,4 +124,52 @@ describe('android download manager', (report, done) => {
       done()
     })
   })
+})
+
+describe('open a file from intent', (report, done) => {
+  let url  = null
+  RNFetchBlob.config({
+    addAndroidDownloads : {
+      useDownloadManager : true,
+      title : 'test-image',
+      description : 'open it from intent !',
+      mime : 'image/png',
+      mediaScannable : true,
+      notification : true,
+    }
+  })
+  .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+  .then((res) => {
+    let sendIntent = RNFetchBlob.android.actionViewIntent
+    return sendIntent(res.path(), 'image/png')
+  })
+  .then(() => {
+    done()
+  })
+})
+
+// #75
+describe('APK downloaded from Download Manager should correct', (report, done) => {
+
+  let url  = null
+
+  RNFetchBlob.config({
+    addAndroidDownloads : {
+      useDownloadManager : true,
+      title : 'test-APK',
+      description : 'apk install file',
+      mime : 'application/vnd.android.package-archive',
+      mediaScannable : true,
+      notification : true,
+    }
+  })
+  .fetch('GET', `${TEST_SERVER_URL}/public/apk-dummy.apk`)
+  .then((res) => {
+    let sendIntent = RNFetchBlob.android.actionViewIntent
+    return sendIntent(res.path(), 'application/vnd.android.package-archive')
+  })
+  .then(() => {
+    done()
+  })
+
 })
