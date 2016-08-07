@@ -676,6 +676,7 @@ If you're going to concatenate files, you don't have to read the data to JS cont
 
 | Version | |
 |---|---|
+| 0.8.2 | Fix Android RN 0.31 installation issue #78 |
 | 0.8.1 | Remove Web API log and fix ios progress report function. |
 | 0.8.0 | Added Web API polyfills, support regular request, added timeout option. |
 | 0.7.5 | Fix installation script that make it compatible to react-native < 0.28 |
