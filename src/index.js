@@ -20,6 +20,7 @@ import fs from './fs'
 import getUUID from './utils/uuid'
 import base64 from 'base-64'
 import polyfill from './polyfill'
+import android from './android'
 const {
   RNFetchBlobSession,
   readStream,
@@ -35,6 +36,7 @@ const {
   mv,
   cp
 } = fs
+
 
 const Blob = polyfill.Blob
 const emitter = DeviceEventEmitter
@@ -383,6 +385,7 @@ class FetchBlobResponse {
 export default {
   fetch,
   base64,
+  android,
   config,
   session,
   fs,

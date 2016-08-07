@@ -562,7 +562,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         cursor.moveToFirst();
                         String filePath = cursor.getString(0);
                         cursor.close();
-                        this.callback.invoke(null, null, filePath);
+                        this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
                     }
                     else
                         this.callback.invoke(null, null, null);

@@ -1,5 +1,8 @@
 package com.RNFetchBlob;
 
+import android.content.Intent;
+import android.net.Uri;
+
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -44,6 +47,20 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             }
         });
 
+    }
+
+    @ReactMethod
+    public void actionViewIntent(String path, String mime, Promise promise) {
+        try {
+            Intent intent= new Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(Uri.parse("file://" + path), mime);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            this.getReactApplicationContext().startActivity(intent);
+            promise.resolve(null);
+        } catch(Exception ex) {
+            promise.reject(ex.getLocalizedMessage());
+        }
     }
 
     @ReactMethod
