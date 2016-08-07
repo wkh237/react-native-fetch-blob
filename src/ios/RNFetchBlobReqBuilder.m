@@ -119,6 +119,11 @@
                     // when content-type is application/octet* decode body string using BASE64 decoder
                     if([[cType lowercaseString] hasPrefix:@"application/octet"] || [[cType lowercaseString] containsString:@";base64"])
                     {
+                        __block NSString * ncType = [[cType stringByReplacingOccurrencesOfString:@";base64" withString:@""]stringByReplacingOccurrencesOfString:@";BASE64" withString:@""];
+                        if([mheaders valueForKey:@"content-type"] != nil)
+                            [mheaders setValue:ncType forKey:@"content-type"];
+                        if([mheaders valueForKey:@"Content-Type"] != nil)
+                            [mheaders setValue:ncType forKey:@"Content-Type"];
                         blobData = [[NSData alloc] initWithBase64EncodedString:body options:0];
                         [request setHTTPBody:blobData];
                         size = [blobData length];

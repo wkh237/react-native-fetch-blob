@@ -47,6 +47,10 @@ class RNFetchBlobFetchPolyfill {
         // When request body is a Blob, use file URI of the Blob as request body.
         else if (body.isRNFetchBlobPolyfill)
           promise = Promise.resolve(RNFetchBlob.wrap(body.blobPath))
+        else if (typeof body !== 'object')
+          promise = Promise.resolve(JSON.stringify(body))
+        else if (typeof body !== 'string')
+          promise = Promise.resolve(body.toString())
         // send it as-is, leave the native module decide how to send the body.
         else
           promise = Promise.resolve(body)

@@ -94,7 +94,7 @@ public class RNFetchBlobBody extends RequestBody{
             String header = "--" + boundary + "\r\n";
             if (field.filename != null) {
                 header += "Content-Disposition: form-data; name=" + name + "; filename=" + field.filename + "\r\n";
-                header += "Content-Type: " + field.mime+ "\r\n\r\n";
+                header += "Content-Type: " + field.mime + "\r\n\r\n";
                 sink.write(header.getBytes());
                 // file field header end
                 // upload from storage
