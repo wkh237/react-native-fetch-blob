@@ -43,9 +43,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.FormBody;
-import okhttp3.internal.framed.Header;
-import okhttp3.internal.http.OkHeaders;
+
 
 /**
  * Created by wkh237 on 2016/6/21.
