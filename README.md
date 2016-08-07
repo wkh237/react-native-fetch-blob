@@ -61,7 +61,7 @@ Open `android/settings.gradle`, and add these lines which will app RNFetchBlob A
 ```diff
 include ':app'      
 + include ':react-native-fetch-blob'                                                                                                  
-+ project(':react-native-fetch-blob').projectDir = new File(rootProject.projectDir,' ../node_modules/react-native-fetch-blob/android')                        
++ project(':react-native-fetch-blob').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-fetch-blob/android')                        
 ```
 
 Add this line to `MainApplication.java`, so that RNFetchBlob package becomes part of react native package.
