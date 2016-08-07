@@ -679,7 +679,7 @@ RNFetchBlob.config({
 
 ### Web API Polyfills
 
-After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/react-native-fetch-blob/wiki/Web-API-Polyfills-(work-in-progress)) that makes some browser-based library available in RN.
+After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/react-native-fetch-blob/wiki/Web-API-Polyfills-(experimental)) that makes some browser-based library available in RN.
 
 - Blob
 - XMLHttpRequest (Use our implementation if you're going to use it with Blob)
