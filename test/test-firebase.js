@@ -61,89 +61,89 @@ describe('firebase login', (report, done) => {
   })
 })
 
-describe('upload file to firebase', (report, done) => {
-
-  // create Blob from BASE64 data
-  let blob = new Blob(RNTest.prop('image'), { type : 'image/png;BASE64'})
-  let testImage = `firebase-test-${Platform.OS}-${Date.now()}.png`
-  RNTest.prop('firebase-image', testImage)
-  // start test after Blob created
-  blob.onCreated(() => {
-    let storage = firebase.storage().ref('rnfbtest')
-    let task = storage
-      .child(RNTest.prop('firebase-image'))
-      .put(blob, { contentType : 'image/png' })
-      .then((snapshot) => {
-        console.log(snapshot.metadata)
-        report(<Assert key="upload success"
-          expect={true}
-          actual={true}/>,
-        <Info key="uploaded file stat" >
-          <Text>{snapshot.totalBytes}</Text>
-          <Text>{JSON.stringify(snapshot.metadata)}</Text>
-        </Info>)
-        done()
-      })
-  })
-})
-
-describe('download firebase storage item', (report, done) => {
-  let storage = firebase.storage().ref('rnfbtest/' + RNTest.prop('firebase-image'))
-  storage.getDownloadURL().then((url) => {
-    console.log(url)
-    report(<Info key="image viewer">
-      <Image style={styles.image} source={{uri : url}}/>
-    </Info>)
-    done()
-  })
-})
-
-let tier2FileName = `firebase-test-${Platform.OS}-github2.jpg`
-
-describe('upload using file path', (report, done) => {
-  RNFetchBlob
-    .config({ fileCache : true, appendExt : 'jpg' })
-    .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
-    .then((resp) => {
-      report(<Info key="test image">
-        <Image style={styles.image} source={{uri : prefix + resp.path()}}/>
-      </Info>)
-      let blob = new Blob(RNFetchBlob.wrap(resp.path()), { type : 'image/jpg' })
-      blob.onCreated(() => {
-        firebase.storage().ref('rnfbtest')
-          .child(tier2FileName)
-          .put(blob, { contentType : 'image/jpg' })
-          .then(() => {
-            report(<Assert key="upload finished" />)
-            done()
-          })
-      })
-    })
-})
-
-let directURL = null
-
-describe('verify uploaded file', (report, done) => {
-  firebase.storage().ref('rnfbtest/' + tier2FileName)
-    .getDownloadURL()
-    .then((url) => {
-      directURL = url
-      report(
-        <Info key="image viewer">
-          <Image style={styles.image} source={{uri : url}}/>
-        </Info>)
-      done()
-    })
-})
-
-describe('download to base64', (report, done) => {
-  RNFetchBlob.fetch('GET', directURL).then((resp) => {
-    report(
-      <Info key="image data">
-        <Image
-          style={styles.image}
-          source={{uri : 'data:image/jpg;base64 ,'+ resp.base64()}}/>
-      </Info>)
-    done()
-  })
-})
+// describe('upload file to firebase', (report, done) => {
+//
+//   // create Blob from BASE64 data
+//   let blob = new Blob(RNTest.prop('image'), { type : 'image/png;BASE64'})
+//   let testImage = `firebase-test-${Platform.OS}-${Date.now()}.png`
+//   RNTest.prop('firebase-image', testImage)
+//   // start test after Blob created
+//   blob.onCreated(() => {
+//     let storage = firebase.storage().ref('rnfbtest')
+//     let task = storage
+//       .child(RNTest.prop('firebase-image'))
+//       .put(blob, { contentType : 'image/png' })
+//       .then((snapshot) => {
+//         console.log(snapshot.metadata)
+//         report(<Assert key="upload success"
+//           expect={true}
+//           actual={true}/>,
+//         <Info key="uploaded file stat" >
+//           <Text>{snapshot.totalBytes}</Text>
+//           <Text>{JSON.stringify(snapshot.metadata)}</Text>
+//         </Info>)
+//         done()
+//       })
+//   })
+// })
+//
+// describe('download firebase storage item', (report, done) => {
+//   let storage = firebase.storage().ref('rnfbtest/' + RNTest.prop('firebase-image'))
+//   storage.getDownloadURL().then((url) => {
+//     console.log(url)
+//     report(<Info key="image viewer">
+//       <Image style={styles.image} source={{uri : url}}/>
+//     </Info>)
+//     done()
+//   })
+// })
+//
+// let tier2FileName = `firebase-test-${Platform.OS}-github2.jpg`
+//
+// describe('upload using file path', (report, done) => {
+//   RNFetchBlob
+//     .config({ fileCache : true, appendExt : 'jpg' })
+//     .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
+//     .then((resp) => {
+//       report(<Info key="test image">
+//         <Image style={styles.image} source={{uri : prefix + resp.path()}}/>
+//       </Info>)
+//       let blob = new Blob(RNFetchBlob.wrap(resp.path()), { type : 'image/jpg' })
+//       blob.onCreated(() => {
+//         firebase.storage().ref('rnfbtest')
+//           .child(tier2FileName)
+//           .put(blob, { contentType : 'image/jpg' })
+//           .then(() => {
+//             report(<Assert key="upload finished" />)
+//             done()
+//           })
+//       })
+//     })
+// })
+//
+// let directURL = null
+//
+// describe('verify uploaded file', (report, done) => {
+//   firebase.storage().ref('rnfbtest/' + tier2FileName)
+//     .getDownloadURL()
+//     .then((url) => {
+//       directURL = url
+//       report(
+//         <Info key="image viewer">
+//           <Image style={styles.image} source={{uri : url}}/>
+//         </Info>)
+//       done()
+//     })
+// })
+//
+// describe('download to base64', (report, done) => {
+//   RNFetchBlob.fetch('GET', directURL).then((resp) => {
+//     report(
+//       <Info key="image data">
+//         <Image
+//           style={styles.image}
+//           source={{uri : 'data:image/jpg;base64 ,'+ resp.base64()}}/>
+//       </Info>)
+//     done()
+//   })
+// })

@@ -196,3 +196,4 @@ describe('download file to specific location using DownloadManager', (report, do
         expect="23975" actual={stat.size}/>)
     done()
   })
+})
