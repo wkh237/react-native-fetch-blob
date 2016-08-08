@@ -179,9 +179,14 @@ public class RNFetchBlobBody extends RequestBody{
                 }
             }
         } else {
-            byte[] bytes = Base64.decode(rawBody, 0);
-            contentLength = bytes.length;
-            requestStream = new ByteArrayInputStream(bytes);
+            try {
+                byte[] bytes = Base64.decode(rawBody, 0);
+                contentLength = bytes.length;
+                requestStream = new ByteArrayInputStream(bytes);
+            } catch(Exception ex) {
+
+                Log.e("error", ex.getLocalizedMessage());
+            }
         }
         if(requestStream != null)
             pipeStreamToSink(requestStream, sink);
