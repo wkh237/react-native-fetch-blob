@@ -9,6 +9,7 @@ A project committed to make file acess and data transfer easier, effiecient for 
 - File stream support for dealing with large file
 - Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN (experimental)
 
+
 ## TOC
 * [About](#user-content-about)
 * [Installation](#user-content-installation)
@@ -37,6 +38,7 @@ A project committed to make file acess and data transfer easier, effiecient for 
 This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854), because React Native lack of `Blob` implementation and it will cause some problem when transfering binary data. Now, this project is committed to make file access and transfer more easier, effiecient for React Native developers. We've implemented highly customizable filesystem and network module which plays well together. For example, upload and download data directly from/to storage which is much more efficient in some cases(especially for large ones). The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
 
 In `0.8.0` we introduced experimential Web API polyfills that make it possible to use browser-based libraries in React Native, for example, [FireBase JS SDK](https://github.com/wkh237/rn-firebase-storage-upload-sample)
+
 
 ## Installation
 
@@ -493,6 +495,38 @@ RNFetchBlob.config({
 .then(...)
 ```
 
+**Open Downloaded File with Intent**
+
+This is a new feature added in `0.9.0`, if you're going to open a file path using official [Linking](https://facebook.github.io/react-native/docs/linking.html) API that might not work as expected, also, if you're going to install an APK in `Downloads` app, that will not work too. As an alternative, you can try `actionViewIntent` API, which will send an ACTION_VIEW intent for you which uses the given `MIME` type.
+
+Download and install an APK programatically
+
+```js
+
+const android = RNFetchBlob.android
+
+RNFetchBlob.config({
+    addAndroidDownloads : {
+      useDownloadManager : true,
+      title : 'awesome.apk',
+      description : 'An APK that will be installed',
+      mime : 'application/vnd.android.package-archive',
+      mediaScannable : true,
+      notification : true,
+    }
+  })
+  .fetch('GET', `http://www.example.com/awesome.apk`)
+  .then((res) => {
+      android.actionViewIntent(res.path(), 'application/vnd.android.package-archive')
+  })
+```
+
+Or show an image in image viewer
+
+```js
+      android.actionViewIntent(PATH_OF_IMG, 'image/png')
+```
+
 ### File System
 
 #### File Access
@@ -645,7 +679,7 @@ RNFetchBlob.config({
 
 ### Web API Polyfills
 
-After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/react-native-fetch-blob/wiki/Web-API-Polyfills-(work-in-progress)) that makes some browser-based library available in RN.
+After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/react-native-fetch-blob/wiki/Web-API-Polyfills-(experimental)) that makes some browser-based library available in RN.
 
 - Blob
 - XMLHttpRequest (Use our implementation if you're going to use it with Blob)
@@ -676,7 +710,7 @@ If you're going to concatenate files, you don't have to read the data to JS cont
 
 | Version | |
 |---|---|
-| 0.8.2 | Fix Android RN 0.31 installation issue #78 |
+| 0.9.0 | Fix unicode response data format issue #73. Improve Android performance by using thread pool instead of async task. Add Fetch replacement #70. Add Android only API `actionViewIntent` to open file or install APK in app |
 | 0.8.1 | Remove Web API log and fix ios progress report function. |
 | 0.8.0 | Added Web API polyfills, support regular request, added timeout option. |
 | 0.7.5 | Fix installation script that make it compatible to react-native < 0.28 |
