@@ -1,4 +1,4 @@
-# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]()
+# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]()
 
 A project committed to make file acess and data transfer easier, effiecient for React Native developers.
 
@@ -7,7 +7,7 @@ A project committed to make file acess and data transfer easier, effiecient for 
 - File API supports normal files, Asset files, and CameraRoll files
 - Native-to-native file manipulation API, reduce JS bridging performance loss
 - File stream support for dealing with large file
-- Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN
+- Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN (experimental)
 
 ## TOC
 * [About](#user-content-about)
@@ -61,7 +61,7 @@ Open `android/settings.gradle`, and add these lines which will app RNFetchBlob A
 ```diff
 include ':app'      
 + include ':react-native-fetch-blob'                                                                                                  
-+ project(':react-native-fetch-blob').projectDir = new File(rootProject.projectDir,' ../node_modules/react-native-fetch-blob/android')                        
++ project(':react-native-fetch-blob').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-fetch-blob/android')                        
 ```
 
 Add this line to `MainApplication.java`, so that RNFetchBlob package becomes part of react native package.
@@ -654,7 +654,7 @@ After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/reac
 
 ---
 
-**Reduce RCT Bridge Overhead and BASE64 Time**
+**Reduce RCT Bridge and BASE64 Overheard**
 
 React Native connects JS and Native context by passing JSON through React bridge, therefore there will be an overhead to convert data before they sent. When data is large, this will be quite a performance impact to your app, it's recommended to use file storage instead of BASE64 if possible. The following chart shows how much faster when loading data from storage than BASE64 encoded string on iphone 6.
 
@@ -676,6 +676,7 @@ If you're going to concatenate files, you don't have to read the data to JS cont
 
 | Version | |
 |---|---|
+| 0.8.2 | Fix Android RN 0.31 installation issue #78 |
 | 0.8.1 | Remove Web API log and fix ios progress report function. |
 | 0.8.0 | Added Web API polyfills, support regular request, added timeout option. |
 | 0.7.5 | Fix installation script that make it compatible to react-native < 0.28 |

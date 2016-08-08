@@ -11,7 +11,7 @@ import ProgressEvent from './ProgressEvent.js'
 const log = new Log('XMLHttpRequest')
 
 log.disable()
-// log.level(2)
+// log.level(3)
 
 const UNSENT = 0
 const OPENED = 1
@@ -39,7 +39,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   _responseXML : null = '';
   _status : number = 0;
   _statusText : string = '';
-  _timeout : number = 0;
+  _timeout : number = 60000;
   _sendFlag : boolean = false;
   _uploadStarted : boolean = false;
 
@@ -299,11 +299,13 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
       let info = resp.respInfo || {}
       switch(info.respType) {
         case 'json' :
+          this._responseText = resp.text()
           this._response = resp.json()
           responseDataReady()
         break;
         case 'blob' :
           resp.blob().then((b) => {
+            this._responseText = resp.text()
             this.response = b
             responseDataReady()
           })

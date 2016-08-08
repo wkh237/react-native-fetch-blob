@@ -11,8 +11,8 @@ import EventTarget from './EventTarget'
 const log = new Log('Blob')
 const blobCacheDir = fs.dirs.DocumentDir + '/RNFetchBlob-blobs/'
 
-log.disable()
-// log.level(3)
+// log.disable()
+log.level(3)
 
 /**
  * A RNFetchBlob style Blob polyfill class, this is a Blob which compatible to
@@ -258,6 +258,7 @@ function getBlobName() {
  * @return {Promise}
  */
 function createMixedBlobData(ref, dataArray) {
+  // create an empty file for store blob data
   let p = fs.writeFile(ref, '')
   let args = []
   let size = 0
@@ -275,17 +276,27 @@ function createMixedBlobData(ref, dataArray) {
     else if (Array.isArray(part))
       args.push([ref, part, 'ascii'])
   }
-  return p.then(() => {
-    let promises = args.map((p) => {
-      log.verbose('mixed blob write', ...p)
-      return fs.appendFile.call(this, ...p)
-    })
-    return Promise.all(promises).then((sizes) => {
-      log.verbose('blob write size', sizes)
-      for(let i in sizes) {
-        size += sizes[i]
-      }
-      return Promise.resolve(size)
-    })
-  })
+  // start write blob data
+  // return p.then(() => {
+    for(let i in args) {
+      p = p.then((written) => {
+        if(written)
+          size += written
+        log.verbose('mixed blob write', ...args[i], written)
+        return fs.appendFile.call(this, ...args[i])
+      })
+    }
+    return p.then(() => Promise.resolve(size))
+    // let promises = args.map((p) => {
+    //   log.verbose('mixed blob write', ...p)
+    //   return fs.appendFile.call(this, ...p)
+    // })
+    // return Promise.all(promises).then((sizes) => {
+    //   log.verbose('blob write size', sizes)
+    //   for(let i in sizes) {
+    //     size += sizes[i]
+    //   }
+    //   return Promise.resolve(size)
+    // })
+  // })
 }
