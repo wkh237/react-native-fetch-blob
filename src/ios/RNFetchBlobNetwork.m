@@ -193,7 +193,7 @@ NSOperationQueue *taskQueue;
 - (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler
 {
     expectedBytes = [response expectedContentLength];
- 
+
     NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
     NSInteger statusCode = [(NSHTTPURLResponse *)response statusCode];
     NSString * respType = @"";
@@ -246,7 +246,7 @@ NSOperationQueue *taskQueue;
                      @"timeout" : @NO,
                      @"status": [NSString stringWithFormat:@"%d", statusCode ]
                     };
-        
+
         [self.bridge.eventDispatcher
          sendDeviceEventWithName: EVENT_STATE_CHANGE
          body:respInfo
@@ -275,7 +275,7 @@ NSOperationQueue *taskQueue;
             NSLog(@"write file error");
         }
     }
-    
+
     completionHandler(NSURLSessionResponseAllow);
 }
 
@@ -292,11 +292,11 @@ NSOperationQueue *taskQueue;
     {
         [writeStream write:[data bytes] maxLength:[data length]];
     }
-    
+
     if([progressTable valueForKey:taskId] == @YES)
     {
         [self.bridge.eventDispatcher
-         sendDeviceEventWithName:EVENT_PROGRESS 
+         sendDeviceEventWithName:EVENT_PROGRESS
          body:@{
                 @"taskId": taskId,
                 @"written": [NSString stringWithFormat:@"%d", receivedBytes],
@@ -316,19 +316,19 @@ NSOperationQueue *taskQueue;
 
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
 {
-    
+
     self.error = error;
     NSString * errMsg = [NSNull null];
     NSString * respStr = [NSNull null];
     NSString * rnfbRespType = @"";
-    
+
     [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-    
+
     if(respInfo == nil)
     {
         respInfo = [NSNull null];
     }
-    
+
     if(error != nil)
     {
         errMsg = [error localizedDescription];
@@ -353,7 +353,7 @@ NSOperationQueue *taskQueue;
             // if it turns out not to be `nil` that means the response data contains valid UTF8 string,
             // in order to properly encode the UTF8 string, use URL encoding before BASE64 encoding.
             NSString * utf8 = [[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding];
-            
+
             if(utf8 != nil)
             {
                 rnfbRespType = RESP_TYPE_UTF8;
@@ -364,12 +364,12 @@ NSOperationQueue *taskQueue;
                 rnfbRespType = RESP_TYPE_BASE64;
                 respStr = [respData base64EncodedStringWithOptions:0];
             }
-            
+
         }
     }
-    
+
     callback(@[ errMsg, rnfbRespType, respStr]);
-    
+
     @synchronized(taskTable, uploadProgressTable, progressTable)
     {
         if([taskTable objectForKey:taskId] == nil)
@@ -379,7 +379,7 @@ NSOperationQueue *taskQueue;
         [uploadProgressTable removeObjectForKey:taskId];
         [progressTable removeObjectForKey:taskId];
     }
-    
+
     respData = nil;
     receivedBytes = 0;
     [session finishTasksAndInvalidate];
