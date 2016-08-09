@@ -101,21 +101,25 @@ class RNFetchBlobFetchRepsonse {
 
   arrayBuffer(){
     log.verbose('to arrayBuffer', this.rnfbRespInfo)
+    this.bodyUsed = true
     return readArrayBuffer(this.rnfbResp, this.rnfbRespInfo)
   }
 
   text() {
     log.verbose('to text', this.rnfbResp, this.rnfbRespInfo)
+    this.bodyUsed = true
     return readText(this.rnfbResp, this.rnfbRespInfo)
   }
 
   json() {
     log.verbose('to json', this.rnfbResp, this.rnfbRespInfo)
+    this.bodyUsed = true
     return readJSON(this.rnfbResp, this.rnfbRespInfo)
   }
 
   blob() {
     log.verbose('to blob', this.rnfbResp, this.rnfbRespInfo)
+    this.bodyUsed = true
     return readBlob(this.rnfbResp, this.rnfbRespInfo)
   }
 }
