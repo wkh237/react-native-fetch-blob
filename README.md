@@ -23,6 +23,7 @@ A project committed to make file acess and data transfer easier, effiecient for 
  * [Cancel HTTP request](#user-content-cancel-request)
  * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
  * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
+ * [RNFetchBlob as Fetch](#user-content-rnfetchblob-as-fetch)
 * [File System](#user-content-file-system)
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
@@ -332,7 +333,7 @@ Elements have property `filename` will be transformed into binary format, otherw
   })
 ```
 
-What if you want to upload a file in some field ? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, wrap `data` by `wrap` API (this feature is only available for `version >= v0.5.0`). On version >= `0.6.2`, it is possible to set custom MIME type when appending file to form data.
+What if you want to upload a file using form data ? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, wrap `data` by `wrap` API (this feature is only available for `version >= v0.5.0`). On version >= `0.6.2`, it is possible to set custom MIME type when appending file to form data.
 
 ```js
 
@@ -413,7 +414,15 @@ task.cancel((err) => { ... })
 
 ```
 
-#### Android Media Scanner, and Download Manager Support
+### RNFetchBlob as Fetch
+
+0.9.0
+
+If you have existing code that uses `whatwg-fetch`(the official **fetch**), you don't have to change them after 0.9.0, just use fetch replacement. The difference between Official fetch and fetch replacement is, official fetch uses [whatwg-fetch](https://github.com/github/fetch) js library which wraps XMLHttpRequest polyfill under the hood it's a great library for web developers, however that does not play very well with RN. Our implementation is simply a wrapper of  RNFetchBlob.fetch and fs APIs, so you can access all the features we provide.
+
+[See document and examples](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetch-replacement)
+
+### Android Media Scanner, and Download Manager Support
 
 If you want to make a file in `External Storage` becomes visible in Picture, Downloads, or other built-in apps, you will have to use `Media Scanner` or `Download Manager`.
 
