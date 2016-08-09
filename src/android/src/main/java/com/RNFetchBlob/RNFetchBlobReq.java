@@ -165,7 +165,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
            File file = new File(RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey) + ext);
 
            if (file.exists()) {
-               callback.invoke(null, file.getAbsolutePath());
+               callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, file.getAbsolutePath());
                return;
            }
        }
