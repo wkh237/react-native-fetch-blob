@@ -133,7 +133,7 @@ NSOperationQueue *taskQueue;
 
     // the session trust any SSL certification
 
-    
+
     NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
     if([options valueForKey:@"timeout"] != nil)
     {
@@ -153,7 +153,7 @@ NSOperationQueue *taskQueue;
 
 			destPath = [RNFetchBlobFS getTempPath:cacheKey withExtension:[self.options valueForKey:CONFIG_FILE_EXT]];
             if ([[NSFileManager defaultManager] fileExistsAtPath:destPath]) {
-				callback(@[[NSNull null], destPath]);
+				callback(@[[NSNull null], @[[NSNull null], destPath]);
                 return;
             }
 		}
@@ -190,7 +190,7 @@ NSOperationQueue *taskQueue;
 - (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler
 {
     expectedBytes = [response expectedContentLength];
- 
+
     NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
     NSInteger statusCode = [(NSHTTPURLResponse *)response statusCode];
     if ([response respondsToSelector:@selector(allHeaderFields)])
@@ -229,7 +229,7 @@ NSOperationQueue *taskQueue;
                      @"timeout" : @NO,
                      @"status": [NSString stringWithFormat:@"%d", statusCode ]
                      };
-        
+
         [self.bridge.eventDispatcher
          sendDeviceEventWithName: EVENT_STATE_CHANGE
          body:respInfo
@@ -272,7 +272,7 @@ NSOperationQueue *taskQueue;
     {
         [writeStream write:[data bytes] maxLength:[data length]];
     }
-    
+
     if([progressTable valueForKey:taskId] == @YES)
     {
         [self.bridge.eventDispatcher
@@ -296,15 +296,15 @@ NSOperationQueue *taskQueue;
 
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
 {
-    
+
     self.error = error;
     [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-    
+
     NSString * respType = [respInfo valueForKey:@"respType"];
     if(error != nil) {
         NSLog([error localizedDescription]);
     }
-    
+
     if(respFile == YES)
     {
         [writeStream close];
@@ -321,7 +321,7 @@ NSOperationQueue *taskQueue;
                    [respData base64EncodedStringWithOptions:0]
                    ]);
     }
-    
+
     [taskTable removeObjectForKey:taskId];
     [uploadProgressTable removeObjectForKey:taskId];
     [progressTable removeObjectForKey:taskId];
