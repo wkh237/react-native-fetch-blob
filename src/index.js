@@ -257,6 +257,7 @@ class FetchBlobResponse {
             Blob.build(this.data, { type : cType + ';BASE64' }).then(resolve)
           break
           case 'path':
+            console.log('##', 'reading path')
             polyfill.Blob.build(wrap(this.data), { type : cType }).then(resolve)
           break
           default:
@@ -276,7 +277,7 @@ class FetchBlobResponse {
           return base64.decode(this.data)
         break
         case 'path':
-          return fs.readFile(this.data, 'utf8')
+          return fs.readFile(this.data, 'base64').then((b64) => Promise.resolve(base64.decode(b64)))
         break
         default:
           return this.data
