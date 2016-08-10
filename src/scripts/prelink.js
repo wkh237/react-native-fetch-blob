@@ -37,7 +37,7 @@ if(VERSION >= 0.29) {
 
 if(VERSION < 0.28) {
   console.log('You project version is '+ VERSION + 'which does not meet requirement of react-native-fetch-blob 7.0+, please upgrade your application template to react-native 0.27+, otherwise Android application will not working.')
-  add OkHttp3 dependency fo 0.28- project
+  // add OkHttp3 dependency fo 0.28- project
   var main = fs.readFileSync(PACKAGE_GRADLE);
   console.log('adding OkHttp3 dependency to pre 0.28 project .. ')
   main = String(main).replace('//{RNFetchBlob_PRE_0.28_DEPDENDENCY}', "compile 'com.squareup.okhttp3:okhttp:3.4.1'");
