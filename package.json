@@ -1,6 +1,6 @@
 {
-  "name": "fetchblob",
-  "version": "0.8.2",
+  "name": "fetchblob-dev",
+  "version": "0.9.0",
   "private": true,
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start",
