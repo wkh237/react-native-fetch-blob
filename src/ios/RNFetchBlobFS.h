@@ -65,7 +65,6 @@
 
 // file stream
 - (void) openWithDestination;
-- (void) openWithId;
 - (NSString *)openWithPath:(NSString *)destPath encode:(nullable NSString *)encode appendData:(BOOL)append;
 - (void) startAssetReadStream:(NSData *)assetUrl;
 

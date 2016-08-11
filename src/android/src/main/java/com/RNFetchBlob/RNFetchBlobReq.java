@@ -558,6 +558,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 DownloadManager dm = (DownloadManager) appCtx.getSystemService(Context.DOWNLOAD_SERVICE);
                 dm.query(query);
                 Cursor c = dm.query(query);
+                String filePath = null;
+                // the file exists in media content database
                 if (c.moveToFirst()) {
                     String contentUri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
                     Uri uri = Uri.parse(contentUri);
@@ -565,26 +567,29 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     // use default destination of DownloadManager
                     if (cursor != null) {
                         cursor.moveToFirst();
-                        String filePath = cursor.getString(0);
+                        filePath = cursor.getString(0);
                         cursor.close();
-                        this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
-                    }
-                    // custom destination
-                    else {
-                        if(options.addAndroidDownloads.hasKey("path")) {
-                            try {
-                                String customDest = options.addAndroidDownloads.getString("path");
-                                boolean exists = new File(customDest).exists();
-                                if(!exists)
-                                    throw new Exception("Download manager download failed, the file does not downloaded to destination.");
-                                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, customDest);
-
-                            } catch(Exception ex) {
-                                this.callback.invoke(ex.getLocalizedMessage(), null, null);
-                            }
+                        if(filePath != null) {
+                            this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
+                            return;
                         }
                     }
                 }
+                // When the file is not found in media content database, check if custom path exists
+                if (options.addAndroidDownloads.hasKey("path")) {
+                    try {
+                        String customDest = options.addAndroidDownloads.getString("path");
+                        boolean exists = new File(customDest).exists();
+                        if(!exists)
+                            throw new Exception("Download manager download failed, the file does not downloaded to destination.");
+                        callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, customDest);
+
+                    } catch(Exception ex) {
+                        this.callback.invoke(ex.getLocalizedMessage(), null, null);
+                    }
+                }
+                else
+                    this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
             }
         }
     }
