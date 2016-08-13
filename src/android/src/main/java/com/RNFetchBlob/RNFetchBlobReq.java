@@ -558,6 +558,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 DownloadManager dm = (DownloadManager) appCtx.getSystemService(Context.DOWNLOAD_SERVICE);
                 dm.query(query);
                 Cursor c = dm.query(query);
+                String error = null;
                 String filePath = null;
                 // the file exists in media content database
                 if (c.moveToFirst()) {
@@ -568,11 +569,6 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     if (cursor != null) {
                         cursor.moveToFirst();
                         filePath = cursor.getString(0);
-                        cursor.close();
-                        if(filePath != null) {
-                            this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
-                            return;
-                        }
                     }
                 }
                 // When the file is not found in media content database, check if custom path exists
@@ -582,14 +578,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         boolean exists = new File(customDest).exists();
                         if(!exists)
                             throw new Exception("Download manager download failed, the file does not downloaded to destination.");
-                        callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, customDest);
 
                     } catch(Exception ex) {
-                        this.callback.invoke(ex.getLocalizedMessage(), null, null);
+                        error = ex.getLocalizedMessage();
                     }
                 }
-                else
-                    this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
+                this.callback.invoke(error, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
+                c.close();
             }
         }
     }
