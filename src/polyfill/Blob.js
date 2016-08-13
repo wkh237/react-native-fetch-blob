@@ -172,11 +172,12 @@ export default class Blob extends EventTarget {
    * @return {Blob} The Blob object instance itself
    */
   onCreated(fn:() => void):Blob {
-    log.verbose('register blob onCreated', this._onCreated.length)
+    log.verbose('#register blob onCreated', this._blobCreated)
     if(!this._blobCreated)
       this._onCreated.push(fn)
-    else
+    else {
       fn(this)
+    }
     return this
   }
 
@@ -230,12 +231,13 @@ export default class Blob extends EventTarget {
   }
 
   _invokeOnCreateEvent() {
-    log.verbose('invoke create event')
+    log.verbose('invoke create event', this._onCreated)
     this._blobCreated = true
     let fns = this._onCreated
     for(let i in fns) {
-      if(typeof fns[i] === 'function')
+      if(typeof fns[i] === 'function') {
         fns[i](this)
+      }
     }
     delete this._onCreated
   }
@@ -279,12 +281,13 @@ function createMixedBlobData(ref, dataArray) {
   // start write blob data
   // return p.then(() => {
     for(let i in args) {
-      p = p.then((written) => {
+      p = p.then(function(written){
+        let arg = this
         if(written)
           size += written
-        log.verbose('mixed blob write', ...args[i], written)
-        return fs.appendFile.call(this, ...args[i])
-      })
+        log.verbose('mixed blob write', args[i], written)
+        return fs.appendFile(...arg)
+      }.bind(args[i]))
     }
     return p.then(() => Promise.resolve(size))
     // let promises = args.map((p) => {

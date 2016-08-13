@@ -133,7 +133,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
 
     if(this._readyState !== XMLHttpRequest.OPENED)
       throw 'InvalidStateError : XMLHttpRequest is not opened yet.'
-
+    let promise = Promise.resolve()
     this._sendFlag = true
     log.verbose('XMLHttpRequest send ', body)
     let {_method, _url, _headers } = this
@@ -141,26 +141,37 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     log.verbose(typeof body, body instanceof FormData)
 
     if(body instanceof Blob) {
-      body = RNFetchBlob.wrap(body.getRNFetchBlobRef())
+      promise = new Promise((resolve, reject) => {
+          body.onCreated((blob) => {
+            body = RNFetchBlob.wrap(body.getRNFetchBlobRef())
+            resolve()
+          })
+        })
     }
     else if(typeof body === 'object') {
       body = JSON.stringify(body)
+      promise = Promise.resolve()
     }
-    else
+    else {
       body = body ? body.toString() : body
-    this._task = RNFetchBlob
-                  .config({
-                    auto: true,
-                    timeout : this._timeout,
-                    binaryContentTypes : XMLHttpRequest.binaryContentTypes
-                  })
-                  .fetch(_method, _url, _headers, body)
-    this._task
-        .stateChange(this._headerReceived.bind(this))
-        .uploadProgress(this._uploadProgressEvent.bind(this))
-        .progress(this._progressEvent.bind(this))
-        .catch(this._onError.bind(this))
-        .then(this._onDone.bind(this))
+      promise = Promise.resolve()
+    }
+
+    promise.then(() => {
+      this._task = RNFetchBlob
+                    .config({
+                      auto: true,
+                      timeout : this._timeout,
+                      binaryContentTypes : XMLHttpRequest.binaryContentTypes
+                    })
+                    .fetch(_method, _url, _headers, body)
+      this._task
+          .stateChange(this._headerReceived.bind(this))
+          .uploadProgress(this._uploadProgressEvent.bind(this))
+          .progress(this._progressEvent.bind(this))
+          .catch(this._onError.bind(this))
+          .then(this._onDone.bind(this))
+    })
   }
 
   overrideMimeType(mime:string) {
@@ -311,6 +322,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
           })
         break;
         default :
+        console.log(resp, resp.text())
           this._responseText = resp.text()
           this._response = this.responseText
           responseDataReady()
