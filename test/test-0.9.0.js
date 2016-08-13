@@ -32,6 +32,61 @@ const dirs = RNFetchBlob.fs.dirs
 
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
+describe('cache control header and range request test', (report, done) => {
+
+  let image = RNTest.prop('image')
+  let part = [
+    `${fs.dirs.DocumentDir}/cache-control-test-part1.png`,
+    `${fs.dirs.DocumentDir}/cache-control-test-part2.png`,
+    `${fs.dirs.DocumentDir}/cache-control-test-part3.png`
+  ]
+  let tmp = null
+
+  RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+    Authorization : `Bearer ${DROPBOX_TOKEN}`,
+    'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+FILENAME+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
+    'Content-Type' : 'application/octet-stream',
+  }, image)
+  .then((resp) => {
+    resp = resp.json()
+    report(
+      <Assert key="confirm the file has been uploaded" expect={FILENAME} actual={resp.name}/>
+    )
+    return RNFetchBlob.config({
+      path : part[0],
+    })
+    .fetch('GET', 'https://content.dropboxapi.com/1/files/auto/rn-upload/' + FILENAME, {
+      Authorization : `Bearer ${DROPBOX_TOKEN}`,
+      'Cache-Control' : 'no-store',
+      'Range' : 'bytes=0-23000'
+    })
+  })
+  .then((res) => {
+    let size = Math.floor(res.info().headers['Content-Length'])
+    report(<Assert key="part2 content length = 23001" expect={23001} actual={size}/>)
+    return RNFetchBlob.config({
+      path : part[2]
+    })
+    .fetch('GET', 'https://content.dropboxapi.com/1/files/auto/rn-upload/' + FILENAME, {
+      Authorization : `Bearer ${DROPBOX_TOKEN}`,
+      'Range' : 'bytes=23001-23975',
+      'Cache-Control' : 'no-store'
+    })
+  })
+  .then((res) => {
+    let size = Math.floor(res.info().headers['Content-Length'])
+    report(<Assert key="part3 content length = 975" expect={974} actual={size}/>)
+    return fs.appendFile(part[0], part[2], 'uri')
+  })
+  .then((written) => {
+    return fs.stat(part[0])
+  })
+  .then((stat) => {
+    report(<Assert key="combined file size check" expect="23975" actual={stat.size}/>)
+    done()
+  })
+})
+
 describe('#73 unicode response BASE64 content test', (report, done) => {
 
   fetch(`${TEST_SERVER_URL}/unicode`, {

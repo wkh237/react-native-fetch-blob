@@ -306,7 +306,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
         case 'blob' :
           resp.blob().then((b) => {
             this._responseText = resp.text()
-            this.response = b
+            this._response = b
             responseDataReady()
           })
         break;

@@ -138,7 +138,7 @@ app.all('/xhr-code/:code', (req, res) => {
 
 app.all('/xhr-header', (req, res) => {
   console.log(req.headers)
-  res.header('Content-Type', 'application/json')
+  // res.header('Content-Type', 'application/json')
   res.send(req.headers)
 })
 
