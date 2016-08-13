@@ -13,7 +13,6 @@ A project committed to make file acess and data transfer easier, effiecient for 
 ## TOC
 * [About](#user-content-about)
 * [Installation](#user-content-installation)
-* [Recipes](#user-content-recipes)
 * [HTTP Data Transfer](#user-content-http-data-transfer)
  * [Regular Request](#user-content-regular-request)
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
@@ -119,7 +118,7 @@ Also, if you're going to use `Android Download Manager` you have to add this to 
 
 Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. So adding permissions in `AndroidManifest.xml` won't work in Android 6.0 devices. To grant permissions in runtime, you might use modules like [react-native-android-permissions](https://github.com/lucasferreira/react-native-android-permissions).
 
-## Recipes
+## Usage
 
 ES6
 
@@ -692,6 +691,8 @@ After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/reac
 
 - Blob
 - XMLHttpRequest (Use our implementation if you're going to use it with Blob)
+
+Here's a [sample app](https://github.com/wkh237/rn-firebase-storage-upload-sample) that uses polyfills to upload files to FireBase.
 
 ### Performance Tips
 
