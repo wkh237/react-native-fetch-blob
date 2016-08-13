@@ -20,7 +20,6 @@ A project committed to make file acess and data transfer easier, effiecient for 
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
  * [Upload/Download progress](#user-content-uploaddownload-progress)
  * [Cancel HTTP request](#user-content-cancel-request)
- * [Recover download task (Range Request)](#user-content-recover-download-request)
  * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
  * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
  * [RNFetchBlob as Fetch](#user-content-rnfetchblob-as-fetch)
