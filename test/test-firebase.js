@@ -25,7 +25,7 @@ const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
   group : 'firebase',
   run : true,
-  expand : false,
+  expand : true,
   timeout : 300000000,
 })
 const { TEST_SERVER_URL, TEST_SERVER_URL_SSL, DROPBOX_TOKEN, styles } = prop()
@@ -103,7 +103,7 @@ let tier2FileName = `firebase-test-${Platform.OS}-github2.jpg`
 describe('upload using file path', (report, done) => {
   RNFetchBlob
     .config({ fileCache : true, appendExt : 'jpg' })
-    .fetch('GET', `${TEST_SERVER_URL}/public/github2.jpg`)
+    .fetch('GET', `${TEST_SERVER_URL}/public/500k-img-dummy.jpg`)
     .then((resp) => {
       report(<Info key="test image">
         <Image style={styles.image} source={{uri : prefix + resp.path()}}/>
