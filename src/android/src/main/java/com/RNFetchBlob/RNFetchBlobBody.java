@@ -59,6 +59,11 @@ public class RNFetchBlobBody extends RequestBody{
     public MediaType contentType() {
         return mime;
     }
+    
+    @Override
+    public long contentLength() {
+        return contentLength;
+    }
 
     @Override
     public void writeTo(BufferedSink sink) throws IOException {
