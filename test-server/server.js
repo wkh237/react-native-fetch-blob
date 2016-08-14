@@ -136,6 +136,11 @@ app.all('/xhr-code/:code', (req, res) => {
   res.status(Math.floor(req.params.code)).send()
 })
 
+app.all('/content-length', (req, res) => {
+  console.log(req.headers)
+  res.send(req.headers['Content-Length'])
+})
+
 app.all('/xhr-header', (req, res) => {
   console.log(req.headers)
   // res.header('Content-Type', 'application/json')
