@@ -299,6 +299,10 @@ function exists(path:string):Promise<bool, bool> {
 
 }
 
+function slice(src:string, dest:string, start:number, end:number):Promise {
+  return RNFetchBlob.slice(src, dest, start, end)
+}
+
 function isDir(path:string):Promise<bool, bool> {
 
   return new Promise((resolve, reject) => {
@@ -333,5 +337,6 @@ export default {
   lstat,
   scanFile,
   dirs,
+  slice,
   asset
 }

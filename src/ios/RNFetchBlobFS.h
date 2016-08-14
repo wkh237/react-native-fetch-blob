@@ -55,7 +55,13 @@
 + (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 + (void) readFile:(NSString *)path encoding:(NSString *)encoding resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject onComplete:(void (^)(NSData * content))onComplete;
 + (void) readAssetFile:(NSData *)assetUrl completionBlock:(void(^)(NSData * content))completionBlock failBlock:(void(^)(NSError * err))failBlock;
-+ (void) slice:(NSString *)path dest:(NSString *)dest start:(NSNumber *)start end:(NSNumber *)end encode:(NSString *)encode resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
++ (void)slice:(NSString *)path
+         dest:(NSString *)dest
+        start:(nonnull NSNumber *)start
+          end:(nonnull NSNumber *)end
+        encode:(NSString *)encode
+     resolver:(RCTPromiseResolveBlock)resolve
+     rejecter:(RCTPromiseRejectBlock)reject;
 //+ (void) writeFileFromFile:(NSString *)src toFile:(NSString *)dest append:(BOOL)append;
 
 // constructor

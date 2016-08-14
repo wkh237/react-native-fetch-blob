@@ -525,11 +525,11 @@ NSMutableDictionary *fileStreams = nil;
 }
 
 // Slice a file into another file, generally for support Blob implementation.
-- (void)slice:(NSString *)path
++ (void)slice:(NSString *)path
          dest:(NSString *)dest
-        start:(NSNumber *)start
-          end:(NSNumber *)end
-        encod:(NSString *)encode
+        start:(nonnull NSNumber *)start
+          end:(nonnull NSNumber *)end
+        encode:(NSString *)encode
      resolver:(RCTPromiseResolveBlock)resolve
      rejecter:(RCTPromiseRejectBlock)reject
 {
@@ -547,20 +547,29 @@ NSMutableDictionary *fileStreams = nil;
     }
     long size = [fm attributesOfItemAtPath:path error:nil].fileSize;
     // abort for the file size is less than start
-    if(size < start)
+    if(size < [start longValue])
     {
-        reject(@"RNFetchBlob slice failed", @"start is greater than file size", @"");
+        reject(@"RNFetchBlob slice failed", @"start is greater than file size", @"start is greater than file size");
         return;
     }
     if(![fm fileExistsAtPath:dest]) {
         [fm createFileAtPath:dest contents:@"" attributes:nil];
     }
-    [handle seekToFileOffset:start];
+    [handle seekToFileOffset:[start longValue]];
     while(read < expected)
     {
+
         NSData * chunk = [handle readDataOfLength:10240];
+        long remain = expected - read;
+        if(remain < 10240)
+        {
+            [os write:[chunk bytes] maxLength:remain];
+        }
+        else
+        {
+            [os write:[chunk bytes] maxLength:10240];
+        }
         read += [chunk length];
-        [os write:[chunk bytes] maxLength:10240];
     }
     [handle closeFile];
     [os close];

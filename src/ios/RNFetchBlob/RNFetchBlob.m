@@ -362,9 +362,11 @@ RCT_EXPORT_METHOD(enableUploadProgressReport:(NSString *)taskId {
     [RNFetchBlobNetwork enableUploadProgress:taskId];
 })
 
-RCT_EXPORT_METHOD(slice:(NSString *)src dest:(NSString *)dest start:(NSNumber *)start end:(NSNumber *)end resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject
+RCT_EXPORT_METHOD(slice:(NSString *)src dest:(NSString *)dest start:(nonnull NSNumber *)start end:(nonnull NSNumber *)end resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject
 {
-    [RNFetchBlobFS slice:src dest:dest start:start end:end encode:@"" resolver:resolve rejecter:reject];
+     dispatch_sync(dispatch_get_main_queue(),^(void){
+         [RNFetchBlobFS slice:src dest:dest start:start end:end encode:@"" resolver:resolve rejecter:reject];
+     });
 })
 
 #pragma mark RNFetchBlob private methods

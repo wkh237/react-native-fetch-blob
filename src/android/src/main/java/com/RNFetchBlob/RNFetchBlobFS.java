@@ -537,7 +537,7 @@ public class RNFetchBlobFS {
      * @param encode
      * @param callback
      */
-    public static void slice(String src, String dest, int start, int end, String encode, Callback callback) {
+    public static void slice(String src, String dest, int start, int end, String encode, Promise promise) {
         try {
             long expected = end - start;
             long now = 0;
@@ -547,17 +547,25 @@ public class RNFetchBlobFS {
             byte [] buffer = new byte[10240];
             while(now < expected) {
                 long read = in.read(buffer, 0, 10240);
+                long remain = expected - now;
                 if(read <= 0) {
                     break;
                 }
+                if(remain < 10240) {
+                    out.write(buffer, 0, (int) remain);
+                }
+                else
+                    out.write(buffer, 0, (int) read);
                 now += read;
-                out.write(buffer, 0, (int) read);
+
             }
             in.close();
+            out.flush();
             out.close();
-            callback.invoke(null, dest);
+            promise.resolve(dest);
         } catch (Exception e) {
             e.printStackTrace();
+            promise.reject(e.getLocalizedMessage());
         }
     }
 

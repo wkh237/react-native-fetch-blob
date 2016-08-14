@@ -11,8 +11,8 @@ import EventTarget from './EventTarget'
 const log = new Log('Blob')
 const blobCacheDir = fs.dirs.DocumentDir + '/RNFetchBlob-blobs/'
 
-log.disable()
-// log.level(3)
+// log.disable()
+log.level(3)
 
 /**
  * A RNFetchBlob style Blob polyfill class, this is a Blob which compatible to
@@ -181,6 +181,14 @@ export default class Blob extends EventTarget {
     return this
   }
 
+  markAsDerived() {
+    this._isDerived = true
+  }
+
+  get isDerived() {
+    return this._isDerived || false
+  }
+
   /**
    * Get file reference of the Blob object.
    * @nonstandard
@@ -197,13 +205,22 @@ export default class Blob extends EventTarget {
    * @param  {string} contentType Optional, content type of new Blob object
    * @return {Blob}
    */
-  slice(start:?number, end:?number, encoding:?string):Blob {
+  slice(start:?number, end:?number, contentType:?string):Blob {
     if(this._closed)
       throw 'Blob has been released.'
-    log.verbose('slice called', start, end, encoding)
-    console.warn('RNFB#Blob.slice() is not implemented yet, to read Blob content, use Blob.readBlob(encoding:string) instead.')
-    // TODO : fs.slice
-    // return fs.slice(this.cacheName, getBlobName(), contentType, start, end)
+    log.verbose('slice called', start, end, contentType)
+    let resPath = blobCacheDir + getBlobName()
+    let pass = false
+    log.debug('fs.slice new blob will at', resPath)
+    fs.slice(this._ref, resPath, start, end).then((dest) => {
+      log.debug('fs.slice done', dest)
+      pass = true
+    })
+    .catch((err) => {
+      pass = true
+    })
+    log.debug('slice returning new Blob')
+    return new Blob(RNFetchBlob.wrap(resPath))
   }
 
   /**
