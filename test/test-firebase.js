@@ -63,12 +63,12 @@ describe('firebase login', (report, done) => {
 
 describe('upload file to firebase', (report, done) => {
 
-  // create Blob from BASE64 data
-  let blob = new Blob(RNTest.prop('image'), { type : 'image/png;BASE64'})
   let testImage = `firebase-test-${Platform.OS}-${Date.now()}.png`
   RNTest.prop('firebase-image', testImage)
-  // start test after Blob created
-  blob.onCreated(() => {
+
+  // create Blob from BASE64 data
+  Blob.build(RNTest.prop('image'), { type : 'image/png;BASE64'})
+  .then((blob) => {
     let storage = firebase.storage().ref('rnfbtest')
     let task = storage
       .child(RNTest.prop('firebase-image'))
@@ -146,4 +146,32 @@ describe('download to base64', (report, done) => {
       </Info>)
     done()
   })
+})
+
+describe('upload from storage', (report, done) => {
+  try {
+  let file = fs.dirs.DocumentDir + '/tempimg.png'
+  fs.writeFile(file, RNTest.prop('image'), 'base64')
+    .then(() => Blob.build(RNFetchBlob.wrap(file), {type : 'image/png'}))
+    .then((blob) => {
+      let storage = firebase.storage().ref('rnfbtest')
+      let task = storage
+        .child(`image-from-storage-${Platform.OS}-${Date.now()}.png`)
+        .put(blob, { contentType : 'image/png' })
+        .then((snapshot) => {
+          console.log(snapshot.metadata)
+          report(<Assert key="upload success"
+            expect={true}
+            actual={true}/>,
+          <Info key="uploaded file stat" >
+            <Text>{snapshot.totalBytes}</Text>
+            <Text>{JSON.stringify(snapshot.metadata)}</Text>
+          </Info>)
+          done()
+        })
+    })
+  }
+  catch(err) {
+    console.log(err)
+  }
 })

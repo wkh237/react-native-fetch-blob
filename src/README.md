@@ -1,20 +1,20 @@
-# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?maxAge=86400&style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]()
-
-A project committed to make file acess and data transfer easier, effiecient for React Native developers.
+# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/releases) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]()
 
 # [Visit our Github for latest document](https://github.com/wkh237/react-native-fetch-blob)
+
+A project committed to make file acess and data transfer easier, effiecient for React Native developers.
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
 - File API supports normal files, Asset files, and CameraRoll files
 - Native-to-native file manipulation API, reduce JS bridging performance loss
 - File stream support for dealing with large file
-- Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN
+- Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN (experimental)
+
 
 ## TOC
 * [About](#user-content-about)
 * [Installation](#user-content-installation)
-* [Recipes](#user-content-recipes)
 * [HTTP Data Transfer](#user-content-http-data-transfer)
  * [Regular Request](#user-content-regular-request)
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
@@ -24,6 +24,7 @@ A project committed to make file acess and data transfer easier, effiecient for 
  * [Cancel HTTP request](#user-content-cancel-request)
  * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
  * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
+ * [RNFetchBlob as Fetch](#user-content-rnfetchblob-as-fetch)
 * [File System](#user-content-file-system)
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
@@ -39,6 +40,7 @@ A project committed to make file acess and data transfer easier, effiecient for 
 This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854), because React Native lack of `Blob` implementation and it will cause some problem when transfering binary data. Now, this project is committed to make file access and transfer more easier, effiecient for React Native developers. We've implemented highly customizable filesystem and network module which plays well together. For example, upload and download data directly from/to storage which is much more efficient in some cases(especially for large ones). The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
 
 In `0.8.0` we introduced experimential Web API polyfills that make it possible to use browser-based libraries in React Native, for example, [FireBase JS SDK](https://github.com/wkh237/rn-firebase-storage-upload-sample)
+
 
 ## Installation
 
@@ -63,7 +65,7 @@ Open `android/settings.gradle`, and add these lines which will app RNFetchBlob A
 ```diff
 include ':app'      
 + include ':react-native-fetch-blob'                                                                                                  
-+ project(':react-native-fetch-blob').projectDir = new File(rootProject.projectDir,' ../node_modules/react-native-fetch-blob/android')                        
++ project(':react-native-fetch-blob').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-fetch-blob/android')                        
 ```
 
 Add this line to `MainApplication.java`, so that RNFetchBlob package becomes part of react native package.
@@ -118,7 +120,7 @@ Also, if you're going to use `Android Download Manager` you have to add this to 
 
 Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. So adding permissions in `AndroidManifest.xml` won't work in Android 6.0 devices. To grant permissions in runtime, you might use modules like [react-native-android-permissions](https://github.com/lucasferreira/react-native-android-permissions).
 
-## Recipes
+## Usage
 
 ES6
 
@@ -332,7 +334,7 @@ Elements have property `filename` will be transformed into binary format, otherw
   })
 ```
 
-What if you want to upload a file in some field ? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, wrap `data` by `wrap` API (this feature is only available for `version >= v0.5.0`). On version >= `0.6.2`, it is possible to set custom MIME type when appending file to form data.
+What if you want to upload a file using form data ? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, wrap `data` by `wrap` API (this feature is only available for `version >= v0.5.0`). On version >= `0.6.2`, it is possible to set custom MIME type when appending file to form data.
 
 ```js
 
@@ -413,7 +415,15 @@ task.cancel((err) => { ... })
 
 ```
 
-#### Android Media Scanner, and Download Manager Support
+### RNFetchBlob as Fetch
+
+0.9.0
+
+If you have existing code that uses `whatwg-fetch`(the official **fetch**), you don't have to change them after 0.9.0, just use fetch replacement. The difference between Official fetch and fetch replacement is, official fetch uses [whatwg-fetch](https://github.com/github/fetch) js library which wraps XMLHttpRequest polyfill under the hood it's a great library for web developers, however that does not play very well with RN. Our implementation is simply a wrapper of  RNFetchBlob.fetch and fs APIs, so you can access all the features we provide.
+
+[See document and examples](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetch-replacement)
+
+### Android Media Scanner, and Download Manager Support
 
 If you want to make a file in `External Storage` becomes visible in Picture, Downloads, or other built-in apps, you will have to use `Media Scanner` or `Download Manager`.
 
@@ -493,6 +503,38 @@ RNFetchBlob.config({
 })
 .fetch('GET', 'http://example.com/image1.png')
 .then(...)
+```
+
+**Open Downloaded File with Intent**
+
+This is a new feature added in `0.9.0`, if you're going to open a file path using official [Linking](https://facebook.github.io/react-native/docs/linking.html) API that might not work as expected, also, if you're going to install an APK in `Downloads` app, that will not work too. As an alternative, you can try `actionViewIntent` API, which will send an ACTION_VIEW intent for you which uses the given `MIME` type.
+
+Download and install an APK programatically
+
+```js
+
+const android = RNFetchBlob.android
+
+RNFetchBlob.config({
+    addAndroidDownloads : {
+      useDownloadManager : true,
+      title : 'awesome.apk',
+      description : 'An APK that will be installed',
+      mime : 'application/vnd.android.package-archive',
+      mediaScannable : true,
+      notification : true,
+    }
+  })
+  .fetch('GET', `http://www.example.com/awesome.apk`)
+  .then((res) => {
+      android.actionViewIntent(res.path(), 'application/vnd.android.package-archive')
+  })
+```
+
+Or show an image in image viewer
+
+```js
+      android.actionViewIntent(PATH_OF_IMG, 'image/png')
 ```
 
 ### File System
@@ -647,16 +689,18 @@ RNFetchBlob.config({
 
 ### Web API Polyfills
 
-After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/react-native-fetch-blob/wiki/Web-API-Polyfills-(work-in-progress)) that makes some browser-based library available in RN.
+After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/react-native-fetch-blob/wiki/Web-API-Polyfills-(experimental)) that makes some browser-based library available in RN.
 
 - Blob
 - XMLHttpRequest (Use our implementation if you're going to use it with Blob)
+
+Here's a [sample app](https://github.com/wkh237/rn-firebase-storage-upload-sample) that uses polyfills to upload files to FireBase.
 
 ### Performance Tips
 
 ---
 
-**Reduce RCT Bridge Overhead and BASE64 Time**
+**Reduce RCT Bridge and BASE64 Overheard**
 
 React Native connects JS and Native context by passing JSON through React bridge, therefore there will be an overhead to convert data before they sent. When data is large, this will be quite a performance impact to your app, it's recommended to use file storage instead of BASE64 if possible. The following chart shows how much faster when loading data from storage than BASE64 encoded string on iphone 6.
 
@@ -678,7 +722,8 @@ If you're going to concatenate files, you don't have to read the data to JS cont
 
 | Version | |
 |---|---|
-| 0.8.2 | Fix Android RN 0.31 installation issue #78 |
+| 0.9.1 | Fix Android Blob constructor asynchronous issue caused by 0.9.0 fs change |
+| 0.9.0 | Fix unicode response data format issue #73. Improve Android performance by using thread pool instead of async task. Add Fetch replacement #70. Add Android only API `actionViewIntent` to open file or install APK in app |
 | 0.8.1 | Remove Web API log and fix ios progress report function. |
 | 0.8.0 | Added Web API polyfills, support regular request, added timeout option. |
 | 0.7.5 | Fix installation script that make it compatible to react-native < 0.28 |

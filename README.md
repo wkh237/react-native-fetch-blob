@@ -1,4 +1,5 @@
-# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]()
+# react-native-fetch-blob [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/releases) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]()
+
 
 A project committed to make file acess and data transfer easier, effiecient for React Native developers.
 
@@ -9,11 +10,11 @@ A project committed to make file acess and data transfer easier, effiecient for 
 - File stream support for dealing with large file
 - Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN (experimental)
 
+> The npm package is inside `src` folder, this is development folder
 
 ## TOC
 * [About](#user-content-about)
 * [Installation](#user-content-installation)
-* [Recipes](#user-content-recipes)
 * [HTTP Data Transfer](#user-content-http-data-transfer)
  * [Regular Request](#user-content-regular-request)
  * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
@@ -119,7 +120,7 @@ Also, if you're going to use `Android Download Manager` you have to add this to 
 
 Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. So adding permissions in `AndroidManifest.xml` won't work in Android 6.0 devices. To grant permissions in runtime, you might use modules like [react-native-android-permissions](https://github.com/lucasferreira/react-native-android-permissions).
 
-## Recipes
+## Usage
 
 ES6
 
@@ -693,6 +694,8 @@ After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/reac
 - Blob
 - XMLHttpRequest (Use our implementation if you're going to use it with Blob)
 
+Here's a [sample app](https://github.com/wkh237/rn-firebase-storage-upload-sample) that uses polyfills to upload files to FireBase.
+
 ### Performance Tips
 
 ---
@@ -719,6 +722,7 @@ If you're going to concatenate files, you don't have to read the data to JS cont
 
 | Version | |
 |---|---|
+| 0.9.1 | Fix Android Blob constructor asynchronous issue caused by 0.9.0 fs change |
 | 0.9.0 | Fix unicode response data format issue #73. Improve Android performance by using thread pool instead of async task. Add Fetch replacement #70. Add Android only API `actionViewIntent` to open file or install APK in app |
 | 0.8.1 | Remove Web API log and fix ios progress report function. |
 | 0.8.0 | Added Web API polyfills, support regular request, added timeout option. |

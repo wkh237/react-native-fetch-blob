@@ -257,7 +257,6 @@ class FetchBlobResponse {
             Blob.build(this.data, { type : cType + ';BASE64' }).then(resolve)
           break
           case 'path':
-            console.log('##', 'reading path')
             polyfill.Blob.build(wrap(this.data), { type : cType }).then(resolve)
           break
           default:
