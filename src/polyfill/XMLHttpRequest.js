@@ -130,7 +130,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
    * @param  {any} body Body in RNfetchblob flavor
    */
   send(body) {
-
+    this._body = body
     if(this._readyState !== XMLHttpRequest.OPENED)
       throw 'InvalidStateError : XMLHttpRequest is not opened yet.'
     let promise = Promise.resolve()
@@ -141,10 +141,12 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     log.verbose(typeof body, body instanceof FormData)
 
     if(body instanceof Blob) {
+      log.debug('sending blob body', body._blobCreated)
       promise = new Promise((resolve, reject) => {
           body.onCreated((blob) => {
-            body = RNFetchBlob.wrap(body.getRNFetchBlobRef())
-            resolve()
+              log.debug('body created send request')
+              body = RNFetchBlob.wrap(blob.getRNFetchBlobRef())
+              resolve()
           })
         })
     }
@@ -158,6 +160,10 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     }
 
     promise.then(() => {
+      log.debug('send request invoke', body)
+      for(let h in _headers) {
+        _headers[h] = _headers[h].toString()
+      }
       this._task = RNFetchBlob
                     .config({
                       auto: true,
@@ -224,10 +230,10 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   getResponseHeader(field:string):string | null {
-    log.verbose('XMLHttpRequest get header', field)
+    log.verbose('XMLHttpRequest get header', field, this._responseHeaders)
     if(!this._responseHeaders)
       return null
-    return this.responseHeaders[field] || null
+    return (this._responseHeaders[field] || this._responseHeaders[field.toLowerCase()]) || null
 
   }
 
@@ -238,9 +244,10 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     let result = ''
     let respHeaders = this.responseHeaders
     for(let i in respHeaders) {
-      result += `${i}:${respHeaders[i]}\r\n`
+      result += `${i}: ${respHeaders[i]}${String.fromCharCode(0x0D,0x0A)}`
     }
-    return result
+    console.log('###', result.substr(0, result.length-2))
+    return result.substr(0, result.length-2)
   }
 
   _headerReceived(e) {
@@ -310,9 +317,12 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
       let info = resp.respInfo || {}
       switch(info.respType) {
         case 'json' :
+        try{
           this._responseText = resp.text()
           this._response = resp.json()
           responseDataReady()
+        } catch(err) {
+        }
         break;
         case 'blob' :
           resp.blob().then((b) => {
@@ -322,7 +332,6 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
           })
         break;
         default :
-        console.log(resp, resp.text())
           this._responseText = resp.text()
           this._response = this.responseText
           responseDataReady()

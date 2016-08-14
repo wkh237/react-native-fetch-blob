@@ -11,8 +11,8 @@ import EventTarget from './EventTarget'
 const log = new Log('Blob')
 const blobCacheDir = fs.dirs.DocumentDir + '/RNFetchBlob-blobs/'
 
-// log.disable()
-log.level(3)
+log.disable()
+// log.level(3)
 
 /**
  * A RNFetchBlob style Blob polyfill class, this is a Blob which compatible to
