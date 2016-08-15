@@ -94,21 +94,26 @@ export default class Blob extends EventTarget {
       this.multipartBoundary = boundary
       let parts = data.getParts()
       let formArray = []
-      for(let i in parts) {
-        formArray.push('\r\n--'+boundary+'\r\n')
-        let part = parts[i]
-        for(let j in part.headers) {
-          formArray.push(j + ': ' +part.headers[j] + ';\r\n')
-        }
-        formArray.push('\r\n')
-        if(part.isRNFetchBlobPolyfill)
-          formArray.push(part)
-        else
-          formArray.push(part.string)
+      if(!parts) {
+        p = fs.writeFile(this._ref, '', 'utf8')
       }
-      log.verbose('FormData array', formArray)
-      formArray.push('\r\n--'+boundary+'--\r\n')
-      p = createMixedBlobData(this._ref, formArray)
+      else {
+        for(let i in parts) {
+          formArray.push('\r\n--'+boundary+'\r\n')
+          let part = parts[i]
+          for(let j in part.headers) {
+            formArray.push(j + ': ' +part.headers[j] + ';\r\n')
+          }
+          formArray.push('\r\n')
+          if(part.isRNFetchBlobPolyfill)
+            formArray.push(part)
+          else
+            formArray.push(part.string)
+        }
+        log.verbose('FormData array', formArray)
+        formArray.push('\r\n--'+boundary+'--\r\n')
+        p = createMixedBlobData(this._ref, formArray)
+      }
     }
     // if the data is a string starts with `RNFetchBlob-file://`, append the
     // Blob data from file path
@@ -205,22 +210,25 @@ export default class Blob extends EventTarget {
    * @param  {string} contentType Optional, content type of new Blob object
    * @return {Blob}
    */
-  slice(start:?number, end:?number, contentType:?string):Blob {
+  slice(start:?number, end:?number, contentType='':?string):Blob {
     if(this._closed)
       throw 'Blob has been released.'
     log.verbose('slice called', start, end, contentType)
     let resPath = blobCacheDir + getBlobName()
     let pass = false
     log.debug('fs.slice new blob will at', resPath)
+    let result = new Blob(RNFetchBlob.wrap(resPath), { type : contentType })
     fs.slice(this._ref, resPath, start, end).then((dest) => {
       log.debug('fs.slice done', dest)
+      result._invokeOnCreateEvent()
       pass = true
     })
     .catch((err) => {
       pass = true
     })
     log.debug('slice returning new Blob')
-    return new Blob(RNFetchBlob.wrap(resPath))
+
+    return result
   }
 
   /**
@@ -283,6 +291,8 @@ function createMixedBlobData(ref, dataArray) {
   let size = 0
   for(let i in dataArray) {
     let part = dataArray[i]
+    if(!part)
+      continue
     if(part.isRNFetchBlobPolyfill) {
       args.push([ref, part._ref, 'uri'])
     }
@@ -296,27 +306,14 @@ function createMixedBlobData(ref, dataArray) {
       args.push([ref, part, 'ascii'])
   }
   // start write blob data
-  // return p.then(() => {
-    for(let i in args) {
-      p = p.then(function(written){
-        let arg = this
-        if(written)
-          size += written
-        log.verbose('mixed blob write', args[i], written)
-        return fs.appendFile(...arg)
-      }.bind(args[i]))
-    }
-    return p.then(() => Promise.resolve(size))
-    // let promises = args.map((p) => {
-    //   log.verbose('mixed blob write', ...p)
-    //   return fs.appendFile.call(this, ...p)
-    // })
-    // return Promise.all(promises).then((sizes) => {
-    //   log.verbose('blob write size', sizes)
-    //   for(let i in sizes) {
-    //     size += sizes[i]
-    //   }
-    //   return Promise.resolve(size)
-    // })
-  // })
+  for(let i in args) {
+    p = p.then(function(written){
+      let arg = this
+      if(written)
+        size += written
+      log.verbose('mixed blob write', args[i], written)
+      return fs.appendFile(...arg)
+    }.bind(args[i]))
+  }
+  return p.then(() => Promise.resolve(size))
 }
