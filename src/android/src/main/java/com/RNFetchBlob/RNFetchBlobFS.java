@@ -535,11 +535,16 @@ public class RNFetchBlobFS {
      * @param start Start byte offset in source file
      * @param end   End byte offset
      * @param encode
-     * @param callback
      */
     public static void slice(String src, String dest, int start, int end, String encode, Promise promise) {
         try {
-            long expected = end - start;
+            File source = new File(src);
+            if(!source.exists()) {
+                promise.reject("RNFetchBlob.slice error", "source file : " + src + " not exists");
+            }
+            long size = source.length();
+            long max = Math.min(size, end);
+            long expected = max - start;
             long now = 0;
             FileInputStream in = new FileInputStream(new File(src));
             FileOutputStream out = new FileOutputStream(new File(dest));
@@ -551,13 +556,8 @@ public class RNFetchBlobFS {
                 if(read <= 0) {
                     break;
                 }
-                if(remain < 10240) {
-                    out.write(buffer, 0, (int) remain);
-                }
-                else
-                    out.write(buffer, 0, (int) read);
+                out.write(buffer, 0, (int) Math.min(remain, read));
                 now += read;
-
             }
             in.close();
             out.flush();
