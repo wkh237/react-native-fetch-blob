@@ -723,6 +723,7 @@ If you're going to concatenate files, you don't have to read the data to JS cont
 
 | Version | |
 |---|---|
+| 0.9.2 | Add Blob.slice() method implementation #89 |
 | 0.9.1 | Fix Android Blob constructor asynchronous issue caused by 0.9.0 fs change |
 | 0.9.0 | Fix unicode response data format issue #73. Improve Android performance by using thread pool instead of async task. Add Fetch replacement #70. Add Android only API `actionViewIntent` to open file or install APK in app |
 | 0.8.1 | Remove Web API log and fix ios progress report function. |
