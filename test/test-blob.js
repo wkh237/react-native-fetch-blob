@@ -154,3 +154,114 @@ describe('create blob using FormData', (report, done) => {
         done()
       })
 })
+
+// since 0.9.2
+// test case from :
+// https://github.com/w3c/web-platform-tests/blob/master/FileAPI/blob/Blob-slice.html
+describe('#89 Blob.slice test', (report, done) => {
+
+  let blob1, blob2
+  let count = 0
+  let testData
+
+  Blob
+    .build(["squiggle"])
+    .then((b) => {
+      blob1 = b
+      return Blob.build(["steak"], {type: "content/type"})
+    })
+    .then((b) => {
+      blob2 = b
+      setTestData()
+      startTest()
+    })
+
+  function setTestData() {
+    testData = [
+      [
+        ["PASSSTRING"],
+        [{start:  -6, contents: "STRING"},
+         {start: -12, contents: "PASSSTRING"},
+         {start:   4, contents: "STRING"},
+         {start:  12, contents: ""},
+         {start: 0, end:  -6, contents: "PASS"},
+         {start: 0, end: -12, contents: ""},
+         {start: 0, end:   4, contents: "PASS"},
+         {start: 0, end:  12, contents: "PASSSTRING"},
+         {start: 7, end:   4, contents: ""}]
+      ],
+      // Test 3 strings
+      [
+        ["foo", "bar", "baz"],
+        [{start:  0, end:  9, contents: "foobarbaz"},
+         {start:  0, end:  3, contents: "foo"},
+         {start:  3, end:  9, contents: "barbaz"},
+         {start:  6, end:  9, contents: "baz"},
+         {start:  6, end: 12, contents: "baz"},
+         {start:  0, end:  9, contents: "foobarbaz"},
+         {start:  0, end: 11, contents: "foobarbaz"},
+         {start: 10, end: 15, contents: ""}]
+      ],
+      // Test string, Blob, string
+      [
+        ["foo", blob1, "baz"],
+        [{start:  0, end:  3, contents: "foo"},
+         {start:  3, end: 11, contents: "squiggle"},
+         {start:  2, end:  4, contents: "os"},
+         {start: 10, end: 12, contents: "eb"}]
+      ],
+      // Test blob, string, blob
+      [
+        [blob1, "foo", blob1],
+        [{start:  0, end:  8, contents: "squiggle"},
+         {start:  7, end:  9, contents: "ef"},
+         {start: 10, end: 12, contents: "os"},
+         {start:  1, end:  4, contents: "qui"},
+         {start: 12, end: 15, contents: "qui"},
+         {start: 40, end: 60, contents: ""}]
+      ],
+      // Test blobs all the way down
+      [
+        [blob2, blob1, blob2],
+        [{start: 0,  end:  5, contents: "steak"},
+         {start: 5,  end: 13, contents: "squiggle"},
+         {start: 13, end: 18, contents: "steak"},
+         {start:  1, end:  3, contents: "te"},
+         {start:  6, end: 10, contents: "quig"}]
+      ]
+    ]
+  }
+
+  function startTest() {
+    Promise.all(testData.map(assert)).then(done)
+  }
+
+  function assert(d):Promise {
+    let content = d[0]
+    let assertions = d[1]
+    console.log('create blob content = ', content)
+    Blob.build(content).then((b) => {
+      for(let i in assertions) {
+        let args = assertions[i]
+        let target = b.slice(args.start, args.end)
+        target.onCreated((b2) => {
+          let raw = null
+          fs.readFile(b.blobPath, 'utf8').then((data) => {
+            raw = data
+            fs.readFile(b2.blobPath, 'utf8')
+              .then(function(actual){
+                console.log('---')
+                console.log('raw',data)
+                console.log('expect', this.contents)
+                console.log('actual', actual)
+                report(<Assert key={`assertion ${++count}`} expect={this.contents} actual={actual}/>)
+              }.bind(args))
+          })
+
+        })
+      }
+    })
+
+  }
+
+})
