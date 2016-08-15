@@ -300,7 +300,25 @@ function exists(path:string):Promise<bool, bool> {
 }
 
 function slice(src:string, dest:string, start:number, end:number):Promise {
-  return RNFetchBlob.slice(src, dest, start, end)
+  let p = Promise.resolve()
+  let size = 0
+  function normalize(num, size) {
+    if(num < 0)
+      return Math.max(0, size + num)
+    if(!num && num !== 0)
+      return size
+    return num
+  }
+  if(start < 0 || end < 0 || !start || !end) {
+    p = p.then(() => stat(src))
+         .then((stat) => {
+           size = Math.floor(stat.size)
+           start = normalize(start || 0, size)
+           end = normalize(end, size)
+           return Promise.resolve()
+         })
+  }
+  return p.then(() => RNFetchBlob.slice(src, dest, start, end))
 }
 
 function isDir(path:string):Promise<bool, bool> {
