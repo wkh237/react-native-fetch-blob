@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Base64;
 
+import com.RNFetchBlob.Utils.PathResolver;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
@@ -852,28 +853,23 @@ public class RNFetchBlobFS {
     }
 
     public static boolean isAsset(String path) {
-        return path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET);
+        if(path != null)
+            return path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET);
+        return false;
     }
 
     public static String normalizePath(String path) {
+        if(path == null)
+            return null;
+        Uri uri = Uri.parse(path);
+        if(uri.getScheme() == null) {
+            return path;
+        }
         if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
             return path;
         }
-        else if (path.startsWith(RNFetchBlobConst.FILE_PREFIX_CONTENT)) {
-            String filePath = null;
-            Uri uri = Uri.parse(path);
-            if (uri != null && "content".equals(uri.getScheme())) {
-                ContentResolver resolver = RNFetchBlob.RCTContext.getContentResolver();
-                Cursor cursor = resolver.query(uri, new String[] { MediaStore.Images.ImageColumns.DATA }, null, null, null);
-                cursor.moveToFirst();
-                filePath = cursor.getString(0);
-                cursor.close();
-            } else {
-                filePath = uri.getPath();
-            }
-            return filePath;
-        }
-        return path;
+        else
+            return PathResolver.getRealPathFromURI(RNFetchBlob.RCTContext, uri);
     }
 
 }
