@@ -192,6 +192,7 @@ public class RNFetchBlobFS {
         res.put("DownloadDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
         res.put("MovieDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getAbsolutePath());
         res.put("RingtoneDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_RINGTONES).getAbsolutePath());
+        res.put("SDCard", Environment.getExternalStorageDirectory().getAbsolutePath());
         return res;
     }
 
