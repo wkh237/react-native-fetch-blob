@@ -154,11 +154,19 @@
     {
         __block int i = 0;
         __block int count = [form count];
+        // a recursive block that builds multipart body asynchornously
         void __block (^getFieldData)(id field) = ^(id field)
         {
             NSString * name = [field valueForKey:@"name"];
             NSString * content = [field valueForKey:@"data"];
             NSString * contentType = [field valueForKey:@"type"];
+            // skip when the form field `name` or `data` is empty
+            if(content == nil || name == nil)
+            {
+                i++;
+                getFieldData([form objectAtIndex:i]);
+                return;
+            }
             contentType = contentType == nil ? @"application/octet-stream" : contentType;
             // field is a text field
             if([field valueForKey:@"filename"] == nil || content == [NSNull null]) {
