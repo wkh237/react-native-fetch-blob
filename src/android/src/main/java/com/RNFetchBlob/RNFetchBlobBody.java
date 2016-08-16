@@ -242,10 +242,10 @@ public class RNFetchBlobBody extends RequestBody{
         ArrayList<FormField> list = new ArrayList<>();
         ReactApplicationContext ctx = RNFetchBlob.RCTContext;
         for(int i = 0;i < form.size(); i++) {
-            ReadableMap field = form.getMap(i);
-            list.add(new FormField(field));
-            String data = field.getString("data");
-            if (field.hasKey("filename")) {
+            FormField field = new FormField(form.getMap(i));
+            list.add(field);
+            String data = field.data;
+            if (field.filename != null) {
                 // upload from storage
                 if (data.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
                     String orgPath = data.substring(RNFetchBlobConst.FILE_PREFIX.length());
@@ -274,7 +274,7 @@ public class RNFetchBlobBody extends RequestBody{
             }
             // data field
             else {
-                total += field.getString("data").length();
+                total += field.data != null ? field.data.length() : 0;
             }
         }
         contentLength = total;
@@ -301,8 +301,9 @@ public class RNFetchBlobBody extends RequestBody{
             else {
                 mime = filename == null ? "text/plain" : "application/octet-stream";
             }
-            if(rawData.hasKey("data"))
+            if(rawData.hasKey("data")) {
                 data = rawData.getString("data");
+            }
         }
     }
 
