@@ -81,67 +81,25 @@ describe('slice test', (report, done) => {
     })
 })
 
+describe('Upload multipart/form-data', (report, done) => {
 
-describe('fs.slice test', (report, done) => {
+  RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload-form`, {
+      Authorization : "Bearer fsXcpmKPrHgAAAAAAAAAEGxFXwhejXM_E8fznZoXPhHbhbNhA-Lytbe6etp1Jznz",
+      'Content-Type' : 'multipart/form-data',
+    }, [
+      // { name : 'test-img', filename : 'test-img.png', data: image},
+      // { name : 'test-text', filename : 'test-text.txt', data: RNFetchBlob.base64.encode('hello.txt')},
+      { name : 'field1', data : 'hello !!'},
+      { name : 'field2', data : 'hello2 !!'}
+    ])
+  .then((resp) => {
+    console.log(resp.json())
+    resp = resp.json()
 
-  let source = null
-  let parts = fs.dirs.DocumentDir + '/tmp-source-'
-  let dests = []
-  let combined = fs.dirs.DocumentDir + '/combined-' + Date.now() + '.jpg'
-  let size = 0
-
-  window.fetch = new RNFetchBlob.polyfill.Fetch({
-    auto : true,
-    binaryContentTypes : ['image/', 'video/', 'audio/']
-  }).build()
-
-  fetch(`${TEST_SERVER_URL}/public/github2.jpg`)
-  .then((res) => res.rawResp())
-  .then((res) => {
-    source = res.path()
-    return fs.stat(source)
-  })
-  // separate file into 4kb chunks
-  .then((stat) => {
-    size = stat.size
-    let promise = Promise.resolve()
-    let cursor = 0
-    while(cursor < size) {
-      promise = promise.then(function(start) {
-        console.log('slicing part ', start , start + 40960)
-        let offset = 0
-        return fs.slice(source, parts + start, start + offset, start + 40960)
-                .then((dest) => {
-                  console.log('slicing part ', start + offset, start + 40960, 'done')
-                  dests.push(dest)
-                  return Promise.resolve()
-                })
-      }.bind(this, cursor))
-      cursor += 40960
-    }
-    console.log('loop end')
-    return promise
-  })
-  // combine chunks and verify the result
-  .then(() => {
-    console.log('combinding files')
-    let p = Promise.resolve()
-    for(let d in dests) {
-      p = p.then(function(chunk){
-        return fs.appendFile(combined, chunk, 'uri').then((write) => {
-          console.log(write, 'bytes write')
-        })
-      }.bind(this, dests[d]))
-    }
-    return p.then(() => fs.stat(combined))
-  })
-  .then((stat) => {
     report(
-      <Assert key="verify file size" expect={size} actual={stat.size}/>,
-      <Info key="image viewer">
-        <Image key="combined image" style={styles.image} source={{ uri : prefix + combined}}/>
-      </Info>)
+      <Assert key="check posted form data #1" expect="hello !!" actual={resp.fields.field1}/>,
+      <Assert key="check posted form data #2" expect="hello2 !!" actual={resp.fields.field2}/>,
+    )
     done()
   })
-
 })

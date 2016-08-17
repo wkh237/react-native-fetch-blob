@@ -450,8 +450,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
                 break;
         }
+        if(!resp.isSuccessful())
+            resp.body().close();
         removeTaskInfo();
-        resp.close();
     }
 
     /**

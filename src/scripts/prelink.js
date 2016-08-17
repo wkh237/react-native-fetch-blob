@@ -45,15 +45,6 @@ if(VERSION < 0.28) {
   console.log('adding OkHttp3 dependency to pre 0.28 project .. ok')
 }
 
-if(VERSION > 0.30) {
-  let dest = process.cwd() + '/node_modules/react-native-fetch-blob/android/src/main/java/com/RNFetchBlob/RNFetchBlobReq.java'
-  var main = fs.readFileSync(dest);
-  console.log('patching OkHttp3 3.4.1 API ..')
-  main = String(main).replace('// ${OKHTTP 3.4.1 ONLY STATEMENT}', "resp.close();");
-  fs.writeFileSync(dest, main);
-  console.log('patching OkHttp3 3.4.1 API .. ok')
-}
-
 // set file access permission for Android < 6.0
 fs.readFile(MANIFEST_PATH, function(err, data) {
 
