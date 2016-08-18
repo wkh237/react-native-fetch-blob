@@ -28,7 +28,8 @@ const dirs = {
     MusicDir : RNFetchBlob.MusicDir,
     MovieDir : RNFetchBlob.MovieDir,
     DownloadDir : RNFetchBlob.DownloadDir,
-    DCIMDir : RNFetchBlob.DCIMDir
+    DCIMDir : RNFetchBlob.DCIMDir,
+    SDCardDir : RNFetchBlob.SDCardDir
 }
 
 /**
