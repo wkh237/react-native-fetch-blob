@@ -103,3 +103,26 @@ describe('Upload multipart/form-data', (report, done) => {
     done()
   })
 })
+
+describe('app should not crash when sending formdata without data field', (report, done) => {
+
+  RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload-form`, {
+      Authorization : "Bearer fsXcpmKPrHgAAAAAAAAAEGxFXwhejXM_E8fznZoXPhHbhbNhA-Lytbe6etp1Jznz",
+      'Content-Type' : 'multipart/form-data',
+    }, [
+      { name : 'empty-file', filename : 'test-img.png'},
+      { name : 'empty-data'},
+      { name : 'field2', data : 'hello2 !!'}
+    ])
+  .then((resp) => {
+    console.log(resp.json())
+    resp = resp.json()
+
+    report(
+      <Assert key="check posted form data #1" expect={undefined} actual={resp.fields['empty-file']}/>,
+      <Assert key="check posted form data #2" expect={undefined} actual={resp.fields['empty-data']}/>,
+      <Assert key="check posted form data #3" expect="hello2 !!" actual={resp.fields.field2}/>,
+    )
+    done()
+  })
+})
