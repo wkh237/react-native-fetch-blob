@@ -65,6 +65,12 @@ public class RNFetchBlobBody extends RequestBody{
         requestType = type;
         this.rawBody = rawBody;
         mime = contentType;
+        if(rawBody != null) {
+            if(requestType == RNFetchBlobReq.RequestType.AsIs)
+                contentLength = rawBody.length();
+            else
+                contentLength = caculateOctetContentLength();
+        }
     }
 
     @Override
@@ -96,7 +102,19 @@ public class RNFetchBlobBody extends RequestBody{
         buffer.flush();
     }
 
-    private void caculateOctetContentLength() {
+    boolean clearRequestBody() {
+        try {
+            if (bodyCache != null && bodyCache.exists()) {
+                bodyCache.delete();
+            }
+        } catch(Exception e) {
+            RNFetchBlobUtils.emitWarningEvent(e.getLocalizedMessage());
+            return false;
+        }
+        return true;
+    }
+
+    private long caculateOctetContentLength() {
         long total = 0;
         // upload from storage
         if (rawBody.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
@@ -106,31 +124,32 @@ public class RNFetchBlobBody extends RequestBody{
             if (RNFetchBlobFS.isAsset(orgPath)) {
                 try {
                     String assetName = orgPath.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
-                    contentLength = RNFetchBlob.RCTContext.getAssets().openFd(assetName).getLength();
+                    total += RNFetchBlob.RCTContext.getAssets().openFd(assetName).getLength();
                     requestStream = RNFetchBlob.RCTContext.getAssets().open(assetName);
                 } catch (IOException e) {
-//                        e.printStackTrace();
+                    RNFetchBlobUtils.emitWarningEvent(e.getLocalizedMessage());
                 }
             } else {
                 File f = new File(RNFetchBlobFS.normalizePath(orgPath));
                 try {
                     if(!f.exists())
                         f.createNewFile();
-                    contentLength = f.length();
+                    total += f.length();
                     requestStream = new FileInputStream(f);
                 } catch (Exception e) {
-//                        callback.invoke(e.getLocalizedMessage(), null);
+                    RNFetchBlobUtils.emitWarningEvent("RNetchBlob error when counting content length: " +e.getLocalizedMessage());
                 }
             }
         } else {
             try {
                 byte[] bytes = Base64.decode(rawBody, 0);
-                contentLength = bytes.length;
                 requestStream = new ByteArrayInputStream(bytes);
+                total += requestStream.available();
             } catch(Exception ex) {
-                Log.e("error", ex.getLocalizedMessage());
+                RNFetchBlobUtils.emitWarningEvent("RNetchBlob error when counting content length: " +ex.getLocalizedMessage());
             }
         }
+        return total;
     }
 
     /**
@@ -173,7 +192,7 @@ public class RNFetchBlobBody extends RequestBody{
                             InputStream in = ctx.getAssets().open(assetName);
                             pipeStreamToFileStream(in, os);
                         } catch (IOException e) {
-                            Log.e("RNFetchBlob", "Failed to create form data asset :" + orgPath + ", " + e.getLocalizedMessage() );
+                            RNFetchBlobUtils.emitWarningEvent("RNFetchBlob Failed to create form data asset :" + orgPath + ", " + e.getLocalizedMessage() );
                         }
                     }
                     // data from normal files
@@ -184,7 +203,7 @@ public class RNFetchBlobBody extends RequestBody{
                             pipeStreamToFileStream(fs, os);
                         }
                         else {
-                            Log.e("RNFetchBlob", "Failed to create form data from path :" + orgPath + "file not exists.");
+                            RNFetchBlobUtils.emitWarningEvent("RNFetchBlob Failed to create form data from path :" + orgPath + ", file not exists.");
                         }
                     }
                 }
@@ -284,7 +303,7 @@ public class RNFetchBlobBody extends RequestBody{
                             long length = ctx.getAssets().open(assetName).available();
                             total += length;
                         } catch (IOException e) {
-
+                            RNFetchBlobUtils.emitWarningEvent(e.getLocalizedMessage());
                         }
                     }
                     // general files
