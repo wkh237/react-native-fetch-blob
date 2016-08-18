@@ -291,7 +291,10 @@ public class RNFetchBlobBody extends RequestBody{
             FormField field = new FormField(form.getMap(i));
             list.add(field);
             String data = field.data;
-            if (field.filename != null) {
+            if(data == null) {
+                RNFetchBlobUtils.emitWarningEvent("RNFetchBlob multipart request builder has found a field without `data` property, the field `"+ field.name +"` will be removed implicitly.");
+            }
+            else if (field.filename != null) {
                 // upload from storage
                 if (data.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
                     String orgPath = data.substring(RNFetchBlobConst.FILE_PREFIX.length());

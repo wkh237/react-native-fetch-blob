@@ -11,6 +11,7 @@
 #import "RNFetchBlobNetwork.h"
 #import "RNFetchBlobConst.h"
 #import "RNFetchBlobFS.h"
+#import "RCTLog.h"
 
 @interface RNFetchBlobReqBuilder()
 {
@@ -165,6 +166,7 @@
             {
                 i++;
                 getFieldData([form objectAtIndex:i]);
+                RCTLogWarn(@"RNFetchBlob multipart request builder has found a field without `data` or `name` property, the field will be removed implicitly.", field);
                 return;
             }
             contentType = contentType == nil ? @"application/octet-stream" : contentType;
