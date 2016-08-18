@@ -183,7 +183,9 @@ describe('Check custom MIME type correctness',(report, done) => {
   .config({fileCache : true})
   .fetch('GET', `${TEST_SERVER_URL}/public/beethoven.mp3`)
   .then((resp) => {
-    return RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/mime`, null, [
+    return RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/mime`, {
+      'Content-Type' : 'multipart/form-data'
+    }, [
       { name : 'image', filename : 'image', type : 'image/jpeg', data : RNFetchBlob.base64.encode('123456') },
       { name : 'mp3', filename : 'mp3', type : 'application/mp3', data : RNFetchBlob.base64.encode('123456') },
       { name : 'mp3', filename : 'mp3', data : RNFetchBlob.base64.encode('123456') },

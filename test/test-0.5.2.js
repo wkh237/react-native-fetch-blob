@@ -58,7 +58,10 @@ describe('GET request with params', (report, done) => {
 describe('POST request with params', (report, done) => {
   let time = Date.now()
   RNFetchBlob.config({ fileCache : true })
-    .fetch('POST', encodeURI(`${TEST_SERVER_URL}/params?time=${time}&name=RNFetchBlobParams&lang=中文`), {}, RNFetchBlob.base64.encode('123'))
+    .fetch('POST', encodeURI(`${TEST_SERVER_URL}/params?time=${time}&name=RNFetchBlobParams&lang=中文`),
+    {
+      'Content-Type' : 'image/png;BASE64'
+    }, RNFetchBlob.base64.encode('123'))
     .then((resp) => {
       let file = resp.path()
       return RNFetchBlob.fs.readStream(resp.path(), 'utf8')

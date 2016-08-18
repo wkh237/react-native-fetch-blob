@@ -16,10 +16,9 @@ import {
 } from 'react-native';
 
 const fs = RNFetchBlob.fs
-const Blob = RNFetchBlob.polyfill.Blob
 
 window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
-window.Blob = Blob
+window.Blob = RNFetchBlob.polyfill.Blob
 
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
@@ -41,10 +40,11 @@ var config = {
   databaseURL: "https://rnfb-test-app.firebaseio.com",
   storageBucket: "rnfb-test-app.appspot.com",
 };
-firebase.initializeApp(config);
+
 
 describe('firebase login', (report, done) => {
 
+  firebase.initializeApp(config);
   firebase.auth().signInWithEmailAndPassword('xeiyan@gmail.com', 'rnfbtest1024')
     .catch((err) => {
       console.log('firebase sigin failed', err)

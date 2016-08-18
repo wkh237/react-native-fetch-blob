@@ -82,13 +82,13 @@ describe('slice test', (report, done) => {
 })
 
 describe('Upload multipart/form-data', (report, done) => {
-
+  let image = RNTest.prop('image')
   RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload-form`, {
       Authorization : "Bearer fsXcpmKPrHgAAAAAAAAAEGxFXwhejXM_E8fznZoXPhHbhbNhA-Lytbe6etp1Jznz",
       'Content-Type' : 'multipart/form-data',
     }, [
-      // { name : 'test-img', filename : 'test-img.png', data: image},
-      // { name : 'test-text', filename : 'test-text.txt', data: RNFetchBlob.base64.encode('hello.txt')},
+      { name : 'test-img', filename : 'test-img.png', data: image},
+      { name : 'test-text', filename : 'test-text.txt', data: RNFetchBlob.base64.encode('hello.txt')},
       { name : 'field1', data : 'hello !!'},
       { name : 'field2', data : 'hello2 !!'}
     ])

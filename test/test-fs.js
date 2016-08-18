@@ -7,6 +7,7 @@ import {
   Text,
   View,
   ScrollView,
+  Platform,
   Dimensions,
   Image,
 } from 'react-native';
@@ -20,6 +21,7 @@ const describe = RNTest.config({
 
 let { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles, image } = prop()
 let dirs = RNFetchBlob.fs.dirs
+let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
 describe('Get storage folders', (report, done) => {
   report(

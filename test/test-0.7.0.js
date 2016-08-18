@@ -36,7 +36,7 @@ describe('Upload and download large file', (report, done) => {
   RNFetchBlob.config({
     fileCache : true
   })
-  .fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`)
+  .fetch('GET', `${TEST_SERVER_URL}/public/1mb-dummy`)
   .progress((now, total) => {
     if(begin === -1)
       begin = Date.now()
@@ -114,6 +114,7 @@ describe('cancel task should work properly', (report, done) => {
       report(<Assert key="task cancelled rejection should be catachable"
         expect={true}
         actual={true}/>)
+      done()
     })
 
 })

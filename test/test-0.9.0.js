@@ -24,7 +24,7 @@ const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
   group : '0.9.0',
   run : true,
-  expand : true,
+  expand : false,
   timeout : 20000,
 })
 const { TEST_SERVER_URL, TEST_SERVER_URL_SSL, FILENAME, DROPBOX_TOKEN, styles } = prop()
