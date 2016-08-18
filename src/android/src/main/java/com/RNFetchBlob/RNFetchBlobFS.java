@@ -449,7 +449,7 @@ public class RNFetchBlobFS {
             in = inputStreamFromPath(path);
             out = new FileOutputStream(dest);
 
-            byte[] buf = new byte[1024];
+            byte[] buf = new byte[10240];
             int len;
             while ((len = in.read(buf)) > 0) {
                 out.write(buf, 0, len);
