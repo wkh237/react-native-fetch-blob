@@ -10,8 +10,8 @@ import ProgressEvent from './ProgressEvent.js'
 
 const log = new Log('XMLHttpRequest')
 
-log.disable()
-// log.level(3)
+// log.disable()
+log.level(3)
 
 const UNSENT = 0
 const OPENED = 1
@@ -103,8 +103,8 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   constructor() {
-    super()
     log.verbose('XMLHttpRequest constructor called')
+    super()
   }
 
 
@@ -409,6 +409,10 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   get responseType() {
     log.verbose('get response type', this._responseType)
     return this._responseType
+  }
+
+  get isRNFBPolyfill() {
+    return true
   }
 
 }
