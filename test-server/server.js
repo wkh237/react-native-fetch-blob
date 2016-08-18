@@ -34,6 +34,8 @@ var server = https.createServer({
     console.log('SSL test server running at port ',8124)
 })
 
+app.disable('etag')
+
 // http
 app.listen(8123, function(err){
   if(!err)
