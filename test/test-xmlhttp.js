@@ -149,13 +149,14 @@ describe('request headers records should be cleared by open()', (report, done) =
   let xhr = new XMLHttpRequest()
   xhr.open('GET', `${TEST_SERVER_URL}/xhr-header`)
   xhr.setRequestHeader('value', '100')
+  xhr.setRequestHeader('cache-control', 'no-store')
   xhr.open('GET', `${TEST_SERVER_URL}/xhr-header`)
   xhr.setRequestHeader('value', '200')
   xhr.send()
   xhr.onreadystatechange = function() {
     if(this.readyState == 4) {
       report(<Assert key="headers should be cleared by open()"
-        expect={'200'}
+        expect={"200"}
         actual={this.response.value}/>)
       done()
     }
