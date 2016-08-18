@@ -156,7 +156,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         // find cached result if `key` property exists
         String cacheKey = this.taskId;
-		String ext = this.options.appendExt != "" ? "." + this.options.appendExt : "";
+		String ext = this.options.appendExt.isEmpty() ? "." + this.options.appendExt : "";
 
        	if (this.options.key != null) {
            cacheKey = RNFetchBlobUtils.getMD5(this.options.key);
@@ -174,7 +174,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         if(this.options.path != null)
             this.destPath = this.options.path;
-        else if(this.options.fileCache == true)
+        else if(this.options.fileCache)
             this.destPath = RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey) + ext;
 
         OkHttpClient.Builder clientBuilder;
@@ -212,7 +212,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 if(rawRequestBodyArray != null) {
                     requestType = RequestType.Form;
                 }
-                else if(cType == null || cType.isEmpty()) {
+                else if(cType.isEmpty()) {
                     builder.header("Content-Type", "application/octet-stream");
                     requestType = RequestType.SingleFile;
                 }
@@ -280,7 +280,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
             final Request req = builder.build();
 
-            // Create response body depends on the responseType
+            // Add request interceptor for upload progress event
             clientBuilder.addInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
@@ -310,15 +310,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         }
                         return originalResponse.newBuilder().body(extended).build();
                     }
-                    catch (SocketTimeoutException e){
+                    catch(SocketException e) {
                         timeout = true;
                     }
-                    catch (SocketException ex) {
+                    catch (SocketTimeoutException e ){
                         timeout = true;
-                    }
-                    catch(Exception ex) {
+                    } catch(Exception ex) {
                         RNFetchBlobUtils.emitWarningEvent("RNFetchBlob error when sending request : " + ex.getLocalizedMessage());
-
                     }
                     return chain.proceed(chain.request());
                 }
@@ -611,7 +609,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     }
                 }
                 else
-                    this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
+                    this.callback.invoke("Download manager could not resolve downloaded file path.", RNFetchBlobConst.RNFB_RESPONSE_PATH, null);
             }
         }
     }
