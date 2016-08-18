@@ -525,11 +525,11 @@ NSMutableDictionary *fileStreams = nil;
 }
 
 // Slice a file into another file, generally for support Blob implementation.
-- (void)slice:(NSString *)path
++ (void)slice:(NSString *)path
          dest:(NSString *)dest
-        start:(NSNumber *)start
-          end:(NSNumber *)end
-        encod:(NSString *)encode
+        start:(nonnull NSNumber *)start
+          end:(nonnull NSNumber *)end
+        encode:(NSString *)encode
      resolver:(RCTPromiseResolveBlock)resolve
      rejecter:(RCTPromiseRejectBlock)reject
 {
@@ -542,25 +542,39 @@ NSMutableDictionary *fileStreams = nil;
     // abort for the source file not exists
     if([fm fileExistsAtPath:path] == NO)
     {
-        reject(@"RNFetchBlob slice failed", @"the file does not exists", path);
+        reject(@"RNFetchBlob slice failed : the file does not exists", path, nil);
         return;
     }
     long size = [fm attributesOfItemAtPath:path error:nil].fileSize;
-    // abort for the file size is less than start
-    if(size < start)
-    {
-        reject(@"RNFetchBlob slice failed", @"start is greater than file size", @"");
-        return;
-    }
+    long max = MIN(size, [end longValue]);
+    
     if(![fm fileExistsAtPath:dest]) {
         [fm createFileAtPath:dest contents:@"" attributes:nil];
     }
-    [handle seekToFileOffset:start];
+    [handle seekToFileOffset:[start longValue]];
     while(read < expected)
     {
-        NSData * chunk = [handle readDataOfLength:10240];
+        
+        NSData * chunk;
+        long chunkSize = 0;
+        if([start longValue] + read + 10240 > max)
+        {
+            NSLog(@"read chunk %lu", max - read - [start longValue]);
+            chunkSize = max - read - [start longValue];
+            chunk = [handle readDataOfLength:chunkSize];
+        }
+        else
+        {
+            NSLog(@"read chunk %lu", 10240);
+            chunkSize = 10240;
+            chunk = [handle readDataOfLength:10240];
+        }
+        if([chunk length] <= 0)
+            break;
+        long remain = expected - read;
+    
+        [os write:[chunk bytes] maxLength:chunkSize];
         read += [chunk length];
-        [os write:[chunk bytes] maxLength:10240];
     }
     [handle closeFile];
     [os close];

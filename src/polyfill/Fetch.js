@@ -99,6 +99,10 @@ class RNFetchBlobFetchRepsonse {
     this.rnfbResp = resp
   }
 
+  rawResp() {
+    return Promise.resolve(this.rnfbResp)
+  }
+
   arrayBuffer(){
     log.verbose('to arrayBuffer', this.rnfbRespInfo)
     this.bodyUsed = true

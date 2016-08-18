@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -81,6 +82,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     Callback callback;
     long contentLength;
     long downloadManagerId;
+    RNFetchBlobBody requestBody;
     RequestType requestType;
     ResponseType responseType;
     WritableMap respInfo;
@@ -154,7 +156,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         // find cached result if `key` property exists
         String cacheKey = this.taskId;
-		String ext = this.options.appendExt != "" ? "." + this.options.appendExt : "";
+		String ext = this.options.appendExt.isEmpty() ? "." + this.options.appendExt : "";
 
        	if (this.options.key != null) {
            cacheKey = RNFetchBlobUtils.getMD5(this.options.key);
@@ -172,7 +174,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         if(this.options.path != null)
             this.destPath = this.options.path;
-        else if(this.options.fileCache == true)
+        else if(this.options.fileCache)
             this.destPath = RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey) + ext;
 
         OkHttpClient.Builder clientBuilder;
@@ -207,7 +209,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             if(method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put")) {
                 String cType = getHeaderIgnoreCases(mheaders, "Content-Type").toLowerCase();
 
-                if(cType == null) {
+                if(rawRequestBodyArray != null) {
+                    requestType = RequestType.Form;
+                }
+                else if(cType.isEmpty()) {
                     builder.header("Content-Type", "application/octet-stream");
                     requestType = RequestType.SingleFile;
                 }
@@ -235,28 +240,32 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             // set request body
             switch (requestType) {
                 case SingleFile:
-                    builder.method(method, new RNFetchBlobBody(
+                    requestBody = new RNFetchBlobBody(
                             taskId,
                             requestType,
                             rawRequestBody,
                             MediaType.parse(getHeaderIgnoreCases(mheaders, "content-type"))
-                    ));
+                    );
+                    builder.method(method, requestBody);
                     break;
                 case AsIs:
-                    builder.method(method, new RNFetchBlobBody(
+                    requestBody = new RNFetchBlobBody(
                             taskId,
                             requestType,
                             rawRequestBody,
                             MediaType.parse(getHeaderIgnoreCases(mheaders, "content-type"))
-                    ));
+                    );
+                    builder.method(method, requestBody);
                     break;
                 case Form:
-                    builder.method(method, new RNFetchBlobBody(
+                    String boundary = "RNFetchBlob-" + taskId;
+                    requestBody = new RNFetchBlobBody(
                             taskId,
                             requestType,
                             rawRequestBodyArray,
-                            MediaType.parse("multipart/form-data; boundary=RNFetchBlob-" + taskId)
-                    ));
+                            MediaType.parse("multipart/form-data; boundary="+ boundary)
+                    );
+                    builder.method(method, requestBody);
                     break;
 
                 case WithoutBody:
@@ -271,7 +280,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
             final Request req = builder.build();
 
-            // Create response body depends on the responseType
+            // Add request interceptor for upload progress event
             clientBuilder.addInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
@@ -300,8 +309,14 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                                 break;
                         }
                         return originalResponse.newBuilder().body(extended).build();
-                    } catch(Exception ex) {
+                    }
+                    catch(SocketException e) {
                         timeout = true;
+                    }
+                    catch (SocketTimeoutException e ){
+                        timeout = true;
+                    } catch(Exception ex) {
+                        RNFetchBlobUtils.emitWarningEvent("RNFetchBlob error when sending request : " + ex.getLocalizedMessage());
                     }
                     return chain.proceed(chain.request());
                 }
@@ -336,7 +351,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     }
                     else
                         callback.invoke(e.getLocalizedMessage(), null, null);
-                    removeTaskInfo();
+                    releaseTaskResource();
                 }
 
                 @Override
@@ -366,7 +381,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         } catch (Exception error) {
             error.printStackTrace();
-            taskTable.remove(taskId);
+            releaseTaskResource();
             callback.invoke("RNFetchBlob request error: " + error.getMessage() + error.getCause());
         }
     }
@@ -374,13 +389,15 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     /**
      * Remove cached information of the HTTP task
      */
-    private void removeTaskInfo() {
+    private void releaseTaskResource() {
         if(taskTable.containsKey(taskId))
             taskTable.remove(taskId);
         if(uploadProgressReport.containsKey(taskId))
             uploadProgressReport.remove(taskId);
         if(progressReport.containsKey(taskId))
             progressReport.remove(taskId);
+        if(requestBody != null)
+            requestBody.clearRequestBody();
     }
 
     /**
@@ -439,7 +456,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     // It uses customized response body which is able to report download progress
                     // and write response data to destination path.
                     resp.body().bytes();
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                    ignored.printStackTrace();
+                }
                 callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
                 break;
             default:
@@ -450,8 +469,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
                 break;
         }
-        removeTaskInfo();
-//        resp.close();
+        if(!resp.isSuccessful())
+            resp.body().close();
+        releaseTaskResource();
     }
 
     /**
@@ -583,8 +603,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         error = ex.getLocalizedMessage();
                     }
                 }
-                this.callback.invoke(error, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
-                c.close();
+                else
+                    this.callback.invoke("Download manager could not resolve downloaded file path.", RNFetchBlobConst.RNFB_RESPONSE_PATH, null);
             }
         }
     }

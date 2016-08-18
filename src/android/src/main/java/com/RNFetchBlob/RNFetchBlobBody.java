@@ -13,8 +13,12 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -33,19 +37,27 @@ import okio.Sink;
 public class RNFetchBlobBody extends RequestBody{
 
     InputStream requestStream;
-    long contentLength;
+    long contentLength = 0;
     long bytesWritten = 0;
     ReadableArray form;
     String mTaskId;
     String rawBody;
     RNFetchBlobReq.RequestType requestType;
     MediaType mime;
+    File bodyCache;
+
 
     public RNFetchBlobBody(String taskId, RNFetchBlobReq.RequestType type, ReadableArray form, MediaType contentType) {
         this.mTaskId = taskId;
         this.form = form;
         requestType = type;
         mime = contentType;
+        try {
+            bodyCache = createMultipartBodyCache();
+            contentLength = bodyCache.length();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public RNFetchBlobBody(String taskId, RNFetchBlobReq.RequestType type, String rawBody, MediaType contentType) {
@@ -53,8 +65,18 @@ public class RNFetchBlobBody extends RequestBody{
         requestType = type;
         this.rawBody = rawBody;
         mime = contentType;
+        if(rawBody != null) {
+            if(requestType == RNFetchBlobReq.RequestType.AsIs)
+                contentLength = rawBody.length();
+            else
+                contentLength = caculateOctetContentLength();
+        }
     }
 
+    @Override
+    public long contentLength() {
+        return contentLength;
+    }
     @Override
     public MediaType contentType() {
         return mime;
@@ -67,10 +89,11 @@ public class RNFetchBlobBody extends RequestBody{
         BufferedSink buffer = Okio.buffer(source);
         switch (requestType) {
             case Form:
-                writeFormData(sink);
+                pipeStreamToSink(new FileInputStream(bodyCache), sink);
                 break;
             case SingleFile:
-                writeOctetData(sink);
+                if(requestStream != null)
+                    pipeStreamToSink(requestStream, sink);
                 break;
             case AsIs:
 				writeRawData(sink);
@@ -79,10 +102,71 @@ public class RNFetchBlobBody extends RequestBody{
         buffer.flush();
     }
 
-	private void writeFormData(BufferedSink sink) throws IOException {
+    boolean clearRequestBody() {
+        try {
+            if (bodyCache != null && bodyCache.exists()) {
+                bodyCache.delete();
+            }
+        } catch(Exception e) {
+            RNFetchBlobUtils.emitWarningEvent(e.getLocalizedMessage());
+            return false;
+        }
+        return true;
+    }
+
+    private long caculateOctetContentLength() {
+        long total = 0;
+        // upload from storage
+        if (rawBody.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
+            String orgPath = rawBody.substring(RNFetchBlobConst.FILE_PREFIX.length());
+            orgPath = RNFetchBlobFS.normalizePath(orgPath);
+            // upload file from assets
+            if (RNFetchBlobFS.isAsset(orgPath)) {
+                try {
+                    String assetName = orgPath.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
+                    total += RNFetchBlob.RCTContext.getAssets().openFd(assetName).getLength();
+                    requestStream = RNFetchBlob.RCTContext.getAssets().open(assetName);
+                } catch (IOException e) {
+                    RNFetchBlobUtils.emitWarningEvent(e.getLocalizedMessage());
+                }
+            } else {
+                File f = new File(RNFetchBlobFS.normalizePath(orgPath));
+                try {
+                    if(!f.exists())
+                        f.createNewFile();
+                    total += f.length();
+                    requestStream = new FileInputStream(f);
+                } catch (Exception e) {
+                    RNFetchBlobUtils.emitWarningEvent("RNetchBlob error when counting content length: " +e.getLocalizedMessage());
+                }
+            }
+        } else {
+            try {
+                byte[] bytes = Base64.decode(rawBody, 0);
+                requestStream = new ByteArrayInputStream(bytes);
+                total += requestStream.available();
+            } catch(Exception ex) {
+                RNFetchBlobUtils.emitWarningEvent("RNetchBlob error when counting content length: " +ex.getLocalizedMessage());
+            }
+        }
+        return total;
+    }
+
+    /**
+     * Create a temp file that contains content of multipart form data content
+     * @return The cache file object
+     * @throws IOException
+     */
+    private File createMultipartBodyCache() throws IOException {
         String boundary = "RNFetchBlob-" + mTaskId;
+
+        File outputDir = RNFetchBlob.RCTContext.getCacheDir(); // context being the Activity pointer
+        File outputFile = File.createTempFile("rnfb-form-tmp", "", outputDir);
+        FileOutputStream os = new FileOutputStream(outputFile);
+
         ArrayList<FormField> fields = countFormDataLength();
         ReactApplicationContext ctx = RNFetchBlob.RCTContext;
+
         for(int i = 0;i < fields.size(); i++) {
             FormField field = fields.get(i);
             String data = field.data;
@@ -95,7 +179,7 @@ public class RNFetchBlobBody extends RequestBody{
             if (field.filename != null) {
                 header += "Content-Disposition: form-data; name=" + name + "; filename=" + field.filename + "\r\n";
                 header += "Content-Type: " + field.mime + "\r\n\r\n";
-                sink.write(header.getBytes());
+                os.write(header.getBytes());
                 // file field header end
                 // upload from storage
                 if (data.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
@@ -106,9 +190,9 @@ public class RNFetchBlobBody extends RequestBody{
                         try {
                             String assetName = orgPath.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
                             InputStream in = ctx.getAssets().open(assetName);
-                            pipeStreamToSink(in, sink);
+                            pipeStreamToFileStream(in, os);
                         } catch (IOException e) {
-                            Log.e("RNFetchBlob", "Failed to create form data asset :" + orgPath + ", " + e.getLocalizedMessage() );
+                            RNFetchBlobUtils.emitWarningEvent("RNFetchBlob Failed to create form data asset :" + orgPath + ", " + e.getLocalizedMessage() );
                         }
                     }
                     // data from normal files
@@ -116,17 +200,17 @@ public class RNFetchBlobBody extends RequestBody{
                         File file = new File(RNFetchBlobFS.normalizePath(orgPath));
                         if(file.exists()) {
                             FileInputStream fs = new FileInputStream(file);
-                            pipeStreamToSink(fs, sink);
+                            pipeStreamToFileStream(fs, os);
                         }
                         else {
-                            Log.e("RNFetchBlob", "Failed to create form data from path :" + orgPath + "file not exists.");
+                            RNFetchBlobUtils.emitWarningEvent("RNFetchBlob Failed to create form data from path :" + orgPath + ", file not exists.");
                         }
                     }
                 }
                 // base64 embedded file content
                 else {
                     byte[] b = Base64.decode(data, 0);
-                    sink.write(b);
+                    os.write(b);
                     bytesWritten += b.length;
                     emitUploadProgress();
                 }
@@ -136,70 +220,30 @@ public class RNFetchBlobBody extends RequestBody{
             else {
                 header += "Content-Disposition: form-data; name=" + name + "\r\n";
                 header += "Content-Type: " + field.mime + "\r\n\r\n";
-                sink.write(header.getBytes());
+                os.write(header.getBytes());
                 byte[] fieldData = field.data.getBytes();
                 bytesWritten += fieldData.length;
-                sink.write(fieldData);
+                os.write(fieldData);
             }
             // form end
-            sink.write("\r\n".getBytes());
+            os.write("\r\n".getBytes());
         }
         // close the form
         byte[] end = ("--" + boundary + "--\r\n").getBytes();
-        sink.write(end);
+        os.write(end);
+        os.flush();
+        os.close();
+        return outputFile;
     }
-
-    /**
-     * Write octet stream data to request body
-     * @param sink
-     */
-    private void writeOctetData(BufferedSink sink) throws IOException {
-        // upload from storage
-        if (rawBody.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
-            String orgPath = rawBody.substring(RNFetchBlobConst.FILE_PREFIX.length());
-            orgPath = RNFetchBlobFS.normalizePath(orgPath);
-            // upload file from assets
-            if (RNFetchBlobFS.isAsset(orgPath)) {
-                try {
-                    String assetName = orgPath.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
-                    contentLength = RNFetchBlob.RCTContext.getAssets().openFd(assetName).getLength();
-                    requestStream = RNFetchBlob.RCTContext.getAssets().open(assetName);
-                } catch (IOException e) {
-//                        e.printStackTrace();
-                }
-            } else {
-                File f = new File(RNFetchBlobFS.normalizePath(orgPath));
-                try {
-                    if(!f.exists())
-                        f.createNewFile();
-                    contentLength = f.length();
-                    requestStream = new FileInputStream(f);
-                } catch (Exception e) {
-//                        callback.invoke(e.getLocalizedMessage(), null);
-                }
-            }
-        } else {
-            try {
-                byte[] bytes = Base64.decode(rawBody, 0);
-                contentLength = bytes.length;
-                requestStream = new ByteArrayInputStream(bytes);
-            } catch(Exception ex) {
-
-                Log.e("error", ex.getLocalizedMessage());
-            }
-        }
-        if(requestStream != null)
-            pipeStreamToSink(requestStream, sink);
-
-    }
-
 
 	/**
      * Write data to request body as-is
      * @param sink
      */
 	private void writeRawData(BufferedSink sink) throws IOException {
-		sink.write(rawBody.getBytes());
+        byte[] bytes = rawBody.getBytes();
+        contentLength = bytes.length;
+		sink.write(bytes);
 	}
 
     /**
@@ -210,27 +254,29 @@ public class RNFetchBlobBody extends RequestBody{
      */
     private void pipeStreamToSink(InputStream stream, BufferedSink sink) throws IOException {
         byte [] chunk = new byte[10240];
-        int read = stream.read(chunk, 0, 10240);
-        if(read > 0) {
-            sink.write(chunk, 0, read);
-        }
-        bytesWritten += read;
-        while(read > 0) {
-            read = stream.read(chunk, 0, 10240);
+        int read;
+        while((read = stream.read(chunk, 0, 10240)) > 0) {
             if(read > 0) {
                 sink.write(chunk, 0, read);
-                bytesWritten += read;
-                emitUploadProgress();
             }
-
         }
         stream.close();
     }
 
-    private void writeBufferToSink(byte [] bytes, BufferedSink sink) throws IOException {
-        bytesWritten += bytes.length;
-        sink.write(bytes);
-        emitUploadProgress();
+    /**
+     * Pipe input stream to a file
+     * @param is    The input stream
+     * @param os    The output stream to a file
+     * @throws IOException
+     */
+    private void pipeStreamToFileStream(InputStream is, FileOutputStream os) throws IOException {
+
+        byte[] buf = new byte[10240];
+        int len;
+        while ((len = is.read(buf)) > 0) {
+            os.write(buf, 0, len);
+        }
+        is.close();
     }
 
     /**
@@ -242,10 +288,13 @@ public class RNFetchBlobBody extends RequestBody{
         ArrayList<FormField> list = new ArrayList<>();
         ReactApplicationContext ctx = RNFetchBlob.RCTContext;
         for(int i = 0;i < form.size(); i++) {
-            ReadableMap field = form.getMap(i);
-            list.add(new FormField(field));
-            String data = field.getString("data");
-            if (field.hasKey("filename")) {
+            FormField field = new FormField(form.getMap(i));
+            list.add(field);
+            String data = field.data;
+            if(data == null) {
+                RNFetchBlobUtils.emitWarningEvent("RNFetchBlob multipart request builder has found a field without `data` property, the field `"+ field.name +"` will be removed implicitly.");
+            }
+            else if (field.filename != null) {
                 // upload from storage
                 if (data.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
                     String orgPath = data.substring(RNFetchBlobConst.FILE_PREFIX.length());
@@ -257,7 +306,7 @@ public class RNFetchBlobBody extends RequestBody{
                             long length = ctx.getAssets().open(assetName).available();
                             total += length;
                         } catch (IOException e) {
-
+                            RNFetchBlobUtils.emitWarningEvent(e.getLocalizedMessage());
                         }
                     }
                     // general files
@@ -274,7 +323,7 @@ public class RNFetchBlobBody extends RequestBody{
             }
             // data field
             else {
-                total += field.getString("data").length();
+                total += field.data != null ? field.data.getBytes().length : 0;
             }
         }
         contentLength = total;
@@ -301,8 +350,9 @@ public class RNFetchBlobBody extends RequestBody{
             else {
                 mime = filename == null ? "text/plain" : "application/octet-stream";
             }
-            if(rawData.hasKey("data"))
+            if(rawData.hasKey("data")) {
                 data = rawData.getString("data");
+            }
         }
     }
 

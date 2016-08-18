@@ -34,6 +34,8 @@ var server = https.createServer({
     console.log('SSL test server running at port ',8124)
 })
 
+app.disable('etag')
+
 // http
 app.listen(8123, function(err){
   if(!err)
@@ -134,6 +136,11 @@ app.put('/upload-form', formUpload)
 app.all('/xhr-code/:code', (req, res) => {
   console.log('code = ', req.params.code)
   res.status(Math.floor(req.params.code)).send()
+})
+
+app.all('/content-length', (req, res) => {
+  console.log(req.headers)
+  res.send(req.headers['Content-Length'])
 })
 
 app.all('/xhr-header', (req, res) => {

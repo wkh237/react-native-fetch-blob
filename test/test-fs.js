@@ -7,6 +7,7 @@ import {
   Text,
   View,
   ScrollView,
+  Platform,
   Dimensions,
   Image,
 } from 'react-native';
@@ -20,6 +21,7 @@ const describe = RNTest.config({
 
 let { TEST_SERVER_URL, FILENAME, DROPBOX_TOKEN, styles, image } = prop()
 let dirs = RNFetchBlob.fs.dirs
+let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
 describe('Get storage folders', (report, done) => {
   report(
@@ -406,6 +408,71 @@ describe('stat and lstat test', (report, done) => {
   })
 
 })
+
+describe('fs.slice test', (report, done) => {
+
+  let source = null
+  let parts = fs.dirs.DocumentDir + '/tmp-source-'
+  let dests = []
+  let combined = fs.dirs.DocumentDir + '/combined-' + Date.now() + '.jpg'
+  let size = 0
+
+  window.fetch = new RNFetchBlob.polyfill.Fetch({
+    auto : true,
+    binaryContentTypes : ['image/', 'video/', 'audio/']
+  }).build()
+
+  fetch(`${TEST_SERVER_URL}/public/github2.jpg`)
+  .then((res) => res.rawResp())
+  .then((res) => {
+    source = res.path()
+    return fs.stat(source)
+  })
+  // separate file into 4kb chunks
+  .then((stat) => {
+    size = stat.size
+    let promise = Promise.resolve()
+    let cursor = 0
+    while(cursor < size) {
+      promise = promise.then(function(start) {
+        console.log('slicing part ', start , start + 40960)
+        let offset = 0
+        return fs.slice(source, parts + start, start + offset, start + 40960)
+                .then((dest) => {
+                  console.log('slicing part ', start + offset, start + 40960, 'done')
+                  dests.push(dest)
+                  return Promise.resolve()
+                })
+      }.bind(this, cursor))
+      cursor += 40960
+    }
+    console.log('loop end')
+    return promise
+  })
+  // combine chunks and verify the result
+  .then(() => {
+    console.log('combinding files')
+    let p = Promise.resolve()
+    for(let d in dests) {
+      p = p.then(function(chunk){
+        return fs.appendFile(combined, chunk, 'uri').then((write) => {
+          console.log(write, 'bytes write')
+        })
+      }.bind(this, dests[d]))
+    }
+    return p.then(() => fs.stat(combined))
+  })
+  .then((stat) => {
+    report(
+      <Assert key="verify file size" expect={size} actual={stat.size}/>,
+      <Info key="image viewer">
+        <Image key="combined image" style={styles.image} source={{ uri : prefix + combined}}/>
+      </Info>)
+    done()
+  })
+
+})
+
 
 function getASCIIArray(str) {
   let r = []

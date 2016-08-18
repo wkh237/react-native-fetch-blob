@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Base64;
 
+import com.RNFetchBlob.Utils.PathResolver;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
@@ -448,7 +449,7 @@ public class RNFetchBlobFS {
             in = inputStreamFromPath(path);
             out = new FileOutputStream(dest);
 
-            byte[] buf = new byte[1024];
+            byte[] buf = new byte[10240];
             int len;
             while ((len = in.read(buf)) > 0) {
                 out.write(buf, 0, len);
@@ -535,11 +536,16 @@ public class RNFetchBlobFS {
      * @param start Start byte offset in source file
      * @param end   End byte offset
      * @param encode
-     * @param callback
      */
-    public static void slice(String src, String dest, int start, int end, String encode, Callback callback) {
+    public static void slice(String src, String dest, int start, int end, String encode, Promise promise) {
         try {
-            long expected = end - start;
+            File source = new File(src);
+            if(!source.exists()) {
+                promise.reject("RNFetchBlob.slice error", "source file : " + src + " not exists");
+            }
+            long size = source.length();
+            long max = Math.min(size, end);
+            long expected = max - start;
             long now = 0;
             FileInputStream in = new FileInputStream(new File(src));
             FileOutputStream out = new FileOutputStream(new File(dest));
@@ -547,17 +553,20 @@ public class RNFetchBlobFS {
             byte [] buffer = new byte[10240];
             while(now < expected) {
                 long read = in.read(buffer, 0, 10240);
+                long remain = expected - now;
                 if(read <= 0) {
                     break;
                 }
+                out.write(buffer, 0, (int) Math.min(remain, read));
                 now += read;
-                out.write(buffer, 0, (int) read);
             }
             in.close();
+            out.flush();
             out.close();
-            callback.invoke(null, dest);
+            promise.resolve(dest);
         } catch (Exception e) {
             e.printStackTrace();
+            promise.reject(e.getLocalizedMessage());
         }
     }
 
@@ -844,28 +853,23 @@ public class RNFetchBlobFS {
     }
 
     public static boolean isAsset(String path) {
-        return path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET);
+        if(path != null)
+            return path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET);
+        return false;
     }
 
     public static String normalizePath(String path) {
+        if(path == null)
+            return null;
+        Uri uri = Uri.parse(path);
+        if(uri.getScheme() == null) {
+            return path;
+        }
         if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
             return path;
         }
-        else if (path.startsWith(RNFetchBlobConst.FILE_PREFIX_CONTENT)) {
-            String filePath = null;
-            Uri uri = Uri.parse(path);
-            if (uri != null && "content".equals(uri.getScheme())) {
-                ContentResolver resolver = RNFetchBlob.RCTContext.getContentResolver();
-                Cursor cursor = resolver.query(uri, new String[] { MediaStore.Images.ImageColumns.DATA }, null, null, null);
-                cursor.moveToFirst();
-                filePath = cursor.getString(0);
-                cursor.close();
-            } else {
-                filePath = uri.getPath();
-            }
-            return filePath;
-        }
-        return path;
+        else
+            return PathResolver.getRealPathFromURI(RNFetchBlob.RCTContext, uri);
     }
 
 }

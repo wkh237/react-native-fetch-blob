@@ -17,7 +17,7 @@ import {
 const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
-  group : '0.6.3',
+  group : 'stress test',
   run : true,
   expand : true,
   timeout : 300000000,
