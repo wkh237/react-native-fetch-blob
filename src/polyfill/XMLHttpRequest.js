@@ -10,8 +10,8 @@ import ProgressEvent from './ProgressEvent.js'
 
 const log = new Log('XMLHttpRequest')
 
-// log.disable()
-log.level(3)
+log.disable()
+// log.level(2)
 
 const UNSENT = 0
 const OPENED = 1
@@ -246,7 +246,6 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     for(let i in respHeaders) {
       result += `${i}: ${respHeaders[i]}${String.fromCharCode(0x0D,0x0A)}`
     }
-    console.log('###', result.substr(0, result.length-2))
     return result.substr(0, result.length-2)
   }
 
@@ -315,6 +314,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     }
     if(resp) {
       let info = resp.respInfo || {}
+      log.debug(this._url, info, info.respType)
       switch(info.respType) {
         case 'json' :
         try{
@@ -348,7 +348,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   set onreadystatechange(fn:() => void) {
-    log.verbose('XMLHttpRequest set onreadystatechange', fn.toString())
+    log.verbose('XMLHttpRequest set onreadystatechange', fn)
     this._onreadystatechange = fn
   }
 
