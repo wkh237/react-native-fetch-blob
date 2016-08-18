@@ -310,6 +310,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         }
                         return originalResponse.newBuilder().body(extended).build();
                     }
+                    catch (SocketTimeoutException e){
+                        timeout = true;
+                    }
                     catch (SocketException ex) {
                         timeout = true;
                     }
