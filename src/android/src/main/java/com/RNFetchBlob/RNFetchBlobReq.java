@@ -251,11 +251,12 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     ));
                     break;
                 case Form:
+                    String boundary = "RNFetchBlob-" + taskId;
                     builder.method(method, new RNFetchBlobBody(
                             taskId,
                             requestType,
                             rawRequestBodyArray,
-                            MediaType.parse("multipart/form-data; boundary=RNFetchBlob-" + taskId)
+                            MediaType.parse("multipart/form-data; boundary="+ boundary)
                     ));
                     break;
 
@@ -301,7 +302,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         }
                         return originalResponse.newBuilder().body(extended).build();
                     } catch(Exception ex) {
-                        timeout = true;
+                        RNFetchBlobUtils.emitWarningEvent(ex.getLocalizedMessage());
                     }
                     return chain.proceed(chain.request());
                 }
@@ -439,7 +440,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     // It uses customized response body which is able to report download progress
                     // and write response data to destination path.
                     resp.body().bytes();
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                    ignored.printStackTrace();
+                }
                 callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
                 break;
             default:

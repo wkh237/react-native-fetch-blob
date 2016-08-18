@@ -9,6 +9,7 @@ public class RNFetchBlobConst {
     public static final String EVENT_UPLOAD_PROGRESS = "RNFetchBlobProgress-upload";
     public static final String EVENT_PROGRESS = "RNFetchBlobProgress";
     public static final String EVENT_HTTP_STATE = "RNFetchBlobState";
+    public static final String EVENT_MESSAGE = "RNFetchBlobMessage";
     public static final String FILE_PREFIX = "RNFetchBlob-file://";
     public static final String FILE_PREFIX_BUNDLE_ASSET = "bundle-assets://";
     public static final String FILE_PREFIX_CONTENT = "content://";
