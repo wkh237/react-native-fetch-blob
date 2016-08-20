@@ -172,6 +172,9 @@ function fetch(...args:any):Promise {
       delete promise['uploadProgress']
       delete promise['stateChange']
       delete promise['cancel']
+      promise.cancel = () {
+        console.warn('finished request could not be canceled')
+      }
 
       if(err)
         reject(new Error(err, respInfo))
