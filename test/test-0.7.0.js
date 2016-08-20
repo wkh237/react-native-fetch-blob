@@ -33,11 +33,13 @@ describe('Upload and download large file', (report, done) => {
   let begin = -1
   let begin2 = -1
   let deb = Date.now()
+  let download = false, upload = false
   RNFetchBlob.config({
     fileCache : true
   })
-  .fetch('GET', `${TEST_SERVER_URL}/public/1mb-dummy`)
+  .fetch('GET', `${TEST_SERVER_URL}/public/2mb-dummy`)
   .progress((now, total) => {
+    download = true
     if(begin === -1)
       begin = Date.now()
     if(Date.now() - deb < 1000)
@@ -57,6 +59,29 @@ describe('Upload and download large file', (report, done) => {
     report(<Info key="big file stat">
       <Text>{JSON.stringify(stat)}</Text>
     </Info>)
+    let task = RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+      Authorization : `Bearer ${DROPBOX_TOKEN}`,
+      'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+filename+Date.now()+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
+      'Content-Type' : 'application/octet-stream',
+    }, RNFetchBlob.wrap(bigfile))
+    begin = -1
+    task.uploadProgress((now, total) => {
+      upload = true
+      if(begin === -1)
+        begin = Date.now()
+      if(Date.now() - deb < 1000)
+        return
+      deb = Date.now()
+      report(<Info uid="300" key="upload progress">
+        <Text>
+          {`upload ${now} / ${total} bytes (${Math.floor(now / (Date.now() - begin))} kb/s) ${(100*now/total).toFixed(2)}%`}
+        </Text>
+      </Info>)
+    })
+    return task
+  })
+  .then(() => {
+    report(<Assert key="upload and download event triggered" expect={true} actual={download && upload}/>)
     done()
   })
 })
@@ -87,6 +112,7 @@ describe('cancel task should work properly', (report, done) => {
       </Text>
     </Info>)
   })
+
   let checkpoint1 = 0
   Timer.setTimeout(() => {
     task.cancel()
