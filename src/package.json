@@ -21,13 +21,24 @@
     "image header"
   ],
   "rnpm": {
-		"commands": {
-			"prelink": "node ./node_modules/react-native-fetch-blob/scripts/prelink.js"
-		}
-	},
+    "commands": {
+      "prelink": "node ./node_modules/react-native-fetch-blob/scripts/prelink.js"
+    }
+  },
   "repository": {
     "url": "https://github.com/wkh237/react-native-fetch-blob.git"
   },
-  "author": "wkh237",
-  "license": "MIT"
+  "author": "wkh237 <xeiyan@gmail.com>",
+  "license": "MIT",
+  "contributors": [
+    "Dmitry Petukhov <dmitryvpetukhov@gmail.com>",
+    "Erik Smartt <code@eriksmartt.com>",
+    "Evgeniy Baraniuk <ev.baraniuk@gmail.com>",
+    "Juan B. Rodriguez <jbrodriguez@gmail.com>",
+    "Nguyen Cao Nhat Linh <nhatlinh95@gmail.com>",
+    "Tim Suchanek <tim.suchanek@gmail.com>",
+    "follower <github@rancidbacon.com>",
+    "smartt <github@eriksmartt.com>",
+    ""
+  ]
 }
