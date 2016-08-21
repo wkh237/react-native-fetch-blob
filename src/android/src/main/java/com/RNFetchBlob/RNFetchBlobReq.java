@@ -332,7 +332,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             clientBuilder.retryOnConnectionFailure(false);
             clientBuilder.followRedirects(true);
 
-            OkHttpClient client = clientBuilder.build();
+            OkHttpClient client = clientBuilder.retryOnConnectionFailure(true).build();
             Call call =  client.newCall(req);
             taskTable.put(taskId, call);
             call.enqueue(new okhttp3.Callback() {
