@@ -3,10 +3,10 @@ var fs = require('fs');
 var MANIFEST_PATH = process.cwd() + '/android/app/src/main/AndroidManifest.xml';
 var PACKAGE_JSON = process.cwd() + '/package.json';
 
-var hasNecessaryFile = fs.existsSync(MANIFEST_PATH) && fs.existsSync(MANIFEST_PATH);
+var hasNecessaryFile = fs.existsSync(MANIFEST_PATH) && fs.existsSync(PACKAGE_JSON);
 
 if (!hasNecessaryFile) {
-  throw 'RNFetchBlob could not found link Android automatically, some files could not be found.'
+  throw 'RNFetchBlob could not link Android automatically, some files could not be found.'
 }
 
 var package = JSON.parse(fs.readFileSync(PACKAGE_JSON));

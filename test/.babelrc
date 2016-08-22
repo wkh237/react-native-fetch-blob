@@ -12,5 +12,5 @@
       { "src": "./node_modules/react-native-fetch-blob/node-polyfill/stream.js", "expose": "stream" }
     ]]
   ],
-  "extends": "./node_modules/react-native/packager/react-packager/rn-babelrc.json",
+  "extends": "./node_modules/react-native/packager/react-packager/rn-babelrc.json"
 }
