@@ -24,8 +24,15 @@ const { TEST_SERVER_URL, TEST_SERVER_URL_SSL, FILENAME, DROPBOX_TOKEN, styles } 
 const dirs = RNFetchBlob.fs.dirs
 
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
-const db = new DataStore()
+const DB_PATH = fs.dirs.documentDir + `/nedb/test-db-${Date.now()}.db`
+const dbs = []
 
-describe('nedb constructor test', (report, done) =>{
+describe('nedb persistant constructor test', (report, done) =>{
+
+  let db = new DataStore(DB_PATH)
+  db.loadDatabase(function(err) {
+    report(<Assert key="database should created" expect={null} actual={err}/>)
+    done()
+  })
 
 })
