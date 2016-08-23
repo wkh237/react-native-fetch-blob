@@ -408,21 +408,6 @@ NSOperationQueue *taskQueue;
         [task cancel];
 }
 
-//- (void) application:(UIApplication *)application handleEventsForBackgroundURLSession:(NSString *)identifier completionHandler:(void (^)())completionHandler {
-//
-//}
-
-//- (void) URLSessionDidFinishEventsForBackgroundURLSession:(NSURLSession *)session
-//{
-//    if(self.dataTaskCompletionHandler != nil)
-//    {
-//        dataTaskCompletionHandler(self.respData, nil, error);
-//    }
-//    else if(self.fileTaskCompletionHandler != nil)
-//    {
-//        fileTaskCompletionHandler(nil, nil, self.error);
-//    }
-//}
 
 - (void) URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable credantial))completionHandler
 {
