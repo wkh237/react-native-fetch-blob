@@ -8,6 +8,7 @@
       { "src": "./node_modules/react-native-fetch-blob/node-polyfill/url.js", "expose": "url" },
       { "src": "./node_modules/react-native-fetch-blob/node-polyfill/querystring.js", "expose": "querystring" },
       { "src": "./node_modules/react-native-fetch-blob/node-polyfill/net.js", "expose": "net" },
+      { "src": "./node_modules/react-native-fetch-blob/node-polyfill/util.js", "expose": "util" },
       { "src": "./node_modules/react-native-fetch-blob/node-polyfill/crypto.js", "expose": "crypto" },
       { "src": "./node_modules/react-native-fetch-blob/node-polyfill/stream.js", "expose": "stream" }
     ]]
