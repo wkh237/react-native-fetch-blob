@@ -44,6 +44,11 @@ npm install --save firebase
 # libs that requires Node polyfills
 npm install --save oboe
 npm install --save nedb
+# for node polyfills
+npm install babel-plugin-add-module-exports --save-dev
+npm install babel-plugin-modue-alias --save-dev
+npm install path-parse --save
+
 rnpm link
 
 # copy android assets
