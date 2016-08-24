@@ -10,8 +10,7 @@ import {
   Dimensions,
   Image,
 } from 'react-native';
-import DataStore from 'nedb'
-
+const JSONStream = RNFetchBlob.JSONStream
 const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
@@ -22,10 +21,21 @@ const describe = RNTest.config({
 })
 const { TEST_SERVER_URL, TEST_SERVER_URL_SSL, FILENAME, DROPBOX_TOKEN, styles } = prop()
 const dirs = RNFetchBlob.fs.dirs
-
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
-const db = new DataStore()
+let begin = Date.now()
 
-describe('nedb constructor test', (report, done) =>{
+describe('oboe test', (report, done) => {
+
+  let count = 0
+  JSONStream(`${TEST_SERVER_URL}/public/json-dummy.json`).node('name', (name) => {
+    count++
+    if(Date.now() - begin < 100)
+    return
+    begin = Date.now()
+    report(<Info key="report" uid="100">
+      <Text>{count} records</Text>
+    </Info>)
+    done()
+  })
 
 })
