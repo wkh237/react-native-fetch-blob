@@ -16,6 +16,7 @@ import type {
   RNFetchBlobStream,
   RNFetchBlobResponseInfo
 } from './types'
+import StatefulPromise from './class/StatefulPromise.js'
 import fs from './fs'
 import getUUID from './utils/uuid'
 import base64 from 'base-64'
@@ -167,6 +168,13 @@ function fetch(...args:any):Promise {
       subscription.remove()
       subscriptionUpload.remove()
       stateEvent.remove()
+      delete promise['progress']
+      delete promise['uploadProgress']
+      delete promise['stateChange']
+      delete promise['cancel']
+      promise.cancel = () => {
+        console.warn('finished request could not be canceled')
+      }
 
       if(err)
         reject(new Error(err, respInfo))

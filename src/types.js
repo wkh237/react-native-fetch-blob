@@ -47,7 +47,7 @@ type RNFetchBlobResponseInfo = {
   state : number,
   headers : any,
   status : number,
-  respType : 'text' | 'blob' | '' | 'json'
+  respType : 'text' | 'blob' | '' | 'json',
   rnfbEncode : 'path' | 'base64' | 'ascii' | 'utf8'
 }
 
