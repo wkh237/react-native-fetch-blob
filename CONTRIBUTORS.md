@@ -1,6 +1,8 @@
 
 Dmitry Petukhov <dmitryvpetukhov@gmail.com>
+
 Erik Smartt <code@eriksmartt.com>
+
 Evgeniy Baraniuk <ev.baraniuk@gmail.com>
 Juan B. Rodriguez <jbrodriguez@gmail.com>
 Kaishley <kklingachetti@msn.com>
