@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start",
+    "update-info" : "sh scripts/contributors.sh",
     "test": "sh test.sh"
   },
   "devDependencies": {
@@ -18,9 +19,11 @@
     "Erik Smartt <code@eriksmartt.com>",
     "Evgeniy Baraniuk <ev.baraniuk@gmail.com>",
     "Juan B. Rodriguez <jbrodriguez@gmail.com>",
+    "Kaishley <kklingachetti@msn.com>",
     "Nguyen Cao Nhat Linh <nhatlinh95@gmail.com>",
     "Tim Suchanek <tim.suchanek@gmail.com>",
     "follower <github@rancidbacon.com>",
+    "francisco-sanchez-molina <psm1984@gmail.com>",
     "smartt <github@eriksmartt.com>",
     ""
   ]
