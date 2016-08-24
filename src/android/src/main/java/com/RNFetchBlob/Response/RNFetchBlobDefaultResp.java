@@ -9,6 +9,7 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -30,11 +31,13 @@ public class RNFetchBlobDefaultResp extends ResponseBody {
     String mTaskId;
     ReactApplicationContext rctContext;
     ResponseBody originalBody;
+    boolean isIncrement = false;
 
-    public RNFetchBlobDefaultResp(ReactApplicationContext ctx, String taskId, ResponseBody body) {
+    public RNFetchBlobDefaultResp(ReactApplicationContext ctx, String taskId, ResponseBody body, boolean isIncrement) {
         this.rctContext = ctx;
         this.mTaskId = taskId;
         this.originalBody = body;
+        this.isIncrement = isIncrement;
     }
 
     @Override
@@ -71,6 +74,13 @@ public class RNFetchBlobDefaultResp extends ResponseBody {
                 args.putString("taskId", mTaskId);
                 args.putString("written", String.valueOf(bytesRead));
                 args.putString("total", String.valueOf(contentLength()));
+                if(isIncrement) {
+                    args.putString("chunk", sink.readString(Charset.defaultCharset()));
+                }
+                else {
+                    args.putString("chunk", "");
+                }
+
                 rctContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                         .emit(RNFetchBlobConst.EVENT_PROGRESS, args);
             }

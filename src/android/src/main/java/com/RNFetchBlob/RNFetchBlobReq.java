@@ -292,7 +292,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                                 extended = new RNFetchBlobDefaultResp(
                                         RNFetchBlob.RCTContext,
                                         taskId,
-                                        originalResponse.body());
+                                        originalResponse.body(),
+                                        options.increment);
                                 break;
                             case FileStorage:
                                 extended = new RNFetchBlobFileResp(
@@ -305,7 +306,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                                 extended = new RNFetchBlobDefaultResp(
                                         RNFetchBlob.RCTContext,
                                         taskId,
-                                        originalResponse.body());
+                                        originalResponse.body(),
+                                        options.increment);
                                 break;
                         }
                         return originalResponse.newBuilder().body(extended).build();
