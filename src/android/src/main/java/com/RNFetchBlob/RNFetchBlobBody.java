@@ -104,11 +104,6 @@ public class RNFetchBlobBody extends RequestBody{
     }
     
     @Override
-    public long contentLength() {
-        return contentLength;
-    }
-    
-    @Override
     public void writeTo(BufferedSink sink) {
         try {
             if (requestType == RNFetchBlobReq.RequestType.AsIs)
