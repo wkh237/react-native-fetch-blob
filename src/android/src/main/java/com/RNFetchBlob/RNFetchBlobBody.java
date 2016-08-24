@@ -73,10 +73,9 @@ public class RNFetchBlobBody extends RequestBody{
         }
     }
 
-    @Override
-    public long contentLength() {
-        return contentLength;
-    }
+    // ${RN 0.26+ ONLY} @Override
+    // ${RN 0.26+ ONLY} public long contentLength() { return contentLength; }
+
     @Override
     public MediaType contentType() {
         return mime;

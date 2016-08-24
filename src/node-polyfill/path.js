@@ -3,41 +3,47 @@
 // found in the LICENSE file.
 // @flow
 import Log from '../utils/log'
-import path from 'path-parse'
+const parse = require('path-parse')
 const log = new Log('node-path')
-
 log.level(3)
-log.info('node-path polyfill loaded')
+log.info('polyfill loaded')
 
 const sep = '/'
 
 function basename(str:string):string {
-  return path.parse(str).base
+  log.verbose('basename', str)
+  return parse(str).base
 }
 
 function dirname(str:string):string {
-  return path.parse(str).dir
+  log.verbose('dirname', str)
+  return parse(str).dir
 }
 
 function extname(str:string):string {
-  return path.parse(str).ext
+  log.verbose('extname', str)
+  return parse(str).ext
 }
 
 function format(args:any):string {
+  log.verbose('format', args)
   // TODO :
 }
 
 function isAbsolute(str:string):boolean {
+  log.verbose('isAbsolute', str)
   // TODO :
   return true
 }
 
 function join(arr:Array):string {
+  log.verbose('join', arr)
   // TODO : error handling and type checking
   return arr.join('')
 }
 
 function normalize(str:string):string {
+  log.verbose('normalize', str)
   // TODO
   return str
 }

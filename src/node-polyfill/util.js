@@ -5,8 +5,8 @@
 import Log from '../utils/log'
 const log = new Log('node-util')
 
-log.level(3)
-log.info('node-util polyfill loaded')
+log.level(1)
+log.info('polyfill loaded')
 
 function inherits(ctor, superCtor):any {
   log.verbose('inherits', superCtor, superCtor)
@@ -17,7 +17,12 @@ function inherits(ctor, superCtor):any {
   return ctor
 }
 
+function isArray(arr:any):boolean {
+  return Array.isArray(arr)
+}
+
 // since nodejs modules uses es5 export by default, we should use es5 export here
 export {
-  inherits
+  inherits,
+  isArray
 }

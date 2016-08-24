@@ -45,6 +45,7 @@ npm install --save firebase
 npm install --save oboe
 npm install --save nedb
 # for node polyfills
+npm install crypto-js --save
 npm install babel-plugin-add-module-exports --save-dev
 npm install babel-plugin-modue-alias --save-dev
 npm install path-parse --save
