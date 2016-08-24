@@ -36,6 +36,7 @@ NSMutableDictionary * uploadProgressTable;
     long bodyLength;
     NSMutableDictionary * respInfo;
     NSInteger respStatus;
+    BOOL isInrement;
 }
 
 @end
@@ -125,6 +126,7 @@ NSOperationQueue *taskQueue;
     self.expectedBytes = 0;
     self.receivedBytes = 0;
     self.options = options;
+    isInrement = [options valueForKey:@"increment"] == nil ? NO : [[options valueForKey:@"increment"] boolValue];
 
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
     NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
@@ -284,6 +286,13 @@ NSOperationQueue *taskQueue;
 {
     NSNumber * received = [NSNumber numberWithLong:[data length]];
     receivedBytes += [received longValue];
+    NSString * chunkString = @"";
+    
+    if(isInrement == YES)
+    {
+        chunkString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    }
+    
     if(respFile == NO)
     {
         [respData appendData:data];
@@ -300,7 +309,8 @@ NSOperationQueue *taskQueue;
          body:@{
                 @"taskId": taskId,
                 @"written": [NSString stringWithFormat:@"%d", receivedBytes],
-                @"total": [NSString stringWithFormat:@"%d", expectedBytes]
+                @"total": [NSString stringWithFormat:@"%d", expectedBytes],
+                @"chunk": chunkString
             }
          ];
     }

@@ -22,6 +22,7 @@ import getUUID from './utils/uuid'
 import base64 from 'base-64'
 import polyfill from './polyfill'
 import android from './android'
+import JSONStream from './json-stream'
 const {
   RNFetchBlobSession,
   readStream,
@@ -126,7 +127,7 @@ function fetch(...args:any):Promise {
     // on progress event listener
     subscription = emitter.addListener('RNFetchBlobProgress', (e) => {
       if(e.taskId === taskId && promise.onProgress) {
-        promise.onProgress(e.written, e.total)
+        promise.onProgress(e.written, e.total, e.chunk)
       }
     })
 
@@ -398,5 +399,6 @@ export default {
   session,
   fs,
   wrap,
-  polyfill
+  polyfill,
+  JSONStream
 }

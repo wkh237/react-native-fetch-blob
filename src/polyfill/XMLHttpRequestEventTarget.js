@@ -8,6 +8,7 @@ import Log from '../utils/log.js'
 const log = new Log('XMLHttpRequestEventTarget')
 
 log.disable()
+// log.level(3)
 
 export default class XMLHttpRequestEventTarget extends EventTarget {
 
