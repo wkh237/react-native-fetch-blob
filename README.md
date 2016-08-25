@@ -61,7 +61,7 @@ rnpm link
 
 If rnpm link command failed to link the package automatically, you might try manually link the package.
 
-Open `android/build.gradle`, add this line 
+Open `android/app/build.gradle`, add this line 
 
 ```diff
 dependencies {
