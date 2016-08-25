@@ -7,6 +7,7 @@ import XMLHttpRequestEventTarget from './XMLHttpRequestEventTarget.js'
 import Log from '../utils/log.js'
 import Blob from './Blob.js'
 import ProgressEvent from './ProgressEvent.js'
+import URIUtil from '../utils/uri'
 
 const log = new Log('XMLHttpRequest')
 
@@ -124,10 +125,9 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     this._method = method
     this._url = url
     this._headers = {}
-    this._increment = /^JSONStream\:\/\//.test(this._url)
+    this._increment = URIUtil.isJSONStreamURI(this._url)
     this._url = this._url.replace(/^JSONStream\:\/\//, '')
     this._dispatchReadStateChange(XMLHttpRequest.OPENED)
-    
   }
 
   /**
@@ -186,6 +186,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
           .progress(this._progressEvent.bind(this))
           .catch(this._onError.bind(this))
           .then(this._onDone.bind(this))
+
     })
   }
 
@@ -424,7 +425,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     return this._responseType
   }
 
-  get isRNFBPolyfill() {
+  static get isRNFBPolyfill() {
     return true
   }
 
