@@ -61,6 +61,15 @@ rnpm link
 
 If rnpm link command failed to link the package automatically, you might try manually link the package.
 
+Open `android/build.gradle`, add this line 
+
+```diff
+dependencies {
+    ...
++    compile project(':react-native-fetch-blob')                                                                      
+}
+```
+
 Open `android/settings.gradle`, and add these lines which will app RNFetchBlob Android project dependency to your app.
 
 ```diff
