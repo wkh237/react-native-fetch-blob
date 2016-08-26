@@ -11,7 +11,7 @@ import ProgressEvent from './ProgressEvent.js'
 const log = new Log('XMLHttpRequest')
 
 log.disable()
-// log.level(2)
+// log.level(3)
 
 const UNSENT = 0
 const OPENED = 1
@@ -307,6 +307,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     log.debug('XMLHttpRequest done', this._url, resp, this)
     this._statusText = this._status
     let responseDataReady = () => {
+      log.debug('request done state = 4')
       this.dispatchEvent('load')
       this.dispatchEvent('loadend')
       this._dispatchReadStateChange(XMLHttpRequest.DONE)
@@ -316,14 +317,6 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
       let info = resp.respInfo || {}
       log.debug(this._url, info, info.respType)
       switch(info.respType) {
-        case 'json' :
-        try{
-          this._responseText = resp.text()
-          this._response = resp.json()
-          responseDataReady()
-        } catch(err) {
-        }
-        break;
         case 'blob' :
           resp.blob().then((b) => {
             this._responseText = resp.text()
