@@ -7,7 +7,7 @@ Pod::Spec.new do |s|
   s.homepage     = 'n/a'
   s.authors      = { "wkh237" => "xeiyan@gmail.com" }
   s.source       = { :git => "https://github.com/wkh237/react-native-fetch-blob" }
-  s.source_files = 'src/ios/**/*.{h,m}'
+  s.source_files = 'ios/**/*.{h,m}'
   s.platform     = :ios, "7.0"
   s.dependency 'React/Core'
 end
