@@ -9,6 +9,7 @@ import {
   Linking,
   Platform,
   Dimensions,
+  AsyncStorage,
   Image,
 } from 'react-native';
 const JSONStream = RNFetchBlob.JSONStream
@@ -69,5 +70,18 @@ describe('json stream via fs', (report, done) => {
       done()
     })
   })
+})
+
+describe('issue #102', (report, done) => {
+
+  RNFetchBlob.config({ fileCache: true })
+    .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+    .then((res) => {
+      return RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload-form`, {},
+      [{ name : String(1), data : RNFetchBlob.wrap(res.path()), filename: '#102-test-image.png' }])
+    })
+    .then((res) => {
+      console.log(res.text())
+    })
 
 })
