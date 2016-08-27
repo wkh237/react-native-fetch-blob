@@ -11,9 +11,10 @@
 
 #import <Foundation/Foundation.h>
 #import "RCTBridgeModule.h"
+#import <UIKit/UIKit.h>
 @import AssetsLibrary;
 
-@interface RNFetchBlobFS : NSObject <NSStreamDelegate>  {
+@interface RNFetchBlobFS : NSObject <NSStreamDelegate, UIDocumentInteractionControllerDelegate>  {
     NSOutputStream * outStream;
     NSInputStream * inStream;
     RCTResponseSenderBlock callback;
@@ -81,6 +82,8 @@
 
 - (void) closeInStream;
 - (void) closeOutStream;
+
+- (void) openFile:( NSString * _Nonnull ) uri;
 
 @end
 

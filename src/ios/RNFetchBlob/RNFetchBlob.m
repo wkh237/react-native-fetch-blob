@@ -367,6 +367,10 @@ RCT_EXPORT_METHOD(slice:(NSString *)src dest:(NSString *)dest start:(nonnull NSN
     [RNFetchBlobFS slice:src dest:dest start:start end:end encode:@"" resolver:resolve rejecter:reject];
 })
 
+RCT_EXPORT_METHOD(openFile:(NSString*)uri {
+    [[[RNFetchBlobFS alloc ] init ]openFile:uri];
+})
+
 #pragma mark RNFetchBlob private methods
 
 

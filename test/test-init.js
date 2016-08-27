@@ -69,6 +69,7 @@ describe('GET image from server', (report, done) => {
 // require('./test-0.9.0')
 // require('./test-0.9.2')
 require('./test-0.10.0')
+// require('./test-0.9.4')
 // require('./test-fetch')
 // require('./test-fs')
 // require('./test-xmlhttp')

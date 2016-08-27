@@ -730,4 +730,19 @@ NSMutableDictionary *fileStreams = nil;
     }
 }
 
+# pragma mark - open file with UIDocumentInteractionController and delegate
+
+- (void) openFile:(NSString *) uri
+{
+    NSURL * url = [[NSURL alloc] initWithString:uri];
+    UIDocumentInteractionController * docCtrl = [UIDocumentInteractionController interactionControllerWithURL:url];
+    docCtrl.delegate = self;
+    [docCtrl presentPreviewAnimated:YES];
+    
+}
+
+- (UIViewController *) documentInteractionControllerViewControllerForPreview: (UIDocumentInteractionController *) controller {
+    return self;
+}
+
 @end
