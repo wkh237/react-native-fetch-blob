@@ -23,6 +23,7 @@ import getUUID from './utils/uuid'
 import base64 from 'base-64'
 import polyfill from './polyfill'
 import android from './android'
+import ios from './ios'
 import JSONStream from './json-stream'
 const {
   RNFetchBlobSession,
@@ -482,6 +483,7 @@ export default {
   fetch,
   base64,
   android,
+  ios,
   config,
   session,
   fs,

@@ -24,7 +24,10 @@ NSMutableDictionary *fileStreams = nil;
 //  File system access methods
 //
 ////////////////////////////////////////
-
+@interface RNFetchBlobFS() {
+    UIDocumentInteractionController * docCtrl;
+}
+@end
 @implementation RNFetchBlobFS
 
 
@@ -728,21 +731,6 @@ NSMutableDictionary *fileStreams = nil;
     {
         onComplete([[self class] getPathOfAsset:uri], nil);
     }
-}
-
-# pragma mark - open file with UIDocumentInteractionController and delegate
-
-- (void) openFile:(NSString *) uri
-{
-    NSURL * url = [[NSURL alloc] initWithString:uri];
-    UIDocumentInteractionController * docCtrl = [UIDocumentInteractionController interactionControllerWithURL:url];
-    docCtrl.delegate = self;
-    [docCtrl presentPreviewAnimated:YES];
-    
-}
-
-- (UIViewController *) documentInteractionControllerViewControllerForPreview: (UIDocumentInteractionController *) controller {
-    return self;
 }
 
 @end

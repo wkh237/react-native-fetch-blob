@@ -11,10 +11,9 @@
 
 #import <Foundation/Foundation.h>
 #import "RCTBridgeModule.h"
-#import <UIKit/UIKit.h>
 @import AssetsLibrary;
 
-@interface RNFetchBlobFS : NSObject <NSStreamDelegate, UIDocumentInteractionControllerDelegate>  {
+@interface RNFetchBlobFS : NSObject <NSStreamDelegate>  {
     NSOutputStream * outStream;
     NSInputStream * inStream;
     RCTResponseSenderBlock callback;

@@ -7,16 +7,17 @@
 #ifndef RNFetchBlob_h
 #define RNFetchBlob_h
 #import "RCTBridgeModule.h"
+#import <UIKit/UIKit.h>
 
 
-@interface RNFetchBlob : NSObject <RCTBridgeModule> {
+@interface RNFetchBlob : NSObject <RCTBridgeModule, UIDocumentInteractionControllerDelegate> {
 
     NSString * filePathPrefix;
 
 }
 
 @property (nonatomic) NSString * filePathPrefix;
-
+@property (nonatomic, strong) UIDocumentInteractionController *documentController;
 
 @end
 
