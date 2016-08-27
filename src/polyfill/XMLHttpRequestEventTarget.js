@@ -26,6 +26,7 @@ export default class XMLHttpRequestEventTarget extends EventTarget {
   }
 
   dispatchEvent(event:string, e:Event) {
+    log.debug('dispatch event', event, e)
     super.dispatchEvent(event, e)
     switch(event) {
       case 'abort' :
@@ -70,7 +71,7 @@ export default class XMLHttpRequestEventTarget extends EventTarget {
   }
 
   set onload(fn:(e:Event) => void) {
-    log.info('set onload')
+    log.info('set onload', fn)
     this._onload = fn
   }
 

@@ -458,9 +458,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     // It uses customized response body which is able to report download progress
                     // and write response data to destination path.
                     resp.body().bytes();
-                } catch (Exception ignored) {
-                    ignored.printStackTrace();
-                }
+                } catch (Exception ignored) {  }
                 callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
                 break;
             default:
@@ -471,8 +469,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
                 break;
         }
-        if(!resp.isSuccessful())
-            resp.body().close();
+//        if(!resp.isSuccessful())
+//            resp.body().close();
+        resp.body().close();
         releaseTaskResource();
     }
 
