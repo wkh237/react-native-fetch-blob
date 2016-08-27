@@ -35,7 +35,8 @@ describe('issue #105', (report, done) => {
     .then((res) => {
       tmp = res.path()
       return RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload-form`, {
-        'Content-Type' : 'multipart/form-data'
+        'Content-Type' : 'multipart/form-data',
+        'Expect' : '100-continue'
       }, [
         { name : 'data', data : 'issue#105 test' },
         { name : 'file', filename : 'github.png', data : RNFetchBlob.wrap(tmp) }
