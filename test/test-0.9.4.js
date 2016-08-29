@@ -61,3 +61,20 @@ describe('issue #106', (report, done) => {
     })
 
 })
+
+describe('issue #111 get redirect destination', (report, done) => {
+  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/redirect`)
+  .then((res) => {
+    report(
+      <Assert key="redirect history should tracable"
+        expect={2}
+        actual={res.info().redirects.length}/>,
+      <Assert key="redirect history verify"
+        expect={[`${TEST_SERVER_URL}/redirect`, `${TEST_SERVER_URL}/public/github.png`]}
+        comparer={Comparer.equalToArray}
+        actual={res.info().redirects}/>,
+    )
+    done()
+  })
+
+})
