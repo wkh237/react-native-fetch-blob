@@ -390,7 +390,7 @@ NSMutableDictionary *fileStreams = nil;
 # pragma mark - stat
 
 + (NSDictionary *) stat:(NSString *) path error:(NSError **) error {
-    NSMutableDictionary *stat = [[NSMutableDictionary alloc] init];
+    
     BOOL isDir = NO;
     NSFileManager * fm = [NSFileManager defaultManager];
     if([fm fileExistsAtPath:path isDirectory:&isDir] == NO) {
@@ -407,7 +407,8 @@ NSMutableDictionary *fileStreams = nil;
              @"path" : path,
              @"lastModified" : [NSString stringWithFormat:@"%d", [lastModified timeIntervalSince1970]],
              @"type" : isDir ? @"directory" : @"file"
-             };
+            };
+    
 }
 
 # pragma mark - exists
