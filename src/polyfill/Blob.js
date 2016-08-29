@@ -58,8 +58,10 @@ export default class Blob extends EventTarget {
    * @param  {any} data Content of Blob object
    * @param  {any} mime Content type settings of Blob object, `text/plain`
    *                    by default
+   * @param  {boolean} defer When this argument set to `true`, blob constructor
+   *                         will not invoke blob created event automatically.
    */
-  constructor(data:any, cType:any) {
+  constructor(data:any, cType:any, defer:boolean) {
     super()
     cType = cType || {}
     this.cacheName = getBlobName()
@@ -75,6 +77,7 @@ export default class Blob extends EventTarget {
       let size = 0
       this._ref = String(data.getRNFetchBlobRef())
       let orgPath = this._ref
+
       p = fs.exists(orgPath)
             .then((exist) =>  {
               if(exist)
@@ -121,10 +124,14 @@ export default class Blob extends EventTarget {
       log.verbose('create Blob cache file from file path', data)
       this._ref = String(data).replace('RNFetchBlob-file://', '')
       let orgPath = this._ref
-      p = fs.stat(orgPath)
-            .then((stat) =>  {
+      if(defer)
+        return
+      else {
+        p = fs.stat(orgPath)
+              .then((stat) =>  {
                 return Promise.resolve(stat.size)
-            })
+              })
+      }
     }
     // content from variable need create file
     else if(typeof data === 'string') {
@@ -217,7 +224,7 @@ export default class Blob extends EventTarget {
     let resPath = blobCacheDir + getBlobName()
     let pass = false
     log.debug('fs.slice new blob will at', resPath)
-    let result = new Blob(RNFetchBlob.wrap(resPath), { type : contentType })
+    let result = new Blob(RNFetchBlob.wrap(resPath), { type : contentType }, true)
     fs.slice(this._ref, resPath, start, end).then((dest) => {
       log.debug('fs.slice done', dest)
       result._invokeOnCreateEvent()
