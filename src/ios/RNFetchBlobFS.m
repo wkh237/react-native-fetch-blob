@@ -1,4 +1,4 @@
-//
+
 //  RNFetchBlobFS.m
 //  RNFetchBlob
 //
@@ -193,6 +193,7 @@ NSMutableDictionary *fileStreams = nil;
 
 + (NSNumber *) writeFileFromFile:(NSString *)src toFile:(NSString *)dest append:(BOOL)append
 {
+    
     NSInputStream * is = [[NSInputStream alloc] initWithFileAtPath:src];
     NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:append];
     [is open];
@@ -728,6 +729,23 @@ NSMutableDictionary *fileStreams = nil;
     {
         onComplete([[self class] getPathOfAsset:uri], nil);
     }
+}
+
++ (void) writeAssetToPath:(ALAssetRepresentation * )rep dest:(NSString *)dest
+{
+    int read = 0;
+    int cursor = 0;
+    Byte * buffer = (Byte *)malloc(10240);
+    NSOutputStream * ostream = [[NSOutputStream alloc] initToFileAtPath:dest append:NO];
+    [ostream open];
+    while((read = [rep getBytes:buffer fromOffset:cursor length:10240 error:nil]) > 0)
+    {
+        cursor+=10240;
+        [ostream write:buffer maxLength:read];
+    }
+    [ostream close];
+    free(buffer);
+    return;
 }
 
 @end

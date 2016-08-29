@@ -63,6 +63,7 @@
      resolver:(RCTPromiseResolveBlock)resolve
      rejecter:(RCTPromiseRejectBlock)reject;
 //+ (void) writeFileFromFile:(NSString *)src toFile:(NSString *)dest append:(BOOL)append;
++ (void) writeAssetToPath:(ALAssetRepresentation * )rep dest:(NSString *)dest;
 
 // constructor
 - (id) init;

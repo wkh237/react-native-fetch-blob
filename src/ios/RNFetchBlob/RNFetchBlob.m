@@ -289,16 +289,27 @@ RCT_EXPORT_METHOD(lstat:(NSString *)path callback:(RCTResponseSenderBlock) callb
 
 }
 
-RCT_EXPORT_METHOD(cp:(NSString *)path toPath:(NSString *)dest callback:(RCTResponseSenderBlock) callback) {
-    NSError * error = nil;
-    path = [RNFetchBlobFS getPathOfAsset:path];
-    BOOL result = [[NSFileManager defaultManager] copyItemAtURL:[NSURL fileURLWithPath:path] toURL:[NSURL fileURLWithPath:dest] error:&error];
-
-    if(error == nil)
-        callback(@[[NSNull null], @YES]);
-    else
-        callback(@[[error localizedDescription], @NO]);
-
+RCT_EXPORT_METHOD(cp:(NSString*)src toPath:(NSString *)dest callback:(RCTResponseSenderBlock) callback) {
+    
+//    path = [RNFetchBlobFS getPathOfAsset:path];
+    [RNFetchBlobFS getPathFromUri:src completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
+        NSError * error = nil;
+        if(path == nil)
+        {
+            [RNFetchBlobFS writeAssetToPath:asset dest:dest];
+            callback(@[[NSNull null], @YES]);
+        }
+        else
+        {
+            BOOL result = [[NSFileManager defaultManager] copyItemAtURL:[NSURL fileURLWithPath:path] toURL:[NSURL fileURLWithPath:dest] error:&error];
+            
+            if(error == nil)
+                callback(@[[NSNull null], @YES]);
+            else
+                callback(@[[error localizedDescription], @NO]);
+        }
+    }];
+    
 }
 
 RCT_EXPORT_METHOD(mv:(NSString *)path toPath:(NSString *)dest callback:(RCTResponseSenderBlock) callback) {
