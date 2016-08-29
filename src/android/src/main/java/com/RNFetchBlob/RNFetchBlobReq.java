@@ -17,6 +17,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
@@ -32,6 +33,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -72,6 +74,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
     ReactApplicationContext ctx;
     RNFetchBlobConfig options;
+    ArrayList<String> redirects = new ArrayList<>();
     String taskId;
     String method;
     String url;
@@ -279,6 +282,14 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             }
 
             final Request req = builder.build();
+
+            clientBuilder.addNetworkInterceptor(new Interceptor() {
+                @Override
+                public Response intercept(Chain chain) throws IOException {
+                    redirects.add(chain.request().url().toString());
+                    return chain.proceed(chain.request());
+                }
+            });
 
             // Add request interceptor for upload progress event
             clientBuilder.addInterceptor(new Interceptor() {
@@ -509,6 +520,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             headers.putString(resp.headers().name(i), resp.headers().value(i));
         }
         info.putMap("headers", headers);
+        WritableArray redirectList = Arguments.createArray();
+        for(String r : redirects) {
+            redirectList.pushString(r);
+        }
+        info.putArray("redirects", redirectList);
         Headers h = resp.headers();
         if(isBlobResp) {
             info.putString("respType", "blob");

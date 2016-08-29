@@ -36,6 +36,7 @@ NSMutableDictionary * uploadProgressTable;
     long bodyLength;
     NSMutableDictionary * respInfo;
     NSInteger respStatus;
+    NSMutableArray * redirects;
 }
 
 @end
@@ -125,6 +126,8 @@ NSOperationQueue *taskQueue;
     self.expectedBytes = 0;
     self.receivedBytes = 0;
     self.options = options;
+    redirects = [[NSMutableArray alloc] init];
+    [redirects addObject:req.URL.absoluteString];
 
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
     NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
@@ -242,6 +245,7 @@ NSOperationQueue *taskQueue;
                      @"taskId": taskId,
                      @"state": @"2",
                      @"headers": headers,
+                     @"redirects": redirects,
                      @"respType" : respType,
                      @"timeout" : @NO,
                      @"status": [NSString stringWithFormat:@"%d", statusCode ]
@@ -440,5 +444,10 @@ NSOperationQueue *taskQueue;
     }
 }
 
+- (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler
+{
+    [redirects addObject:[request.URL absoluteString]];
+    completionHandler(request);
+}
 
 @end
