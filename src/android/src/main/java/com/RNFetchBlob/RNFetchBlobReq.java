@@ -283,6 +283,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
             final Request req = builder.build();
 
+            // intercept network redirections
             clientBuilder.addNetworkInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {

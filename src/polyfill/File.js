@@ -9,7 +9,7 @@ export default class File extends Blob {
 
   name : string = '';
 
-  static build(name:string, data:any, cType):Promise<File> {
+  static build(name:string, data:any, cType:string):Promise<File> {
     return new Promise((resolve, reject) => {
       new File(data, cType).onCreated((f) => {
         f.name = name
