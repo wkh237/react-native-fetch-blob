@@ -57,6 +57,13 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
+Or if using CocoaPods, add the pod to your `Podfile`, for example:
+
+```
+pod 'react-native-fetch-blob,
+    :path => '../node_modules/react-native-fetch-blob
+```
+
 ### Manually link the package (Android)
 
 If rnpm link command failed to link the package automatically, you might try manually link the package.
