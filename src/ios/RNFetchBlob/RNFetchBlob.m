@@ -192,6 +192,7 @@ RCT_EXPORT_METHOD(closeStream:(NSString *)streamId callback:(RCTResponseSenderBl
     callback(@[[NSNull null], @YES]);
 }
 
+#pragma mark - unlink
 RCT_EXPORT_METHOD(unlink:(NSString *)path callback:(RCTResponseSenderBlock) callback) {
     NSError * error = nil;
     NSString * tmpPath = nil;

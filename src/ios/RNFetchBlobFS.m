@@ -225,6 +225,7 @@ NSMutableDictionary *fileStreams = nil;
             [os open];
             while((read = [asset getBytes:buffer fromOffset:cursor length:10240 error:nil]) > 0)
             {
+                cursor += read;
                 [os write:buffer maxLength:read];
             }
             __block NSNumber * size = [NSNumber numberWithLong:written];

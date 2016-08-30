@@ -36,12 +36,12 @@
     
     // send request
     __block NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString: encodedUrl]];
-    NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
+    __block NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
     NSTimeInterval timeStamp = [[NSDate date] timeIntervalSince1970];
     NSNumber * timeStampObj = [NSNumber numberWithDouble: timeStamp];
 
     // generate boundary
-    NSString * boundary = [NSString stringWithFormat:@"RNFetchBlob%d", timeStampObj];
+    __block NSString * boundary = [NSString stringWithFormat:@"RNFetchBlob%d", timeStampObj];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         __block NSMutableData * postData = [[NSMutableData alloc] init];
         // combine multipart/form-data body
@@ -148,7 +148,7 @@
 
 +(void) buildFormBody:(NSArray *)form boundary:(NSString *)boundary onComplete:(void(^)(NSData * formData))onComplete
 {
-    NSMutableData * formData = [[NSMutableData alloc] init];
+    __block NSMutableData * formData = [[NSMutableData alloc] init];
     if(form == nil)
         onComplete(nil);
     else
@@ -159,7 +159,7 @@
         void __block (^getFieldData)(id field) = ^(id field)
         {
             NSString * name = [field valueForKey:@"name"];
-            NSString * content = [field valueForKey:@"data"];
+            __block NSString * content = [field valueForKey:@"data"];
             NSString * contentType = [field valueForKey:@"type"];
             // skip when the form field `name` or `data` is empty
             if(content == nil || name == nil)
@@ -197,10 +197,14 @@
                             i++;
                             if(i < count)
                             {
-                                getFieldData([form objectAtIndex:i]);
+                                __block NSDictionary * nextField = [form objectAtIndex:i];
+                                getFieldData(nextField);
                             }
                             else
+                            {
                                 onComplete(formData);
+                                getFieldData = nil;
+                            }
                         }];
                         return ;
                     }
@@ -213,17 +217,23 @@
                 [formData appendData:[[NSString stringWithFormat:@"Content-Type: %@\r\n\r\n", contentType] dataUsingEncoding:NSUTF8StringEncoding]];
                 [formData appendData:blobData];
                 [formData appendData:[[NSString stringWithFormat:@"\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+                blobData = nil;
             }
             i++;
             if(i < count)
             {
-                getFieldData([form objectAtIndex:i]);
+                __block NSDictionary * nextField = [form objectAtIndex:i];
+                getFieldData(nextField);
             }
             else
+            {
                 onComplete(formData);
+                getFieldData = nil;
+            }
 
         };
-        getFieldData([form objectAtIndex:i]);
+        __block NSDictionary * nextField = [form objectAtIndex:i];
+        getFieldData(nextField);
     }
 }
 
