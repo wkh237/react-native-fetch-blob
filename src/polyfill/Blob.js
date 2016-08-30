@@ -259,7 +259,9 @@ export default class Blob extends EventTarget {
     if(this._closed)
       return Promise.reject('Blob has been released.')
     this._closed = true
-    return fs.unlink(this._ref)
+    return fs.unlink(this._ref).catch((err) => {
+      console.warn(err)
+    })
   }
 
   _invokeOnCreateEvent() {
