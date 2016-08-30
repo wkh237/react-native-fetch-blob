@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.content.CursorLoader;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
+import android.graphics.Path;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -74,7 +75,7 @@ public class RNFetchBlobFS {
      * @param path Destination file path.
      * @param encoding Encoding of the string.
      * @param data Array passed from JS context.
-     * @param promise
+     * @param promise RCT Promise
      */
     static public void writeFile(String path, String encoding, String data, final boolean append, final Promise promise) {
         try {
@@ -86,6 +87,7 @@ public class RNFetchBlobFS {
             FileOutputStream fout = new FileOutputStream(f, append);
             // write data from a file
             if(encoding.equalsIgnoreCase(RNFetchBlobConst.DATA_ENCODE_URI)) {
+                data = normalizePath(data);
                 File src = new File(data);
                 if(!src.exists()) {
                     promise.reject("RNfetchBlob writeFileError", "source file : " + data + "not exists");
@@ -118,7 +120,7 @@ public class RNFetchBlobFS {
      * Write array of bytes into file
      * @param path Destination file path.
      * @param data Array passed from JS context.
-     * @param promise
+     * @param promise RCT Promise
      */
     static public void writeFile(String path, ReadableArray data, final boolean append, final Promise promise) {
 
@@ -432,6 +434,7 @@ public class RNFetchBlobFS {
      * @param callback  JS context callback
      */
     static void cp(String path, String dest, Callback callback) {
+
         path = normalizePath(path);
         InputStream in = null;
         OutputStream out = null;
@@ -442,7 +445,6 @@ public class RNFetchBlobFS {
                 callback.invoke("cp error: source file at path`" + path + "` not exists");
                 return;
             }
-
             if(!new File(dest).exists())
                 new File(dest).createNewFile();
 
@@ -456,14 +458,17 @@ public class RNFetchBlobFS {
             }
 
         } catch (Exception err) {
-            if(err != null)
-                callback.invoke(err.getLocalizedMessage());
+            callback.invoke(err.getLocalizedMessage());
         } finally {
             try {
-                in.close();
-                out.close();
+                if (in != null) {
+                    in.close();
+                }
+                if (out != null) {
+                    out.close();
+                }
                 callback.invoke();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 callback.invoke(e.getLocalizedMessage());
             }
         }
@@ -491,7 +496,7 @@ public class RNFetchBlobFS {
      * @param callback  JS context callback
      */
     static void exists(String path, Callback callback) {
-        path = normalizePath(path);
+
         if(isAsset(path)) {
             try {
                 String filename = path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
@@ -502,11 +507,11 @@ public class RNFetchBlobFS {
             }
         }
         else {
+            path = normalizePath(path);
             boolean exist = new File(path).exists();
             boolean isDir = new File(path).isDirectory();
             callback.invoke(exist, isDir);
         }
-
     }
 
     /**
@@ -535,10 +540,11 @@ public class RNFetchBlobFS {
      * @param dest  Destination of created file
      * @param start Start byte offset in source file
      * @param end   End byte offset
-     * @param encode
+     * @param encode NOT IMPLEMENTED
      */
     public static void slice(String src, String dest, int start, int end, String encode, Promise promise) {
         try {
+            src = normalizePath(src);
             File source = new File(src);
             if(!source.exists()) {
                 promise.reject("RNFetchBlob.slice error", "source file : " + src + " not exists");
@@ -604,6 +610,7 @@ public class RNFetchBlobFS {
      */
     static void stat(String path, Callback callback) {
         try {
+            path = normalizePath(path);
             WritableMap result = statFile(path);
             if(result == null)
                 callback.invoke("stat error: failed to list path `" + path + "` for it is not exist or it is not a folder", null);

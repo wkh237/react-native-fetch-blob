@@ -50,7 +50,7 @@
 + (RNFetchBlobFS *) getFileStreams;
 + (BOOL) mkdir:(NSString *) path;
 + (NSDictionary *) stat:(NSString *) path error:(NSError **) error;
-+ (BOOL) exists:(NSString *) path;
++ (void) exists:(NSString *) path callback:(RCTResponseSenderBlock)callback;
 + (void) writeFileArray:(NSString *)path data:(NSArray *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 + (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 + (void) readFile:(NSString *)path encoding:(NSString *)encoding resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject onComplete:(void (^)(NSData * content))onComplete;

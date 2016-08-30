@@ -191,25 +191,51 @@ NSMutableDictionary *fileStreams = nil;
 
 # pragma write file from file
 
-+ (NSNumber *) writeFileFromFile:(NSString *)src toFile:(NSString *)dest append:(BOOL)append
++ (NSNumber *) writeFileFromFile:(NSString *)src toFile:(NSString *)dest append:(BOOL)append callback:(void(^)(NSString * errMsg, NSNumber *size))callback
 {
+    [[self class] getPathFromUri:src completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
+        if(path != nil)
+        {
+            __block NSInputStream * is = [[NSInputStream alloc] initWithFileAtPath:path];
+            __block NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:append];
+            [is open];
+            [os open];
+            uint8_t buffer[10240];
+            __block long written = 0;
+            int read = [is read:buffer maxLength:10240];
+            written += read;
+            while(read > 0) {
+                [os write:buffer maxLength:read];
+                read = [is read:buffer maxLength:10240];
+                written += read;
+            }
+            [os close];
+            [is close];
+            __block NSNumber * size = [NSNumber numberWithLong:written];
+            callback(nil, size);
+        }
+        else if(asset != nil)
+        {
+            
+            __block NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:append];
+            int read = 0;
+            int cursor = 0;
+            __block long written = 0;
+            uint8_t buffer[10240];
+            [os open];
+            while((read = [asset getBytes:buffer fromOffset:cursor length:10240 error:nil]) > 0)
+            {
+                [os write:buffer maxLength:read];
+            }
+            __block NSNumber * size = [NSNumber numberWithLong:written];
+            [os close];
+            callback(nil, size);
+        }
+        else
+            callback(@"failed to resolve path", nil);
+    }];
     
-    NSInputStream * is = [[NSInputStream alloc] initWithFileAtPath:src];
-    NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:append];
-    [is open];
-    [os open];
-    uint8_t buffer[10240];
-    long written = 0;
-    int read = [is read:buffer maxLength:10240];
-    written += read;
-    while(read > 0) {
-        [os write:buffer maxLength:read];
-        read = [is read:buffer maxLength:10240];
-        written += read;
-    }
-    [os close];
-    [is close];
-    return [NSNumber numberWithLong:written];
+    return 0;
 }
 
 # pragma mark - write file
@@ -228,7 +254,7 @@ NSMutableDictionary *fileStreams = nil;
             [fm createFileAtPath:path contents:nil attributes:nil];
         }
         if(err != nil) {
-            reject(@"RNFetchBlob writeFile Error", @"could not create file at path", path);
+            reject(@"RNFetchBlob writeFile Error", @"could not create file at path", nil);
             return;
         }
         NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
@@ -237,8 +263,12 @@ NSMutableDictionary *fileStreams = nil;
             content = [[NSData alloc] initWithBase64EncodedString:data options:0];
         }
         else if([encoding isEqualToString:@"uri"]) {
-            NSNumber* size = [[self class] writeFileFromFile:data toFile:path append:append];
-            resolve(size);
+            NSNumber* size = [[self class] writeFileFromFile:data toFile:path append:append callback:^(NSString *errMsg, NSNumber *size) {
+                if(errMsg != nil)
+                    reject(@"RNFetchBlob writeFile Error", errMsg, nil);
+                else
+                    resolve(size);
+            }];
             return;
         }
         else {
@@ -390,6 +420,7 @@ NSMutableDictionary *fileStreams = nil;
 # pragma mark - stat
 
 + (NSDictionary *) stat:(NSString *) path error:(NSError **) error {
+
     
     BOOL isDir = NO;
     NSFileManager * fm = [NSFileManager defaultManager];
@@ -413,8 +444,25 @@ NSMutableDictionary *fileStreams = nil;
 
 # pragma mark - exists
 
-+ (BOOL) exists:(NSString *) path {
-    return [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:NULL];
++ (void) exists:(NSString *) path callback:(RCTResponseSenderBlock)callback
+{
+    [[self class] getPathFromUri:path completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
+        if(path != nil)
+        {
+            BOOL isDir = NO;
+            BOOL exists = NO;
+            exists = [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory: &isDir];
+            callback(@[@(exists), @(isDir)]);
+        }
+        else if(asset != nil)
+        {
+            callback(@[@YES, @NO]);
+        }
+        else
+        {
+            callback(@[@NO, @NO]);
+        }
+    }];
 }
 
 - (id)init {
@@ -535,53 +583,100 @@ NSMutableDictionary *fileStreams = nil;
      resolver:(RCTPromiseResolveBlock)resolve
      rejecter:(RCTPromiseRejectBlock)reject
 {
-    long expected = [end longValue] - [start longValue];
-    long read = 0;
-    NSFileHandle * handle = [NSFileHandle fileHandleForReadingAtPath:path];
-    NSFileManager * fm = [NSFileManager defaultManager];
-    NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:NO];
-    [os open];
-    // abort for the source file not exists
-    if([fm fileExistsAtPath:path] == NO)
+    [[self class] getPathFromUri:path completionHandler:^(NSString *path, ALAssetRepresentation *asset)
     {
-        reject(@"RNFetchBlob slice failed : the file does not exists", path, nil);
-        return;
-    }
-    long size = [fm attributesOfItemAtPath:path error:nil].fileSize;
-    long max = MIN(size, [end longValue]);
-    
-    if(![fm fileExistsAtPath:dest]) {
-        [fm createFileAtPath:dest contents:@"" attributes:nil];
-    }
-    [handle seekToFileOffset:[start longValue]];
-    while(read < expected)
-    {
-        
-        NSData * chunk;
-        long chunkSize = 0;
-        if([start longValue] + read + 10240 > max)
+        if(path != nil)
         {
-            NSLog(@"read chunk %lu", max - read - [start longValue]);
-            chunkSize = max - read - [start longValue];
-            chunk = [handle readDataOfLength:chunkSize];
+            long expected = [end longValue] - [start longValue];
+            long read = 0;
+            NSFileHandle * handle = [NSFileHandle fileHandleForReadingAtPath:path];
+            NSFileManager * fm = [NSFileManager defaultManager];
+            NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:NO];
+            [os open];
+            // abort for the source file not exists
+            if([fm fileExistsAtPath:path] == NO)
+            {
+                reject(@"RNFetchBlob slice failed : the file does not exists", path, nil);
+                return;
+            }
+            long size = [fm attributesOfItemAtPath:path error:nil].fileSize;
+            long max = MIN(size, [end longValue]);
+            
+            if(![fm fileExistsAtPath:dest]) {
+                [fm createFileAtPath:dest contents:@"" attributes:nil];
+            }
+            [handle seekToFileOffset:[start longValue]];
+            while(read < expected)
+            {
+                
+                NSData * chunk;
+                long chunkSize = 0;
+                if([start longValue] + read + 10240 > max)
+                {
+                    NSLog(@"read chunk %lu", max - read - [start longValue]);
+                    chunkSize = max - read - [start longValue];
+                    chunk = [handle readDataOfLength:chunkSize];
+                }
+                else
+                {
+                    NSLog(@"read chunk %lu", 10240);
+                    chunkSize = 10240;
+                    chunk = [handle readDataOfLength:10240];
+                }
+                if([chunk length] <= 0)
+                    break;
+                long remain = expected - read;
+                
+                [os write:[chunk bytes] maxLength:chunkSize];
+                read += [chunk length];
+            }
+            [handle closeFile];
+            [os close];
+            resolve(dest);
+        }
+        else if (asset != nil)
+        {
+            long expected = [end longValue] - [start longValue];
+            long read = 0;
+            long chunkRead = 0;
+            NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:NO];
+            [os open];
+            long size = asset.size;
+            long max = MIN(size, [end longValue]);
+            
+            while(read < expected)
+            {
+                
+                uint8_t * chunk[10240];
+                long chunkSize = 0;
+                if([start longValue] + read + 10240 > max)
+                {
+                    NSLog(@"read chunk %lu", max - read - [start longValue]);
+                    chunkSize = max - read - [start longValue];
+                    chunkRead = [asset getBytes:chunk fromOffset:[start longValue] + read length:chunkSize error:nil];
+                }
+                else
+                {
+                    NSLog(@"read chunk %lu", 10240);
+                    chunkSize = 10240;
+                    chunkRead = [asset getBytes:chunk fromOffset:[start longValue] + read length:chunkSize error:nil];
+                }
+                if( chunkRead <= 0)
+                    break;
+                long remain = expected - read;
+                
+                [os write:chunk maxLength:chunkSize];
+                read += chunkRead;
+            }
+            [os close];
+            resolve(dest);
         }
         else
         {
-            NSLog(@"read chunk %lu", 10240);
-            chunkSize = 10240;
-            chunk = [handle readDataOfLength:10240];
+            reject(@"slice error",  [NSString stringWithFormat: @"could not resolve URI %@", path ], nil);
         }
-        if([chunk length] <= 0)
-            break;
-        long remain = expected - read;
-    
-        [os write:[chunk bytes] maxLength:chunkSize];
-        read += [chunk length];
-    }
-    [handle closeFile];
-    [os close];
-    resolve(dest);
-    
+        
+    }];
 }
 
 // close file read stream
