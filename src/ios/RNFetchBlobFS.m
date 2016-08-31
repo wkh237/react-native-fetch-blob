@@ -7,8 +7,6 @@
 //
 
 
-#import "RCTConvert.h"
-#import "RCTLog.h"
 #import <Foundation/Foundation.h>
 #import "RCTBridge.h"
 #import "RCTEventDispatcher.h"
@@ -366,7 +364,7 @@ NSMutableDictionary *fileStreams = nil;
             {
                 BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:path];
                 if(!exists) {
-                    reject(@"RNFetchBlobFS readFile error", @"file not exists", path);
+                    reject(@"RNFetchBlobFS readFile error", @"file not exists", nil);
                     return;
                 }
                 fileContent = [NSData dataWithContentsOfFile:path];

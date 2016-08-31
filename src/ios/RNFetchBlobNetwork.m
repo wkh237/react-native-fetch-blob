@@ -6,7 +6,6 @@
 //  Copyright © 2016 wkh237. All rights reserved.
 //
 
-#import "RCTConvert.h"
 #import "RCTLog.h"
 #import <Foundation/Foundation.h>
 #import "RCTBridge.h"
