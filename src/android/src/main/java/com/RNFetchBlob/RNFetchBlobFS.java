@@ -548,6 +548,7 @@ public class RNFetchBlobFS {
             File source = new File(src);
             if(!source.exists()) {
                 promise.reject("RNFetchBlob.slice error", "source file : " + src + " not exists");
+                return;
             }
             long size = source.length();
             long max = Math.min(size, end);
