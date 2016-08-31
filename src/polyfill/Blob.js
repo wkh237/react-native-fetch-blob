@@ -50,6 +50,13 @@ export default class Blob extends EventTarget {
     return this._ref
   }
 
+  static setLog(level:number) {
+    if(number === -1)
+      log.disable()
+    else
+      log.level(level)
+  }
+
   /**
    * RNFetchBlob Blob polyfill, create a Blob directly from file path, BASE64
    * encoded data, and string. The conversion is done implicitly according to

@@ -9,6 +9,7 @@ export default class Log {
   }
 
   level(val:number) {
+    this._isEnable = true
     this._level = val
   }
 
