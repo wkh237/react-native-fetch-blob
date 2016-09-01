@@ -27,54 +27,79 @@ const dirs = RNFetchBlob.fs.dirs
 
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
-describe('issue #105', (report, done) => {
-  let tmp = null
+// describe('issue #105', (report, done) => {
+//   let tmp = null
+//   RNFetchBlob
+//     .config({ fileCache : true })
+//     .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+//     .then((res) => {
+//       tmp = res.path()
+//       return RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload-form`, {
+//         'Content-Type' : 'multipart/form-data',
+//         'Expect' : '100-continue'
+//       }, [
+//         { name : 'data', data : 'issue#105 test' },
+//         { name : 'file', filename : 'github.png', data : RNFetchBlob.wrap(tmp) }
+//       ])
+//     })
+//     .then((res) => {
+//       done()
+//     })
+// })
+//
+// describe('issue #106', (report, done) => {
+//
+//   fetch('https://rnfb-test-app.firebaseapp.com/6m-json.json')
+//     .then((res) => {
+//       console.log('## converted')
+//       return res.json()
+//     })
+//     .then((data) => {
+//       // console.log(data)
+//       report(<Assert key="fetch request success" expect={20000} actual={data.total}/>)
+//       done()
+//     })
+//
+// })
+//
+// describe('issue #111 get redirect destination', (report, done) => {
+//   RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/redirect`)
+//   .then((res) => {
+//     report(
+//       <Assert key="redirect history should tracable"
+//         expect={2}
+//         actual={res.info().redirects.length}/>,
+//       <Assert key="redirect history verify"
+//         expect={[`${TEST_SERVER_URL}/redirect`, `${TEST_SERVER_URL}/public/github.png`]}
+//         comparer={Comparer.equalToArray}
+//         actual={res.info().redirects}/>,
+//     )
+//     done()
+//   })
+// })
+
+describe('chunked encoding option test', (report, done) => {
+
+  let path = null
+  let base64 = null
+
   RNFetchBlob
-    .config({ fileCache : true })
-    .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+    // .config({ fileCache : true })
+    .fetch('GET', `${TEST_SERVER_URL}/public/1600k-img-dummy.jpg`)
     .then((res) => {
-      tmp = res.path()
-      return RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload-form`, {
-        'Content-Type' : 'multipart/form-data',
-        'Expect' : '100-continue'
-      }, [
-        { name : 'data', data : 'issue#105 test' },
-        { name : 'file', filename : 'github.png', data : RNFetchBlob.wrap(tmp) }
-      ])
+      base64 = res.base64()
+      return RNFetchBlob
+        .fetch('POST', `${TEST_SERVER_URL}/upload`, {
+          'Content-Type' : 'application/octet-stream;BASE64'
+        }, base64)
     })
     .then((res) => {
+      let headers = res.info().headers
+      console.log(res.text())
+      report(<Assert key="request should not use chunked encoding"
+        expect={undefined}
+        actual={headers['transfer-encoding']}/>)
+      fs.unlink(path)
       done()
     })
-})
-
-describe('issue #106', (report, done) => {
-
-  fetch('https://rnfb-test-app.firebaseapp.com/6m-json.json')
-    .then((res) => {
-      console.log('## converted')
-      return res.json()
-    })
-    .then((data) => {
-      // console.log(data)
-      report(<Assert key="fetch request success" expect={20000} actual={data.total}/>)
-      done()
-    })
-
-})
-
-describe('issue #111 get redirect destination', (report, done) => {
-  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/redirect`)
-  .then((res) => {
-    report(
-      <Assert key="redirect history should tracable"
-        expect={2}
-        actual={res.info().redirects.length}/>,
-      <Assert key="redirect history verify"
-        expect={[`${TEST_SERVER_URL}/redirect`, `${TEST_SERVER_URL}/public/github.png`]}
-        comparer={Comparer.equalToArray}
-        actual={res.info().redirects}/>,
-    )
-    done()
-  })
-
 })

@@ -65,6 +65,11 @@ app.use(function(req, res, next) {
   next();
 })
 
+app.all('/upload', (req, res) => {
+  console.log(req.headers)
+  res.send(req.headers)
+})
+
 app.get('/unicode', (req, res) => {
   res.send({ data:'你好!'})
 })
