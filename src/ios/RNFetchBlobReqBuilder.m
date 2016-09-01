@@ -90,6 +90,7 @@
             // generate octet-stream body
             if(body != nil) {
                 __block NSString * cType = [[self class] getHeaderIgnoreCases:@"content-type" fromHeaders:mheaders];
+                __block NSString * transferEncoding = [[self class] getHeaderIgnoreCases:@"transfer-encoding" fromHeaders:mheaders];
                 // when headers does not contain a key named "content-type" (case ignored), use default content type
                 if(cType == nil)
                 {
@@ -111,7 +112,14 @@
                         return;
                     }
                     size = [[[NSFileManager defaultManager] attributesOfItemAtPath:orgPath error:nil] fileSize];
-                    [request setHTTPBodyStream: [NSInputStream inputStreamWithFileAtPath:orgPath ]];
+                    if(transferEncoding != nil && [[transferEncoding lowercaseString] isEqualToString:@"chunked"])
+                    {
+                        [request setHTTPBodyStream: [NSInputStream inputStreamWithFileAtPath:orgPath ]];
+                    }
+                    else
+                    {
+                        [request setHTTPBody:[NSData dataWithContentsOfFile:orgPath ]];
+                    }
                 }
                 // otherwise convert it as BASE64 data string
                 else {
