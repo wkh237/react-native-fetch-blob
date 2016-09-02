@@ -14,6 +14,8 @@
 #import "RNFetchBlobReqBuilder.h"
 
 
+RCTBridge * bridgeRef;
+
 ////////////////////////////////////////
 //
 //  Exported native methods
@@ -31,6 +33,11 @@
     return dispatch_queue_create("RNFetchBlob.queue", DISPATCH_QUEUE_SERIAL);
 }
 
++ (RCTBridge *)getRCTBridge
+{
+    return bridgeRef;
+}
+
 RCT_EXPORT_MODULE();
 
 - (id) init {
@@ -41,6 +48,7 @@ RCT_EXPORT_MODULE();
     if(![[NSFileManager defaultManager] fileExistsAtPath: [RNFetchBlobFS getTempPath] isDirectory:&isDir]) {
         [[NSFileManager defaultManager] createDirectoryAtPath:[RNFetchBlobFS getTempPath] withIntermediateDirectories:YES attributes:nil error:NULL];
     }
+    bridgeRef = _bridge;
     return self;
 }
 
@@ -366,18 +374,20 @@ RCT_EXPORT_METHOD(readFile:(NSString *)path encoding:(NSString *)encoding resolv
 })
 
 #pragma mark - fs.readStream
-RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding bufferSize:(int)bufferSize) {
+RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding bufferSize:(int)bufferSize streamId:(NSString *)streamId
+{
 
-    RNFetchBlobFS *fileStream = [[RNFetchBlobFS alloc] initWithBridgeRef:self.bridge];
+//    RNFetchBlobFS *fileStream = [[RNFetchBlobFS alloc] initWithBridgeRef:self.bridge];
     if(bufferSize == nil) {
         if([[encoding lowercaseString] isEqualToString:@"base64"])
             bufferSize = 4095;
         else
             bufferSize = 4096;
     }
-    // read asset stream
-    [fileStream readWithPath:path useEncoding:encoding bufferSize:bufferSize];
-}
+    
+//    [fileStream readWithPath:path useEncoding:encoding bufferSize:bufferSize];
+    [RNFetchBlobFS readStream:path encoding:encoding bufferSize:bufferSize streamId:streamId bridgeRef:_bridge];
+})
 
 #pragma mark - fs.getEnvionmentDirs
 RCT_EXPORT_METHOD(getEnvironmentDirs:(RCTResponseSenderBlock) callback) {

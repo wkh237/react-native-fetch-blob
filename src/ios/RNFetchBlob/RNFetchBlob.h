@@ -17,6 +17,7 @@
 
 @property (nonatomic) NSString * filePathPrefix;
 
++ (RCTBridge *)getRCTBridge;
 
 @end
 

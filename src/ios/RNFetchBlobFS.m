@@ -9,6 +9,7 @@
 
 #import <Foundation/Foundation.h>
 #import "RCTBridge.h"
+#import "RNFetchBlob.h"
 #import "RCTEventDispatcher.h"
 #import "RNFetchBlobFS.h"
 #import "RNFetchBlobConst.h"
@@ -98,93 +99,99 @@ NSMutableDictionary *fileStreams = nil;
     return tempPath;
 }
 
-#pragma mark - read asset stream
+#pragma margk - readStream 
 
-- (void) startAssetReadStream:(NSString *)assetUrl
++ (void) readStream:(NSString *)uri
+           encoding:(NSString * )encoding
+         bufferSize:(int)bufferSize
+           streamId:(NSString *)streamId
+          bridgeRef:(RCTBridge *)bridgeRef
 {
-    ALAssetsLibraryAssetForURLResultBlock resultblock = ^(ALAsset *myasset)
-    {
-        dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0);
-        dispatch_async(queue, ^ {
-            NSString * streamEventCode = [NSString stringWithFormat:@"RNFetchBlobStream+%@", self.path];
-            ALAssetRepresentation *rep = [myasset defaultRepresentation];
-            Byte *buffer = (Byte*)malloc(self.bufferSize);
-            NSUInteger cursor = [rep getBytes:buffer fromOffset:0 length:self.bufferSize error:nil];
-            while(cursor > 0)
+    [[self class] getPathFromUri:uri completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
+    
+        RCTEventDispatcher * event = bridgeRef.eventDispatcher;
+        @try
+        {
+            int read = 0;
+            int chunkSize = bufferSize;
+            uint8_t * buffer[bufferSize];
+            
+            if(path != nil)
             {
-                cursor += [rep getBytes:buffer fromOffset:cursor length:self.bufferSize error:nil];
-                NSData * chunkData = [NSData dataWithBytes:buffer length:self.bufferSize];
-                NSString * encodedChunk = @"";
-                // emit data
-                if( [[self.encoding lowercaseString] isEqualToString:@"utf8"] ) {
-                    encodedChunk = [encodedChunk initWithData:chunkData encoding:NSUTF8StringEncoding];
+                NSInputStream * stream = [[NSInputStream alloc] initWithFileAtPath:path];
+                [stream open];
+                while((read = [stream read:buffer maxLength:bufferSize]) > 0)
+                {
+                    [[self class] emitDataChunks:[NSData dataWithBytes:buffer length:read] encoding:encoding streamId:streamId event:event];
                 }
-                // when encoding is ASCII, send byte array data
-                else if ( [[self.encoding lowercaseString] isEqualToString:@"ascii"] ) {
-                    // RCTBridge only emits string data, so we have to create JSON byte array string
-                    NSMutableArray * asciiArray = [NSMutableArray array];
-                    unsigned char *bytePtr;
-                    if (chunkData.length > 0)
-                    {
-                        bytePtr = (unsigned char *)[chunkData bytes];
-                        NSInteger byteLen = chunkData.length/sizeof(uint8_t);
-                        for (int i = 0; i < byteLen; i++)
-                        {
-                            [asciiArray addObject:[NSNumber numberWithChar:bytePtr[i]]];
-                        }
-                    }
-                    
-                    [self.bridge.eventDispatcher
-                     sendDeviceEventWithName:streamEventCode
-                     body: @{
-                             @"event": FS_EVENT_DATA,
-                             @"detail": asciiArray
-                             }
-                     ];
-                    return;
-                }
-                // convert byte array to base64 data chunks
-                else if ( [[self.encoding lowercaseString] isEqualToString:@"base64"] ) {
-                    encodedChunk = [chunkData base64EncodedStringWithOptions:0];
-                }
-                // unknown encoding, send error event
-                else {
-                    [self.bridge.eventDispatcher
-                     sendDeviceEventWithName:streamEventCode
-                     body:@{
-                            @"event": FS_EVENT_ERROR,
-                            @"detail": @"unrecognized encoding"
-                            }
-                     ];
-                    return;
-                }
-                
-                [self.bridge.eventDispatcher
-                 sendDeviceEventWithName:streamEventCode
-                 body:@{
-                        @"event": FS_EVENT_DATA,
-                        @"detail": encodedChunk
-                        }
-                 ];
+                [stream close];
             }
-            free(buffer);
-        });
+            else if (asset != nil)
+            {
+                int cursor = 0;
+                NSError * err;
+                while((read = [asset getBytes:buffer fromOffset:cursor length:bufferSize error:&err]) > 0)
+                {
+                    cursor += read;
+                    [[self class] emitDataChunks:[NSData dataWithBytes:buffer length:read] encoding:encoding streamId:streamId event:event];
+                }
+            }
+            else
+            {
+                NSDictionary * payload = @{ @"event": FS_EVENT_ERROR, @"detail": @"RNFetchBlob.readStream unable to resolve URI" };
+                [event sendDeviceEventWithName:streamId body:payload];
+            }
+        }
+        @catch (NSError * err)
+        {
+            
+            NSDictionary * payload = @{ @"event": FS_EVENT_ERROR, @"detail": [NSString stringWithFormat:@"RNFetchBlob.readStream error %@", [err description]] };
+            [event sendDeviceEventWithName:streamId body:payload];
+        }
+        @finally
+        {
+            NSDictionary * payload = @{ @"event": FS_EVENT_END, @"detail": @"" };
+            [event sendDeviceEventWithName:streamId body:payload];
+        }
         
-    };
+    }];
     
-    ALAssetsLibraryAccessFailureBlock failureblock  = ^(NSError *error)
+}
+
+// send read stream chunks via native event emitter
++ (void) emitDataChunks:(NSData *)data encoding:(NSString *) encoding streamId:(NSString *)streamId event:(RCTEventDispatcher *)event
+{
+    NSString * encodedChunk = @"";
+    if([[encoding lowercaseString] isEqualToString:@"utf8"])
     {
-        
-    };
-    
-    if(assetUrl && [assetUrl length])
-    {
-        NSURL *asseturl = [NSURL URLWithString:assetUrl];
-        ALAssetsLibrary* assetslibrary = [[ALAssetsLibrary alloc] init];
-        [assetslibrary assetForURL:asseturl
-                       resultBlock:resultblock
-                      failureBlock:failureblock];
+        NSDictionary * payload = @{ @"event": FS_EVENT_DATA,  @"detail" : [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] };
+        [event sendDeviceEventWithName:streamId body:payload];
     }
+    else if ([[encoding lowercaseString] isEqualToString:@"base64"])
+    {
+        NSDictionary * payload = @{ @"event": FS_EVENT_DATA,  @"detail" : [data base64EncodedStringWithOptions:0] };
+        [event sendDeviceEventWithName:streamId body:payload];
+    }
+    else if([[encoding lowercaseString] isEqualToString:@"ascii"])
+    {
+        // RCTBridge only emits string data, so we have to create JSON byte array string
+        NSMutableArray * asciiArray = [NSMutableArray array];
+        unsigned char *bytePtr;
+        if (data.length > 0)
+        {
+            bytePtr = (unsigned char *)[data bytes];
+            NSInteger byteLen = data.length/sizeof(uint8_t);
+            for (int i = 0; i < byteLen; i++)
+            {
+                [asciiArray addObject:[NSNumber numberWithChar:bytePtr[i]]];
+            }
+        }
+
+        NSDictionary * payload = @{ @"event": FS_EVENT_DATA,  @"detail" : asciiArray };
+        [event sendDeviceEventWithName:streamId body:payload];
+    }
+    
+    
 }
 
 # pragma write file from file
@@ -544,35 +551,6 @@ NSMutableDictionary *fileStreams = nil;
     
 }
 
-- (void)readWithPath:(NSString *)path useEncoding:(NSString *)encoding bufferSize:(int) bufferSize {
-    
-    self.inStream = [[NSInputStream alloc] initWithFileAtPath:path];
-    self.inStream.delegate = self;
-    self.encoding = encoding;
-    self.path = path;
-    self.bufferSize = bufferSize;
-    
-    if([path hasPrefix:AL_PREFIX])
-    {
-        [self startAssetReadStream:path];
-        return;
-    }
-    
-    // normalize file path
-    path = [[self class] getPathOfAsset:path];
-    
-    // NSStream needs a runloop so let's create a run loop for it
-    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0);
-    // start NSStream is a runloop
-    dispatch_async(queue, ^ {
-        [inStream scheduleInRunLoop:[NSRunLoop currentRunLoop]
-                            forMode:NSDefaultRunLoopMode];
-        [inStream open];
-        [[NSRunLoop currentRunLoop] run];
-        
-    });
-}
-
 // Slice a file into another file, generally for support Blob implementation.
 + (void)slice:(NSString *)path
          dest:(NSString *)dest
@@ -690,118 +668,6 @@ NSMutableDictionary *fileStreams = nil;
     
 }
 
-#pragma mark RNFetchBlobFS read stream delegate
-
-- (void)stream:(NSStream *)stream handleEvent:(NSStreamEvent)eventCode {
-    
-    NSString * streamEventCode = [NSString stringWithFormat:@"RNFetchBlobStream+%@", self.path];
-    
-    switch(eventCode) {
-            
-            // write stream event
-        case NSStreamEventHasSpaceAvailable:
-        {
-            
-            
-        }
-            
-            // read stream incoming chunk
-        case NSStreamEventHasBytesAvailable:
-        {
-            NSMutableData * chunkData = [[NSMutableData alloc] init];
-            NSInteger chunkSize = 4096;
-            if([[self.encoding lowercaseString] isEqualToString:@"base64"])
-                chunkSize = 4095;
-            if(self.bufferSize > 0)
-                chunkSize = self.bufferSize;
-            uint8_t buf[chunkSize];
-            unsigned int len = 0;
-            len = [(NSInputStream *)stream read:buf maxLength:chunkSize];
-            // still have data in stream
-            if(len) {
-                [chunkData appendBytes:buf length:len];
-                // dispatch data event
-                NSString * encodedChunk = [NSString alloc];
-                if( [[self.encoding lowercaseString] isEqualToString:@"utf8"] ) {
-                    encodedChunk = [encodedChunk initWithData:chunkData encoding:NSUTF8StringEncoding];
-                }
-                // when encoding is ASCII, send byte array data
-                else if ( [[self.encoding lowercaseString] isEqualToString:@"ascii"] ) {
-                    // RCTBridge only emits string data, so we have to create JSON byte array string
-                    NSMutableArray * asciiArray = [NSMutableArray array];
-                    unsigned char *bytePtr;
-                    if (chunkData.length > 0)
-                    {
-                        bytePtr = (unsigned char *)[chunkData bytes];
-                        NSInteger byteLen = chunkData.length/sizeof(uint8_t);
-                        for (int i = 0; i < byteLen; i++)
-                        {
-                            [asciiArray addObject:[NSNumber numberWithChar:bytePtr[i]]];
-                        }
-                    }
-                    
-                    [self.bridge.eventDispatcher
-                     sendDeviceEventWithName:streamEventCode
-                     body: @{
-                             @"event": FS_EVENT_DATA,
-                             @"detail": asciiArray
-                             }
-                     ];
-                    return;
-                }
-                // convert byte array to base64 data chunks
-                else if ( [[self.encoding lowercaseString] isEqualToString:@"base64"] ) {
-                    encodedChunk = [chunkData base64EncodedStringWithOptions:0];
-                }
-                // unknown encoding, send error event
-                else {
-                    [self.bridge.eventDispatcher
-                     sendDeviceEventWithName:streamEventCode
-                     body:@{
-                            @"event": FS_EVENT_ERROR,
-                            @"detail": @"unrecognized encoding"
-                            }
-                     ];
-                    return;
-                }
-                
-                [self.bridge.eventDispatcher
-                 sendDeviceEventWithName:streamEventCode
-                 body:@{
-                        @"event": FS_EVENT_DATA,
-                        @"detail": encodedChunk
-                        }
-                 ];
-            }
-            // end of stream
-            else {
-                [self.bridge.eventDispatcher
-                 sendDeviceEventWithName:streamEventCode
-                 body:@{
-                        @"event": FS_EVENT_END,
-                        @"detail": @""
-                        }
-                 ];
-            }
-            break;
-        }
-            
-            // stream error
-        case NSStreamEventErrorOccurred:
-        {
-            [self.bridge.eventDispatcher
-             sendDeviceEventWithName:streamEventCode
-             body:@{
-                    @"event": FS_EVENT_ERROR,
-                    @"detail": @"RNFetchBlob error when read file with stream, file may not exists"
-                    }
-             ];
-            break;
-        }
-            
-    }
-    
-}
 
 # pragma mark - get absolute path of resource
 

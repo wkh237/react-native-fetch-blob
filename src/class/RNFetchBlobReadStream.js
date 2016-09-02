@@ -8,6 +8,7 @@ import {
   DeviceEventEmitter,
   NativeAppEventEmitter,
 } from 'react-native'
+import UUID from '../utils/uuid'
 
 const RNFetchBlob = NativeModules.RNFetchBlob
 const emitter = DeviceEventEmitter
@@ -29,10 +30,10 @@ export default class RNFetchBlobReadStream {
     this._onData = () => {}
     this._onEnd = () => {}
     this._onError = () => {}
+    this.streamId = 'RNFBRS'+ UUID()
 
     // register for file stream event
-    let subscription = emitter.addListener(`RNFetchBlobStream+${this.path}`, (e) => {
-
+    let subscription = emitter.addListener(this.streamId, (e) => {
       let {event, detail} = e
       if(this._onData && event === 'data')
         this._onData(detail)
@@ -56,18 +57,18 @@ export default class RNFetchBlobReadStream {
 
   open() {
     if(!this.closed)
-      RNFetchBlob.readStream(this.path, this.encoding, this.bufferSize || 0)
+      RNFetchBlob.readStream(this.path, this.encoding, this.bufferSize || 0, this.streamId)
     else
       throw new Error('Stream closed')
   }
 
   onData(fn) {
-    if(this.encoding.toLowerCase() === 'ascii')
-      this._onData = (data) => {
-        fn(data)
-      }
-    else
-      this._onData = fn
+    // if(this.encoding.toLowerCase() === 'ascii')
+    //   this._onData = (data) => {
+    //     fn(data)
+    //   }
+    // else
+    this._onData = fn
   }
 
   onError(fn) {
