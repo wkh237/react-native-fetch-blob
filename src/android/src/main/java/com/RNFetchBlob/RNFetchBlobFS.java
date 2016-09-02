@@ -229,7 +229,7 @@ public class RNFetchBlobFS {
      * @param encoding  File stream decoder, should be one of `base64`, `utf8`, `ascii`
      * @param bufferSize    Buffer size of read stream, default to 4096 (4095 when encode is `base64`)
      */
-    public void readStream( String path, String encoding, int bufferSize) {
+    public void readStream(String path, String encoding, int bufferSize, final String streamId) {
         path = normalizePath(path);
         AsyncTask<String, Integer, Integer> task = new AsyncTask<String, Integer, Integer>() {
             @Override
@@ -237,7 +237,6 @@ public class RNFetchBlobFS {
                 String path = args[0];
                 String encoding = args[1];
                 int bufferSize = Integer.parseInt(args[2]);
-                String eventName = "RNFetchBlobStream+" + path;
                 try {
 
                     int chunkSize = encoding.equalsIgnoreCase("base64") ? 4095 : 4096;
@@ -259,7 +258,7 @@ public class RNFetchBlobFS {
                     if (encoding.equalsIgnoreCase("utf8")) {
                         while ((cursor = fs.read(buffer)) != -1) {
                             String chunk = new String(buffer, 0, cursor, "UTF-8");
-                            emitStreamEvent(eventName, "data", chunk);
+                            emitStreamEvent(streamId, "data", chunk);
                         }
                     } else if (encoding.equalsIgnoreCase("ascii")) {
                         while ((cursor = fs.read(buffer)) != -1) {
@@ -268,7 +267,7 @@ public class RNFetchBlobFS {
                             {
                                 chunk.pushInt((int)buffer[i]);
                             }
-                            emitStreamEvent(eventName, "data", chunk);
+                            emitStreamEvent(streamId, "data", chunk);
                         }
                     } else if (encoding.equalsIgnoreCase("base64")) {
                         while ((cursor = fs.read(buffer)) != -1) {
@@ -277,24 +276,24 @@ public class RNFetchBlobFS {
                                 for(int i =0;i<cursor;i++) {
                                     copy[i] = buffer[i];
                                 }
-                                emitStreamEvent(eventName, "data", Base64.encodeToString(copy, Base64.NO_WRAP));
+                                emitStreamEvent(streamId, "data", Base64.encodeToString(copy, Base64.NO_WRAP));
                             }
                             else
-                                emitStreamEvent(eventName, "data", Base64.encodeToString(buffer, Base64.NO_WRAP));
+                                emitStreamEvent(streamId, "data", Base64.encodeToString(buffer, Base64.NO_WRAP));
                         }
                     } else {
                         String msg = "unrecognized encoding `" + encoding + "`";
-                        emitStreamEvent(eventName, "error", msg);
+                        emitStreamEvent(streamId, "error", msg);
                         error = true;
                     }
 
                     if(!error)
-                        emitStreamEvent(eventName, "end", "");
+                        emitStreamEvent(streamId, "end", "");
                     fs.close();
                     buffer = null;
 
                 } catch (Exception err) {
-                    emitStreamEvent(eventName, "error", err.getLocalizedMessage());
+                    emitStreamEvent(streamId, "error", err.getLocalizedMessage());
                 }
                 return null;
             }
