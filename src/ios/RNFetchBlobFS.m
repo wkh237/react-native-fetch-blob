@@ -371,7 +371,7 @@ NSMutableDictionary *fileStreams = nil;
             {
                 BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:path];
                 if(!exists) {
-                    reject(@"RNFetchBlobFS readFile error", @"file not exists", nil);
+                    reject(@"RNFetchBlobFS readFile error", @"file not exists", [[NSError alloc]init]);
                     return;
                 }
                 fileContent = [NSData dataWithContentsOfFile:path];
