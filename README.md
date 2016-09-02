@@ -1,4 +1,4 @@
-# react-native-fetch-blob 
+# react-native-fetch-blob
 [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/releases) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![](https://img.shields.io/badge/Wiki-Public-brightgreen.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/wiki) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]()
 
 
@@ -25,6 +25,7 @@ A project committed to make file acess and data transfer easier, efficient for R
  * [Cancel HTTP request](#user-content-cancel-request)
  * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
  * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
+* [Transfer Encoding](#user-content-transfer-encoding)
  * [RNFetchBlob as Fetch](#user-content-rnfetchblob-as-fetch)
 * [File System](#user-content-file-system)
  * [File access](#user-content-file-access)
@@ -68,7 +69,7 @@ pod 'react-native-fetch-blob,
 
 If rnpm link command failed to link the package automatically, you might try manually link the package.
 
-Open `android/app/build.gradle`, add this line 
+Open `android/app/build.gradle`, add this line
 
 ```diff
 dependencies {
@@ -737,36 +738,7 @@ If you're going to concatenate files, you don't have to read the data to JS cont
 
 ## Changes
 
-| Version | |
-|---|---|
-| 0.9.2 | Add Blob.slice() method implementation #89 |
-| 0.9.1 | Fix Android Blob constructor asynchronous issue caused by 0.9.0 fs change |
-| 0.9.0 | Fix unicode response data format issue #73. Improve Android performance by using thread pool instead of async task. Add Fetch replacement #70. Add Android only API `actionViewIntent` to open file or install APK in app |
-| 0.8.1 | Remove Web API log and fix ios progress report function. |
-| 0.8.0 | Added Web API polyfills, support regular request, added timeout option. |
-| 0.7.5 | Fix installation script that make it compatible to react-native < 0.28 |
-| 0.7.4 | Fix app crash problem in version > 0.27 |
-| 0.7.3 | Fix OkHttp dependency issue in version < 0.29 |
-| 0.7.2 | Fix cancel request bug |
-| 0.7.1 | Fix #57 ios module could not compile on ios version <= 9.3 |
-| 0.7.0 | Add support of Android upload progress, and remove AsyncHttpClient dependency from Android native implementation. |
-| 0.6.4 | Fix rnpm link script. |
-| 0.6.3 | Fix performance issue on IOS, increase max concurrent request limitation from 1. |
-| 0.6.2 | Add support of asset file and camera roll files, Support custom MIME type when sending multipart request, thanks @smartt |
-| 0.6.1 | Fix #37 progress report API issue on IOS |
-| 0.6.0 | Add readFile and writeFile API for easier file access, also added Android download manager support. |
-| 0.5.8 | Fix #33 PUT request will always be sent as POST on Android |
-| 0.5.7 | Fix #31 #30 Xcode pre 7.3 build error |
-| 0.5.6 | Add support for IOS network status indicator. Fix file stream ASCII reader bug. |
-| 0.5.5 | Remove work in progress code added in 0.5.2 which may cause memory leaks. |
-| 0.5.4 | Fix #30 #31 build build error, and improve memory efficiency. |
-| 0.5.3 | Add API for access untrusted SSL server |
-| 0.5.2 | Fix improper url params bug [#26](https://github.com/wkh237/react-native-fetch-blob/issues/26) and change IOS HTTP implementation from NSURLConnection to NSURLSession |
-| 0.5.0 | Upload/download with direct access to file storage, and also added file access APIs |
-| 0.4.2 | Supports upload/download progress |
-| 0.4.1 | Fix upload form-data missing file extension problem on Android |
-| 0.4.0 | Add base-64 encode/decode library and API |
-| ~0.3.0 | Upload/Download octet-stream and form-data |
+See [release notes](https://github.com/wkh237/react-native-fetch-blob/releases)
 
 ### Development
 
