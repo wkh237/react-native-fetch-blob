@@ -25,7 +25,7 @@ A project committed to make file acess and data transfer easier, efficient for R
  * [Cancel HTTP request](#user-content-cancel-request)
  * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
  * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
-* [Transfer Encoding](#user-content-transfer-encoding)
+ * [Transfer Encoding](#user-content-transfer-encoding)
  * [RNFetchBlob as Fetch](#user-content-rnfetchblob-as-fetch)
 * [File System](#user-content-file-system)
  * [File access](#user-content-file-access)
@@ -689,6 +689,14 @@ You can also grouping requests by using `session` API, and use `dispose` to remo
   // remove all files in a session
   RNFetchBlob.session('foo').dispose().then(() => { ... })
 
+```
+
+#### Transfer Encoding
+
+After `0.9.4`, the `Chunked` transfer encoding is disabled by default due to some service provoder may not support chunked transfer. To enable it, set `Transfer-Encoding` header to `Chunked`.
+
+```js
+RNFetchBlob.fetch('POST', 'http://example.com/upload', { 'Transfer-Encoding' : 'Chunked' }, bodyData)
 ```
 
 #### Self-Signed SSL Server
