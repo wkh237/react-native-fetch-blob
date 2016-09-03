@@ -6,7 +6,10 @@ var PACKAGE_JSON = process.cwd() + '/package.json';
 var hasNecessaryFile = fs.existsSync(MANIFEST_PATH) && fs.existsSync(MANIFEST_PATH);
 
 if (!hasNecessaryFile) {
-  throw 'RNFetchBlob could not found link Android automatically, some files could not be found.'
+  console.log('\033[31m*** react-native-fetch-blob pre-link FAILED ***')
+  console.log('\033[31mRNFetchBlob could not link Android automatically, some files could not be found.')
+  console.log('\033[31mYou may have to manually link the library, see \033[36mhttps://github.com/wkh237/react-native-fetch-blob#manually-link-the-package-android \033[31mfor more information.')
+  return
 }
 
 var package = JSON.parse(fs.readFileSync(PACKAGE_JSON));
@@ -20,7 +23,11 @@ console.log('RNFetchBlob detected app version .. ' + VERSION);
 if(VERSION >= 0.29) {
   console.log('RNFetchBlob patching MainApplication.java .. ');
   if(!fs.existsSync(APPLICATION_MAIN)) {
-    throw 'RNFetchBlob could not link Android automatically, MainApplication.java not found in path : ' + APPLICATION_MAIN
+    console.log('\033[31m*** react-native-fetch-blob pre-link FAILED ***')
+    console.log('\033[31mRNFetchBlob could not link Android automatically, MainApplication.java not found in path : ' + APPLICATION_MAIN)
+    console.log('\033[31mRNFetchBlob could not link Android automatically, some files could not be found.')
+    console.log('\033[31mTry manually link the library, see \033[36mhttps://github.com/wkh237/react-native-fetch-blob#manually-link-the-package-android \033[31mfor more information.')
+    return
   }
   var main = fs.readFileSync(APPLICATION_MAIN);
   if(String(main).match('new RNFetchBlobPackage()') !== null) {
