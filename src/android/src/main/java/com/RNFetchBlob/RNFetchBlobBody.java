@@ -75,6 +75,7 @@ public class RNFetchBlobBody extends RequestBody{
                     break;
                 case AsIs:
                     contentLength = this.rawBody.getBytes().length;
+                    requestStream = new ByteArrayInputStream(this.rawBody.getBytes());
                     break;
                 case Others:
                     break;
@@ -117,10 +118,7 @@ public class RNFetchBlobBody extends RequestBody{
     @Override
     public void writeTo(BufferedSink sink) {
         try {
-            if (requestType == RNFetchBlobReq.RequestType.AsIs)
-                sink.write(rawBody.getBytes());
-            else
-                pipeStreamToSink(requestStream, sink);
+            pipeStreamToSink(requestStream, sink);
         } catch(Exception ex) {
             RNFetchBlobUtils.emitWarningEvent(ex.getLocalizedMessage());
             ex.printStackTrace();
