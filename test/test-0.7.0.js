@@ -45,6 +45,7 @@ describe('Upload and download large file', (report, done) => {
     if(Date.now() - deb < 1000)
       return
     deb = Date.now()
+    console.log('download', now, total)
     report(<Info uid="200" key="progress">
       <Text>
         {`download ${now} / ${total} bytes (${Math.floor(now / (Date.now() - begin))} kb/s) ${(100*now/total).toFixed(2)}%`}
@@ -72,6 +73,7 @@ describe('Upload and download large file', (report, done) => {
       if(Date.now() - deb < 1000)
         return
       deb = Date.now()
+      console.log('upload', now, total)
       report(<Info uid="300" key="upload progress">
         <Text>
           {`upload ${now} / ${total} bytes (${Math.floor(now / (Date.now() - begin))} kb/s) ${(100*now/total).toFixed(2)}%`}

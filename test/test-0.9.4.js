@@ -117,15 +117,6 @@ describe('#118 ', (report, done) => {
       cache = res.path()
       return fs.readStream(cache, 'utf8', 102400)
     })
-    // .then((res) => {
-    //   cache = res.path()
-    //   return fs.readFile(cache, 'utf8')
-    // })
-    // .then(() => {
-    //   report(<Info key="good" />)
-    //   done()
-    //   fs.unlink(cache)
-    // })
     .then((stream) => {
       stream.open()
       start = Date.now()
@@ -151,5 +142,31 @@ describe('#118 ', (report, done) => {
         })
       })
     })
+
+})
+
+describe('issue #120 upload progress should work when sending body as-is', (report, done) => {
+
+  let data = RNTest.prop('image')
+  let tick = 0
+
+  let task = RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+    Authorization : `Bearer ${DROPBOX_TOKEN}`,
+    'Dropbox-API-Arg': '{\"path\": \"/rn-upload/'+FILENAME+'\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
+    'Content-Type' : 'text/plain; charset=dropbox-cors-hack',
+  }, data)
+
+  task.uploadProgress((current, total) => {
+    tick ++
+  })
+  .then((res) => {
+    let resp = res.json()
+    report(
+      <Info key="viewer"><Text>{JSON.stringify(resp)}</Text></Info>,
+      <Assert key="event should be triggered"
+        expect={tick}
+        comparer={Comparer.greater} actual={0}/>)
+    done()
+  })
 
 })
