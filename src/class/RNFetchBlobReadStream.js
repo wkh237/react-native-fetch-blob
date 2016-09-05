@@ -35,8 +35,10 @@ export default class RNFetchBlobReadStream {
     // register for file stream event
     let subscription = emitter.addListener(this.streamId, (e) => {
       let {event, detail} = e
-      if(this._onData && event === 'data')
+      if(this._onData && event === 'data') {
         this._onData(detail)
+        return 
+      }
       else if (this._onEnd && event === 'end') {
         this._onEnd(detail)
       }
@@ -62,12 +64,7 @@ export default class RNFetchBlobReadStream {
       throw new Error('Stream closed')
   }
 
-  onData(fn) {
-    // if(this.encoding.toLowerCase() === 'ascii')
-    //   this._onData = (data) => {
-    //     fn(data)
-    //   }
-    // else
+  onData(fn:() => void) {
     this._onData = fn
   }
 
