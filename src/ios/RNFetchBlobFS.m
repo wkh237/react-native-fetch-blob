@@ -36,6 +36,23 @@ NSMutableDictionary *fileStreams = nil;
 @synthesize appendData;
 @synthesize bufferSize;
 
+- (id)init {
+    self = [super init];
+    return self;
+}
+
+- (id)initWithCallback:(RCTResponseSenderBlock)callback {
+    self = [super init];
+    self.callback = callback;
+    return self;
+}
+
+- (id)initWithBridgeRef:(RCTBridge *)bridgeRef {
+    self = [super init];
+    self.bridge = bridgeRef;
+    return self;
+}
+
 // static member getter
 + (NSArray *) getFileStreams {
     
@@ -118,6 +135,13 @@ NSMutableDictionary *fileStreams = nil;
             
             if(path != nil)
             {
+                if([[NSFileManager defaultManager] fileExistsAtPath:path] == NO)
+                {
+                    NSString * message = [NSString stringWithFormat:@"File not exists at path %@", path];
+                    NSDictionary * payload = @{ @"event": FS_EVENT_ERROR, @"detail": message };
+                    [event sendDeviceEventWithName:streamId body:payload];
+                    return ;
+                }
                 NSInputStream * stream = [[NSInputStream alloc] initWithFileAtPath:path];
                 [stream open];
                 while((read = [stream read:buffer maxLength:bufferSize]) > 0)
@@ -144,7 +168,6 @@ NSMutableDictionary *fileStreams = nil;
         }
         @catch (NSError * err)
         {
-            
             NSDictionary * payload = @{ @"event": FS_EVENT_ERROR, @"detail": [NSString stringWithFormat:@"RNFetchBlob.readStream error %@", [err description]] };
             [event sendDeviceEventWithName:streamId body:payload];
         }
@@ -469,23 +492,6 @@ NSMutableDictionary *fileStreams = nil;
             callback(@[@NO, @NO]);
         }
     }];
-}
-
-- (id)init {
-    self = [super init];
-    return self;
-}
-
-- (id)initWithCallback:(RCTResponseSenderBlock)callback {
-    self = [super init];
-    self.callback = callback;
-    return self;
-}
-
-- (id)initWithBridgeRef:(RCTBridge *)bridgeRef {
-    self = [super init];
-    self.bridge = bridgeRef;
-    return self;
 }
 
 # pragma mark - open file stream
