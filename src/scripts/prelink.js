@@ -77,7 +77,7 @@ try {
   }
   else {
     console.log(
-      '\033[95mreact-native-fetch-blob \033[97mwill not automatically add Android permissions after \033[92m0.9.5 '+
+      '\033[95mreact-native-fetch-blob \033[97mwill not automatically add Android permissions after \033[92m0.9.4 '+
       '\033[97mplease run the following command if you want to add default permissions :\n\n' +
       '\033[96m\tRNFB_ANDROID_PERMISSION=true rnpm link\n\n')
   }
