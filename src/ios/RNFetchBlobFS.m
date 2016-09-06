@@ -127,12 +127,12 @@ NSMutableDictionary *fileStreams = nil;
     [[self class] getPathFromUri:uri completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
     
         RCTEventDispatcher * event = bridgeRef.eventDispatcher;
+        int read = 0;
+        int chunkSize = bufferSize;
+        // allocate buffer in heap instead of stack
+        uint8_t * buffer = (uint8_t *) malloc(bufferSize);
         @try
         {
-            int read = 0;
-            int chunkSize = bufferSize;
-            uint8_t * buffer[bufferSize];
-            
             if(path != nil)
             {
                 if([[NSFileManager defaultManager] fileExistsAtPath:path] == NO)
@@ -140,6 +140,7 @@ NSMutableDictionary *fileStreams = nil;
                     NSString * message = [NSString stringWithFormat:@"File not exists at path %@", path];
                     NSDictionary * payload = @{ @"event": FS_EVENT_ERROR, @"detail": message };
                     [event sendDeviceEventWithName:streamId body:payload];
+                    free(buffer);
                     return ;
                 }
                 NSInputStream * stream = [[NSInputStream alloc] initWithFileAtPath:path];
@@ -165,6 +166,7 @@ NSMutableDictionary *fileStreams = nil;
                 NSDictionary * payload = @{ @"event": FS_EVENT_ERROR, @"detail": @"RNFetchBlob.readStream unable to resolve URI" };
                 [event sendDeviceEventWithName:streamId body:payload];
             }
+            
         }
         @catch (NSError * err)
         {
@@ -173,6 +175,8 @@ NSMutableDictionary *fileStreams = nil;
         }
         @finally
         {
+            // release buffer
+            free(buffer);
             NSDictionary * payload = @{ @"event": FS_EVENT_END, @"detail": @"" };
             [event sendDeviceEventWithName:streamId body:payload];
         }
