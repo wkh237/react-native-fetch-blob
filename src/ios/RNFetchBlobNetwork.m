@@ -14,6 +14,7 @@
 #import "RNFetchBlobNetwork.h"
 #import "RNFetchBlobConst.h"
 #import "RNFetchBlobReqBuilder.h"
+#import "IOS7Polyfill.h"
 #import <CommonCrypto/CommonDigest.h>
 
 ////////////////////////////////////////
@@ -207,11 +208,11 @@ NSOperationQueue *taskQueue;
         if(respCType != nil)
         {
             NSArray * extraBlobCTypes = [options objectForKey:CONFIG_EXTRA_BLOB_CTYPE];
-            if([respCType containsString:@"text/"])
+            if([respCType RNFBContainsString:@"text/"])
             {
                 respType = @"text";
             }
-            else if([respCType containsString:@"application/json"])
+            else if([respCType RNFBContainsString:@"application/json"])
             {
                 respType = @"json";
             }
@@ -219,7 +220,7 @@ NSOperationQueue *taskQueue;
             else if( extraBlobCTypes !=  nil) {
                 for(NSString * substr in extraBlobCTypes)
                 {
-                    if([respCType containsString:[substr lowercaseString]])
+                    if([respCType RNFBContainsString:[substr lowercaseString]])
                     {
                         respType = @"blob";
                         respFile = YES;

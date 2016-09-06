@@ -13,6 +13,7 @@
 #import "RCTEventDispatcher.h"
 #import "RNFetchBlobFS.h"
 #import "RNFetchBlobConst.h"
+#import "IOS7Polyfill.h"
 @import AssetsLibrary;
 
 
@@ -130,9 +131,10 @@ NSMutableDictionary *fileStreams = nil;
         int read = 0;
         int chunkSize = bufferSize;
         // allocate buffer in heap instead of stack
-        uint8_t * buffer = (uint8_t *) malloc(bufferSize);
+        uint8_t * buffer;
         @try
         {
+            buffer = (uint8_t *) malloc(bufferSize);
             if(path != nil)
             {
                 if([[NSFileManager defaultManager] fileExistsAtPath:path] == NO)
@@ -166,6 +168,9 @@ NSMutableDictionary *fileStreams = nil;
                 NSDictionary * payload = @{ @"event": FS_EVENT_ERROR, @"detail": @"RNFetchBlob.readStream unable to resolve URI" };
                 [event sendDeviceEventWithName:streamId body:payload];
             }
+            // release buffer
+            if(buffer != nil)
+                free(buffer);
             
         }
         @catch (NSError * err)
@@ -175,8 +180,6 @@ NSMutableDictionary *fileStreams = nil;
         }
         @finally
         {
-            // release buffer
-            free(buffer);
             NSDictionary * payload = @{ @"event": FS_EVENT_END, @"detail": @"" };
             [event sendDeviceEventWithName:streamId body:payload];
         }
@@ -292,7 +295,7 @@ NSMutableDictionary *fileStreams = nil;
         }
         NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
         NSData * content = nil;
-        if([encoding containsString:@"base64"]) {
+        if([encoding RNFBContainsString:@"base64"]) {
             content = [[NSData alloc] initWithBase64EncodedString:data options:0];
         }
         else if([encoding isEqualToString:@"uri"]) {
