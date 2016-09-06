@@ -231,74 +231,64 @@ public class RNFetchBlobFS {
      */
     public void readStream(String path, String encoding, int bufferSize, final String streamId) {
         path = normalizePath(path);
-        AsyncTask<String, Integer, Integer> task = new AsyncTask<String, Integer, Integer>() {
-            @Override
-            protected Integer doInBackground(String ... args) {
-                String path = args[0];
-                String encoding = args[1];
-                int bufferSize = Integer.parseInt(args[2]);
-                try {
+        try {
 
-                    int chunkSize = encoding.equalsIgnoreCase("base64") ? 4095 : 4096;
-                    if(bufferSize > 0)
-                        chunkSize = bufferSize;
+            int chunkSize = encoding.equalsIgnoreCase("base64") ? 4095 : 4096;
+            if(bufferSize > 0)
+                chunkSize = bufferSize;
 
-                    InputStream fs;
-                    if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
-                        fs = RNFetchBlob.RCTContext.getAssets().open(path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, ""));
-                    }
-                    else {
-                        fs = new FileInputStream(new File(path));
-                    }
-
-                    byte[] buffer = new byte[chunkSize];
-                    int cursor = 0;
-                    boolean error = false;
-
-                    if (encoding.equalsIgnoreCase("utf8")) {
-                        while ((cursor = fs.read(buffer)) != -1) {
-                            String chunk = new String(buffer, 0, cursor, "UTF-8");
-                            emitStreamEvent(streamId, "data", chunk);
-                        }
-                    } else if (encoding.equalsIgnoreCase("ascii")) {
-                        while ((cursor = fs.read(buffer)) != -1) {
-                            WritableArray chunk = Arguments.createArray();
-                            for(int i =0;i<cursor;i++)
-                            {
-                                chunk.pushInt((int)buffer[i]);
-                            }
-                            emitStreamEvent(streamId, "data", chunk);
-                        }
-                    } else if (encoding.equalsIgnoreCase("base64")) {
-                        while ((cursor = fs.read(buffer)) != -1) {
-                            if(cursor < chunkSize) {
-                                byte [] copy = new byte[cursor];
-                                for(int i =0;i<cursor;i++) {
-                                    copy[i] = buffer[i];
-                                }
-                                emitStreamEvent(streamId, "data", Base64.encodeToString(copy, Base64.NO_WRAP));
-                            }
-                            else
-                                emitStreamEvent(streamId, "data", Base64.encodeToString(buffer, Base64.NO_WRAP));
-                        }
-                    } else {
-                        String msg = "unrecognized encoding `" + encoding + "`";
-                        emitStreamEvent(streamId, "error", msg);
-                        error = true;
-                    }
-
-                    if(!error)
-                        emitStreamEvent(streamId, "end", "");
-                    fs.close();
-                    buffer = null;
-
-                } catch (Exception err) {
-                    emitStreamEvent(streamId, "error", err.getLocalizedMessage());
-                }
-                return null;
+            InputStream fs;
+            if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
+                fs = RNFetchBlob.RCTContext.getAssets().open(path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, ""));
             }
-        };
-        task.execute(path, encoding, String.valueOf(bufferSize));
+            else {
+                fs = new FileInputStream(new File(path));
+            }
+
+            byte[] buffer = new byte[chunkSize];
+            int cursor = 0;
+            boolean error = false;
+
+            if (encoding.equalsIgnoreCase("utf8")) {
+                while ((cursor = fs.read(buffer)) != -1) {
+                    String chunk = new String(buffer, 0, cursor, "UTF-8");
+                    emitStreamEvent(streamId, "data", chunk);
+                }
+            } else if (encoding.equalsIgnoreCase("ascii")) {
+                while ((cursor = fs.read(buffer)) != -1) {
+                    WritableArray chunk = Arguments.createArray();
+                    for(int i =0;i<cursor;i++)
+                    {
+                        chunk.pushInt((int)buffer[i]);
+                    }
+                    emitStreamEvent(streamId, "data", chunk);
+                }
+            } else if (encoding.equalsIgnoreCase("base64")) {
+                while ((cursor = fs.read(buffer)) != -1) {
+                    if(cursor < chunkSize) {
+                        byte [] copy = new byte[cursor];
+                        for(int i =0;i<cursor;i++) {
+                            copy[i] = buffer[i];
+                        }
+                        emitStreamEvent(streamId, "data", Base64.encodeToString(copy, Base64.NO_WRAP));
+                    }
+                    else
+                        emitStreamEvent(streamId, "data", Base64.encodeToString(buffer, Base64.NO_WRAP));
+                }
+            } else {
+                String msg = "unrecognized encoding `" + encoding + "`";
+                emitStreamEvent(streamId, "error", msg);
+                error = true;
+            }
+
+            if(!error)
+                emitStreamEvent(streamId, "end", "");
+            fs.close();
+            buffer = null;
+
+        } catch (Exception err) {
+            emitStreamEvent(streamId, "error", err.getLocalizedMessage());
+        }
     }
 
     /**

@@ -205,11 +205,17 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     /**
      * @param path Stream file path
      * @param encoding Stream encoding, should be one of `base64`, `ascii`, and `utf8`
-     * @param bufferSize Stream buffer size, default to 1024 or 1026(base64).
+     * @param bufferSize Stream buffer size, default to 4096 or 4095(base64).
      */
-    public void readStream(String path, String encoding, int bufferSize, String streamId) {
-        RNFetchBlobFS fs = new RNFetchBlobFS(this.getReactApplicationContext());
-        fs.readStream(path, encoding, bufferSize, streamId);
+    public void readStream(final String path, final String encoding, final int bufferSize, final String streamId) {
+        final ReactApplicationContext ctx = this.getReactApplicationContext();
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS fs = new RNFetchBlobFS(ctx);
+                fs.readStream(path, encoding, bufferSize, streamId);
+            }
+        });
     }
 
     @ReactMethod
