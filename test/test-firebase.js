@@ -57,7 +57,8 @@ describe('firebase login', (report, done) => {
     <Info key="user content" uid="user data">
       <Text>{JSON.stringify(user)}</Text>
     </Info>)
-    done()
+    if(user)
+      done()
   })
 })
 
