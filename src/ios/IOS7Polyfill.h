@@ -9,6 +9,12 @@
 #ifndef IOS7Polyfill_h
 #define IOS7Polyfill_h
 
+@interface NSString (Contains)
+
+- (BOOL)RNFBContainsString:(NSString*)other;
+
+@end
+
 @implementation NSString (Contains)
 
 - (BOOL)RNFBContainsString:(NSString*)other {
