@@ -6,35 +6,10 @@ try {
   var PACKAGE_JSON = process.cwd() + '/package.json';
   var package = JSON.parse(fs.readFileSync(PACKAGE_JSON));
   var APP_NAME = package.name;
-  var APPLICATION_MAIN = glob.sync(process.cwd() + '/android/app/src/main/**/MainApplication.java')[0];
   var PACKAGE_GRADLE = process.cwd() + '/node_modules/react-native-fetch-blob/android/build.gradle'
-  var hasNecessaryFile = MANIFEST_PATH && APPLICATION_MAIN;
   var VERSION = checkVersion();
 
   console.log('RNFetchBlob detected app version => ' + VERSION);
-
-  if(VERSION >= 0.29) {
-    console.log('RNFetchBlob patching MainApplication.java .. ');
-    if(!hasNecessaryFile) {
-      console.log(
-        '\033[95mreact-native-fetch-blob\033[97m link \033[91mFAILED \033[97m\nCould not automatically link Android package, '+
-        'please follow the instructions to manually link the library : ' +
-        '\033[4mhttps://github.com/wkh237/react-native-fetch-blob/wiki/Manually-Link-Package\n\n')
-      return
-    }
-    var main = fs.readFileSync(APPLICATION_MAIN);
-    if(String(main).match('new RNFetchBlobPackage()') === null) {
-
-      main = String(main).replace('new MainReactPackage()', 'new RNFetchBlobPackage(),\n           new MainReactPackage()');
-      main = String(main).replace('import com.facebook.react.ReactApplication;', 'import com.facebook.react.ReactApplication;\nimport com.RNFetchBlob.RNFetchBlobPackage;')
-
-      fs.writeFileSync(APPLICATION_MAIN, main);
-      console.log('RNFetchBlob patching MainApplication.java .. ok')
-    }
-    else {
-      console.log('Project already linked, process skipped.');
-    }
-  }
 
   if(VERSION < 0.28) {
     console.log('You project version is '+ VERSION + ' which may not compatible to react-native-fetch-blob 7.0+, please consider upgrade your application template to react-native 0.27+.')
