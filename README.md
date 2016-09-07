@@ -52,23 +52,37 @@ Install package from npm
 npm install --save react-native-fetch-blob
 ```
 
-Link package using [rnpm](https://github.com/rnpm/rnpm)
-
-```sh
-rnpm link
-```
-
-optional, use the following command to add Android permissions to `AndroidManifest.xml` automatically
-
-```sh
-RNFB_ANDROID_PERMISSIONS=true rnpm link
-```
-
 Or if using CocoaPods, add the pod to your `Podfile`, for example:
 
 ```
 pod 'react-native-fetch-blob,
     :path => '../node_modules/react-native-fetch-blob
+```
+
+**Automatically Link Native Modules**
+
+For 0.29.2+ projects, simply link native packages via following command because rnpm has been merged into react-native, you no longer need it.
+
+```
+react-native link
+```
+
+As for projects < 0.29 you need `rnpm` to link native packages
+
+```sh
+rnpm link
+```
+
+Optionally, use the following command to add Android permissions to `AndroidManifest.xml` automatically
+
+```sh
+RNFB_ANDROID_PERMISSIONS=true react-native link
+```
+
+pre 0.29 projects 
+
+```sh
+RNFB_ANDROID_PERMISSIONS=true rnpm link
 ```
 
 The link script might not take effect if you have non-default project structure, please visit [the wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Manually-Link-Package/_edit) to manually link the pacakge.
@@ -138,11 +152,13 @@ After `0.8.0` react-native-fetch-blob automatically decide how to send the body 
 
 To sum up :
 
-- To send a form data, the `Content-Type` header won't take effect if the body is an `Array` because we will set proper content type for you.
-- To send binary data, you have two choices, use BASE64 encoded string or a file path which points to a file contains the body. The `Content-Type` header does not matters.
- - The body is a BASE64 encoded string, the `Content-Type` header filed must containing substring`;BASE64` or `application/octet`  
- - The body is a path point to a file, it must be a string starts with `RNFetchBlob-file://`, which can simply done by `RNFetchBlob.wrap(PATH_TO_THE_FILE)`
-- To send the body as-is, set a `Content-Type` header not containing `;BASE64` or `application/octet`.
+- To send a form data, the `Content-Type` header does not matters. When the body is an `Array` we will set proper content type for you.
+- To send binary data, you have two choices, use BASE64 encoded string or path points to a file contains the body.
+ - If the `Content-Type` containing substring`;BASE64` or `application/octet` the given body will be considered as a BASE64 encoded data which will be decoded to binary data as the request body.   
+ - Otherwise, if a string starts with `RNFetchBlob-file://` (which can simply done by `RNFetchBlob.wrap(PATH_TO_THE_FILE)`), it will try to find the data from the URI string after `RNFetchBlob-file://` and use it as request body. 
+- To send the body as-is, simply use a `Content-Type` header not containing `;BASE64` or `application/octet`.
+
+> After 0.9.4, we disabled `Chunked` transfer encoding by default, if you're going to use it, you should explicitly set header `Transfer-Encoding` to `Chunked`.
 
 #### Download example : Fetch files that needs authorization token
 
@@ -172,7 +188,7 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
 
 #### Download to storage directly
 
-If the response data is large, that would be a bad idea to convert it into BASE64 string. The better solution is store the response data directly into file system. The simplest way is give a `fileCache` option to config, and set it to `true`. This will make incoming response data stored in a temporary path **without** any file extension.
+If the response data is large, that would be a bad idea to convert it into BASE64 string. A better solution is streaming the response directly into a file, simply add a `fileCache` option to config, and set it to `true`. This will make incoming response data stored in a temporary path **without** any file extension.
 
 **These files won't be removed automatically, please refer to [Cache File Management](#user-content-cache-file-management)**
 
@@ -194,7 +210,7 @@ RNFetchBlob
 
 **Set Temp File Extension**
 
-Sometimes you might need a file extension for some reason. For instance, when using file path as source of `Image` component, the path should end with something like .png or .jpg, you can do this by add `appendExt` option to `config`.
+Sometimes you might need a file extension for some reason. For example, when using file path as source of `Image` component, the path should end with something like .png or .jpg, you can do this by add `appendExt` option to `config`.
 
 ```js
 RNFetchBlob
@@ -217,7 +233,7 @@ RNFetchBlob
 
 **Use Specific File Path**
 
-If you prefer a specific path rather than randomly generated one, you can use `path` option. We've added a constant [dirs](#user-content-dirs) in v0.5.0 that contains several common used directories.
+If you prefer a specific path rather than randomly generated one, you can use `path` option. We've added [several  constants](#user-content-dirs) in v0.5.0 which represents commonly used directories.
 
 ```js
 let dirs = RNFetchBlob.fs.dirs
@@ -239,7 +255,7 @@ RNFetchBlob
 
 ####  Upload example : Dropbox [files-upload](https://www.dropbox.com/developers/documentation/http/documentation#files-upload) API
 
-`react-native-fetch-blob` will convert the base64 string in `body` to binary format using native API, this process will be  done in a new thread, so it's async.
+`react-native-fetch-blob` will convert the base64 string in `body` to binary format using native API, this process will be  done in a separated thread, so it won't block your GUI.
 
 ```js
 
@@ -266,7 +282,7 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
 
 #### Upload a file from storage
 
-If you're going to use a `file` request body, just wrap the path with `wrap` API.
+If you're going to use a `file` as request body, just wrap the path with `wrap` API.
 
 ```js
 RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
@@ -322,7 +338,7 @@ Elements have property `filename` will be transformed into binary format, otherw
   })
 ```
 
-What if you want to upload a file using form data ? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, wrap `data` by `wrap` API (this feature is only available for `version >= v0.5.0`). On version >= `0.6.2`, it is possible to set custom MIME type when appending file to form data.
+What if you want to append a file to form data ? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, wrap `data` by `wrap` API (this feature is only available for `version >= v0.5.0`). On version >= `0.6.2`, it is possible to set custom MIME type when appending file to form data. But keep in mind when the file is large it's likely crash your app. Please consider use other strategy (see [#94](https://github.com/wkh237/react-native-fetch-blob/issues/94)).
 
 ```js
 
@@ -363,7 +379,7 @@ What if you want to upload a file using form data ? Just like [upload a file fro
 
 #### Upload/Download progress
 
-In `version >= 0.4.2` it is possible to know the upload/download progress. After `0.7.0` IOS and Android upload progress are supported.
+In `version >= 0.4.2` it is possible to know the upload/download progress. After `0.7.0` IOS and Android upload progress are also supported.
 
 ```js
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
@@ -559,7 +575,7 @@ See [File API](https://github.com/wkh237/react-native-fetch-blob/wiki/File-Syste
 
 In `v0.5.0` we've added  `writeStream` and `readStream`, which allows your app read/write data from file path. This API creates a file stream, rather than convert whole data into BASE64 encoded string, it's handy when processing **large files**.
 
-When calling `readStream` method, you have to `open` the stream, and start to read data.
+When calling `readStream` method, you have to `open` the stream, and start to read data. When the file is large consider use an appropriate buffer size to reduce the native event dispatching overhead (see [Performance Tips](#user-content-performance-tips))
 
 ```js
 let data = ''
