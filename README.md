@@ -58,6 +58,12 @@ Link package using [rnpm](https://github.com/rnpm/rnpm)
 rnpm link
 ```
 
+optional, use the following command to add Android permissions to `AndroidManifest.xml` automatically
+
+```sh
+RNFB_ANDROID_PERMISSIONS=true rnpm link
+```
+
 Or if using CocoaPods, add the pod to your `Podfile`, for example:
 
 ```
@@ -65,43 +71,7 @@ pod 'react-native-fetch-blob,
     :path => '../node_modules/react-native-fetch-blob
 ```
 
-### Manually link the package (Android)
-
-If rnpm link command failed to link the package automatically, you might try manually link the package.
-
-Open `android/app/build.gradle`, add this line
-
-```diff
-dependencies {
-    ...
-+    compile project(':react-native-fetch-blob')                                                                      
-}
-```
-
-Open `android/settings.gradle`, and add these lines which will app RNFetchBlob Android project dependency to your app.
-
-```diff
-include ':app'      
-+ include ':react-native-fetch-blob'                                                                                                  
-+ project(':react-native-fetch-blob').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-fetch-blob/android')                        
-```
-
-Add this line to `MainApplication.java`, so that RNFetchBlob package becomes part of react native package.
-
-```diff
-...
-+ import com.RNFetchBlob.RNFetchBlobPackage;                                                                                 
-...
-protected List<ReactPackage> getPackages() {
-      return Arrays.<ReactPackage>asList(
-          new MainReactPackage(),
-+          new RNFetchBlobPackage()                                                                                         
-      );
-    }
-  };
-...
-```
-> If you still having problem on installing this package, please check the [trouble shooting page](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting) or [file an issue](https://github.com/wkh237/react-native-fetch-blob/issues/new)
+The link script might not take effect if you have non-default project structure, please visit [the wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Manually-Link-Package/_edit) to manually link the pacakge.
 
 **Grant Permission to External storage for Android 5.0 or lower**
 
