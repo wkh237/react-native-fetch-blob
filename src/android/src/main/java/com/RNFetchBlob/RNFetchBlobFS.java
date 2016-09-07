@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.util.Base64;
 
@@ -229,7 +230,7 @@ public class RNFetchBlobFS {
      * @param encoding  File stream decoder, should be one of `base64`, `utf8`, `ascii`
      * @param bufferSize    Buffer size of read stream, default to 4096 (4095 when encode is `base64`)
      */
-    public void readStream(String path, String encoding, int bufferSize, final String streamId) {
+    public void readStream(String path, String encoding, int bufferSize, int tick, final String streamId) {
         path = normalizePath(path);
         try {
 
@@ -253,6 +254,8 @@ public class RNFetchBlobFS {
                 while ((cursor = fs.read(buffer)) != -1) {
                     String chunk = new String(buffer, 0, cursor, "UTF-8");
                     emitStreamEvent(streamId, "data", chunk);
+                    if(tick > 0)
+                        SystemClock.sleep(tick);
                 }
             } else if (encoding.equalsIgnoreCase("ascii")) {
                 while ((cursor = fs.read(buffer)) != -1) {
@@ -262,6 +265,8 @@ public class RNFetchBlobFS {
                         chunk.pushInt((int)buffer[i]);
                     }
                     emitStreamEvent(streamId, "data", chunk);
+                    if(tick > 0)
+                        SystemClock.sleep(tick);
                 }
             } else if (encoding.equalsIgnoreCase("base64")) {
                 while ((cursor = fs.read(buffer)) != -1) {
@@ -274,6 +279,8 @@ public class RNFetchBlobFS {
                     }
                     else
                         emitStreamEvent(streamId, "data", Base64.encodeToString(buffer, Base64.NO_WRAP));
+                    if(tick > 0)
+                        SystemClock.sleep(tick);
                 }
             } else {
                 String msg = "unrecognized encoding `" + encoding + "`";

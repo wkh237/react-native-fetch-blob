@@ -17,6 +17,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
@@ -32,6 +33,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -87,6 +89,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     ResponseType responseType;
     WritableMap respInfo;
     boolean timeout = false;
+    ArrayList<String> redirects = new ArrayList<>();
 
     public RNFetchBlobReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, final Callback callback) {
         this.method = method.toUpperCase();
@@ -277,7 +280,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             }
 
             final Request req = builder.build();
-
+            clientBuilder.addNetworkInterceptor(new Interceptor() {
+                @Override
+                public Response intercept(Chain chain) throws IOException {
+                        redirects.add(chain.request().url().toString());
+                        return chain.proceed(chain.request());
+                    }
+            });
             // Add request interceptor for upload progress event
             clientBuilder.addInterceptor(new Interceptor() {
                 @Override
@@ -329,6 +338,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             clientBuilder.connectionPool(pool);
             clientBuilder.retryOnConnectionFailure(false);
             clientBuilder.followRedirects(true);
+
 
             OkHttpClient client = clientBuilder.retryOnConnectionFailure(true).build();
             Call call =  client.newCall(req);
@@ -508,6 +518,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         for(int i =0;i< resp.headers().size();i++) {
             headers.putString(resp.headers().name(i), resp.headers().value(i));
         }
+        WritableArray redirectList = Arguments.createArray();
+        for(String r : redirects) {
+                redirectList.pushString(r);
+        }
+        info.putArray("redirects", redirectList);
         info.putMap("headers", headers);
         Headers h = resp.headers();
         if(isBlobResp) {

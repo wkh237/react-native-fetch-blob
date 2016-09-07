@@ -122,6 +122,7 @@ NSMutableDictionary *fileStreams = nil;
 + (void) readStream:(NSString *)uri
            encoding:(NSString * )encoding
          bufferSize:(int)bufferSize
+               tick:(int)tick
            streamId:(NSString *)streamId
           bridgeRef:(RCTBridge *)bridgeRef
 {

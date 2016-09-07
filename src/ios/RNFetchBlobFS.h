@@ -64,7 +64,7 @@
      rejecter:(RCTPromiseRejectBlock)reject;
 //+ (void) writeFileFromFile:(NSString *)src toFile:(NSString *)dest append:(BOOL)append;
 + (void) writeAssetToPath:(ALAssetRepresentation * )rep dest:(NSString *)dest;
-+ (void) readStream:(NSString *)uri encoding:(NSString * )encoding bufferSize:(int)bufferSize streamId:(NSString *)streamId bridgeRef:(RCTBridge *)bridgeRef;
++ (void) readStream:(NSString *)uri encoding:(NSString * )encoding bufferSize:(int)bufferSize tick:(int)tick streamId:(NSString *)streamId bridgeRef:(RCTBridge *)bridgeRef;
 
 // constructor
 - (id) init;

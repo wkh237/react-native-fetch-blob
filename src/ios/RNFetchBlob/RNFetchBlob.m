@@ -374,7 +374,7 @@ RCT_EXPORT_METHOD(readFile:(NSString *)path encoding:(NSString *)encoding resolv
 })
 
 #pragma mark - fs.readStream
-RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding bufferSize:(int)bufferSize streamId:(NSString *)streamId
+RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding bufferSize:(int)bufferSize tick:(int)tick streamId:(NSString *)streamId
 {
 
 //    RNFetchBlobFS *fileStream = [[RNFetchBlobFS alloc] initWithBridgeRef:self.bridge];
@@ -386,7 +386,7 @@ RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding 
     }
     
 //    [fileStream readWithPath:path useEncoding:encoding bufferSize:bufferSize];
-    [RNFetchBlobFS readStream:path encoding:encoding bufferSize:bufferSize streamId:streamId bridgeRef:_bridge];
+    [RNFetchBlobFS readStream:path encoding:encoding bufferSize:bufferSize tick:tick streamId:streamId bridgeRef:_bridge];
 })
 
 #pragma mark - fs.getEnvionmentDirs
