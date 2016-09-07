@@ -40,7 +40,7 @@ cd "${TEST_APP_PATH}"
 # npm install --save "${CWD}/src"
 npm install --save react-native-fetch-blob
 npm install --save firebase
-rnpm link
+react-native link
 
 # copy android assets
 cd ${CWD}
