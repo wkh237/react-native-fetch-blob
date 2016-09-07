@@ -11,7 +11,7 @@ A project committed to make file acess and data transfer easier, efficient for R
 - File stream support for dealing with large file
 - Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN (experimental)
 
-> The npm package is inside `src` folder, this is development folder
+> The npm package is inside `src` folder, if you're going to install via git repository do not directly poiint to this folder
 
 ## TOC
 * [About](#user-content-about)
@@ -140,11 +140,10 @@ If you're using ES5 require statement to load the module, please add `default`. 
 var RNFetchBlob = require('react-native-fetch-blob').default
 ```
 
-### HTTP Data Transfer
+## HTTP Data Transfer
 
----
 
-#### Regular Request
+### Regular Request
 
 After `0.8.0` react-native-fetch-blob automatically decide how to send the body by checking its type and `Content-Type` in header. The rule is described in the following diagram
 
@@ -160,7 +159,7 @@ To sum up :
 
 > After 0.9.4, we disabled `Chunked` transfer encoding by default, if you're going to use it, you should explicitly set header `Transfer-Encoding` to `Chunked`.
 
-#### Download example : Fetch files that needs authorization token
+### Download example : Fetch files that needs authorization token
 
 Most simple way is download to memory and stored as BASE64 encoded string, this is handy when the response data is small.
 
@@ -186,7 +185,7 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
   })
 ```
 
-#### Download to storage directly
+### Download to storage directly
 
 If the response data is large, that would be a bad idea to convert it into BASE64 string. A better solution is streaming the response directly into a file, simply add a `fileCache` option to config, and set it to `true`. This will make incoming response data stored in a temporary path **without** any file extension.
 
@@ -280,7 +279,7 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
   })
 ```
 
-#### Upload a file from storage
+### Upload a file from storage
 
 If you're going to use a `file` as request body, just wrap the path with `wrap` API.
 
@@ -306,7 +305,7 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
   })
 ```
 
-#### Multipart/form-data example : Post form data with file and data
+### Multipart/form-data example : Post form data with file and data
 
 In `version >= 0.3.0` you can also post files with form data, just put an array in `body`, with elements have property `name`, `data`, and `filename`(optional).
 
@@ -377,7 +376,7 @@ What if you want to append a file to form data ? Just like [upload a file from s
   })
 ```
 
-#### Upload/Download progress
+### Upload/Download progress
 
 In `version >= 0.4.2` it is possible to know the upload/download progress. After `0.7.0` IOS and Android upload progress are also supported.
 
@@ -402,7 +401,7 @@ In `version >= 0.4.2` it is possible to know the upload/download progress. After
     })
 ```
 
-#### Cancel Request
+### Cancel Request
 
 After `0.7.0` it is possible to cancel a HTTP request. When the request cancel, it will definately throws an promise rejection, be sure to catch it.
 
@@ -541,9 +540,9 @@ Or show an image in image viewer
       android.actionViewIntent(PATH_OF_IMG, 'image/png')
 ```
 
-### File System
+## File System
 
-#### File Access
+### File Access
 
 File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However we realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need these APIs for there cases.
 
@@ -571,7 +570,7 @@ File Access APIs
 
 See [File API](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API) for more information
 
-#### File Stream
+### File Stream
 
 In `v0.5.0` we've added  `writeStream` and `readStream`, which allows your app read/write data from file path. This API creates a file stream, rather than convert whole data into BASE64 encoded string, it's handy when processing **large files**.
 
@@ -620,7 +619,7 @@ RNFetchBlob.fs.writeStream(
 
 ```
 
-#### Cache File Management
+### Cache File Management
 
 When using `fileCache` or `path` options along with `fetch` API, response data will automatically stored into file system. The files will **NOT** removed unless you `unlink` it. There're several ways to remove the files
 
@@ -677,7 +676,7 @@ You can also grouping requests by using `session` API, and use `dispose` to remo
 
 ```
 
-#### Transfer Encoding
+### Transfer Encoding
 
 After `0.9.4`, the `Chunked` transfer encoding is disabled by default due to some service provoder may not support chunked transfer. To enable it, set `Transfer-Encoding` header to `Chunked`.
 
@@ -685,7 +684,7 @@ After `0.9.4`, the `Chunked` transfer encoding is disabled by default due to som
 RNFetchBlob.fetch('POST', 'http://example.com/upload', { 'Transfer-Encoding' : 'Chunked' }, bodyData)
 ```
 
-#### Self-Signed SSL Server
+### Self-Signed SSL Server
 
 By default, react-native-fetch-blob does NOT allow connection to unknown certification provider since it's dangerous. If you're going to connect a server with self-signed certification, add `trusty` to `config`. This function is available for version >= `0.5.3`
 
@@ -699,7 +698,7 @@ RNFetchBlob.config({
 })
 ```
 
-### Web API Polyfills
+## Web API Polyfills
 
 After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/react-native-fetch-blob/wiki/Web-API-Polyfills-(experimental)) that makes some browser-based library available in RN.
 
@@ -708,9 +707,7 @@ After `0.8.0` we've made some [Web API polyfills](https://github.com/wkh237/reac
 
 Here's a [sample app](https://github.com/wkh237/rn-firebase-storage-upload-sample) that uses polyfills to upload files to FireBase.
 
-### Performance Tips
-
----
+## Performance Tips
 
 **Reduce RCT Bridge and BASE64 Overheard**
 
