@@ -19,7 +19,7 @@ try {
       console.log(
         '\033[95mreact-native-fetch-blob\033[97m link \033[91mFAILED \033[97m\nCould not automatically link Android package, '+
         'please follow the instructions to manually link the library : ' +
-        '\033[4mhttps://github.com/wkh237/react-native-fetch-blob#manually-link-the-package-android\n\n')
+        '\033[4mhttps://github.com/wkh237/react-native-fetch-blob/wiki/Manually-Link-Package\n\n')
       return
     }
     var main = fs.readFileSync(APPLICATION_MAIN);
@@ -79,7 +79,7 @@ try {
     console.log(
       '\033[95mreact-native-fetch-blob \033[97mwill not automatically add Android permissions after \033[92m0.9.4 '+
       '\033[97mplease run the following command if you want to add default permissions :\n\n' +
-      '\033[96m\tRNFB_ANDROID_PERMISSION=true rnpm link\n\n')
+      '\033[96m\tRNFB_ANDROID_PERMISSION=true rnpm link\n')
   }
 
   function checkVersion() {
@@ -92,5 +92,5 @@ try {
     '\033[95mreact-native-fetch-blob\033[97m link \033[91mFAILED \033[97m\nCould not automatically link package :'+
     err.stack +
     'please follow the instructions to manually link the library : ' +
-    '\033[4mhttps://github.com/wkh237/react-native-fetch-blob#manually-link-the-package-android\n\n')
+    '\033[4mhttps://github.com/wkh237/react-native-fetch-blob/wiki/Manually-Link-Package\n')
 }
