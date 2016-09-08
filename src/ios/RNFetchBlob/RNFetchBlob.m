@@ -15,6 +15,8 @@
 
 
 RCTBridge * bridgeRef;
+dispatch_queue_t commonTaskQueue;
+dispatch_queue_t fsQueue;
 
 ////////////////////////////////////////
 //
@@ -30,7 +32,9 @@ RCTBridge * bridgeRef;
 @synthesize bridge = _bridge;
 
 - (dispatch_queue_t) methodQueue {
-    return dispatch_queue_create("RNFetchBlob.queue", DISPATCH_QUEUE_SERIAL);
+    if(commonTaskQueue == nil)
+        commonTaskQueue = dispatch_queue_create("RNFetchBlob.queue", DISPATCH_QUEUE_SERIAL);
+    return commonTaskQueue;
 }
 
 + (RCTBridge *)getRCTBridge
@@ -43,6 +47,10 @@ RCT_EXPORT_MODULE();
 - (id) init {
     self = [super init];
     self.filePathPrefix = FILE_PREFIX;
+    if(commonTaskQueue == nil)
+        commonTaskQueue = dispatch_queue_create("RNFetchBlob.queue", DISPATCH_QUEUE_SERIAL);
+    if(fsQueue == nil)
+        fsQueue = dispatch_queue_create("RNFetchBlob.fs.queue", DISPATCH_QUEUE_SERIAL);
     BOOL isDir;
     // if temp folder not exists, create one
     if(![[NSFileManager defaultManager] fileExistsAtPath: [RNFetchBlobFS getTempPath] isDirectory:&isDir]) {
@@ -376,8 +384,6 @@ RCT_EXPORT_METHOD(readFile:(NSString *)path encoding:(NSString *)encoding resolv
 #pragma mark - fs.readStream
 RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding bufferSize:(int)bufferSize tick:(int)tick streamId:(NSString *)streamId
 {
-
-//    RNFetchBlobFS *fileStream = [[RNFetchBlobFS alloc] initWithBridgeRef:self.bridge];
     if(bufferSize == nil) {
         if([[encoding lowercaseString] isEqualToString:@"base64"])
             bufferSize = 4095;
@@ -385,8 +391,9 @@ RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding 
             bufferSize = 4096;
     }
     
-//    [fileStream readWithPath:path useEncoding:encoding bufferSize:bufferSize];
-    [RNFetchBlobFS readStream:path encoding:encoding bufferSize:bufferSize tick:tick streamId:streamId bridgeRef:_bridge];
+    dispatch_async(fsQueue, ^{
+        [RNFetchBlobFS readStream:path encoding:encoding bufferSize:bufferSize tick:tick streamId:streamId bridgeRef:_bridge];
+    });
 })
 
 #pragma mark - fs.getEnvionmentDirs

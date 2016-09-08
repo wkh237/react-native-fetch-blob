@@ -128,9 +128,10 @@ NSMutableDictionary *fileStreams = nil;
 {
     [[self class] getPathFromUri:uri completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
     
-        RCTEventDispatcher * event = bridgeRef.eventDispatcher;
-        int read = 0;
-        int chunkSize = bufferSize;
+        __block RCTEventDispatcher * event = bridgeRef.eventDispatcher;
+        __block int read = 0;
+        __block int backoff = tick *1000;
+        __block int chunkSize = bufferSize;
         // allocate buffer in heap instead of stack
         uint8_t * buffer;
         @try
@@ -151,6 +152,10 @@ NSMutableDictionary *fileStreams = nil;
                 while((read = [stream read:buffer maxLength:bufferSize]) > 0)
                 {
                     [[self class] emitDataChunks:[NSData dataWithBytes:buffer length:read] encoding:encoding streamId:streamId event:event];
+                    if(tick > 0)
+                    {
+                        usleep(backoff);
+                    }
                 }
                 [stream close];
             }
@@ -162,6 +167,10 @@ NSMutableDictionary *fileStreams = nil;
                 {
                     cursor += read;
                     [[self class] emitDataChunks:[NSData dataWithBytes:buffer length:read] encoding:encoding streamId:streamId event:event];
+                    if(tick > 0)
+                    {
+                        usleep(backoff);
+                    }
                 }
             }
             else
