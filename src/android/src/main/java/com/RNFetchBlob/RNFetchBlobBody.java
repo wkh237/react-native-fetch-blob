@@ -21,9 +21,6 @@ import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okio.BufferedSink;
 
-/**
- * Created by wkh237 on 2016/7/11.
- */
 public class RNFetchBlobBody extends RequestBody{
 
     InputStream requestStream;

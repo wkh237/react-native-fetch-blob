@@ -1,18 +1,11 @@
 package com.RNFetchBlob;
 
-import android.app.LoaderManager;
-import android.content.ContentResolver;
-import android.content.CursorLoader;
 import android.content.res.AssetFileDescriptor;
-import android.database.Cursor;
-import android.graphics.Path;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
-import android.os.Looper;
 import android.os.SystemClock;
-import android.provider.MediaStore;
 import android.util.Base64;
 
 import com.RNFetchBlob.Utils.PathResolver;
@@ -23,31 +16,19 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
-/**
- * Created by wkh237 on 2016/5/26.
- */
 public class RNFetchBlobFS {
 
     ReactApplicationContext mCtx;
@@ -676,10 +657,10 @@ public class RNFetchBlobFS {
 
     /**
      * Create new file at path
-     * @param path
-     * @param data
-     * @param encoding
-     * @param callback
+     * @param path The destination path of the new file.
+     * @param data Initial data of the new file.
+     * @param encoding Encoding of initial data.
+     * @param callback RCT bridge callback.
      */
     static void createFile(String path, String data, String encoding, Callback callback) {
         try {
@@ -785,8 +766,8 @@ public class RNFetchBlobFS {
             return data.getBytes(Charset.forName("US-ASCII"));
         }
         else if(encoding.toLowerCase().contains("base64")) {
-            byte [] b = Base64.decode(data, Base64.NO_WRAP);
-            return b;
+            return Base64.decode(data, Base64.NO_WRAP);
+
         }
         else if(encoding.equalsIgnoreCase("utf8")) {
             return data.getBytes(Charset.forName("UTF-8"));
@@ -825,8 +806,8 @@ public class RNFetchBlobFS {
     /**
      * Get input stream of the given path, when the path is a string starts with bundle-assets://
      * the stream is created by Assets Manager, otherwise use FileInputStream.
-     * @param path
-     * @return
+     * @param path The file to open stream
+     * @return InputStream instance
      * @throws IOException
      */
     static InputStream inputStreamFromPath(String path) throws IOException {
@@ -838,8 +819,8 @@ public class RNFetchBlobFS {
 
     /**
      * Check if the asset or the file exists
-     * @param path
-     * @return
+     * @param path A file path URI string
+     * @return A boolean value represents if the path exists.
      */
     static boolean isPathExists(String path) {
         if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {

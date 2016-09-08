@@ -48,10 +48,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-
-/**
- * Created by wkh237 on 2016/6/21.
- */
 public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
     enum RequestType  {
@@ -60,12 +56,12 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         AsIs,
         WithoutBody,
         Others
-    };
+    }
 
     enum ResponseType {
         KeepInMemory,
         FileStorage
-    };
+    }
 
     public static HashMap<String, Call> taskTable = new HashMap<>();
     static HashMap<String, Boolean> progressReport = new HashMap<>();
@@ -420,7 +416,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 try {
                     // For XMLHttpRequest, automatic response data storing strategy, when response
                     // data is considered as binary data, write it to file system
-                    if(isBlobResp && options.auto == true) {
+                    if(isBlobResp && options.auto) {
                         String dest = RNFetchBlobFS.getTmpPath(ctx, taskId);
                         InputStream ins = resp.body().byteStream();
                         FileOutputStream os = new FileOutputStream(new File(dest));
@@ -503,10 +499,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     }
 
     /**
-     * Create response information object, conatins status code, headers, etc.
-     * @param resp
-     * @param isBlobResp
-     * @return
+     * Create response information object, contains status code, headers, etc.
+     * @param resp Response object
+     * @param isBlobResp If the response is binary data
+     * @return Get RCT bridge object contains response information.
      */
     private WritableMap getResponseInfo(Response resp, boolean isBlobResp) {
         WritableMap info = Arguments.createMap();
@@ -543,7 +539,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     /**
      * Check if response data is binary data.
      * @param resp OkHttp response.
-     * @return
+     * @return If the response data contains binary bytes
      */
     private boolean isBlobResponse(Response resp) {
         Headers h = resp.headers();
