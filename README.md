@@ -4,7 +4,7 @@
 
 A project committed to make file acess and data transfer easier, efficient for React Native developers.
 
-> The npm package is inside `src` folder, if you're going to install via git repository do not directly point to this folder
+> The npm package is inside `src` folder, if you're going to install using github repository do not point to here directly
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
