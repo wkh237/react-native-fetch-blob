@@ -574,7 +574,7 @@ See [File API](https://github.com/wkh237/react-native-fetch-blob/wiki/File-Syste
 
 In `v0.5.0` we've added  `writeStream` and `readStream`, which allows your app read/write data from file path. This API creates a file stream, rather than convert whole data into BASE64 encoded string, it's handy when processing **large files**.
 
-When calling `readStream` method, you have to `open` the stream, and start to read data. When the file is large consider use an appropriate buffer size to reduce the native event dispatching overhead (see [Performance Tips](#user-content-performance-tips))
+When calling `readStream` method, you have to `open` the stream, and start to read data. When the file is large, consider use an appropriate `bufferSize` and `interval` to reduce the native event dispatching overhead (see [Performance Tips](#user-content-performance-tips))
 
 ```js
 let data = ''
@@ -711,9 +711,9 @@ Here's a [sample app](https://github.com/wkh237/rn-firebase-storage-upload-sampl
 
 **Reduce RCT Bridge and BASE64 Overheard**
 
-React Native connects JS and Native context by passing JSON around React Native bridge, and there will be an overhead to convert data before they sent to each side. When data is large, this will be quite a performance impact to your app, it's recommended to use file storage instead of BASE64 if possible. 
+When reading data via `fs.readStream` the process seems blocking JS thread when file is large, it's because the default buffer size is quite small (4kb) which result in large amount of events triggered in JS thread, try to increase the buffer size (for example 100kb = 102400) and set a larger interval (which is introduced in 0.9.4 default value is 10ms) to limit the frequency. 
 
-There's a knowning issue when reading data via `fs.readStream`. the process seems blocking JS thread when file is large, it's because the default buffer size is quite small (4kb) which result in large amount of events triggered in JS thread, try to increase the buffer size (for example 100kb => 102400) to reduce the frequency. The following chart shows how much faster when loading data from storage than BASE64 encoded string on iphone 6.
+React Native connects JS and Native context by passing JSON around React Native bridge, and there will be an overhead to convert data before they sent to each side. When data is large, this will be quite a performance impact to your app, it's recommended to use file storage instead of BASE64 if possible.The following chart shows how much faster when loading data from storage than BASE64 encoded string on iphone 6.
 
 <img src="img/performance_1.png" style="width : 100%"/>
 
