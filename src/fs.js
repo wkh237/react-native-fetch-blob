@@ -112,11 +112,9 @@ function writeStream(
 function readStream(
   path : string,
   encoding : 'utf8' | 'ascii' | 'base64',
-  bufferSize? : ?number
-  tick? : ?number
+  bufferSize? : ?number,
+  tick : ?number = 10
 ):Promise<RNFetchBlobReadStream> {
-  if(!tick)
-    tick = -1
   return Promise.resolve(new RNFetchBlobReadStream(path, encoding, bufferSize, tick))
 }
 

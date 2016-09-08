@@ -19,14 +19,16 @@ export default class RNFetchBlobReadStream {
   encoding : 'utf8' | 'ascii' | 'base64';
   bufferSize : ?number;
   closed : boolean;
+  tick : number = 10;
 
-  constructor(path:string, encoding:string, bufferSize?:?number) {
+  constructor(path:string, encoding:string, bufferSize?:?number, tick:number) {
     if(!path)
       throw Error('RNFetchBlob could not open file stream with empty `path`')
     this.encoding = encoding || 'utf8'
     this.bufferSize = bufferSize
     this.path = path
     this.closed = false
+    this.tick = tick
     this._onData = () => {}
     this._onEnd = () => {}
     this._onError = () => {}
@@ -37,7 +39,7 @@ export default class RNFetchBlobReadStream {
       let {event, detail} = e
       if(this._onData && event === 'data') {
         this._onData(detail)
-        return 
+        return
       }
       else if (this._onEnd && event === 'end') {
         this._onEnd(detail)
@@ -59,7 +61,7 @@ export default class RNFetchBlobReadStream {
 
   open() {
     if(!this.closed)
-      RNFetchBlob.readStream(this.path, this.encoding, this.bufferSize || 0, this.streamId)
+      RNFetchBlob.readStream(this.path, this.encoding, this.bufferSize || 10240 , this.tick || -1, this.streamId)
     else
       throw new Error('Stream closed')
   }
