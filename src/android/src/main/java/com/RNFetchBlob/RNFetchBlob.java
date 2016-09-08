@@ -21,6 +21,8 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     static ReactApplicationContext RCTContext;
     static LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
     static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    static LinkedBlockingQueue<Runnable> fsTaskQueue = new LinkedBlockingQueue<>();
+    static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
 
     public RNFetchBlob(ReactApplicationContext reactContext) {
 
@@ -209,7 +211,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
      */
     public void readStream(final String path, final String encoding, final int bufferSize, final int tick, final String streamId) {
         final ReactApplicationContext ctx = this.getReactApplicationContext();
-        threadPool.execute(new Runnable() {
+        fsThreadPool.execute(new Runnable() {
             @Override
             public void run() {
                 RNFetchBlobFS fs = new RNFetchBlobFS(ctx);
