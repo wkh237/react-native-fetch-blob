@@ -4,14 +4,14 @@
 
 A project committed to make file acess and data transfer easier, efficient for React Native developers.
 
+> The npm package is inside `src` folder, if you're going to install via git repository do not directly point to this folder
+
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
 - File API supports normal files, Asset files, and CameraRoll files
 - Native-to-native file manipulation API, reduce JS bridging performance loss
 - File stream support for dealing with large file
 - Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN (experimental)
-
-> The npm package is inside `src` folder, if you're going to install via git repository do not directly poiint to this folder
 
 ## TOC
 * [About](#user-content-about)
