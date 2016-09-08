@@ -9,6 +9,7 @@ import {
   Platform,
   Dimensions,
   Image,
+  TouchableOpacity,
 } from 'react-native';
 
 window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
@@ -65,6 +66,7 @@ describe('issue #106', (report, done) => {
 describe('issue #111 get redirect destination', (report, done) => {
   RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/redirect`)
   .then((res) => {
+    console.log(res.info())
     report(
       <Assert key="redirect history should tracable"
         expect={2}
@@ -107,17 +109,26 @@ describe('chunked encoding option test', (report, done) => {
 describe('#118 readStream performance prepare the file', (report, done) => {
   let cache = null
   let size = 0
+  let size2 = 0
   let tick = Date.now()
+  let tick2 = Date.now()
   let start = -1
+  let start2 = -1
   let count = 0
 
-  RNFetchBlob.config({fileCache : true})
+  let task = RNFetchBlob.config({fileCache : true})
     .fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`)
-    .then((res) => {
+  task.progress((current, total) => {
+    report(<Info key="prepare file" uid="prepare">
+      <Text key="pg"> {Math.floor(current/total*100)}% </Text>
+    </Info>)
+  })
+  task.then((res) => {
       report(<Info key="preparation complete"><Text>start in 3 seconds</Text></Info>)
       cache = res.path()
-      setTimeout(() => {
-        fs.readStream(cache, 'utf8', 1024000)
+      setTimeout(readFile, 2500)
+      function readFile() {
+        fs.readStream(cache, 'utf8', 102400, 10)
           .then((stream) => {
             stream.open()
             start = Date.now()
@@ -125,9 +136,13 @@ describe('#118 readStream performance prepare the file', (report, done) => {
               count++
               size += chunk.length
               if(Date.now() - tick > 500) {
+                console.log(size, ' read')
                 tick = Date.now()
                 report(
-                  <Info key="size" uid="100"><Text>{size} bytes read</Text></Info>)
+                  <Info key="size" uid="100">
+                    <Text key="AA">File 1 {size}/22000000 bytes read</Text>
+                    <Text key="BB">File 2 {size2}/22000000 bytes read</Text>
+                  </Info>)
               }
             })
             stream.onEnd(() => {
@@ -144,7 +159,7 @@ describe('#118 readStream performance prepare the file', (report, done) => {
               })
             })
           })
-      }, 3000)
+      }
     })
 })
 
