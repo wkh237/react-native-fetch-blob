@@ -18,7 +18,7 @@ const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
  * @param  {string} mime MIME type string
  * @return {Promise}
  */
-function actionViewIntent(path:string, mime = 'text/plain':string) {
+function actionViewIntent(path:string, mime:string = 'text/plain') {
   if(Platform.OS === 'android')
     return RNFetchBlob.actionViewIntent(path, mime)
   else

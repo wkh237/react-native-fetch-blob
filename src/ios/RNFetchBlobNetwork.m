@@ -6,7 +6,6 @@
 //  Copyright © 2016 wkh237. All rights reserved.
 //
 
-#import "RCTConvert.h"
 #import "RCTLog.h"
 #import <Foundation/Foundation.h>
 #import "RCTBridge.h"
@@ -15,6 +14,7 @@
 #import "RNFetchBlobNetwork.h"
 #import "RNFetchBlobConst.h"
 #import "RNFetchBlobReqBuilder.h"
+#import "IOS7Polyfill.h"
 #import <CommonCrypto/CommonDigest.h>
 
 ////////////////////////////////////////
@@ -36,7 +36,7 @@ NSMutableDictionary * uploadProgressTable;
     long bodyLength;
     NSMutableDictionary * respInfo;
     NSInteger respStatus;
-    BOOL isInrement;
+    NSMutableArray * redirects;
 }
 
 @end
@@ -126,7 +126,8 @@ NSOperationQueue *taskQueue;
     self.expectedBytes = 0;
     self.receivedBytes = 0;
     self.options = options;
-    isInrement = [options valueForKey:@"increment"] == nil ? NO : [[options valueForKey:@"increment"] boolValue];
+    redirects = [[NSMutableArray alloc] init];
+    [redirects addObject:req.URL.absoluteString];
 
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
     NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
@@ -207,11 +208,11 @@ NSOperationQueue *taskQueue;
         if(respCType != nil)
         {
             NSArray * extraBlobCTypes = [options objectForKey:CONFIG_EXTRA_BLOB_CTYPE];
-            if([respCType containsString:@"text/"])
+            if([respCType RNFBContainsString:@"text/"])
             {
                 respType = @"text";
             }
-            else if([respCType containsString:@"application/json"])
+            else if([respCType RNFBContainsString:@"application/json"])
             {
                 respType = @"json";
             }
@@ -219,7 +220,7 @@ NSOperationQueue *taskQueue;
             else if( extraBlobCTypes !=  nil) {
                 for(NSString * substr in extraBlobCTypes)
                 {
-                    if([respCType containsString:[substr lowercaseString]])
+                    if([respCType RNFBContainsString:[substr lowercaseString]])
                     {
                         respType = @"blob";
                         respFile = YES;
@@ -244,6 +245,7 @@ NSOperationQueue *taskQueue;
                      @"taskId": taskId,
                      @"state": @"2",
                      @"headers": headers,
+                     @"redirects": redirects,
                      @"respType" : respType,
                      @"timeout" : @NO,
                      @"status": [NSString stringWithFormat:@"%d", statusCode ]
@@ -287,12 +289,12 @@ NSOperationQueue *taskQueue;
     NSNumber * received = [NSNumber numberWithLong:[data length]];
     receivedBytes += [received longValue];
     NSString * chunkString = @"";
-    
+
     if(isInrement == YES)
     {
         chunkString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
     }
-    
+
     if(respFile == NO)
     {
         [respData appendData:data];
@@ -450,5 +452,10 @@ NSOperationQueue *taskQueue;
     }
 }
 
+- (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler
+{
+    [redirects addObject:[request.URL absoluteString]];
+    completionHandler(request);
+}
 
 @end

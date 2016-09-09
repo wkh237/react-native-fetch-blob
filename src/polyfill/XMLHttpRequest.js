@@ -86,6 +86,13 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     return DONE
   }
 
+  static setLog(level:number) {
+    if(number === -1)
+      log.disable()
+    else
+      log.level(level)
+  }
+
   static addBinaryContentType(substr:string) {
     for(let i in XMLHttpRequest.binaryContentTypes) {
       if(new RegExp(substr,'i').test(XMLHttpRequest.binaryContentTypes[i])) {

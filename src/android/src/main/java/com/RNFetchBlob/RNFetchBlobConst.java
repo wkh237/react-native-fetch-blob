@@ -1,10 +1,6 @@
 package com.RNFetchBlob;
 
-import okhttp3.MediaType;
 
-/**
- * Created by wkh237 on 2016/7/11.
- */
 public class RNFetchBlobConst {
     public static final String EVENT_UPLOAD_PROGRESS = "RNFetchBlobProgress-upload";
     public static final String EVENT_PROGRESS = "RNFetchBlobProgress";

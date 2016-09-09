@@ -21,9 +21,6 @@ import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okio.BufferedSink;
 
-/**
- * Created by wkh237 on 2016/7/11.
- */
 public class RNFetchBlobBody extends RequestBody{
 
     InputStream requestStream;
@@ -34,42 +31,35 @@ public class RNFetchBlobBody extends RequestBody{
     RNFetchBlobReq.RequestType requestType;
     MediaType mime;
     File bodyCache;
+    Boolean chunkedEncoding = false;
 
 
-    /**
-     * Single file or raw content request constructor
-     * @param taskId
-     * @param type
-     * @param form
-     * @param contentType
-     */
-    public RNFetchBlobBody(String taskId, RNFetchBlobReq.RequestType type, ReadableArray form, MediaType contentType) {
+    public RNFetchBlobBody(String taskId) {
         this.mTaskId = taskId;
-        this.form = form;
-        requestType = type;
-        mime = contentType;
-        try {
-            bodyCache = createMultipartBodyCache();
-            requestStream = new FileInputStream(bodyCache);
-            contentLength = bodyCache.length();
-        } catch(Exception ex) {
-            ex.printStackTrace();
-            RNFetchBlobUtils.emitWarningEvent("RNFetchBlob failed to create request multipart body :" + ex.getLocalizedMessage());
-        }
+    }
+
+    RNFetchBlobBody chunkedEncoding(boolean val) {
+        this.chunkedEncoding = val;
+        return this;
+    }
+
+    RNFetchBlobBody setMIME(MediaType mime) {
+        this.mime = mime;
+        return this;
+    }
+
+    RNFetchBlobBody setRequestType( RNFetchBlobReq.RequestType type) {
+        this.requestType = type;
+        return this;
     }
 
     /**
-     * Multipart request constructor
-     * @param taskId
-     * @param type
-     * @param rawBody
-     * @param contentType
+     * Set request body
+     * @param body A string represents the request body
+     * @return object itself
      */
-    public RNFetchBlobBody(String taskId, RNFetchBlobReq.RequestType type, String rawBody, MediaType contentType) {
-        this.mTaskId = taskId;
-        requestType = type;
-        this.rawBody = rawBody;
-        mime = contentType;
+    RNFetchBlobBody setBody(String body) {
+        this.rawBody = body;
         if(rawBody == null) {
             this.rawBody = "";
             requestType = RNFetchBlobReq.RequestType.AsIs;
@@ -82,6 +72,7 @@ public class RNFetchBlobBody extends RequestBody{
                     break;
                 case AsIs:
                     contentLength = this.rawBody.getBytes().length;
+                    requestStream = new ByteArrayInputStream(this.rawBody.getBytes());
                     break;
                 case Others:
                     break;
@@ -90,12 +81,30 @@ public class RNFetchBlobBody extends RequestBody{
             ex.printStackTrace();
             RNFetchBlobUtils.emitWarningEvent("RNFetchBlob failed to create single content request body :" + ex.getLocalizedMessage() + "\r\n");
         }
+        return this;
+    }
 
+    /**
+     * Set request body (Array)
+     * @param body A Readable array contains form data
+     * @return object itself
+     */
+    RNFetchBlobBody setBody(ReadableArray body) {
+        this.form = body;
+        try {
+            bodyCache = createMultipartBodyCache();
+            requestStream = new FileInputStream(bodyCache);
+            contentLength = bodyCache.length();
+        } catch(Exception ex) {
+            ex.printStackTrace();
+            RNFetchBlobUtils.emitWarningEvent("RNFetchBlob failed to create request multipart body :" + ex.getLocalizedMessage());
+        }
+        return this;
     }
 
     @Override
     public long contentLength() {
-        return contentLength;
+        return chunkedEncoding ? -1 : contentLength;
     }
 
     @Override
@@ -106,10 +115,7 @@ public class RNFetchBlobBody extends RequestBody{
     @Override
     public void writeTo(BufferedSink sink) {
         try {
-            if (requestType == RNFetchBlobReq.RequestType.AsIs)
-                sink.write(rawBody.getBytes());
-            else
-                pipeStreamToSink(requestStream, sink);
+            pipeStreamToSink(requestStream, sink);
         } catch(Exception ex) {
             RNFetchBlobUtils.emitWarningEvent(ex.getLocalizedMessage());
             ex.printStackTrace();

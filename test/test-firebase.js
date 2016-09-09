@@ -57,7 +57,8 @@ describe('firebase login', (report, done) => {
     <Info key="user content" uid="user data">
       <Text>{JSON.stringify(user)}</Text>
     </Info>)
-    done()
+    if(user)
+      done()
   })
 })
 
@@ -108,16 +109,16 @@ describe('upload using file path', (report, done) => {
       report(<Info key="test image">
         <Image style={styles.image} source={{uri : prefix + resp.path()}}/>
       </Info>)
-      let blob = new Blob(RNFetchBlob.wrap(resp.path()), { type : 'image/jpg' })
-      blob.onCreated(() => {
-        firebase.storage().ref('rnfbtest')
-          .child(tier2FileName)
-          .put(blob, { contentType : 'image/jpg' })
-          .then(() => {
-            report(<Assert key="upload finished" />)
-            done()
-          })
-      })
+      return Blob.build(RNFetchBlob.wrap(resp.path()), { type : 'image/jpg' })
+    })
+    .then((blob) => {
+      return firebase.storage().ref('rnfbtest')
+        .child(tier2FileName)
+        .put(blob, { contentType : 'image/jpg' })
+    })
+    .then(() => {
+      report(<Assert key="upload finished" />)
+      done()
     })
 })
 
@@ -174,4 +175,52 @@ describe('upload from storage', (report, done) => {
   catch(err) {
     console.log(err)
   }
+})
+
+Platform.OS === 'ios' && describe('upload from CameraRoll', (report, done) => {
+
+    CameraRoll.getPhotos({first : 10})
+    .then((resp) => {
+      let url = resp.edges[0].node.image.uri
+      console.log('CameraRoll',url)
+      return Blob.build(RNFetchBlob.wrap(url), {type:'image/jpg'})
+    })
+    .then((b) => {
+      blob = b
+      console.log('start upload ..')
+      return firebase.storage()
+        .ref('rnfbtest').child(`camra-roll-${Platform.OS}-${Date.now()}.jpg`)
+        .put(b, {contentType : 'image/jpg'})
+    })
+    .then((snapshot) => {
+      report(<Assert key="upload sucess" expect={true} actual={true}/>)
+      done()
+    })
+})
+
+
+Platform.OS === 'android' && describe('upload from CameraRoll', (report, done) => {
+
+  let blob
+  RNFetchBlob.config({
+      addAndroidDownloads : { useDownloadManager : true }
+    })
+    .fetch('GET', `${TEST_SERVER_URL}/public/1600k-img-dummy.jpg`)
+    .then((res) => CameraRoll.getPhotos({first : 10}))
+    .then((resp) => {
+      let url = resp.edges[0].node.image.uri
+      console.log('CameraRoll',url)
+      return Blob.build(RNFetchBlob.wrap(url), {type:'image/jpg'})
+    })
+    .then((b) => {
+      blob = b
+      return firebase.storage()
+        .ref('rnfbtest').child(`camra-roll-${Platform.OS}-${Date.now()}.jpg`)
+        .put(b, {contentType : 'image/jpg'})
+    })
+    .then((snapshot) => {
+      report(<Assert key="upload sucess" expect={true} actual={true}/>)
+      blob.close()
+      done()
+    })
 })

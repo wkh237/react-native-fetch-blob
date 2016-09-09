@@ -9,6 +9,7 @@ export default class Log {
   }
 
   level(val:number) {
+    this._isEnable = true
     this._level = val
   }
 
@@ -33,7 +34,7 @@ export default class Log {
   }
 
   error(...args) {
-    this._isEnable && this._level > -1 && console.log(this._name, 'error:', ...args)
+    this._isEnable && this._level > -1 && console.warn(this._name, 'error:', ...args)
   }
 
 }

@@ -1,13 +1,14 @@
 {
   "name": "react-native-fetch-blob",
-  "version": "0.9.4-beta.1",
+  "version": "0.9.4",
   "description": "A module provides upload, download, and files access API. Supports file stream read/write for process large files.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "base-64": "0.1.0"
+    "base-64": "0.1.0",
+    "glob": "^7.0.6"
   },
   "keywords": [
     "react-native",

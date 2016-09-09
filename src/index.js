@@ -261,9 +261,7 @@ function fetch(...args:any):Promise {
       delete promise['uploadProgress']
       delete promise['stateChange']
       delete promise['cancel']
-      promise.cancel = () => {
-        console.warn('finished request could not be canceled')
-      }
+      promise.cancel = () => {}
 
       if(err)
         reject(new Error(err, respInfo))
@@ -320,14 +318,14 @@ class FetchBlobResponse {
   path : () => string | null;
   type : 'base64' | 'path' | 'utf8';
   data : any;
-  blob : (contentType:string, sliceSize:number) => null;
-  text : () => string;
+  blob : (contentType:string, sliceSize:number) => Promise<Blob>;
+  text : () => string | Promise<any>;
   json : () => any;
   base64 : () => any;
   flush : () => void;
   respInfo : RNFetchBlobResponseInfo;
   session : (name:string) => RNFetchBlobSession | null;
-  readFile : (encode: 'base64' | 'utf8' | 'ascii') => ?Promise;
+  readFile : (encode: 'base64' | 'utf8' | 'ascii') => ?Promise<any>;
   readStream : (
     encode: 'utf8' | 'ascii' | 'base64',
   ) => RNFetchBlobStream | null;
@@ -366,18 +364,15 @@ class FetchBlobResponse {
      * Convert result to text.
      * @return {string} Decoded base64 string.
      */
-    this.text = ():string => {
+    this.text = ():string | Promise<any> => {
       let res = this.data
       switch(this.type) {
         case 'base64':
           return base64.decode(this.data)
-        break
         case 'path':
           return fs.readFile(this.data, 'base64').then((b64) => Promise.resolve(base64.decode(b64)))
-        break
         default:
           return this.data
-        break
       }
     }
     /**
@@ -388,31 +383,25 @@ class FetchBlobResponse {
       switch(this.type) {
         case 'base64':
           return JSON.parse(base64.decode(this.data))
-        break
         case 'path':
           return fs.readFile(this.data, 'utf8')
                    .then((text) => Promise.resolve(JSON.parse(text)))
-        break
         default:
           return JSON.parse(this.data)
-        break
       }
     }
     /**
      * Return BASE64 string directly.
      * @return {string} BASE64 string of response body.
      */
-    this.base64 = ():string => {
+    this.base64 = ():string | Promise<any> => {
       switch(this.type) {
         case 'base64':
           return this.data
-        break
         case 'path':
           return fs.readFile(this.data, 'base64')
-        break
         default:
           return base64.encode(this.data)
-        break
       }
     }
     /**
@@ -467,7 +456,6 @@ class FetchBlobResponse {
     this.readFile = (encode: 'base64' | 'utf8' | 'ascii') => {
       if(this.type === 'path') {
         encode = encode || 'utf8'
-
         return readFile(this.data, encode)
       }
       else {

@@ -17,6 +17,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
@@ -32,6 +33,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -46,10 +48,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-
-/**
- * Created by wkh237 on 2016/6/21.
- */
 public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
     enum RequestType  {
@@ -58,12 +56,12 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         AsIs,
         WithoutBody,
         Others
-    };
+    }
 
     enum ResponseType {
         KeepInMemory,
         FileStorage
-    };
+    }
 
     public static HashMap<String, Call> taskTable = new HashMap<>();
     static HashMap<String, Boolean> progressReport = new HashMap<>();
@@ -87,6 +85,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     ResponseType responseType;
     WritableMap respInfo;
     boolean timeout = false;
+    ArrayList<String> redirects = new ArrayList<>();
 
     public RNFetchBlobReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, final Callback callback) {
         this.method = method.toUpperCase();
@@ -104,7 +103,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             responseType = ResponseType.KeepInMemory;
 
 
-		if (body != null)
+        if (body != null)
             requestType = RequestType.SingleFile;
         else if (arrayBody != null)
             requestType = RequestType.Form;
@@ -156,21 +155,21 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         // find cached result if `key` property exists
         String cacheKey = this.taskId;
-		String ext = this.options.appendExt.isEmpty() ? "." + this.options.appendExt : "";
+        String ext = this.options.appendExt.isEmpty() ? "." + this.options.appendExt : "";
 
-       	if (this.options.key != null) {
-           cacheKey = RNFetchBlobUtils.getMD5(this.options.key);
-           if (cacheKey == null) {
-               cacheKey = this.taskId;
-           }
+        if (this.options.key != null) {
+            cacheKey = RNFetchBlobUtils.getMD5(this.options.key);
+            if (cacheKey == null) {
+                cacheKey = this.taskId;
+            }
 
-           File file = new File(RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey) + ext);
+            File file = new File(RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey) + ext);
 
-           if (file.exists()) {
-               callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, file.getAbsolutePath());
-               return;
-           }
-       }
+            if (file.exists()) {
+                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, file.getAbsolutePath());
+                return;
+            }
+        }
 
         if(this.options.path != null)
             this.destPath = this.options.path;
@@ -236,35 +235,33 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 requestType = RequestType.WithoutBody;
             }
 
+            boolean isChunkedRequest = getHeaderIgnoreCases(mheaders, "Transfer-Encoding").equalsIgnoreCase("chunked");
 
             // set request body
             switch (requestType) {
                 case SingleFile:
-                    requestBody = new RNFetchBlobBody(
-                            taskId,
-                            requestType,
-                            rawRequestBody,
-                            MediaType.parse(getHeaderIgnoreCases(mheaders, "content-type"))
-                    );
+                    requestBody = new RNFetchBlobBody(taskId)
+                            .chunkedEncoding(isChunkedRequest)
+                            .setRequestType(requestType)
+                            .setBody(rawRequestBody)
+                            .setMIME(MediaType.parse(getHeaderIgnoreCases(mheaders, "content-type")));
                     builder.method(method, requestBody);
                     break;
                 case AsIs:
-                    requestBody = new RNFetchBlobBody(
-                            taskId,
-                            requestType,
-                            rawRequestBody,
-                            MediaType.parse(getHeaderIgnoreCases(mheaders, "content-type"))
-                    );
+                    requestBody = new RNFetchBlobBody(taskId)
+                            .chunkedEncoding(isChunkedRequest)
+                            .setRequestType(requestType)
+                            .setBody(rawRequestBody)
+                            .setMIME(MediaType.parse(getHeaderIgnoreCases(mheaders, "content-type")));
                     builder.method(method, requestBody);
                     break;
                 case Form:
                     String boundary = "RNFetchBlob-" + taskId;
-                    requestBody = new RNFetchBlobBody(
-                            taskId,
-                            requestType,
-                            rawRequestBodyArray,
-                            MediaType.parse("multipart/form-data; boundary="+ boundary)
-                    );
+                    requestBody = new RNFetchBlobBody(taskId)
+                            .chunkedEncoding(isChunkedRequest)
+                            .setRequestType(requestType)
+                            .setBody(rawRequestBodyArray)
+                            .setMIME(MediaType.parse("multipart/form-data; boundary="+ boundary));
                     builder.method(method, requestBody);
                     break;
 
@@ -279,7 +276,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             }
 
             final Request req = builder.build();
-
+            clientBuilder.addNetworkInterceptor(new Interceptor() {
+                @Override
+                public Response intercept(Chain chain) throws IOException {
+                        redirects.add(chain.request().url().toString());
+                        return chain.proceed(chain.request());
+                    }
+            });
             // Add request interceptor for upload progress event
             clientBuilder.addInterceptor(new Interceptor() {
                 @Override
@@ -333,6 +336,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             clientBuilder.connectionPool(pool);
             clientBuilder.retryOnConnectionFailure(false);
             clientBuilder.followRedirects(true);
+
 
             OkHttpClient client = clientBuilder.retryOnConnectionFailure(true).build();
             Call call =  client.newCall(req);
@@ -414,7 +418,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 try {
                     // For XMLHttpRequest, automatic response data storing strategy, when response
                     // data is considered as binary data, write it to file system
-                    if(isBlobResp && options.auto == true) {
+                    if(isBlobResp && options.auto) {
                         String dest = RNFetchBlobFS.getTmpPath(ctx, taskId);
                         InputStream ins = resp.body().byteStream();
                         FileOutputStream os = new FileOutputStream(new File(dest));
@@ -458,7 +462,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     // It uses customized response body which is able to report download progress
                     // and write response data to destination path.
                     resp.body().bytes();
-                } catch (Exception ignored) {  }
+                } catch (Exception ignored) {
+                    ignored.printStackTrace();
+                }
                 callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
                 break;
             default:
@@ -469,9 +475,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
                 break;
         }
-//        if(!resp.isSuccessful())
-//            resp.body().close();
-        resp.body().close();
+        if(!resp.isSuccessful())
+            resp.body().close();
         releaseTaskResource();
     }
 
@@ -496,10 +501,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     }
 
     /**
-     * Create response information object, conatins status code, headers, etc.
-     * @param resp
-     * @param isBlobResp
-     * @return
+     * Create response information object, contains status code, headers, etc.
+     * @param resp Response object
+     * @param isBlobResp If the response is binary data
+     * @return Get RCT bridge object contains response information.
      */
     private WritableMap getResponseInfo(Response resp, boolean isBlobResp) {
         WritableMap info = Arguments.createMap();
@@ -511,6 +516,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         for(int i =0;i< resp.headers().size();i++) {
             headers.putString(resp.headers().name(i), resp.headers().value(i));
         }
+        WritableArray redirectList = Arguments.createArray();
+        for(String r : redirects) {
+                redirectList.pushString(r);
+        }
+        info.putArray("redirects", redirectList);
         info.putMap("headers", headers);
         Headers h = resp.headers();
         if(isBlobResp) {
@@ -531,7 +541,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     /**
      * Check if response data is binary data.
      * @param resp OkHttp response.
-     * @return
+     * @return If the response data contains binary bytes
      */
     private boolean isBlobResponse(Response resp) {
         Headers h = resp.headers();

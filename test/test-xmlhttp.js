@@ -157,7 +157,7 @@ describe('request headers records should be cleared by open()', (report, done) =
     if(this.readyState == 4) {
       report(<Assert key="headers should be cleared by open()"
         expect={"200"}
-        actual={this.response.value}/>)
+        actual={JSON.parse(this.response).value}/>)
       done()
     }
   }
@@ -243,7 +243,7 @@ describe('upload progress event test', (report, done) => {
       report(
         <Assert key="reponse should correct"
           expect={time}
-          actual={Math.floor(xhr.response.time)}/>,
+          actual={Math.floor(JSON.parse(xhr.response).time)}/>,
         <Assert key="responseType should correct"
           expect={'json'}
           actual={xhr.responseType}/>)

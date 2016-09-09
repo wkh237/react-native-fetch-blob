@@ -21,6 +21,8 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     static ReactApplicationContext RCTContext;
     static LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
     static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    static LinkedBlockingQueue<Runnable> fsTaskQueue = new LinkedBlockingQueue<>();
+    static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
 
     public RNFetchBlob(ReactApplicationContext reactContext) {
 
@@ -205,11 +207,17 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     /**
      * @param path Stream file path
      * @param encoding Stream encoding, should be one of `base64`, `ascii`, and `utf8`
-     * @param bufferSize Stream buffer size, default to 1024 or 1026(base64).
+     * @param bufferSize Stream buffer size, default to 4096 or 4095(base64).
      */
-    public void readStream(String path, String encoding, int bufferSize) {
-        RNFetchBlobFS fs = new RNFetchBlobFS(this.getReactApplicationContext());
-        fs.readStream(path, encoding, bufferSize);
+    public void readStream(final String path, final String encoding, final int bufferSize, final int tick, final String streamId) {
+        final ReactApplicationContext ctx = this.getReactApplicationContext();
+        fsThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS fs = new RNFetchBlobFS(ctx);
+                fs.readStream(path, encoding, bufferSize, tick, streamId);
+            }
+        });
     }
 
     @ReactMethod

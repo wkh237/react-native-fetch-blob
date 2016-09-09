@@ -5,9 +5,7 @@ import com.facebook.react.bridge.ReadableMap;
 
 import java.util.HashMap;
 
-/**
- * Created by wkh237 on 2016/5/29.
- */
+
 public class RNFetchBlobConfig {
 
     public Boolean fileCache;

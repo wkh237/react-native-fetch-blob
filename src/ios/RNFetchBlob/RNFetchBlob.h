@@ -17,7 +17,8 @@
 }
 
 @property (nonatomic) NSString * filePathPrefix;
-@property (nonatomic, strong) UIDocumentInteractionController *documentController;
+
++ (RCTBridge *)getRCTBridge;
 
 @end
 

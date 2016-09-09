@@ -39,6 +39,7 @@
 		A15C30131CD25C330074CB35 /* RNFetchBlob.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = RNFetchBlob.m; path = RNFetchBlob/RNFetchBlob.m; sourceTree = "<group>"; };
 		A1AAE2971D300E3E0051D11C /* RNFetchBlobReqBuilder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNFetchBlobReqBuilder.h; sourceTree = "<group>"; };
 		A1AAE2981D300E4D0051D11C /* RNFetchBlobReqBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNFetchBlobReqBuilder.m; sourceTree = "<group>"; };
+		A1F950181D7E9134002A95A6 /* IOS7Polyfill.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOS7Polyfill.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,6 +63,7 @@
 		A15C30051CD25C330074CB35 = {
 			isa = PBXGroup;
 			children = (
+				A1F950181D7E9134002A95A6 /* IOS7Polyfill.h */,
 				A1AAE2981D300E4D0051D11C /* RNFetchBlobReqBuilder.m */,
 				A1AAE2971D300E3E0051D11C /* RNFetchBlobReqBuilder.h */,
 				A158F42F1D0539DB006FFD38 /* RNFetchBlobNetwork.m */,
@@ -112,7 +114,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 730;
-				ORGANIZATIONNAME = suzuri04x2;
+				ORGANIZATIONNAME = wkh237.github.io;
 				TargetAttributes = {
 					A15C300D1CD25C330074CB35 = {
 						CreatedOnToolsVersion = 7.3;

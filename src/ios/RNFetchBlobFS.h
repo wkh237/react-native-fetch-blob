@@ -50,12 +50,12 @@
 + (RNFetchBlobFS *) getFileStreams;
 + (BOOL) mkdir:(NSString *) path;
 + (NSDictionary *) stat:(NSString *) path error:(NSError **) error;
-+ (BOOL) exists:(NSString *) path;
++ (void) exists:(NSString *) path callback:(RCTResponseSenderBlock)callback;
 + (void) writeFileArray:(NSString *)path data:(NSArray *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 + (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 + (void) readFile:(NSString *)path encoding:(NSString *)encoding resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject onComplete:(void (^)(NSData * content))onComplete;
 + (void) readAssetFile:(NSData *)assetUrl completionBlock:(void(^)(NSData * content))completionBlock failBlock:(void(^)(NSError * err))failBlock;
-+ (void)slice:(NSString *)path
++ (void) slice:(NSString *)path
          dest:(NSString *)dest
         start:(nonnull NSNumber *)start
           end:(nonnull NSNumber *)end
@@ -63,6 +63,8 @@
      resolver:(RCTPromiseResolveBlock)resolve
      rejecter:(RCTPromiseRejectBlock)reject;
 //+ (void) writeFileFromFile:(NSString *)src toFile:(NSString *)dest append:(BOOL)append;
++ (void) writeAssetToPath:(ALAssetRepresentation * )rep dest:(NSString *)dest;
++ (void) readStream:(NSString *)uri encoding:(NSString * )encoding bufferSize:(int)bufferSize tick:(int)tick streamId:(NSString *)streamId bridgeRef:(RCTBridge *)bridgeRef;
 
 // constructor
 - (id) init;
@@ -72,12 +74,10 @@
 // file stream
 - (void) openWithDestination;
 - (NSString *)openWithPath:(NSString *)destPath encode:(nullable NSString *)encode appendData:(BOOL)append;
-- (void) startAssetReadStream:(NSData *)assetUrl;
 
 // file stream write data
 - (void)write:(NSData *) chunk;
 - (void)writeEncodeChunk:(NSString *) chunk;
-- (void)readWithPath:(NSString *)path useEncoding:(NSString *)encoding bufferSize:(int) bufferSize;
 
 - (void) closeInStream;
 - (void) closeOutStream;

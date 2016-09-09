@@ -41,10 +41,7 @@ cd "${TEST_APP_PATH}"
 npm install --save react-native-fetch-blob
 # libs that requires web API polyfills
 npm install --save firebase
-# libs that requires Node polyfills
-npm install --save oboe
-
-rnpm link
+react-native link
 
 # copy android assets
 cd ${CWD}
