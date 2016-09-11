@@ -157,6 +157,8 @@ To sum up :
  - Otherwise, if a string starts with `RNFetchBlob-file://` (which can simply done by `RNFetchBlob.wrap(PATH_TO_THE_FILE)`), it will try to find the data from the URI string after `RNFetchBlob-file://` and use it as request body. 
 - To send the body as-is, simply use a `Content-Type` header not containing `;BASE64` or `application/octet`.
 
+> It is Worth to mentioning that the HTTP request uses cache by default, if you're going to disable it simply add a Cache Control header `'Cache-Control' : 'no-store'` 
+
 > After 0.9.4, we disabled `Chunked` transfer encoding by default, if you're going to use it, you should explicitly set header `Transfer-Encoding` to `Chunked`.
 
 ### Download example : Fetch files that needs authorization token
