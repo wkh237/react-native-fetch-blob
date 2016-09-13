@@ -27,6 +27,12 @@ NSMapTable * taskTable;
 NSMutableDictionary * progressTable;
 NSMutableDictionary * uploadProgressTable;
 
+typedef NS_ENUM(NSUInteger, ResponseFormat) {
+    UTF8,
+    BASE64,
+    AUTO
+};
+
 
 @interface RNFetchBlobNetwork ()
 {
@@ -37,6 +43,7 @@ NSMutableDictionary * uploadProgressTable;
     NSMutableDictionary * respInfo;
     NSInteger respStatus;
     NSMutableArray * redirects;
+    ResponseFormat responseFormat;
 }
 
 @end
@@ -128,6 +135,15 @@ NSOperationQueue *taskQueue;
     self.options = options;
     redirects = [[NSMutableArray alloc] init];
     [redirects addObject:req.URL.absoluteString];
+    
+    // set response format
+    NSString * rnfbResp = [req.allHTTPHeaderFields valueForKey:@"RNFB-Response"];
+    if([[rnfbResp lowercaseString] isEqualToString:@"base64"])
+        responseFormat = BASE64;
+    else if([[rnfbResp lowercaseString] isEqualToString:@"utf8"])
+        responseFormat = UTF8;
+    else
+        responseFormat = AUTO;
 
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
     NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
@@ -365,18 +381,30 @@ NSOperationQueue *taskQueue;
             // if it turns out not to be `nil` that means the response data contains valid UTF8 string,
             // in order to properly encode the UTF8 string, use URL encoding before BASE64 encoding.
             NSString * utf8 = [[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding];
-
-            if(utf8 != nil)
+            
+            if(responseFormat == BASE64)
+            {
+                rnfbRespType = RESP_TYPE_BASE64;
+                respStr = [respData base64EncodedStringWithOptions:0];
+            }
+            else if (responseFormat == UTF8)
             {
                 rnfbRespType = RESP_TYPE_UTF8;
                 respStr = utf8;
             }
             else
             {
-                rnfbRespType = RESP_TYPE_BASE64;
-                respStr = [respData base64EncodedStringWithOptions:0];
+                if(utf8 != nil)
+                {
+                    rnfbRespType = RESP_TYPE_UTF8;
+                    respStr = utf8;
+                }
+                else
+                {
+                    rnfbRespType = RESP_TYPE_BASE64;
+                    respStr = [respData base64EncodedStringWithOptions:0];
+                }
             }
-
         }
     }
 

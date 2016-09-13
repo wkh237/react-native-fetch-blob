@@ -63,6 +63,12 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         FileStorage
     }
 
+    enum ResponseFormat {
+        Auto,
+        UTF8,
+        BASE64
+    }
+
     public static HashMap<String, Call> taskTable = new HashMap<>();
     static HashMap<String, Boolean> progressReport = new HashMap<>();
     static HashMap<String, Boolean> uploadProgressReport = new HashMap<>();
@@ -83,8 +89,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     RNFetchBlobBody requestBody;
     RequestType requestType;
     ResponseType responseType;
+    ResponseFormat responseFormat = ResponseFormat.Auto;
     WritableMap respInfo;
     boolean timeout = false;
+
     ArrayList<String> redirects = new ArrayList<>();
 
     public RNFetchBlobReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, final Callback callback) {
@@ -200,8 +208,16 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 while (it.hasNextKey()) {
                     String key = it.nextKey();
                     String value = headers.getString(key);
-                    builder.header(key, value);
-                    mheaders.put(key,value);
+                    if(key.equalsIgnoreCase("RNFB-Response")) {
+                        if(value.equalsIgnoreCase("base64"))
+                            responseFormat = ResponseFormat.BASE64;
+                        else if (value.equalsIgnoreCase("utf8"))
+                            responseFormat = ResponseFormat.UTF8;
+                    }
+                    else {
+                        builder.header(key, value);
+                        mheaders.put(key, value);
+                    }
                 }
             }
 
@@ -439,6 +455,10 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         // string correctly, we should do URL encoding before BASE64.
                         byte[] b = resp.body().bytes();
                         CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
+                        if(responseFormat == ResponseFormat.BASE64) {
+                            callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_BASE64, android.util.Base64.encodeToString(b, Base64.NO_WRAP));
+                            return;
+                        }
                         try {
                             encoder.encode(ByteBuffer.wrap(b).asCharBuffer());
                             // if the data contains invalid characters the following lines will be
@@ -449,7 +469,12 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         // This usually mean the data is contains invalid unicode characters, it's
                         // binary data
                         catch(CharacterCodingException ignored) {
-                            callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_BASE64, android.util.Base64.encodeToString(b, Base64.NO_WRAP));
+                            if(responseFormat == ResponseFormat.UTF8) {
+                                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, "");
+                            }
+                            else {
+                                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_BASE64, android.util.Base64.encodeToString(b, Base64.NO_WRAP));
+                            }
                         }
                     }
                 } catch (IOException e) {
