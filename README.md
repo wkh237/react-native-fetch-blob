@@ -270,7 +270,7 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
     }),
     'Content-Type' : 'application/octet-stream',
     // here's the body you're going to send, should be a BASE64 encoded string
-    // (you can use "base64" APIs to make one).
+    // (you can use "base64"(refer to the library 'mathiasbynens/base64') APIs to make one).
     // The data will be converted to "byte array"(say, blob) before request sent.  
   }, base64ImageString)
   .then((res) => {
