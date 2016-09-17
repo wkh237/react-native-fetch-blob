@@ -48,6 +48,7 @@ const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
 
 // register message channel event handler.
 emitter.addListener("RNFetchBlobMessage", (e) => {
+
   if(e.event === 'warn') {
     console.warn(e.detail)
   }
@@ -140,7 +141,11 @@ function fetchFile(options = {}, method, url, headers = {}, body):Promise {
       promise = fs.stat(url)
       .then((stat) => {
         total = stat.size
-        return fs.readStream(url, headers.encoding || 'utf8', Math.floor(headers.bufferSize) || 4096)
+        return fs.readStream(url,
+          headers.encoding || 'utf8',
+          Math.floor(headers.bufferSize) || 409600,
+          Math.floor(headers.interval) || 100
+        )
       })
       .then((stream) => new Promise((resolve, reject) => {
         stream.open()
@@ -232,6 +237,13 @@ function fetch(...args:any):Promise {
       }
     })
 
+    subscription = emitter.addListener('RNFetchBlobExpire', (e) => {
+      console.log(e , 'EXPIRED!!')
+      if(e.taskId === taskId && promise.onExpire) {
+        promise.onExpire(e)
+      }
+    })
+
     // When the request body comes from Blob polyfill, we should use special its ref
     // as the request body
     if( body instanceof Blob && body.isRNFetchBlobPolyfill) {
@@ -261,6 +273,7 @@ function fetch(...args:any):Promise {
       delete promise['uploadProgress']
       delete promise['stateChange']
       delete promise['cancel']
+      // delete promise['expire']
       promise.cancel = () => {}
 
       if(err)
@@ -294,6 +307,10 @@ function fetch(...args:any):Promise {
   }
   promise.stateChange = (fn) => {
     promise.onStateChange = fn
+    return promise
+  }
+  promise.expire = (fn) => {
+    promise.onExpire = fn
     return promise
   }
   promise.cancel = (fn) => {

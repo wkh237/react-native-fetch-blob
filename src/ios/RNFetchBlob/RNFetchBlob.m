@@ -6,6 +6,7 @@
 
 #import "RNFetchBlob.h"
 #import "RCTLog.h"
+#import "RCTRootView.h"
 #import "RCTBridge.h"
 #import "RCTEventDispatcher.h"
 #import "RNFetchBlobFS.h"
@@ -14,7 +15,7 @@
 #import "RNFetchBlobReqBuilder.h"
 
 
-RCTBridge * bridgeRef;
+__strong RCTBridge * bridgeRef;
 dispatch_queue_t commonTaskQueue;
 dispatch_queue_t fsQueue;
 
@@ -40,7 +41,8 @@ dispatch_queue_t fsQueue;
 
 + (RCTBridge *)getRCTBridge
 {
-    return bridgeRef;
+    RCTRootView * rootView = [[UIApplication sharedApplication] keyWindow].rootViewController.view;
+    return rootView.bridge;
 }
 
 RCT_EXPORT_MODULE();
@@ -58,6 +60,7 @@ RCT_EXPORT_MODULE();
         [[NSFileManager defaultManager] createDirectoryAtPath:[RNFetchBlobFS getTempPath] withIntermediateDirectories:YES attributes:nil error:NULL];
     }
     bridgeRef = _bridge;
+    [RNFetchBlobNetwork getExpiredTasks];
     return self;
 }
 
