@@ -166,7 +166,20 @@ app.all('/timeout408/:time', (req, res) => {
   }, 5000)
 })
 
-app.all('/long', (req, res) => {
+app.all('/long/:ticks', (req, res) => {
+  var count = 0;
+  var it = setInterval(() => {
+    console.log('write data', count)
+    res.write('a')
+    if(++count > req.params.ticks){
+      clearInterval(it)
+      res.end()
+    }
+  }, 1000);
+
+})
+
+app.all('/long/', (req, res) => {
   var count = 0;
   var it = setInterval(() => {
     console.log('write data', count)
