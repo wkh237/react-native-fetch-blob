@@ -30,25 +30,6 @@ let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
 describe('issue #122 force response data format', (report, done) => {
 
-  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/json-dummy.json`, {
-    'RNFB-Response' : 'base64'
-  })
-  .then((res) => {
-    let r = RNFetchBlob.base64.decode(res.data)
-    report(
-      <Assert key="test data verify" expect="fetchblob-dev" actual={JSON.parse(r).name}/>,
-      <Assert key="should successfully decode the data" expect={true} actual={true}/>)
-    return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/json-dummy.json`)
-  })
-  .then((res) => {
-    report(
-      <Assert key="response should in format of plain-text" expect="fetchblob-dev" actual={JSON.parse(res.data).name}/>)
-    done()
-  })
-  .catch(() => {
-    report(
-      <Assert key="Should successfully decode the data" expect={true} actual={false}/>)
-    done()
   })
 
 })

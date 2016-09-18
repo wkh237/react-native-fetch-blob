@@ -353,11 +353,6 @@ NSOperationQueue *taskQueue;
     {
         errMsg = [error localizedDescription];
     }
-    // Fix #72 response with status code 200 ~ 299 considered as success
-    else if(respStatus> 299 || respStatus < 200)
-    {
-        errMsg = [NSString stringWithFormat:@"Request failed, status %d", respStatus];
-    }
     else
     {
         if(respFile == YES)
