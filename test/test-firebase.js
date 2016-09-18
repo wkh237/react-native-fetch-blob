@@ -41,7 +41,6 @@ var config = {
   storageBucket: "rnfb-test-app.appspot.com",
 };
 
-
 describe('firebase login', (report, done) => {
 
   firebase.initializeApp(config);
@@ -49,6 +48,11 @@ describe('firebase login', (report, done) => {
     .catch((err) => {
       console.log('firebase sigin failed', err)
     })
+
+  firebase.auth().createUserWithEmailAndPassword('xeiyan@gmail.com', 'rnfbtest1024')
+  .catch((err) => {
+    report(<Assert key="Should be 'auth/email-already-in-use'" expect={'auth/email-already-in-use'} actual={err.code}/>)
+  });
 
   firebase.auth().onAuthStateChanged((user) => {
     report(<Assert key="login status" uid="100"
