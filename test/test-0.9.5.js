@@ -53,33 +53,33 @@ let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 //
 // })
 
-// describe('#129 memory leaking when enable uploadProgress', (report, done) => {
-//
-//   let file = null
-//   let count = 0
-//
-//   RNFetchBlob.config({ fileCache : true })
-//     .fetch('GET', `${TEST_SERVER_URL}/public/6mb-dummy`)
-//     .then((res) => {
-//       file = res.path()
-//       setTimeout(() => {
-//         for(let i=0;i<20;i++){
-//           RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload`, {}, RNFetchBlob.wrap(file))
-//           .uploadProgress(() => {})
-//           .then(() => {
-//             if(count > 20) {
-//               fs.unlink(file)
-//               report(<Assert key="finished" expect={true} actual={true}/>)
-//               done()
-//             }
-//           })
-//         }
-//       }, 3000)
-//     })
-//
-// })
+describe('#129 memory leaking when enable uploadProgress', (report, done) => {
 
-describe('#131 status code != 200 should not throw an error', (report, done) => {
+  let file = null
+  let count = 0
+
+  RNFetchBlob.config({ fileCache : true })
+    .fetch('GET', `${TEST_SERVER_URL}/public/6mb-dummy`)
+    .then((res) => {
+      file = res.path()
+      for(let i=0;i<10;i++){
+        RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload`, {
+          'Transfer-Encoding' : 'Chunked'
+        }, RNFetchBlob.wrap(file))
+        .uploadProgress((current, total) => {})
+        .then(() => {
+          count ++
+          if(count >= 10) {
+            fs.unlink(file)
+            done()
+          }
+        })
+      }
+    })
+
+})
+
+false && describe('#131 status code != 200 should not throw an error', (report, done) => {
 
   let count = 0
   let codes = [404, 500, 501, 403]
