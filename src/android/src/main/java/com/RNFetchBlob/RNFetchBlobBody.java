@@ -370,7 +370,7 @@ public class RNFetchBlobBody extends RequestBody{
      * @param written
      */
     private void emitUploadProgress(int written) {
-        if(!RNFetchBlobReq.isReportProgress(mTaskId))
+        if(!RNFetchBlobReq.isReportUploadProgress(mTaskId))
             return;
         WritableMap args = Arguments.createMap();
         args.putString("taskId", mTaskId);
