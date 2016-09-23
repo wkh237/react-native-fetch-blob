@@ -1,5 +1,5 @@
 {
-  "name": "fetchblob-dev",
+  "name": "react-native-fetch-blob",
   "version": "0.9.5",
   "private": true,
   "scripts": {
