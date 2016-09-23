@@ -285,7 +285,9 @@ NSOperationQueue *taskQueue;
             if(![fm fileExistsAtPath:folder]) {
                 [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:nil];
             }
-            [fm createFileAtPath:destPath contents:[[NSData alloc] init] attributes:nil];
+            if (![fm fileExistsAtPath:destPath]) {
+                [fm createFileAtPath:destPath contents:[[NSData alloc] init] attributes:nil];
+            }
             writeStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:YES];
             [writeStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
             [writeStream open];
