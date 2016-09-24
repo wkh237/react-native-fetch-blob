@@ -193,14 +193,15 @@ function fetch(...args:any):Promise {
 
   // extend Promise object, add `progress`, `uploadProgress`, and `cancel`
   // method for register progress event handler and cancel request.
-  promise.progress = (fn) => {
+  // Add second parameter for performance purpose #140
+  promise.progress = (fn, interval:number=250, count:number=-1) => {
     promise.onProgress = fn
-    RNFetchBlob.enableProgressReport(taskId)
+    RNFetchBlob.enableProgressReport(taskId, interval, count)
     return promise
   }
-  promise.uploadProgress = (fn) => {
+  promise.uploadProgress = (fn, interval:number=250, count:number=-1) => {
     promise.onUploadProgress = fn
-    RNFetchBlob.enableUploadProgressReport(taskId)
+    RNFetchBlob.enableUploadProgressReport(taskId, interval, count)
     return promise
   }
   promise.stateChange = (fn) => {

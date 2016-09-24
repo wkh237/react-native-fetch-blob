@@ -31,6 +31,7 @@ public class RNFetchBlobBody extends RequestBody{
     RNFetchBlobReq.RequestType requestType;
     MediaType mime;
     File bodyCache;
+    int reported = 0;
     Boolean chunkedEncoding = false;
 
 
@@ -370,7 +371,8 @@ public class RNFetchBlobBody extends RequestBody{
      * @param written
      */
     private void emitUploadProgress(int written) {
-        if(!RNFetchBlobReq.isReportUploadProgress(mTaskId))
+        RNFetchBlobProgressConfig config = RNFetchBlobReq.getReportUploadProgress(mTaskId);
+        if(!config.enable)
             return;
         WritableMap args = Arguments.createMap();
         args.putString("taskId", mTaskId);

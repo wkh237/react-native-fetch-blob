@@ -1,7 +1,7 @@
 package com.RNFetchBlob.Response;
 
-import com.RNFetchBlob.RNFetchBlob;
 import com.RNFetchBlob.RNFetchBlobConst;
+import com.RNFetchBlob.RNFetchBlobProgressConfig;
 import com.RNFetchBlob.RNFetchBlobReq;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -10,14 +10,10 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.IOException;
 
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.MediaType;
-import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.Buffer;
 import okio.BufferedSource;
-import okio.ForwardingSource;
 import okio.Okio;
 import okio.Source;
 import okio.Timeout;
@@ -66,7 +62,9 @@ public class RNFetchBlobDefaultResp extends ResponseBody {
 
             long read =  mOriginalSource.read(sink, byteCount);
             bytesRead += read > 0 ? read : 0;
-            if(RNFetchBlobReq.isReportProgress(mTaskId)) {
+            RNFetchBlobProgressConfig reportConfig = RNFetchBlobReq.getReportProgress(mTaskId);
+            if(reportConfig != null && reportConfig.shouldReport()) {
+                reportConfig.tick(bytesRead/contentLength());
                 WritableMap args = Arguments.createMap();
                 args.putString("taskId", mTaskId);
                 args.putString("written", String.valueOf(bytesRead));

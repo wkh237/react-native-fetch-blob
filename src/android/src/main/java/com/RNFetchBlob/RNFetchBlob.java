@@ -236,13 +236,15 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void enableProgressReport(String taskId) {
-        RNFetchBlobReq.progressReport.put(taskId, true);
+    public void enableProgressReport(String taskId, int interval, int count) {
+        RNFetchBlobProgressConfig config = new RNFetchBlobProgressConfig(true, interval, count, RNFetchBlobProgressConfig.ReportType.Download);
+        RNFetchBlobReq.progressReport.put(taskId, config);
     }
 
     @ReactMethod
-    public void enableUploadProgressReport(String taskId) {
-        RNFetchBlobReq.uploadProgressReport.put(taskId, true);
+    public void enableUploadProgressReport(String taskId, int interval, int count) {
+        RNFetchBlobProgressConfig config = new RNFetchBlobProgressConfig(true, interval, count, RNFetchBlobProgressConfig.ReportType.Upload);
+        RNFetchBlobReq.uploadProgressReport.put(taskId, config);
     }
 
     @ReactMethod

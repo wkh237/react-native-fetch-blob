@@ -70,8 +70,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     }
 
     public static HashMap<String, Call> taskTable = new HashMap<>();
-    static HashMap<String, Boolean> progressReport = new HashMap<>();
-    static HashMap<String, Boolean> uploadProgressReport = new HashMap<>();
+    static HashMap<String, RNFetchBlobProgressConfig> progressReport = new HashMap<>();
+    static HashMap<String, RNFetchBlobProgressConfig> uploadProgressReport = new HashMap<>();
     static ConnectionPool pool = new ConnectionPool();
 
     ReactApplicationContext ctx;
@@ -508,8 +508,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
      * @param taskId Task ID of the HTTP task.
      * @return Task ID of the target task
      */
-    public static boolean isReportProgress(String taskId) {
-        if(!progressReport.containsKey(taskId)) return false;
+    public static RNFetchBlobProgressConfig getReportProgress(String taskId) {
+        if(!progressReport.containsKey(taskId)) return null;
         return progressReport.get(taskId);
     }
 
@@ -518,8 +518,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
      * @param taskId Task ID of the HTTP task.
      * @return Task ID of the target task
      */
-    public static boolean isReportUploadProgress(String taskId) {
-        if(!uploadProgressReport.containsKey(taskId)) return false;
+    public static RNFetchBlobProgressConfig getReportUploadProgress(String taskId) {
+        if(!uploadProgressReport.containsKey(taskId)) return null;
         return uploadProgressReport.get(taskId);
     }
 

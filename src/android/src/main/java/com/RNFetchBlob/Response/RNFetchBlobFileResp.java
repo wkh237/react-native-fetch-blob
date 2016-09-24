@@ -3,6 +3,7 @@ package com.RNFetchBlob.Response;
 import android.util.Log;
 
 import com.RNFetchBlob.RNFetchBlobConst;
+import com.RNFetchBlob.RNFetchBlobProgressConfig;
 import com.RNFetchBlob.RNFetchBlobReq;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -75,7 +76,9 @@ public class RNFetchBlobFileResp extends ResponseBody {
             if(read > 0 ) {
                 ofStream.write(bytes, 0, (int) read);
             }
-            if(RNFetchBlobReq.isReportProgress(mTaskId)) {
+            RNFetchBlobProgressConfig reportConfig = RNFetchBlobReq.getReportProgress(mTaskId);
+            if(reportConfig != null && reportConfig.shouldReport()) {
+                reportConfig.tick(bytesDownloaded/contentLength());
                 WritableMap args = Arguments.createMap();
                 args.putString("taskId", mTaskId);
                 args.putString("written", String.valueOf(bytesDownloaded));
