@@ -220,6 +220,11 @@ NSOperationQueue *taskQueue;
     if ([response respondsToSelector:@selector(allHeaderFields)])
     {
         NSDictionary *headers = [httpResponse allHeaderFields];
+        if(expectedBytes < 0)
+        {
+            expectedBytes = [[headers valueForKey:@"Content-Length"] intValue];
+            
+        }
         NSString * respCType = [[RNFetchBlobReqBuilder getHeaderIgnoreCases:@"Content-Type" fromHeaders:headers] lowercaseString];
         if(respCType != nil)
         {
@@ -282,10 +287,16 @@ NSOperationQueue *taskQueue;
         @try{
             NSFileManager * fm = [NSFileManager defaultManager];
             NSString * folder = [destPath stringByDeletingLastPathComponent];
-            if(![fm fileExistsAtPath:folder]) {
+            if(![fm fileExistsAtPath:folder])
+            {
                 [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:nil];
             }
-            if (![fm fileExistsAtPath:destPath]) {
+            BOOL appendToExistingFile = [destPath RNFBContainsString:@"?append=true"];
+            // For solving #141 append response data if the file already exists
+            // base on PR#139 @kejinliang
+            if (appendToExistingFile && ![fm fileExistsAtPath:destPath])
+            {
+                destPath = [destPath stringByReplacingOccurrencesOfString:@"?append=true" withString:@""];
                 [fm createFileAtPath:destPath contents:[[NSData alloc] init] attributes:nil];
             }
             writeStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:YES];
