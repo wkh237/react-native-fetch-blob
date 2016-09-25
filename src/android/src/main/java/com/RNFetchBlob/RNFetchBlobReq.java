@@ -394,6 +394,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         DownloadManager dm = (DownloadManager)RNFetchBlob.RCTContext.getSystemService(RNFetchBlob.RCTContext.DOWNLOAD_SERVICE);
                         dm.addCompletedDownload(title, desc, scannable, mime, destPath, contentLength, notification);
                     }
+
                     done(response);
                 }
             });
@@ -488,6 +489,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 } catch (Exception ignored) {
                     ignored.printStackTrace();
                 }
+                this.destPath = this.destPath.replace("?append=true", "");
                 callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
                 break;
             default:
