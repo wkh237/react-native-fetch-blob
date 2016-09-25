@@ -16,6 +16,7 @@
 #import "RNFetchBlobReqBuilder.h"
 #import "IOS7Polyfill.h"
 #import <CommonCrypto/CommonDigest.h>
+#import "RNFetchBlobProgress.h"
 
 ////////////////////////////////////////
 //
@@ -294,9 +295,12 @@ NSOperationQueue *taskQueue;
             BOOL appendToExistingFile = [destPath RNFBContainsString:@"?append=true"];
             // For solving #141 append response data if the file already exists
             // base on PR#139 @kejinliang
-            if (appendToExistingFile && ![fm fileExistsAtPath:destPath])
+            if(appendToExistingFile)
             {
                 destPath = [destPath stringByReplacingOccurrencesOfString:@"?append=true" withString:@""];
+            }
+            if (![fm fileExistsAtPath:destPath])
+            {
                 [fm createFileAtPath:destPath contents:[[NSData alloc] init] attributes:nil];
             }
             writeStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:YES];
