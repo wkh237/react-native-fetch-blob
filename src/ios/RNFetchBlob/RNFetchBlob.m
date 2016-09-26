@@ -213,7 +213,7 @@ RCT_EXPORT_METHOD(unlink:(NSString *)path callback:(RCTResponseSenderBlock) call
     NSError * error = nil;
     NSString * tmpPath = nil;
     [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
-    if(error == nil)
+    if(error == nil || [[NSFileManager defaultManager] fileExistsAtPath:path] == NO)
         callback(@[[NSNull null]]);
     else
         callback(@[[NSString stringWithFormat:@"failed to unlink file or path at %@", path]]);
