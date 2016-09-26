@@ -85,14 +85,14 @@ NSOperationQueue *taskQueue;
     return self;
 }
 
-+ (void) enableProgressReport:(NSString *) taskId
++ (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config
 {
-    [progressTable setValue:@YES forKey:taskId];
+    [progressTable setValue:config forKey:taskId];
 }
 
-+ (void) enableUploadProgress:(NSString *) taskId
++ (void) enableUploadProgress:(NSString *) taskId config:(RNFetchBlobProgress *)config
 {
-    [uploadProgressTable setValue:@YES forKey:taskId];
+    [uploadProgressTable setValue:config forKey:taskId];
 }
 
 // removing case from headers
@@ -221,11 +221,6 @@ NSOperationQueue *taskQueue;
     if ([response respondsToSelector:@selector(allHeaderFields)])
     {
         NSDictionary *headers = [httpResponse allHeaderFields];
-        if(expectedBytes < 0)
-        {
-            expectedBytes = [[headers valueForKey:@"Content-Length"] intValue];
-            
-        }
         NSString * respCType = [[RNFetchBlobReqBuilder getHeaderIgnoreCases:@"Content-Type" fromHeaders:headers] lowercaseString];
         if(respCType != nil)
         {
@@ -329,8 +324,9 @@ NSOperationQueue *taskQueue;
     {
         [writeStream write:[data bytes] maxLength:[data length]];
     }
-
-    if([progressTable valueForKey:taskId] == @YES)
+    RNFetchBlobProgress * pconfig = [progressTable valueForKey:taskId];
+    NSNumber * now =[NSNumber numberWithFloat:((float)receivedBytes/(float)expectedBytes)];
+    if(pconfig != nil && [pconfig shouldReport:now])
     {
         [self.bridge.eventDispatcher
          sendDeviceEventWithName:EVENT_PROGRESS
@@ -433,13 +429,15 @@ NSOperationQueue *taskQueue;
 // upload progress handler
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didSendBodyData:(int64_t)bytesSent totalBytesSent:(int64_t)totalBytesWritten totalBytesExpectedToSend:(int64_t)totalBytesExpectedToWrite
 {
-    if([uploadProgressTable valueForKey:taskId] == @YES) {
+    RNFetchBlobProgress * pconfig = [uploadProgressTable valueForKey:taskId];
+    NSNumber * now = [NSNumber numberWithFloat:((float)totalBytesWritten/(float)totalBytesExpectedToWrite)];
+    if(pconfig != nil && [pconfig shouldReport:now]) {
         [self.bridge.eventDispatcher
          sendDeviceEventWithName:EVENT_PROGRESS_UPLOAD
          body:@{
                 @"taskId": taskId,
                 @"written": [NSString stringWithFormat:@"%d", totalBytesWritten],
-                @"total": [NSString stringWithFormat:@"%d", bodyLength]
+                @"total": [NSString stringWithFormat:@"%d", totalBytesExpectedToWrite]
                 }
          ];
     }

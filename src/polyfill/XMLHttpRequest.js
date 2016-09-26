@@ -33,7 +33,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   _response : any = '';
   _responseText : any = null;
   _responseHeaders : any = {};
-  _responseType : '' | 'arraybuffer' | 'blob' | 'document' | 'json' | 'text' = '';
+  _responseType : '' | 'arraybuffer' | 'blob'  | 'json' | 'text' = '';
   // TODO : not suppoted ATM
   _responseURL : null = '';
   _responseXML : null = '';
@@ -331,6 +331,13 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
             responseDataReady()
           })
         break;
+        case 'arraybuffer':
+          // TODO : to array buffer
+        break
+        case 'json':
+          this._response = resp.json()
+          this._responseText = resp.text()
+        break
         default :
           this._responseText = resp.text()
           this._response = this.responseText

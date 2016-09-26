@@ -63,8 +63,7 @@ public class RNFetchBlobDefaultResp extends ResponseBody {
             long read =  mOriginalSource.read(sink, byteCount);
             bytesRead += read > 0 ? read : 0;
             RNFetchBlobProgressConfig reportConfig = RNFetchBlobReq.getReportProgress(mTaskId);
-            if(reportConfig != null && reportConfig.shouldReport()) {
-                reportConfig.tick(bytesRead/contentLength());
+            if(reportConfig != null && reportConfig.shouldReport(bytesRead/contentLength())) {
                 WritableMap args = Arguments.createMap();
                 args.putString("taskId", mTaskId);
                 args.putString("written", String.valueOf(bytesRead));

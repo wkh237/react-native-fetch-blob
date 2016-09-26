@@ -12,7 +12,7 @@
 {
     float progress;
     int tick;
-    long lastTick;
+    double lastTick;
 }
 @end
 
@@ -22,33 +22,34 @@
 {
     self = [super init];
     self.count = count;
-    self.interval = interval;
+    self.interval = [NSNumber numberWithFloat:[interval floatValue] /1000];
     self.type = type;
     self.enable = YES;
+    lastTick = 0;
+    tick = 1;
     return self;
 }
 
--(void)tick:(NSNumber *) nextProgress
-{
-    progress = [nextProgress floatValue];
-    tick++;
-    NSTimeInterval timeStamp = [[NSDate date] timeIntervalSince1970];
-    // NSTimeInterval is defined as double
-    NSNumber *timeStampObj = [NSNumber numberWithDouble: timeStamp];
-    lastTick = [timeStampObj longValue];
-}
-
--(BOOL)shouldReport
+-(BOOL)shouldReport:(NSNumber *)nextProgress
 {
     BOOL result = YES;
-    if(self.count > 0)
+    float countF = [self.count floatValue];
+    if(countF > 0 && [nextProgress floatValue] > 0)
     {
-        result = floorf(progress*100/[count floatValue]) > tick;
+        result = (int)(floorf([nextProgress floatValue]*countF)) >= tick;
     }
+    
     NSTimeInterval timeStamp = [[NSDate date] timeIntervalSince1970];
     // NSTimeInterval is defined as double
     NSNumber *timeStampObj = [NSNumber numberWithDouble: timeStamp];
-    return lastTick - [timeStampObj longValue] > [self.interval longValue] && self.enable && result;
+    float delta = [timeStampObj doubleValue] - lastTick;
+    BOOL shouldReport = delta > [self.interval doubleValue] && self.enable && result;
+    if(shouldReport)
+    {
+        tick++;
+        lastTick = [timeStampObj doubleValue];
+    }
+    return shouldReport;
     
 }
 

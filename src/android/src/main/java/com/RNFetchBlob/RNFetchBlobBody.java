@@ -372,16 +372,16 @@ public class RNFetchBlobBody extends RequestBody{
      */
     private void emitUploadProgress(int written) {
         RNFetchBlobProgressConfig config = RNFetchBlobReq.getReportUploadProgress(mTaskId);
-        if(!config.enable)
-            return;
-        WritableMap args = Arguments.createMap();
-        args.putString("taskId", mTaskId);
-        args.putString("written", String.valueOf(written));
-        args.putString("total", String.valueOf(contentLength));
+        if(config.enable && config.shouldReport((float)written/contentLength)) {
+            WritableMap args = Arguments.createMap();
+            args.putString("taskId", mTaskId);
+            args.putString("written", String.valueOf(written));
+            args.putString("total", String.valueOf(contentLength));
 
-        // emit event to js context
-        RNFetchBlob.RCTContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                .emit(RNFetchBlobConst.EVENT_UPLOAD_PROGRESS, args);
+            // emit event to js context
+            RNFetchBlob.RCTContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit(RNFetchBlobConst.EVENT_UPLOAD_PROGRESS, args);
+        }
     }
 
 }

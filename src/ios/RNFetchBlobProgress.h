@@ -31,8 +31,7 @@ typedef NS_ENUM(NSUInteger, ProgressType) {
 @property (nonatomic) BOOL enable;
 
 -(id)initWithType:(ProgressType)type interval:(NSNumber*)interval count:(NSNumber *)count;
--(BOOL)shouldReport;
--(void)tick;
+-(BOOL)shouldReport:(NSNumber *) nextProgress;
 
 
 @end
