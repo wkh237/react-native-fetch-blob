@@ -79,5 +79,55 @@ describe('support #141 breakpoint download', (report, done) => {
 })
 
 describe('support download/upload progress interval and division #140 ', (report, done) => {
+  let tick = 0
+  let records = []
+  let last = Date.now()
+  RNFetchBlob.config({
+    timeout : 30000
+  }).fetch('GET', `${TEST_SERVER_URL}/10s-download`, {
+    'Cache-Control' : 'no-store'
+  })
+  .progress({interval : 1000},(current, total) => {
+    records.push(Date.now() - last)
+    last = Date.now()
+    console.log(current, '/', total, current/total)
+    tick ++
+  })
+  .then(() => {
+    let avg = 0
+    for(let i in records) {
+      avg+=records[i]
+    }
+    avg/=records.length
+    report(<Assert key="interval > 900" expect={900} comparer={Comparer.smaller} actual={avg}/>)
+    report(<Assert key="interval < 1200" expect={1200} comparer={Comparer.greater} actual={avg}/>)
+    upload()
+  })
+
+  function upload() {
+    let count = 0
+    let image = RNTest.prop('image')
+    RNFetchBlob.config({
+      fileCache : true
+    })
+    .fetch('GET', `${TEST_SERVER_URL}/public/6mb-dummy`)
+    .then((res) => {
+      return RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
+        Authorization : `Bearer ${DROPBOX_TOKEN}`,
+        'Dropbox-API-Arg': '{\"path\": \"/rn-upload/intervalTest.png\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
+        'Content-Type' : 'application/octet-stream',
+      }, RNFetchBlob.wrap(res.path()))
+      .uploadProgress({count : 10, interval : -1}, (current, total) => {
+        count++
+        console.log(current, total)
+      })
+    })
+    .then(() => {
+      report(<Assert key="count is correct" expect={10} actual={count}/>)
+      done()
+    })
+
+  }
+
 
 })
