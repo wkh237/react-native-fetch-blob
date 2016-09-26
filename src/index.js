@@ -202,8 +202,8 @@ function fetch(...args:any):Promise {
     let count = -1
     let fn = () => {}
     if(args.length === 2) {
-      interval = args[0].interval
-      interval = args[0].count
+      interval = args[0].interval || interval
+      count = args[0].count || count
       fn = args[1]
     }
     else {
@@ -218,8 +218,8 @@ function fetch(...args:any):Promise {
     let count = -1
     let fn = () => {}
     if(args.length === 2) {
-      interval = args[0].interval
-      interval = args[0].count
+      interval = args[0].interval || interval
+      count = args[0].count || count
       fn = args[1]
     }
     else {
@@ -276,6 +276,24 @@ class FetchBlobResponse {
     this.info = ():RNFetchBlobResponseInfo => {
       return this.respInfo
     }
+
+    this.array = ():Promise<Array> => {
+      let cType = info.headers['Content-Type'] || info.headers['content-type']
+      return new Promise((resolve, reject) => {
+        switch(this.type) {
+          case 'base64':
+            // TODO : base64 to array buffer
+          break
+          case 'path':
+            fs.readFile(this.data, 'ascii').then(resolve)
+          break
+          default:
+            // TODO : text to array buffer
+          break
+        }
+      })
+    }
+
     /**
      * Convert result to javascript RNFetchBlob object.
      * @return {Promise<Blob>} Return a promise resolves Blob object.
