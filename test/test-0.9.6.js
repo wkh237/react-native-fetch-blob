@@ -114,7 +114,7 @@ describe('support download/upload progress interval and division #140 ', (report
     .then((res) => {
       return RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
         Authorization : `Bearer ${DROPBOX_TOKEN}`,
-        'Dropbox-API-Arg': '{\"path\": \"/rn-upload/intervalTest.png\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
+        'Dropbox-API-Arg': '{\"path\": \"/rn-upload/intervalTest.txt\",\"mode\": \"add\",\"autorename\": true,\"mute\": false}',
         'Content-Type' : 'application/octet-stream',
       }, RNFetchBlob.wrap(res.path()))
       .uploadProgress({count : 10, interval : -1}, (current, total) => {
