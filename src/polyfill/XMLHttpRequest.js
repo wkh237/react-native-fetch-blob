@@ -84,7 +84,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   static setLog(level:number) {
-    if(number === -1)
+    if(level === -1)
       log.disable()
     else
       log.level(level)

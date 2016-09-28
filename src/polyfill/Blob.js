@@ -51,7 +51,7 @@ export default class Blob extends EventTarget {
   }
 
   static setLog(level:number) {
-    if(number === -1)
+    if(level === -1)
       log.disable()
     else
       log.level(level)
