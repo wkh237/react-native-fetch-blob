@@ -372,7 +372,7 @@ public class RNFetchBlobBody extends RequestBody{
      */
     private void emitUploadProgress(int written) {
         RNFetchBlobProgressConfig config = RNFetchBlobReq.getReportUploadProgress(mTaskId);
-        if(config.enable && config.shouldReport((float)written/contentLength)) {
+        if(config != null && contentLength != 0 && config.shouldReport((float)written/contentLength)) {
             WritableMap args = Arguments.createMap();
             args.putString("taskId", mTaskId);
             args.putString("written", String.valueOf(written));

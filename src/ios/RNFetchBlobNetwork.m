@@ -325,6 +325,8 @@ NSOperationQueue *taskQueue;
         [writeStream write:[data bytes] maxLength:[data length]];
     }
     RNFetchBlobProgress * pconfig = [progressTable valueForKey:taskId];
+    if(expectedBytes == 0)
+        return;
     NSNumber * now =[NSNumber numberWithFloat:((float)receivedBytes/(float)expectedBytes)];
     if(pconfig != nil && [pconfig shouldReport:now])
     {
@@ -430,6 +432,8 @@ NSOperationQueue *taskQueue;
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didSendBodyData:(int64_t)bytesSent totalBytesSent:(int64_t)totalBytesWritten totalBytesExpectedToSend:(int64_t)totalBytesExpectedToWrite
 {
     RNFetchBlobProgress * pconfig = [uploadProgressTable valueForKey:taskId];
+    if(totalBytesExpectedToWrite == 0)
+        return;
     NSNumber * now = [NSNumber numberWithFloat:((float)totalBytesWritten/(float)totalBytesExpectedToWrite)];
     if(pconfig != nil && [pconfig shouldReport:now]) {
         [self.bridge.eventDispatcher

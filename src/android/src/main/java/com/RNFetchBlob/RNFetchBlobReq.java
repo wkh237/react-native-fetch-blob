@@ -92,7 +92,6 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     ResponseFormat responseFormat = ResponseFormat.Auto;
     WritableMap respInfo;
     boolean timeout = false;
-
     ArrayList<String> redirects = new ArrayList<>();
 
     public RNFetchBlobReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, final Callback callback) {

@@ -80,7 +80,7 @@ public class RNFetchBlobFileResp extends ResponseBody {
                     ofStream.write(bytes, 0, (int) read);
                 }
                 RNFetchBlobProgressConfig reportConfig = RNFetchBlobReq.getReportProgress(mTaskId);
-                if (reportConfig != null && reportConfig.shouldReport(bytesDownloaded / contentLength())) {
+                if (reportConfig != null && contentLength() != 0 &&reportConfig.shouldReport(bytesDownloaded / contentLength())) {
                     WritableMap args = Arguments.createMap();
                     args.putString("taskId", mTaskId);
                     args.putString("written", String.valueOf(bytesDownloaded));
