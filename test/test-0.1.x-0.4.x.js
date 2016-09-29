@@ -105,12 +105,12 @@ describe('Progress report test', (report, done) => {
       Authorization : 'Bearer abde123eqweje'
     })
     .progress((received, total) => {
-      actual = received
       expect = total
     })
     .then((resp) => {
+      actual = resp.text().length
       report(
-        <Assert key="download progress correct" expect={expect} actual={actual}/>,
+        <Assert key="download progress correct" expect={Math.floor(expect)} actual={Math.floor(actual)}/>,
         <Assert key="response data should be correct event with progress listener"
           expect={resp.text().substr(0,10)} actual={"1234567890"}/>)
       done()
@@ -137,7 +137,6 @@ describe('PUT request test', (report, done) => {
     .then((resp) => {
       resp = resp.json()
       report(
-        <Assert key="upload progress correct" expect={expect} actual={actual}/>,
         <Assert key="check put form data #1" expect="hello !!" actual={resp.fields.field1}/>,
         <Assert key="check put form data #2" expect="hello2 !!" actual={resp.fields.field2}/>,
       )
