@@ -262,7 +262,6 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     if(e.state === "2") {
       this._responseHeaders = e.headers
       this._statusText = e.status
-      this._responseType = e.respType || ''
       this._status = Math.floor(e.status)
       this._dispatchReadStateChange(XMLHttpRequest.HEADERS_RECEIVED)
     }
@@ -323,7 +322,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     if(resp) {
       let info = resp.respInfo || {}
       log.debug(this._url, info, info.respType)
-      switch(info.respType) {
+      switch(this._responseType) {
         case 'blob' :
           resp.blob().then((b) => {
             this._responseText = resp.text()
