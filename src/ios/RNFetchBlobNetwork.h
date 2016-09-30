@@ -22,6 +22,7 @@ typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse 
 @property (nullable, nonatomic) NSString * taskId;
 @property (nonatomic) int expectedBytes;
 @property (nonatomic) int receivedBytes;
+@property (nonatomic) BOOL isServerPush;
 @property (nullable, nonatomic) NSMutableData * respData;
 @property (strong, nonatomic) RCTResponseSenderBlock callback;
 @property (nullable, nonatomic) RCTBridge * bridge;

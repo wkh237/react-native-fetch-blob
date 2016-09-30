@@ -38,6 +38,8 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
 @interface RNFetchBlobNetwork ()
 {
     BOOL * respFile;
+    BOOL isNewPart;
+    NSMutableData * partBuffer;
     NSString * destPath;
     NSOutputStream * writeStream;
     long bodyLength;
@@ -222,6 +224,26 @@ NSOperationQueue *taskQueue;
     {
         NSDictionary *headers = [httpResponse allHeaderFields];
         NSString * respCType = [[RNFetchBlobReqBuilder getHeaderIgnoreCases:@"Content-Type" fromHeaders:headers] lowercaseString];
+        if(self.isServerPush == NO)
+        {
+            self.isServerPush = [[respCType lowercaseString] RNFBContainsString:@"multipart/x-mixed-replace;"];
+        }
+        if(self.isServerPush)
+        {
+            if(partBuffer != nil)
+            {
+                [self.bridge.eventDispatcher
+                 sendDeviceEventWithName:EVENT_SERVER_PUSH
+                 body:@{
+                        @"taskId": taskId,
+                        @"chunk": [partBuffer base64EncodedStringWithOptions:0],
+                        }
+                 ];
+            }
+            partBuffer = [[NSMutableData alloc] init];
+            completionHandler(NSURLSessionResponseAllow);
+            return;
+        }
         if(respCType != nil)
         {
             NSArray * extraBlobCTypes = [options objectForKey:CONFIG_EXTRA_BLOB_CTYPE];
@@ -311,9 +333,17 @@ NSOperationQueue *taskQueue;
     completionHandler(NSURLSessionResponseAllow);
 }
 
+
 // download progress handler
 - (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data
 {
+    // For #143 handling multipart/x-mixed-replace response
+    if(self.isServerPush)
+    {
+        [partBuffer appendData:data];
+        return ;
+    }
+    
     NSNumber * received = [NSNumber numberWithLong:[data length]];
     receivedBytes += [received longValue];
     if(respFile == NO)
@@ -348,6 +378,7 @@ NSOperationQueue *taskQueue;
     if([session isEqual:session])
         session = nil;
 }
+
 
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
 {

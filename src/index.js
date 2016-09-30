@@ -116,7 +116,7 @@ function fetch(...args:any):Promise {
   // create task ID for receiving progress event
   let taskId = getUUID()
   let options = this || {}
-  let subscription, subscriptionUpload, stateEvent
+  let subscription, subscriptionUpload, stateEvent, partEvent
   let respInfo = {}
 
   let promise = new Promise((resolve, reject) => {
@@ -140,6 +140,12 @@ function fetch(...args:any):Promise {
       respInfo = e
       if(e.taskId === taskId && promise.onStateChange) {
         promise.onStateChange(e)
+      }
+    })
+
+    partEvent = emitter.addListener('RNFetchBlobServerPush', (e) => {
+      if(e.taskId === taskId && promise.onPartData) {
+        promise.onPartData(e.chunk)
       }
     })
 
@@ -168,9 +174,11 @@ function fetch(...args:any):Promise {
       subscription.remove()
       subscriptionUpload.remove()
       stateEvent.remove()
+      partEvent.remove()
       delete promise['progress']
       delete promise['uploadProgress']
       delete promise['stateChange']
+      delete promise['part']
       delete promise['cancel']
       promise.cancel = () => {}
 
@@ -227,6 +235,10 @@ function fetch(...args:any):Promise {
     }
     promise.onUploadProgress = fn
     RNFetchBlob.enableUploadProgressReport(taskId, interval, count)
+    return promise
+  }
+  promise.part = (fn) => {
+    promise.onPartData = fn
     return promise
   }
   promise.stateChange = (fn) => {
