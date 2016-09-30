@@ -380,7 +380,7 @@ What if you want to append a file to form data ? Just like [upload a file from s
 
 ### Upload/Download progress
 
-In `version >= 0.4.2` it is possible to know the upload/download progress. After `0.7.0` IOS and Android upload progress are also supported.
+In `version >= 0.4.2` it is possible to know the upload/download progress. After `0.7.0` IOS and Android upload progress are also supported. 
 
 ```js
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
@@ -393,6 +393,30 @@ In `version >= 0.4.2` it is possible to know the upload/download progress. After
     })
     // listen to download progress event
     .progress((received, total) => {
+        console.log('progress', received / total)
+    })
+    .then((resp) => {
+      // ...
+    })
+    .catch((err) => {
+      // ...
+    })
+```
+
+In `0.9.6`, you can specify an optional first argument which contains `count` and `interval` to limit progress event frequency (this will be done in native context in order to reduce RCT bridge overhead). Notice that `count` argument will not work if the server does not provide response content length.
+
+
+```js
+  RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
+      ... some headers,
+      'Content-Type' : 'octet-stream'
+    }, base64DataString)
+    // listen to upload progress event, emit every 250ms
+    .uploadProgress({ interval : 250 },(written, total) => {
+        console.log('uploaded', written / total)
+    })
+    // listen to download progress event, every 10%
+    .progress({ count : 10 }, (received, total) => {
         console.log('progress', received / total)
     })
     .then((resp) => {
