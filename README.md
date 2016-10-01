@@ -4,7 +4,9 @@
 
 A project committed to make file acess and data transfer easier, efficient for React Native developers.
 
-> The npm package is inside `src` folder, if you're going to install using github repository do not point to here directly
+> If you're going to use github repo as npm dependency please use the [archive repository](https://github.com/wkh237/react-native-fetch-blob-package/releases/tag/v0.9.6) this repository is for development.
+
+> If you're using this library as Firebase Storage solution, please upgrade to 0.9.6 since XMLHttpRequest polyfill has way better compatibility than previous versions.
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
@@ -403,7 +405,7 @@ In `version >= 0.4.2` it is possible to know the upload/download progress. After
     })
 ```
 
-In `0.9.6`, you can specify an optional first argument which contains `count` and `interval` to limit progress event frequency (this will be done in native context in order to reduce RCT bridge overhead). Notice that `count` argument will not work if the server does not provide response content length.
+In `0.9.6`, you can specify an object as first argument which contains `count` and `interval`, to the frequency of progress event (this will be done in native context in order to reduce RCT bridge overhead). Notice that `count` argument will not work if the server does not provide response content length.
 
 
 ```js
