@@ -36,6 +36,7 @@ A project committed to make file acess and data transfer easier, efficient for R
 * [Web API Polyfills](#user-content-web-api-polyfills)
 * [Performance Tips](#user-content-performance-tips)
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
+* [Caveats](#user-content-caveats)
 * [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting)
 * [Development](#user-content-development)
 
@@ -737,7 +738,7 @@ Here's a [sample app](https://github.com/wkh237/rn-firebase-storage-upload-sampl
 
 ## Performance Tips
 
-**Read Stream Event Overhead**
+**Read Stream and Progress Event Overhead**
 
 When reading data via `fs.readStream` the process seems blocking JS thread when file is large, it's because the default buffer size is quite small (4kb) which result in large amount of events triggered in JS thread, try to increase the buffer size (for example 100kb = 102400) and set a larger interval (which is introduced in 0.9.4 default value is 10ms) to limit the frequency. 
 
@@ -758,6 +759,14 @@ Due to the [lack of typed array implementation in JavascriptCore, and limitation
 If you're going to concatenate files, you don't have to read the data to JS context anymore ! In `0.8.0` we introduced new encoding `uri` for writeFile and appendFile API. Which make it possible to done the whole process in native.
 
 <img src="img/performance_f2f.png" style="width : 100%"/>
+
+## Caveats
+
+* This library does not urlencode unicode characters in URL automatically, see [#146](https://github.com/wkh237/react-native-fetch-blob/issues/146). 
+* When a `Blob` is created from existing file, the file **WILL BE REMOVE** if you `close` the blob.
+* If you replaced `window.XMLHttpRequest` for some reason (e.g. make Firebase SDK work), it will also effect how official `fetch` works (basically it should work just fine).
+* When file stream and upload/download progress event slow down your app, consider upgrade to `0.9.6+`, use [additional arguments](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogressconfig-eventlistenerpromisernfetchblobresponse) to limit its frequency.
+* When passing a file path to the library, remove `file://` prefix.
 
 ## Changes
 
