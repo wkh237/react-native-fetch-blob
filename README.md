@@ -37,7 +37,6 @@ A project committed to make file acess and data transfer easier, efficient for R
 * [Performance Tips](#user-content-performance-tips)
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
 * [Caveats](#user-content-caveats)
-* [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting)
 * [Development](#user-content-development)
 
 ## About
@@ -767,6 +766,8 @@ If you're going to concatenate files, you don't have to read the data to JS cont
 * If you replaced `window.XMLHttpRequest` for some reason (e.g. make Firebase SDK work), it will also effect how official `fetch` works (basically it should work just fine).
 * When file stream and upload/download progress event slow down your app, consider upgrade to `0.9.6+`, use [additional arguments](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogressconfig-eventlistenerpromisernfetchblobresponse) to limit its frequency.
 * When passing a file path to the library, remove `file://` prefix.
+
+when you got problem, have a look at [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting) or issues tagged `Trouble Shooting`, there'd be some helpful information.
 
 ## Changes
 
