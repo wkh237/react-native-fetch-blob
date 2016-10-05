@@ -767,7 +767,7 @@ If you're going to concatenate files, you don't have to read the data to JS cont
 * When file stream and upload/download progress event slow down your app, consider upgrade to `0.9.6+`, use [additional arguments](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogressconfig-eventlistenerpromisernfetchblobresponse) to limit its frequency.
 * When passing a file path to the library, remove `file://` prefix.
 
-when you got problem, have a look at [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting) or issues tagged `Trouble Shooting`, there'd be some helpful information.
+when you got problem, have a look at [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting) or [issues labeled Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/issues?utf8=✓&q=label%3A%22trouble%20shooting%22%20), there'd be some helpful information.
 
 ## Changes
 
