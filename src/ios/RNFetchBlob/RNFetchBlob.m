@@ -13,6 +13,7 @@
 #import "RNFetchBlobNetwork.h"
 #import "RNFetchBlobConst.h"
 #import "RNFetchBlobReqBuilder.h"
+#import "RNFetchBlobProgress.h"
 
 
 __strong RCTBridge * bridgeRef;
@@ -216,7 +217,7 @@ RCT_EXPORT_METHOD(unlink:(NSString *)path callback:(RCTResponseSenderBlock) call
     NSError * error = nil;
     NSString * tmpPath = nil;
     [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
-    if(error == nil)
+    if(error == nil || [[NSFileManager defaultManager] fileExistsAtPath:path] == NO)
         callback(@[[NSNull null]]);
     else
         callback(@[[NSString stringWithFormat:@"failed to unlink file or path at %@", path]]);
@@ -417,13 +418,16 @@ RCT_EXPORT_METHOD(cancelRequest:(NSString *)taskId callback:(RCTResponseSenderBl
 }
 
 #pragma mark - net.enableProgressReport
-RCT_EXPORT_METHOD(enableProgressReport:(NSString *)taskId {
-    [RNFetchBlobNetwork enableProgressReport:taskId];
+RCT_EXPORT_METHOD(enableProgressReport:(NSString *)taskId interval:(nonnull NSNumber*)interval count:(nonnull NSNumber*)count  {
+    
+    RNFetchBlobProgress * cfg = [[RNFetchBlobProgress alloc] initWithType:Download interval:interval count:count];
+    [RNFetchBlobNetwork enableProgressReport:taskId config:cfg];
 })
 
 #pragma mark - net.enableUploadProgressReport
-RCT_EXPORT_METHOD(enableUploadProgressReport:(NSString *)taskId {
-    [RNFetchBlobNetwork enableUploadProgress:taskId];
+RCT_EXPORT_METHOD(enableUploadProgressReport:(NSString *)taskId interval:(nonnull NSNumber*)interval count:(nonnull NSNumber*)count{
+    RNFetchBlobProgress * cfg = [[RNFetchBlobProgress alloc] initWithType:Upload interval:interval count:count];
+    [RNFetchBlobNetwork enableUploadProgress:taskId config:cfg];
 })
 
 #pragma mark - fs.slice

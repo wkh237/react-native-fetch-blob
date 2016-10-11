@@ -15,6 +15,7 @@ var app = express()
 var fs = require('fs')
 var https = require('https')
 
+
 var JS_SOURCE_PATH = '../test/',
     LIB_SOURCE_PATH = '../src/',
     NODE_MODULE_MODULE_PATH = '../RNFetchBlobTest/node_modules/react-native-fetch-blob/',
@@ -63,6 +64,30 @@ var count = 0
 app.use(function(req, res, next) {
   console.log(req.url, ++count);
   next();
+})
+
+app.get('/video/:count', (req, res) => {
+  var count = 0
+  res.set('Content-Type', 'multipart/x-mixed-replace; boundary="---osclivepreview---"')
+  res.write('---osclivepreview---\r\n')
+  var it = setInterval(() => {
+    if(count > req.params.count) {
+      res.end()
+    }
+    else {
+      count ++
+      res.write('Content-Type: image/jpeg\r\n')
+      var data = fs.readFileSync('./cat_fu_mp4/img' + pad(count,5) + '.jpeg')
+      console.log('frame', count, 'length=', new Buffer(data).length, 'base64=', new Buffer(data).toString('base64').length)
+      console.log(data)
+      fs.writeFileSync('test.jpeg')
+      res.write('Content-Length: '+data.length+'\r\n')
+      res.write('\r\n')
+      res.write(new Buffer(data), 'binary')
+      res.write('\r\n\r\n---osclivepreview---\r\n')
+    }
+  }, 66)
+
 })
 
 app.all('/upload', (req, res) => {
@@ -179,8 +204,7 @@ app.all('/long/:ticks', (req, res) => {
 
 })
 
-app.all('/long/', (req, res) => {
-  var count = 0;
+app.all('/long/', (req, res) => {  var count = 0;
   var it = setInterval(() => {
     console.log('write data', count)
     res.write('a')
@@ -242,4 +266,10 @@ function watch(source, dest, ignore) {
     .on('error', function(err){
       console.log(err)
     })
+}
+
+function pad(n, width, z) {
+  z = z || '0';
+  n = n + '';
+  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }

@@ -119,7 +119,8 @@
                     }
                     else
                     {
-                        [request setHTTPBody:[NSData dataWithContentsOfFile:orgPath ]];
+                        __block NSData * bodyBytes = [NSData dataWithContentsOfFile:orgPath ];
+                        [request setHTTPBody:bodyBytes];
                     }
                 }
                 // otherwise convert it as BASE64 data string

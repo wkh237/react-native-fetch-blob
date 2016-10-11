@@ -204,7 +204,7 @@ function fetch(...args:any):Promise {
   // create task ID for receiving progress event
   let taskId = getUUID()
   let options = this || {}
-  let subscription, subscriptionUpload, stateEvent
+  let subscription, subscriptionUpload, stateEvent, partEvent
   let respInfo = {}
   let [method, url, headers, body] = [...args]
 
@@ -241,6 +241,10 @@ function fetch(...args:any):Promise {
       console.log(e , 'EXPIRED!!')
       if(e.taskId === taskId && promise.onExpire) {
         promise.onExpire(e)
+
+    partEvent = emitter.addListener('RNFetchBlobServerPush', (e) => {
+      if(e.taskId === taskId && promise.onPartData) {
+        promise.onPartData(e.chunk)
       }
     })
 
@@ -269,9 +273,11 @@ function fetch(...args:any):Promise {
       subscription.remove()
       subscriptionUpload.remove()
       stateEvent.remove()
+      partEvent.remove()
       delete promise['progress']
       delete promise['uploadProgress']
       delete promise['stateChange']
+      delete promise['part']
       delete promise['cancel']
       // delete promise['expire']
       promise.cancel = () => {}
@@ -295,14 +301,44 @@ function fetch(...args:any):Promise {
 
   // extend Promise object, add `progress`, `uploadProgress`, and `cancel`
   // method for register progress event handler and cancel request.
-  promise.progress = (fn) => {
+  // Add second parameter for performance purpose #140
+  // When there's only one argument pass to this method, use default `interval`
+  // and `count`, otherwise use the given on.
+  // TODO : code refactor, move `uploadProgress` and `progress` to StatefulPromise
+  promise.progress = (...args) => {
+    let interval = 250
+    let count = -1
+    let fn = () => {}
+    if(args.length === 2) {
+      interval = args[0].interval || interval
+      count = args[0].count || count
+      fn = args[1]
+    }
+    else {
+      fn = args[0]
+    }
     promise.onProgress = fn
-    RNFetchBlob.enableProgressReport(taskId)
+    RNFetchBlob.enableProgressReport(taskId, interval, count)
     return promise
   }
-  promise.uploadProgress = (fn) => {
+  promise.uploadProgress = (...args) => {
+    let interval = 250
+    let count = -1
+    let fn = () => {}
+    if(args.length === 2) {
+      interval = args[0].interval || interval
+      count = args[0].count || count
+      fn = args[1]
+    }
+    else {
+      fn = args[0]
+    }
     promise.onUploadProgress = fn
-    RNFetchBlob.enableUploadProgressReport(taskId)
+    RNFetchBlob.enableUploadProgressReport(taskId, interval, count)
+    return promise
+  }
+  promise.part = (fn) => {
+    promise.onPartData = fn
     return promise
   }
   promise.stateChange = (fn) => {
@@ -356,6 +392,24 @@ class FetchBlobResponse {
     this.info = ():RNFetchBlobResponseInfo => {
       return this.respInfo
     }
+
+    this.array = ():Promise<Array> => {
+      let cType = info.headers['Content-Type'] || info.headers['content-type']
+      return new Promise((resolve, reject) => {
+        switch(this.type) {
+          case 'base64':
+            // TODO : base64 to array buffer
+          break
+          case 'path':
+            fs.readFile(this.data, 'ascii').then(resolve)
+          break
+          default:
+            // TODO : text to array buffer
+          break
+        }
+      })
+    }
+
     /**
      * Convert result to javascript RNFetchBlob object.
      * @return {Promise<Blob>} Return a promise resolves Blob object.

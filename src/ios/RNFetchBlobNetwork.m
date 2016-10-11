@@ -18,6 +18,7 @@
 #import "RNFetchBlobReqBuilder.h"
 #import "IOS7Polyfill.h"
 #import <CommonCrypto/CommonDigest.h>
+#import "RNFetchBlobProgress.h"
 
 ////////////////////////////////////////
 //
@@ -40,7 +41,8 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
 @interface RNFetchBlobNetwork ()
 {
     BOOL * respFile;
-    BOOL * isIncrement;
+    BOOL isNewPart;
+    NSMutableData * partBuffer;
     NSString * destPath;
     NSOutputStream * writeStream;
     long bodyLength;
@@ -93,14 +95,14 @@ NSOperationQueue *taskQueue;
     return self;
 }
 
-+ (void) enableProgressReport:(NSString *) taskId
++ (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config
 {
-    [progressTable setValue:@YES forKey:taskId];
+    [progressTable setValue:config forKey:taskId];
 }
 
-+ (void) enableUploadProgress:(NSString *) taskId
++ (void) enableUploadProgress:(NSString *) taskId config:(RNFetchBlobProgress *)config
 {
-    [uploadProgressTable setValue:@YES forKey:taskId];
+    [uploadProgressTable setValue:config forKey:taskId];
 }
 
 // removing case from headers
@@ -145,7 +147,7 @@ NSOperationQueue *taskQueue;
     isIncrement = [options valueForKey:@"increment"] == nil ? NO : [[options valueForKey:@"increment"] boolValue];
     redirects = [[NSMutableArray alloc] init];
     [redirects addObject:req.URL.absoluteString];
-    
+
     // set response format
     NSString * rnfbResp = [req.allHTTPHeaderFields valueForKey:@"RNFB-Response"];
     if([[rnfbResp lowercaseString] isEqualToString:@"base64"])
@@ -165,7 +167,7 @@ NSOperationQueue *taskQueue;
     // the session trust any SSL certification
 //    NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
     NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:taskId];
-    
+
     // set request timeout
     float timeout = [options valueForKey:@"timeout"] == nil ? -1 : [[options valueForKey:@"timeout"] floatValue];
     if(timeout > 0)
@@ -202,7 +204,7 @@ NSOperationQueue *taskQueue;
         respData = [[NSMutableData alloc] init];
         respFile = NO;
     }
-    
+
     __block NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
     [taskTable setObject:task forKey:taskId];
     [task resume];
@@ -211,16 +213,16 @@ NSOperationQueue *taskQueue;
     if([[options objectForKey:CONFIG_INDICATOR] boolValue] == YES)
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
     __block UIApplication * app = [UIApplication sharedApplication];
-    
+
     // #115 handling task expired when application entering backgound for a long time
     [app beginBackgroundTaskWithName:taskId expirationHandler:^{
         NSLog([NSString stringWithFormat:@"session %@ expired event emit", taskId ]);
         [expirationTable setObject:task forKey:taskId];
         [app endBackgroundTask:task];
-        
+
     }];
-    
-    
+
+
 }
 
 // #115 Invoke fetch.expire event on those expired requests so that the expired event can be handled
@@ -259,6 +261,26 @@ NSOperationQueue *taskQueue;
     {
         NSDictionary *headers = [httpResponse allHeaderFields];
         NSString * respCType = [[RNFetchBlobReqBuilder getHeaderIgnoreCases:@"Content-Type" fromHeaders:headers] lowercaseString];
+        if(self.isServerPush == NO)
+        {
+            self.isServerPush = [[respCType lowercaseString] RNFBContainsString:@"multipart/x-mixed-replace;"];
+        }
+        if(self.isServerPush)
+        {
+            if(partBuffer != nil)
+            {
+                [self.bridge.eventDispatcher
+                 sendDeviceEventWithName:EVENT_SERVER_PUSH
+                 body:@{
+                        @"taskId": taskId,
+                        @"chunk": [partBuffer base64EncodedStringWithOptions:0],
+                        }
+                 ];
+            }
+            partBuffer = [[NSMutableData alloc] init];
+            completionHandler(NSURLSessionResponseAllow);
+            return;
+        }
         if(respCType != nil)
         {
             NSArray * extraBlobCTypes = [options objectForKey:CONFIG_EXTRA_BLOB_CTYPE];
@@ -320,10 +342,21 @@ NSOperationQueue *taskQueue;
         @try{
             NSFileManager * fm = [NSFileManager defaultManager];
             NSString * folder = [destPath stringByDeletingLastPathComponent];
-            if(![fm fileExistsAtPath:folder]) {
+            if(![fm fileExistsAtPath:folder])
+            {
                 [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:nil];
             }
-            [fm createFileAtPath:destPath contents:[[NSData alloc] init] attributes:nil];
+            BOOL appendToExistingFile = [destPath RNFBContainsString:@"?append=true"];
+            // For solving #141 append response data if the file already exists
+            // base on PR#139 @kejinliang
+            if(appendToExistingFile)
+            {
+                destPath = [destPath stringByReplacingOccurrencesOfString:@"?append=true" withString:@""];
+            }
+            if (![fm fileExistsAtPath:destPath])
+            {
+                [fm createFileAtPath:destPath contents:[[NSData alloc] init] attributes:nil];
+            }
             writeStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:YES];
             [writeStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
             [writeStream open];
@@ -337,9 +370,17 @@ NSOperationQueue *taskQueue;
     completionHandler(NSURLSessionResponseAllow);
 }
 
+
 // download progress handler
 - (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data
 {
+    // For #143 handling multipart/x-mixed-replace response
+    if(self.isServerPush)
+    {
+        [partBuffer appendData:data];
+        return ;
+    }
+
     NSNumber * received = [NSNumber numberWithLong:[data length]];
     receivedBytes += [received longValue];
     NSString * chunkString = @"";
@@ -357,8 +398,11 @@ NSOperationQueue *taskQueue;
     {
         [writeStream write:[data bytes] maxLength:[data length]];
     }
-
-    if([progressTable valueForKey:taskId] == @YES)
+    RNFetchBlobProgress * pconfig = [progressTable valueForKey:taskId];
+    if(expectedBytes == 0)
+        return;
+    NSNumber * now =[NSNumber numberWithFloat:((float)receivedBytes/(float)expectedBytes)];
+    if(pconfig != nil && [pconfig shouldReport:now])
     {
         [self.bridge.eventDispatcher
          sendDeviceEventWithName:EVENT_PROGRESS
@@ -380,6 +424,7 @@ NSOperationQueue *taskQueue;
         session = nil;
 }
 
+
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
 {
 
@@ -399,11 +444,6 @@ NSOperationQueue *taskQueue;
     {
         errMsg = [error localizedDescription];
     }
-    // Fix #72 response with status code 200 ~ 299 considered as success
-    else if(respStatus> 299 || respStatus < 200)
-    {
-        errMsg = [NSString stringWithFormat:@"Request failed, status %d", respStatus];
-    }
     else
     {
         if(respFile == YES)
@@ -419,7 +459,7 @@ NSOperationQueue *taskQueue;
             // if it turns out not to be `nil` that means the response data contains valid UTF8 string,
             // in order to properly encode the UTF8 string, use URL encoding before BASE64 encoding.
             NSString * utf8 = [[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding];
-            
+
             if(responseFormat == BASE64)
             {
                 rnfbRespType = RESP_TYPE_BASE64;
@@ -467,13 +507,17 @@ NSOperationQueue *taskQueue;
 // upload progress handler
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didSendBodyData:(int64_t)bytesSent totalBytesSent:(int64_t)totalBytesWritten totalBytesExpectedToSend:(int64_t)totalBytesExpectedToWrite
 {
-    if([uploadProgressTable valueForKey:taskId] == @YES) {
+    RNFetchBlobProgress * pconfig = [uploadProgressTable valueForKey:taskId];
+    if(totalBytesExpectedToWrite == 0)
+        return;
+    NSNumber * now = [NSNumber numberWithFloat:((float)totalBytesWritten/(float)totalBytesExpectedToWrite)];
+    if(pconfig != nil && [pconfig shouldReport:now]) {
         [self.bridge.eventDispatcher
          sendDeviceEventWithName:EVENT_PROGRESS_UPLOAD
          body:@{
                 @"taskId": taskId,
                 @"written": [NSString stringWithFormat:@"%d", totalBytesWritten],
-                @"total": [NSString stringWithFormat:@"%d", bodyLength]
+                @"total": [NSString stringWithFormat:@"%d", totalBytesExpectedToWrite]
                 }
          ];
     }

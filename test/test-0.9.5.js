@@ -52,3 +52,54 @@ describe('issue #122 force response data format', (report, done) => {
   })
 
 })
+
+describe('#129 memory leaking when enable uploadProgress', (report, done) => {
+
+  let file = null
+  let count = 0
+
+  RNFetchBlob.config({ fileCache : true })
+    .fetch('GET', `${TEST_SERVER_URL}/public/6mb-dummy`)
+    .then((res) => {
+      file = res.path()
+      for(let i=0;i<10;i++){
+        RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload`, {
+          'Transfer-Encoding' : 'Chunked'
+        }, RNFetchBlob.wrap(file))
+        .uploadProgress((current, total) => {})
+        .then(() => {
+          count ++
+          if(count >= 10) {
+            fs.unlink(file)
+            done()
+          }
+        })
+      }
+    })
+
+})
+
+false && describe('#131 status code != 200 should not throw an error', (report, done) => {
+
+  let count = 0
+  let codes = [404, 500, 501, 403]
+
+  codes.forEach((code) => {
+
+    RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/xhr-code/${code}`, {
+      'Cache-Control' : 'no-store'
+    })
+    .then(function(res) {
+      report(<Assert key={`status code should be ${this}`} expect={Math.floor(this)} actual={Math.floor(res.info().status)}/>)
+      count ++
+      if(count >= 4)
+        done()
+    }.bind(code))
+    .catch(function(err) {
+      report(<Assert key={`status code ${this} should not cause error`} expect={true} actual={false}/>)
+      count++
+    }.bind(code))
+
+  })
+
+})

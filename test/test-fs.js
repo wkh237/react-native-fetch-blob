@@ -473,6 +473,35 @@ describe('fs.slice test', (report, done) => {
 
 })
 
+describe('#135 binary data to ascii file size checking', (report, done) => {
+
+  let file = null
+  let expectedSize = 0
+
+  RNFetchBlob.config({ fileCache : true })
+    .fetch('GET', `${TEST_SERVER_URL}/public/beethoven.mp3`)
+    .then((res) => {
+      file = res.path()
+      return fs.stat(file)
+    })
+    .then((stat) => {
+      expectedSize = Math.floor(stat.size)
+      return fs.readStream(file, 'ascii')
+    })
+    .then((stream) => {
+      let actual = 0
+      stream.open()
+      stream.onData((chunk) => {
+        actual += chunk.length
+      })
+      stream.onEnd(() => {
+        report(<Assert key="check mp3 file size" expect={expectedSize} actual={actual}/>)
+        done()
+      })
+    })
+
+})
+
 
 function getASCIIArray(str) {
   let r = []

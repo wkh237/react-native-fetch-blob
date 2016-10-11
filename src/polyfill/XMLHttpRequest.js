@@ -35,7 +35,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   _response : any = '';
   _responseText : any = '';
   _responseHeaders : any = {};
-  _responseType : '' | 'arraybuffer' | 'blob' | 'document' | 'json' | 'text' = '';
+  _responseType : '' | 'arraybuffer' | 'blob'  | 'json' | 'text' = '';
   // TODO : not suppoted ATM
   _responseURL : null = '';
   _responseXML : null = '';
@@ -87,7 +87,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   }
 
   static setLog(level:number) {
-    if(number === -1)
+    if(level === -1)
       log.disable()
     else
       log.level(level)
@@ -272,7 +272,6 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     if(e.state === "2") {
       this._responseHeaders = e.headers
       this._statusText = e.status
-      this._responseType = e.respType || ''
       this._status = Math.floor(e.status)
       this._dispatchReadStateChange(XMLHttpRequest.HEADERS_RECEIVED)
     }
@@ -337,7 +336,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     if(resp) {
       let info = resp.respInfo || {}
       log.debug(this._url, info, info.respType)
-      switch(info.respType) {
+      switch(this._responseType) {
         case 'blob' :
           resp.blob().then((b) => {
             this._responseText = resp.text()
@@ -345,6 +344,13 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
             responseDataReady()
           })
         break;
+        case 'arraybuffer':
+          // TODO : to array buffer
+        break
+        case 'json':
+          this._response = resp.json()
+          this._responseText = resp.text()
+        break
         default :
           this._responseText = resp.text()
           this._response = this.responseText

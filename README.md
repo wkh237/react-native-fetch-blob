@@ -4,14 +4,14 @@
 
 A project committed to make file acess and data transfer easier, efficient for React Native developers.
 
+> The npm package is inside `src` folder, if you're going to install using github repository do not point to here directly
+
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
 - File API supports normal files, Asset files, and CameraRoll files
 - Native-to-native file manipulation API, reduce JS bridging performance loss
 - File stream support for dealing with large file
 - Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN (experimental)
-
-> The npm package is inside `src` folder, if you're going to install via git repository do not directly poiint to this folder
 
 ## TOC
 * [About](#user-content-about)
@@ -157,6 +157,8 @@ To sum up :
  - Otherwise, if a string starts with `RNFetchBlob-file://` (which can simply done by `RNFetchBlob.wrap(PATH_TO_THE_FILE)`), it will try to find the data from the URI string after `RNFetchBlob-file://` and use it as request body. 
 - To send the body as-is, simply use a `Content-Type` header not containing `;BASE64` or `application/octet`.
 
+> It is Worth to mentioning that the HTTP request uses cache by default, if you're going to disable it simply add a Cache Control header `'Cache-Control' : 'no-store'` 
+
 > After 0.9.4, we disabled `Chunked` transfer encoding by default, if you're going to use it, you should explicitly set header `Transfer-Encoding` to `Chunked`.
 
 ### Download example : Fetch files that needs authorization token
@@ -268,7 +270,7 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
     }),
     'Content-Type' : 'application/octet-stream',
     // here's the body you're going to send, should be a BASE64 encoded string
-    // (you can use "base64" APIs to make one).
+    // (you can use "base64"(refer to the library 'mathiasbynens/base64') APIs to make one).
     // The data will be converted to "byte array"(say, blob) before request sent.  
   }, base64ImageString)
   .then((res) => {
@@ -378,7 +380,7 @@ What if you want to append a file to form data ? Just like [upload a file from s
 
 ### Upload/Download progress
 
-In `version >= 0.4.2` it is possible to know the upload/download progress. After `0.7.0` IOS and Android upload progress are also supported.
+In `version >= 0.4.2` it is possible to know the upload/download progress. After `0.7.0` IOS and Android upload progress are also supported. 
 
 ```js
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
@@ -391,6 +393,30 @@ In `version >= 0.4.2` it is possible to know the upload/download progress. After
     })
     // listen to download progress event
     .progress((received, total) => {
+        console.log('progress', received / total)
+    })
+    .then((resp) => {
+      // ...
+    })
+    .catch((err) => {
+      // ...
+    })
+```
+
+In `0.9.6`, you can specify an optional first argument which contains `count` and `interval` to limit progress event frequency (this will be done in native context in order to reduce RCT bridge overhead). Notice that `count` argument will not work if the server does not provide response content length.
+
+
+```js
+  RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
+      ... some headers,
+      'Content-Type' : 'octet-stream'
+    }, base64DataString)
+    // listen to upload progress event, emit every 250ms
+    .uploadProgress({ interval : 250 },(written, total) => {
+        console.log('uploaded', written / total)
+    })
+    // listen to download progress event, every 10%
+    .progress({ count : 10 }, (received, total) => {
         console.log('progress', received / total)
     })
     .then((resp) => {
@@ -709,9 +735,11 @@ Here's a [sample app](https://github.com/wkh237/rn-firebase-storage-upload-sampl
 
 ## Performance Tips
 
-**Reduce RCT Bridge and BASE64 Overheard**
+**Read Stream Event Overhead**
 
 When reading data via `fs.readStream` the process seems blocking JS thread when file is large, it's because the default buffer size is quite small (4kb) which result in large amount of events triggered in JS thread, try to increase the buffer size (for example 100kb = 102400) and set a larger interval (which is introduced in 0.9.4 default value is 10ms) to limit the frequency. 
+
+**Reduce RCT Bridge and BASE64 Overhead**
 
 React Native connects JS and Native context by passing JSON around React Native bridge, and there will be an overhead to convert data before they sent to each side. When data is large, this will be quite a performance impact to your app, it's recommended to use file storage instead of BASE64 if possible.The following chart shows how much faster when loading data from storage than BASE64 encoded string on iphone 6.
 

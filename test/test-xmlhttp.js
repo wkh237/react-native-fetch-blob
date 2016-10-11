@@ -136,7 +136,7 @@ describe('HTTP error should not throw error event', (report, done) => {
     xhr.onerror = function() {
       report(
         <Assert
-          key={`HTTP error ${code} should not throw error event`}
+          key={`HTTP status ${code} should not throw error event`}
           expect={false}
           actual={true}/>)
     }

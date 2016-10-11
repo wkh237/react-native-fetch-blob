@@ -3,6 +3,7 @@ package com.RNFetchBlob.Response;
 import android.util.Log;
 
 import com.RNFetchBlob.RNFetchBlobConst;
+import com.RNFetchBlob.RNFetchBlobProgressConfig;
 import com.RNFetchBlob.RNFetchBlobReq;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -41,10 +42,13 @@ public class RNFetchBlobFileResp extends ResponseBody {
         assert path != null;
         this.mPath = path;
         if (path != null) {
+            boolean appendToExistingFile = path.contains("?append=true");
+            path = path.replace("?append=true", "");
+            mPath = path;
             File f = new File(path);
             if(f.exists() == false)
                 f.createNewFile();
-            ofStream = new FileOutputStream(new File(path));
+            ofStream = new FileOutputStream(new File(path), appendToExistingFile);
         }
     }
 
@@ -67,22 +71,27 @@ public class RNFetchBlobFileResp extends ResponseBody {
     private class ProgressReportingSource implements Source {
         @Override
         public long read(Buffer sink, long byteCount) throws IOException {
-            byte [] bytes = new byte[(int) byteCount];
-            long read = originalBody.byteStream().read(bytes, 0, (int) byteCount);
-            bytesDownloaded += read > 0 ? read : 0;
-            Log.i("bytes downloaded", String.valueOf(byteCount) +"/"+ String.valueOf(read) + "=" + String.valueOf(bytesDownloaded));
-            if(read > 0 ) {
-                ofStream.write(bytes, 0, (int) read);
+            try {
+                byte[] bytes = new byte[(int) byteCount];
+                long read = originalBody.byteStream().read(bytes, 0, (int) byteCount);
+                bytesDownloaded += read > 0 ? read : 0;
+                Log.i("bytes downloaded", String.valueOf(byteCount) + "/" + String.valueOf(read) + "=" + String.valueOf(bytesDownloaded));
+                if (read > 0) {
+                    ofStream.write(bytes, 0, (int) read);
+                }
+                RNFetchBlobProgressConfig reportConfig = RNFetchBlobReq.getReportProgress(mTaskId);
+                if (reportConfig != null && contentLength() != 0 &&reportConfig.shouldReport(bytesDownloaded / contentLength())) {
+                    WritableMap args = Arguments.createMap();
+                    args.putString("taskId", mTaskId);
+                    args.putString("written", String.valueOf(bytesDownloaded));
+                    args.putString("total", String.valueOf(contentLength()));
+                    rctContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                            .emit(RNFetchBlobConst.EVENT_PROGRESS, args);
+                }
+                return read;
+            } catch(Exception ex) {
+                return -1;
             }
-            if(RNFetchBlobReq.isReportProgress(mTaskId)) {
-                WritableMap args = Arguments.createMap();
-                args.putString("taskId", mTaskId);
-                args.putString("written", String.valueOf(bytesDownloaded));
-                args.putString("total", String.valueOf(contentLength()));
-                rctContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit(RNFetchBlobConst.EVENT_PROGRESS, args);
-            }
-            return read;
         }
 
         @Override

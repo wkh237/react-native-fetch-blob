@@ -51,7 +51,7 @@ export default class Blob extends EventTarget {
   }
 
   static setLog(level:number) {
-    if(number === -1)
+    if(level === -1)
       log.disable()
     else
       log.level(level)
@@ -224,7 +224,7 @@ export default class Blob extends EventTarget {
    * @param  {string} contentType Optional, content type of new Blob object
    * @return {Blob}
    */
-  slice(start:?number, end:?number, contentType='':?string):Blob {
+  slice(start:?number, end:?number, contentType:?string=''):Blob {
     if(this._closed)
       throw 'Blob has been released.'
     log.verbose('slice called', start, end, contentType)
