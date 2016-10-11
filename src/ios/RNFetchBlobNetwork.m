@@ -42,6 +42,7 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
 {
     BOOL * respFile;
     BOOL isNewPart;
+    BOOL * isIncrement;
     NSMutableData * partBuffer;
     NSString * destPath;
     NSOutputStream * writeStream;
@@ -561,6 +562,7 @@ NSOperationQueue *taskQueue;
         }
     }
 }
+
 
 - (void) URLSessionDidFinishEventsForBackgroundURLSession:(NSURLSession *)session
 {

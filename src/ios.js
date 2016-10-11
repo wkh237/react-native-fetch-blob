@@ -20,7 +20,7 @@ const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
  */
 function openDocument(path:string, scheme:string) {
   if(Platform.OS === 'ios')
-    return RNFetchBlob.openDocument(path, scheme)
+    return RNFetchBlob.openDocument('file://' + path, scheme)
   else
     return Promise.reject('RNFetchBlob.openDocument only supports IOS.')
 }
@@ -33,7 +33,7 @@ function openDocument(path:string, scheme:string) {
  */
 function previewDocument(path:string, scheme:string) {
   if(Platform.OS === 'ios')
-    return RNFetchBlob.previewDocument(path, scheme)
+    return RNFetchBlob.previewDocument('file://' + path, scheme)
   else
     return Promise.reject('RNFetchBlob.previewDocument only supports IOS.')
 }

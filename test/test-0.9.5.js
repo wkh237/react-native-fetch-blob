@@ -30,7 +30,7 @@ let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 
 describe('issue #122 force response data format', (report, done) => {
 
-  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/json-dummy.json`, {
+  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/json-dummy-1.json`, {
     'RNFB-Response' : 'base64'
   })
   .then((res) => {
@@ -38,7 +38,7 @@ describe('issue #122 force response data format', (report, done) => {
     report(
       <Assert key="test data verify" expect="fetchblob-dev" actual={JSON.parse(r).name}/>,
       <Assert key="should successfully decode the data" expect={true} actual={true}/>)
-    return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/json-dummy.json`)
+    return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/json-dummy-1.json`)
   })
   .then((res) => {
     report(
@@ -79,7 +79,7 @@ describe('#129 memory leaking when enable uploadProgress', (report, done) => {
 
 })
 
-false && describe('#131 status code != 200 should not throw an error', (report, done) => {
+describe('#131 status code != 200 should not throw an error', (report, done) => {
 
   let count = 0
   let codes = [404, 500, 501, 403]

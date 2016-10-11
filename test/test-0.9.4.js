@@ -14,6 +14,10 @@ import {
 
 window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
 window.Blob = RNFetchBlob.polyfill.Blob
+window.fetch = new RNFetchBlob.polyfill.Fetch({
+  auto : true,
+  binaryContentTypes : ['image/', 'video/', 'audio/']
+}).build()
 
 const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
@@ -56,7 +60,7 @@ describe('issue #106', (report, done) => {
       return res.json()
     })
     .then((data) => {
-      // console.log(data)
+      console.log(data)
       report(<Assert key="fetch request success" expect={20000} actual={data.total}/>)
       done()
     })
@@ -64,7 +68,9 @@ describe('issue #106', (report, done) => {
 })
 
 describe('issue #111 get redirect destination', (report, done) => {
-  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/redirect`)
+  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/redirect`, {
+    'Cache-Control' : 'no-store'
+  })
   .then((res) => {
     console.log(res.info())
     report(

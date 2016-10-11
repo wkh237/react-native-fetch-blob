@@ -62,6 +62,7 @@ describe('upload asset from camera roll', (report, done) => {
 
 describe('Upload multipart data with file from CameraRoll', (report, done) => {
     let filename = 'test-from-storage-img-'+Date.now()+'.png'
+    console.log(photo)
     RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload-form`, {
         'Content-Type' : 'multipart/form-data',
       }, [
@@ -165,10 +166,11 @@ describe('upload file from assets',(report, done) => {
   let assetName = fs.asset('test-asset1.json')
   RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
     Authorization : `Bearer ${DROPBOX_TOKEN}`,
-    'Dropbox-API-Arg': `{\"path\": \"/rn-upload/file-from-asset-${Platform.OS}.json\",\"mode\": \"add\",\"autorename\": false,\"mute\": false}`,
+    'Dropbox-API-Arg': `{\"path\": \"/rn-upload/file-from-asset-${Platform.OS}.json\",\"mode\": \"overwrite\",\"autorename\": false,\"mute\": false}`,
     'Content-Type' : 'application/octet-stream',
   }, RNFetchBlob.wrap(assetName))
   .then((resp) => {
+    console.log(resp)
     resp = resp.json()
     report(
       <Assert key="file name check"

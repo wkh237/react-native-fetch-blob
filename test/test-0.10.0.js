@@ -78,7 +78,7 @@ describe('issue #102', (report, done) => {
     .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
     .then((res) => {
       tmp = res
-      RNFetchBlob.ios.previewDocument('file://' + res.path(), 'itms-books:')
+      RNFetchBlob.ios.previewDocument(res.path())
       return RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload-form`, {},
       [{ name : String(1), data : RNFetchBlob.wrap(res.path()), filename: '#102-test-image.png' }])
     })

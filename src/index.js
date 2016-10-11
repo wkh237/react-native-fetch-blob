@@ -241,6 +241,8 @@ function fetch(...args:any):Promise {
       console.log(e , 'EXPIRED!!')
       if(e.taskId === taskId && promise.onExpire) {
         promise.onExpire(e)
+      }
+    })
 
     partEvent = emitter.addListener('RNFetchBlobServerPush', (e) => {
       if(e.taskId === taskId && promise.onPartData) {

@@ -66,6 +66,23 @@ app.use(function(req, res, next) {
   next();
 })
 
+
+app.get('/10s-download', (req,res) => {
+  var count = 0
+  var data = ''
+  for(var i =0;i<1024000;i++)
+    data += '1'
+  res.set('Contet-Length', 1024000*10)
+  var it = setInterval(() => {
+    res.write(data)
+    count++
+    if(count == 10) {
+      clearInterval(it)
+      res.end()
+    }
+  }, 1000)
+})
+
 app.get('/video/:count', (req, res) => {
   var count = 0
   res.set('Content-Type', 'multipart/x-mixed-replace; boundary="---osclivepreview---"')
