@@ -147,7 +147,8 @@ NSOperationQueue *taskQueue;
     self.options = options;
     isIncrement = [options valueForKey:@"increment"] == nil ? NO : [[options valueForKey:@"increment"] boolValue];
     redirects = [[NSMutableArray alloc] init];
-    [redirects addObject:req.URL.absoluteString];
+    if(req.URL != nil)
+        [redirects addObject:req.URL.absoluteString];
 
     // set response format
     NSString * rnfbResp = [req.allHTTPHeaderFields valueForKey:@"RNFB-Response"];
@@ -574,7 +575,8 @@ NSOperationQueue *taskQueue;
 
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler
 {
-    [redirects addObject:[request.URL absoluteString]];
+    if(request.URL != nil)
+        [redirects addObject:[request.URL absoluteString]];
     completionHandler(request);
 }
 
