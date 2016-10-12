@@ -20,6 +20,7 @@
 @property (nonatomic) UIDocumentInteractionController * documentController;
 
 + (RCTBridge *)getRCTBridge;
++ (void) checkExpiredSessions;
 
 @end
 

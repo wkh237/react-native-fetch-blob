@@ -217,7 +217,7 @@ NSOperationQueue *taskQueue;
 
     // #115 handling task expired when application entering backgound for a long time
     [app beginBackgroundTaskWithName:taskId expirationHandler:^{
-        NSLog([NSString stringWithFormat:@"session %@ expired event emit", taskId ]);
+        NSLog([NSString stringWithFormat:@"session %@ expired", taskId ]);
         [expirationTable setObject:task forKey:taskId];
         [app endBackgroundTask:task];
 
@@ -227,7 +227,7 @@ NSOperationQueue *taskQueue;
 }
 
 // #115 Invoke fetch.expire event on those expired requests so that the expired event can be handled
-+ (void) getExpiredTasks
++ (void) emitExpiredTasks
 {
     NSEnumerator * emu =  [expirationTable keyEnumerator];
     NSString * key;
@@ -238,6 +238,9 @@ NSOperationQueue *taskQueue;
         NSData * args = @{ @"taskId": key };
         [bridge.eventDispatcher sendDeviceEventWithName:EVENT_EXPIRE body:args];
     }
+    
+    // emit expired event once
+    [expirationTable removeAllObjects];
 }
 
 ////////////////////////////////////////

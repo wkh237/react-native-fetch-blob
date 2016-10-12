@@ -6,8 +6,8 @@
 //  Copyright © 2016 wkh237. All rights reserved.
 //
 
-#ifndef RNFetchBlobResp_h
-#define RNFetchBlobResp_h
+#ifndef RNFetchBlobNetwork_h
+#define RNFetchBlobNetwork_h
 
 #import <Foundation/Foundation.h>
 #import "RCTBridgeModule.h"
@@ -37,7 +37,7 @@ typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse 
 + (void) cancelRequest:(NSString *)taskId;
 + (void) enableProgressReport:(NSString *) taskId;
 + (void) enableUploadProgress:(NSString *) taskId;
-+ (void) getExpiredTasks;
++ (void) emitExpiredTasks;
 
 - (nullable id) init;
 - (void) sendRequest;
@@ -50,4 +50,4 @@ typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse 
 @end
 
 
-#endif /* RNFetchBlobResp_h */
+#endif /* RNFetchBlobNetwork_h */

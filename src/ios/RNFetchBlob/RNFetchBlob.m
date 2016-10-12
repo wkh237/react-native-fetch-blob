@@ -61,7 +61,7 @@ RCT_EXPORT_MODULE();
         [[NSFileManager defaultManager] createDirectoryAtPath:[RNFetchBlobFS getTempPath] withIntermediateDirectories:YES attributes:nil error:NULL];
     }
     bridgeRef = _bridge;
-    [RNFetchBlobNetwork getExpiredTasks];
+    [RNFetchBlobNetwork emitExpiredTasks];
     return self;
 }
 
