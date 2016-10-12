@@ -17,7 +17,7 @@
 }
 
 @property (nonatomic) NSString * filePathPrefix;
-@property (nonatomic) UIDocumentInteractionController * documentController;
+@property (retain) UIDocumentInteractionController * documentController;
 
 + (RCTBridge *)getRCTBridge;
 + (void) checkExpiredSessions;
