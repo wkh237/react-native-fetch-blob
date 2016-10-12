@@ -57,8 +57,8 @@ npm install --save react-native-fetch-blob
 Or if using CocoaPods, add the pod to your `Podfile`, for example:
 
 ```
-pod 'react-native-fetch-blob,
-    :path => '../node_modules/react-native-fetch-blob
+pod 'react-native-fetch-blob',
+    :path => '../node_modules/react-native-fetch-blob'
 ```
 
 **Automatically Link Native Modules**
