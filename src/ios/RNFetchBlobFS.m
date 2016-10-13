@@ -85,6 +85,10 @@ NSMutableDictionary *fileStreams = nil;
 
 #pragma mark - system directories
 
++ (NSString *) getMainBundleDir {
+    return [[NSBundle mainBundle] bundlePath];
+}
+
 + (NSString *) getCacheDir {
     return [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
 }

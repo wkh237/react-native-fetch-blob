@@ -1,5 +1,7 @@
 package com.RNFetchBlob;
 
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -184,6 +186,18 @@ public class RNFetchBlobFS {
      */
     static public Map<String, Object> getSystemfolders(ReactApplicationContext ctx) {
         Map<String, Object> res = new HashMap<>();
+
+        PackageManager m = ctx.getPackageManager();
+        String s = ctx.getPackageName();
+        PackageInfo p = null;
+
+        try {
+            p = m.getPackageInfo(s, 0);
+            s = p.applicationInfo.dataDir;
+            res.put("DocumentDir", s);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
         res.put("DocumentDir", ctx.getFilesDir().getAbsolutePath());
         res.put("CacheDir", ctx.getCacheDir().getAbsolutePath());
         res.put("DCIMDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath());
@@ -782,14 +796,14 @@ public class RNFetchBlobFS {
      * @param event Event name, `data`, `end`, `error`, etc.
      * @param data  Event data
      */
-    void emitStreamEvent(String streamName, String event, String data) {
+    private void emitStreamEvent(String streamName, String event, String data) {
         WritableMap eventData = Arguments.createMap();
         eventData.putString("event", event);
         eventData.putString("detail", data);
         this.emitter.emit(streamName, eventData);
     }
 
-    void emitStreamEvent(String streamName, String event, WritableArray  data) {
+    private void emitStreamEvent(String streamName, String event, WritableArray data) {
         WritableMap eventData = Arguments.createMap();
         eventData.putString("event", event);
         eventData.putArray("detail", data);
@@ -838,13 +852,13 @@ public class RNFetchBlobFS {
 
     }
 
-    public static boolean isAsset(String path) {
+    static boolean isAsset(String path) {
         if(path != null)
             return path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET);
         return false;
     }
 
-    public static String normalizePath(String path) {
+    static String normalizePath(String path) {
         if(path == null)
             return null;
         Uri uri = Uri.parse(path);
