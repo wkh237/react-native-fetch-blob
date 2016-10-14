@@ -44,6 +44,7 @@ typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse 
 - (void) sendRequest:(NSDictionary  * _Nullable )options contentLength:(long)contentLength bridge:(RCTBridge * _Nullable)bridgeRef taskId:(NSString * _Nullable)taskId withRequest:(NSURLRequest * _Nullable)req callback:(_Nullable RCTResponseSenderBlock) callback;
 + (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config;
 + (void) enableUploadProgress:(NSString *) taskId config:(RNFetchBlobProgress *)config;
++ (NSArray *) getCookies:(NSString *) url;
 
 
 

@@ -28,6 +28,7 @@
 
 NSMapTable * taskTable;
 NSMapTable * expirationTable;
+NSMapTable * cookiesTable;
 NSMutableDictionary * progressTable;
 NSMutableDictionary * uploadProgressTable;
 
@@ -93,7 +94,53 @@ NSOperationQueue *taskQueue;
     {
         uploadProgressTable = [[NSMutableDictionary alloc] init];
     }
+    if(cookiesTable == nil)
+    {
+        cookiesTable = [[NSMapTable alloc] init];
+    }
     return self;
+}
+
++ (NSArray *) getCookies:(NSString *) url
+{
+    NSString * hostname = [[NSURL URLWithString:url] host];
+    NSMutableArray * cookies = [NSMutableArray new];
+    NSArray * list = [cookiesTable objectForKey:hostname];
+    for(NSHTTPCookie * cookie in list)
+    {
+        NSMutableString * cookieStr = [[NSMutableString alloc] init];
+        [cookieStr appendString:cookie.name];
+        [cookieStr appendString:@"="];
+        [cookieStr appendString:cookie.value];
+        
+        if(cookie.expiresDate == nil) {
+            [cookieStr appendString:@"; max-age=0"];
+        }
+        else {
+            [cookieStr appendString:@"; expires="];
+            NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+            [dateFormatter setDateFormat:@"EEE, dd MM yyyy HH:mm:ss ZZZ"];
+            NSString *strDate = [dateFormatter stringFromDate:cookie.expiresDate];
+            [cookieStr appendString:strDate];
+        }
+        
+        
+        [cookieStr appendString:@"; domain="];
+        [cookieStr appendString:hostname];
+        [cookieStr appendString:@"; path="];
+        [cookieStr appendString:cookie.path];
+        
+        
+        if (cookie.isSecure) {
+            [cookieStr appendString:@"; secure"];
+        }
+        
+        if (cookie.isHTTPOnly) {
+            [cookieStr appendString:@"; httponly"];
+        }
+        [cookies addObject:cookieStr];
+    }
+    return cookies;
 }
 
 + (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config
@@ -253,6 +300,8 @@ NSOperationQueue *taskQueue;
 
 #pragma mark NSURLSession delegate methods
 
+
+#pragma mark - Received Response
 // set expected content length on response received
 - (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler
 {
@@ -332,12 +381,23 @@ NSOperationQueue *taskQueue;
                      @"status": [NSString stringWithFormat:@"%d", statusCode ]
                     };
 
+#pragma mark - handling cookies
+        // # 153 get cookies
+        if(response.URL != nil)
+        {
+            NSArray<NSHTTPCookie *> * cookies = [NSHTTPCookie cookiesWithResponseHeaderFields: headers forURL:response.URL];
+            if(cookies != nil && [cookies count] > 0) {
+                [cookiesTable setObject:cookies forKey:response.URL.host];
+            }
+        }
+        
         [self.bridge.eventDispatcher
          sendDeviceEventWithName: EVENT_STATE_CHANGE
          body:respInfo
         ];
         headers = nil;
         respInfo = nil;
+
     }
     else
         NSLog(@"oops");

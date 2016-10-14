@@ -91,6 +91,7 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
 
 }
 
+
 // Fetch blob data request
 RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                   taskId:(NSString *)taskId
@@ -473,8 +474,11 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
     return window.rootViewController;
 }
 
-
-#pragma mark RNFetchBlob private methods
+# pragma mark - getCookies
+RCT_EXPORT_METHOD(getCookies:(NSString *)url resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject
+{
+    resolve([RNFetchBlobNetwork getCookies:url]);
+})
 
 
 @end

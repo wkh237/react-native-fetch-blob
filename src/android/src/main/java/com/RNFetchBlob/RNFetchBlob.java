@@ -3,6 +3,7 @@ package com.RNFetchBlob;
 import android.content.Intent;
 import android.net.Uri;
 
+import com.RNFetchBlob.Utils.RNFBCookieJar;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -10,6 +11,7 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableArray;
 
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -201,6 +203,20 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             }
         });
 
+    }
+
+    @ReactMethod
+    /**
+     * Get cookies belongs specific host.
+     * @param host String host name.
+     */
+    public void getCookies(String host, Promise promise) {
+        try {
+            WritableArray cookies = RNFBCookieJar.getCookies(host);
+            promise.resolve(cookies);
+        } catch(Exception err) {
+            promise.reject("RNFetchBlob.getCookies", err.getMessage());
+        }
     }
 
     @ReactMethod

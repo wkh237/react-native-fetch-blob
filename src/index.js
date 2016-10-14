@@ -24,6 +24,7 @@ import base64 from 'base-64'
 import polyfill from './polyfill'
 import android from './android'
 import ios from './ios'
+import net from './net'
 import JSONStream from './json-stream'
 const {
   RNFetchBlobSession,
@@ -41,10 +42,9 @@ const {
   cp
 } = fs
 
-
 const Blob = polyfill.Blob
 const emitter = DeviceEventEmitter
-const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
+const RNFetchBlob= NativeModules.RNFetchBlob
 
 // register message channel event handler.
 emitter.addListener("RNFetchBlobMessage", (e) => {
@@ -549,6 +549,7 @@ export default {
   session,
   fs,
   wrap,
+  net,
   polyfill,
   JSONStream
 }
