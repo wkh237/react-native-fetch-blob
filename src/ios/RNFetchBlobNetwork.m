@@ -378,7 +378,7 @@ NSOperationQueue *taskQueue;
                      @"redirects": redirects,
                      @"respType" : respType,
                      @"timeout" : @NO,
-                     @"status": [NSString stringWithFormat:@"%d", statusCode ]
+                     @"status": [NSNumber numberWithInteger:statusCode]
                     };
 
 #pragma mark - handling cookies
