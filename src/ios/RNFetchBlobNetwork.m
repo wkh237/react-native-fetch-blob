@@ -449,8 +449,8 @@ NSOperationQueue *taskQueue;
     {
         errMsg = [error localizedDescription];
     }
-    else
-    {
+//    else
+//    {
         if(respFile == YES)
         {
             [writeStream close];
@@ -489,7 +489,7 @@ NSOperationQueue *taskQueue;
                 }
             }
         }
-    }
+//    }
 
     callback(@[ errMsg, rnfbRespType, respStr]);
 
