@@ -233,6 +233,12 @@ app.all('/long/', (req, res) => {  var count = 0;
 
 })
 
+app.all('/err-body', (res, res) => {
+  res.status(400)
+  res.write({ data : Date.now() })
+  res.end()
+})
+
 app.all('/timeout', (req, res) => {
 })
 
