@@ -240,7 +240,7 @@ app.all('/cookie', (req, res) => {
 
 app.all('/err-body', (req, res) => {
   res.status(400)
-  res.write({ data : Date.now() })
+  res.write(JSON.stringify({ data : Date.now() }))
   res.end()
 })
 

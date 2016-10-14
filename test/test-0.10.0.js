@@ -89,6 +89,17 @@ let begin = Date.now()
 //
 // })
 
+describe('#154 Allow passing unparsed response body to error handler ', (report, done) =>{
+
+  RNFetchBlob.fetch('get', `${TEST_SERVER_URL}/err-body`)
+  .then((res) => {
+    console.log(res)
+  })
+  .catch((err) => {
+    console.log(err)
+  })
+
+})
 
 describe('cookie test', (report, done) => {
 
