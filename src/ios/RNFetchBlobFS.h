@@ -39,6 +39,7 @@
 @property (nonatomic) BOOL appendData;
 
 // get dirs
++ (NSString *) getMainBundleDir;
 + (NSString *) getTempPath;
 + (NSString *) getCacheDir;
 + (NSString *) getDocumentDir;

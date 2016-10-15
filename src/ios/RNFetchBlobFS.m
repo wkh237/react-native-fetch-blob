@@ -111,7 +111,7 @@ NSMutableDictionary *fileStreams = nil;
 
 + (NSString *) getTempPath {
     
-    return [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingString:@"/RNFetchBlob_tmp"];
+    return NSTemporaryDirectory();
 }
 
 + (NSString *) getTempPath:(NSString*)taskId withExtension:(NSString *)ext {

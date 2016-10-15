@@ -194,7 +194,7 @@ public class RNFetchBlobFS {
         try {
             p = m.getPackageInfo(s, 0);
             s = p.applicationInfo.dataDir;
-            res.put("DocumentDir", s);
+            res.put("MainBundleDir", s);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
