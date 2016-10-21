@@ -738,8 +738,8 @@ NSMutableDictionary *fileStreams = nil;
         totalSpace = [fileSystemSizeInBytes unsignedLongLongValue];
         totalFreeSpace = [freeFileSystemSizeInBytes unsignedLongLongValue];
         callback(@[[NSNull null], @{
-                  @"free" : [NSNumber numberWithInt:totalFreeSpace],
-                  @"total" : [NSNumber numberWithInt:totalSpace]
+                  @"free" : [NSString stringWithFormat:@"%d", totalFreeSpace],
+                  @"total" : [NSString stringWithFormat:@"%d", totalSpace]
                 }]);
     } else {
         callback(@[@"failed to get storage usage."]);
