@@ -338,6 +338,17 @@ function isDir(path:string):Promise<bool, bool> {
 
 }
 
+function df():Promise<{ free : number, total : number }> {
+  return new Promise((resolve, reject) => {
+    RNFetchBlob.df((err, stat) => {
+      if(err)
+        reject(err)
+      else
+        resolve(stat)
+    })
+  })
+}
+
 export default {
   RNFetchBlobSession,
   unlink,
@@ -359,5 +370,6 @@ export default {
   scanFile,
   dirs,
   slice,
-  asset
+  asset,
+  df
 }
