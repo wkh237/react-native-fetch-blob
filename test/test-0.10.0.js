@@ -117,21 +117,21 @@ let begin = Date.now()
 //
 // })
 
-describe('SSL test #159', (report, done) => {
-  RNFetchBlob.config({
-    trusty : true
-    }).fetch('GET', `${TEST_SERVER_URL_SSL}/public/github.png`, {
-      'Cache-Control' : 'no-store'
-    })
-    .then(res => {
-      report(<Assert key="trusty request should pass" expect={true} actual={true}/>)
-      return RNFetchBlob.fetch('GET',`${TEST_SERVER_URL_SSL}/public/github.png`)
-    })
-    .catch(e => {
-      report(<Assert key="non-trusty request should not pass" expect={true} actual={true}/>)
-      done()
-    })
-})
+// describe('SSL test #159', (report, done) => {
+//   RNFetchBlob.config({
+//     trusty : true
+//     }).fetch('GET', `${TEST_SERVER_URL_SSL}/public/github.png`, {
+//       'Cache-Control' : 'no-store'
+//     })
+//     .then(res => {
+//       report(<Assert key="trusty request should pass" expect={true} actual={true}/>)
+//       return RNFetchBlob.fetch('GET',`${TEST_SERVER_URL_SSL}/public/github.png`)
+//     })
+//     .catch(e => {
+//       report(<Assert key="non-trusty request should not pass" expect={true} actual={true}/>)
+//       done()
+//     })
+// })
 
 describe('#162 get free disk space', (report, done) => {
 
