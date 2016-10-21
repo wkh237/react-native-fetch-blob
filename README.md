@@ -431,7 +431,7 @@ In `0.9.6`, you can specify an object as first argument which contains `count` a
 
 ### Cancel Request
 
-After `0.7.0` it is possible to cancel a HTTP request. When the request cancel, it will definately throws an promise rejection, be sure to catch it.
+After `0.7.0` it is possible to cancel an HTTP request. When the request is cancelled, it will throw a promise rejection, be sure to catch it.
 
 ```js
 let task = RNFetchBlob.fetch('GET', 'http://example.com/file/1')
