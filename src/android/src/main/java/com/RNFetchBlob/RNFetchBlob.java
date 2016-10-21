@@ -258,6 +258,17 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void df(final Callback callback) {
+        fsThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS.df(callback);
+            }
+        });
+    }
+
+
+    @ReactMethod
     public void enableUploadProgressReport(String taskId, int interval, int count) {
         RNFetchBlobProgressConfig config = new RNFetchBlobProgressConfig(true, interval, count, RNFetchBlobProgressConfig.ReportType.Upload);
         RNFetchBlobReq.uploadProgressReport.put(taskId, config);

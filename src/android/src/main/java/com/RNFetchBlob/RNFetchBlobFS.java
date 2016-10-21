@@ -6,7 +6,9 @@ import android.content.res.AssetFileDescriptor;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
+import android.os.StatFs;
 import android.os.SystemClock;
 import android.util.Base64;
 
@@ -742,6 +744,20 @@ public class RNFetchBlobFS {
         } catch(Exception err) {
             callback.invoke(err.getLocalizedMessage());
         }
+    }
+
+    static void df(Callback callback) {
+        StatFs stat = new StatFs(Environment.getDataDirectory().getPath());
+        WritableMap args = Arguments.createMap();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            args.putString("internal_free", String.valueOf(stat.getFreeBytes()));
+            args.putString("internal_total", String.valueOf(stat.getTotalBytes()));
+            StatFs statEx = new StatFs(Environment.getExternalStorageDirectory().getPath());
+            args.putString("external_free", String.valueOf(statEx.getFreeBytes()));
+            args.putString("external_total", String.valueOf(statEx.getTotalBytes()));
+
+        }
+        callback.invoke(null ,args);
     }
 
     /**
