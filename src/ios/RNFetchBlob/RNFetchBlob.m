@@ -470,6 +470,11 @@ RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme resolver
     }
 })
 
+RCT_EXPORT_METHOD(df:(RCTResponseSenderBlock)callback
+{
+    [RNFetchBlobFS df:callback];
+})
+
 - (UIViewController *) documentInteractionControllerViewControllerForPreview: (UIDocumentInteractionController *) controller {
     UIWindow *window = [UIApplication sharedApplication].keyWindow;
     return window.rootViewController;
