@@ -89,30 +89,46 @@ let begin = Date.now()
 //
 // })
 
-describe('#154 Allow passing unparsed response body to error handler ', (report, done) =>{
+// describe('#154 Allow passing unparsed response body to error handler ', (report, done) =>{
+//
+//   RNFetchBlob.fetch('get', `${TEST_SERVER_URL}/err-body`)
+//   .then((res) => {
+//     console.log(res)
+//   })
+//   .catch((err) => {
+//     console.log(err)
+//   })
+//
+// })
+//
+// describe('cookie test', (report, done) => {
+//
+//   RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/cookie`)
+//   .then((res) => {
+//     return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/xhr-header`)
+//   })
+//   .then((res) => {
+//     console.log(res)
+//     RNFetchBlob.net.getCookies(`${TEST_SERVER_URL}`)
+//     .then((cookies) => {
+//       console.log(cookies)
+//     })
+//   })
+//
+// })
 
-  RNFetchBlob.fetch('get', `${TEST_SERVER_URL}/err-body`)
-  .then((res) => {
-    console.log(res)
-  })
-  .catch((err) => {
-    console.log(err)
-  })
-
-})
-
-describe('cookie test', (report, done) => {
-
-  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/cookie`)
-  .then((res) => {
-    return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/xhr-header`)
-  })
-  .then((res) => {
-    console.log(res)
-    RNFetchBlob.net.getCookies(`${TEST_SERVER_URL}`)
-    .then((cookies) => {
-      console.log(cookies)
+describe('SSL test #159', (report, done) => {
+  RNFetchBlob.config({
+    trusty : true
+    }).fetch('GET', `${TEST_SERVER_URL_SSL}/public/github.png`, {
+      'Cache-Control' : 'no-store'
     })
-  })
-
+    .then(res => {
+      report(<Assert key="trusty request should pass" expect={true} actual={true}/>)
+      return RNFetchBlob.fetch('GET',`${TEST_SERVER_URL_SSL}/public/github.png`)
+    })
+    .catch(e => {
+      report(<Assert key="non-trusty request should not pass" expect={true} actual={true}/>)
+      done()
+    })
 })
