@@ -598,32 +598,14 @@ NSOperationQueue *taskQueue;
 
 - (void) URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable credantial))completionHandler
 {
-    if([options valueForKey:CONFIG_TRUSTY] != nil)
+    BOOL trusty = [options valueForKey:CONFIG_TRUSTY];
+    if(!trusty)
     {
         completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
     }
     else
     {
-        NSURLSessionAuthChallengeDisposition disposition = NSURLSessionAuthChallengePerformDefaultHandling;
-        __block NSURLCredential *credential = nil;
-        if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust])
-        {
-            credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
-            if (credential) {
-                disposition = NSURLSessionAuthChallengeUseCredential;
-            } else {
-                disposition = NSURLSessionAuthChallengePerformDefaultHandling;
-            }
-        }
-        else
-        {
-            disposition = NSURLSessionAuthChallengeCancelAuthenticationChallenge;
-            RCTLogWarn(@"counld not create connection with an unstrusted SSL certification, if you're going to create connection anyway, add `trusty:true` to RNFetchBlob.config");
-            [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-        }
-        if (completionHandler) {
-            completionHandler(disposition, credential);
-        }
+        completionHandler(NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
     }
 }
 
