@@ -132,3 +132,12 @@ describe('SSL test #159', (report, done) => {
       done()
     })
 })
+
+describe('#162 get free disk space', (report, done) => {
+
+  fs.df().then((stat) => {
+    console.log(stat);
+    done();
+  })
+
+})
