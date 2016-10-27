@@ -167,7 +167,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         // find cached result if `key` property exists
         String cacheKey = this.taskId;
-        String ext = this.options.appendExt.isEmpty() ? "." + this.options.appendExt : "";
+        String ext = this.options.appendExt.isEmpty() ? "" : "." + this.options.appendExt;
 
         if (this.options.key != null) {
             cacheKey = RNFetchBlobUtils.getMD5(this.options.key);
@@ -187,6 +187,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             this.destPath = this.options.path;
         else if(this.options.fileCache)
             this.destPath = RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey) + ext;
+
 
         OkHttpClient.Builder clientBuilder;
 
@@ -497,7 +498,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     // and write response data to destination path.
                     resp.body().bytes();
                 } catch (Exception ignored) {
-                    ignored.printStackTrace();
+//                    ignored.printStackTrace();
                 }
                 this.destPath = this.destPath.replace("?append=true", "");
                 callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
