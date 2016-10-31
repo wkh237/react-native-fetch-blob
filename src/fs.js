@@ -29,7 +29,8 @@ const dirs = {
     MovieDir : RNFetchBlob.MovieDir,
     DownloadDir : RNFetchBlob.DownloadDir,
     DCIMDir : RNFetchBlob.DCIMDir,
-    SDCardDir : RNFetchBlob.SDCardDir
+    SDCardDir : RNFetchBlob.SDCardDir,
+    MainBundleDir : RNFetchBlob.MainBundleDir
 }
 
 /**

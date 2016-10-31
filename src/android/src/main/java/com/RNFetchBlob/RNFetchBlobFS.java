@@ -189,17 +189,6 @@ public class RNFetchBlobFS {
     static public Map<String, Object> getSystemfolders(ReactApplicationContext ctx) {
         Map<String, Object> res = new HashMap<>();
 
-        PackageManager m = ctx.getPackageManager();
-        String s = ctx.getPackageName();
-        PackageInfo p = null;
-
-        try {
-            p = m.getPackageInfo(s, 0);
-            s = p.applicationInfo.dataDir;
-            res.put("MainBundleDir", s);
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
         res.put("DocumentDir", ctx.getFilesDir().getAbsolutePath());
         res.put("CacheDir", ctx.getCacheDir().getAbsolutePath());
         res.put("DCIMDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath());
@@ -208,7 +197,8 @@ public class RNFetchBlobFS {
         res.put("DownloadDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
         res.put("MovieDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getAbsolutePath());
         res.put("RingtoneDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_RINGTONES).getAbsolutePath());
-        res.put("SDCard", Environment.getExternalStorageDirectory().getAbsolutePath());
+//        res.put("SDCard", Environment.getExternalStorageDirectory().getAbsolutePath());
+        res.put("MainBundleDir", ctx.getApplicationInfo().dataDir);
         return res;
     }
 
@@ -703,7 +693,7 @@ public class RNFetchBlobFS {
             }
             else {
                 if (!created) {
-                    callback.invoke("create file error: failed to create file at path `" + path + "` for its parent path may not exists");
+                    callback.invoke("create file error: failed to create file at path `" + path + "` for its parent path may not exists, or the file already exists. If you intended to overwrite the existing file use fs.writeFile instead.");
                     return;
                 }
                 OutputStream ostream = new FileOutputStream(dest);
