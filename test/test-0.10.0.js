@@ -9,6 +9,7 @@ import {
   Linking,
   Platform,
   Dimensions,
+  BackAndroid,
   AsyncStorage,
   Image,
 } from 'react-native';
@@ -105,7 +106,7 @@ let begin = Date.now()
 //
 //   RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/cookie`)
 //   .then((res) => {
-//     return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/xhr-header`)
+//     return RNFetchBlotesb.fetch('GET', `${TEST_SERVER_URL}/xhr-header`)
 //   })
 //   .then((res) => {
 //     console.log(res)
@@ -133,11 +134,32 @@ let begin = Date.now()
 //     })
 // })
 
-describe('#162 get free disk space', (report, done) => {
+// describe('#162 get free disk space', (report, done) => {
+//
+//   fs.df().then((stat) => {
+//     console.log(stat);
+//     done();
+//   })
+//
+// })
 
-  fs.df().then((stat) => {
-    console.log(stat);
-    done();
+
+describe('action view intent get callback', (report, done) => {
+  let isActionViewVisible = false
+
+  RNFetchBlob.config({
+    fileCache : true,
+    appendExt : 'png',
+    trusty : true
   })
-
+  .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+  .then(res => {
+    console.log(res.data);
+    console.log(res.info())
+    RNFetchBlob.android.actionViewIntent(res.path(), 'image/png')
+    .then(() => {
+        console.log('action-view removed')
+      isActionViewVisible = true
+    });
+  })
 })
