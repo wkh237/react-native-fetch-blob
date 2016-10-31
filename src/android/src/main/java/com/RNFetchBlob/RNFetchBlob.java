@@ -2,9 +2,13 @@ package com.RNFetchBlob;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
+import android.widget.SearchView;
 
 import com.RNFetchBlob.Utils.RNFBCookieJar;
+import com.facebook.react.LifecycleState;
 import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -25,10 +29,12 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
     static LinkedBlockingQueue<Runnable> fsTaskQueue = new LinkedBlockingQueue<>();
     static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    static public boolean ActionViewVisible = false;
 
     public RNFetchBlob(ReactApplicationContext reactContext) {
 
         super(reactContext);
+
         RCTContext = reactContext;
     }
 
@@ -54,14 +60,33 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void actionViewIntent(String path, String mime, Promise promise) {
+    public void actionViewIntent(String path, String mime, final Promise promise) {
         try {
             Intent intent= new Intent(Intent.ACTION_VIEW)
                     .setDataAndType(Uri.parse("file://" + path), mime);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
             this.getReactApplicationContext().startActivity(intent);
-            promise.resolve(null);
+            ActionViewVisible = true;
+            final boolean triggered = false;
+            final LifecycleEventListener listener = new LifecycleEventListener() {
+                @Override
+                public void onHostResume() {
+                    if(triggered)
+                        promise.resolve(null);
+                    RCTContext.removeLifecycleEventListener(this);
+                }
+
+                @Override
+                public void onHostPause() {
+
+                }
+
+                @Override
+                public void onHostDestroy() {
+
+                }
+            };
+            RCTContext.addLifecycleEventListener(listener);
         } catch(Exception ex) {
             promise.reject(ex.getLocalizedMessage());
         }
