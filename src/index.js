@@ -9,6 +9,7 @@ import {
   NativeAppEventEmitter,
   Platform,
   AsyncStorage,
+  AppState,
 } from 'react-native'
 import type {
   RNFetchBlobNative,
@@ -44,7 +45,13 @@ const {
 
 const Blob = polyfill.Blob
 const emitter = DeviceEventEmitter
-const RNFetchBlob= NativeModules.RNFetchBlob
+const RNFetchBlob = NativeModules.RNFetchBlob
+
+AppState.addEventListener('change', (e) => {
+  console.log('app state changed', e)
+  if(e === 'active')
+    RNFetchBlob.emitExpiredEvent(()=>{})
+})
 
 // register message channel event handler.
 emitter.addListener("RNFetchBlobMessage", (e) => {

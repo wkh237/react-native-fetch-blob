@@ -486,5 +486,12 @@ RCT_EXPORT_METHOD(getCookies:(NSString *)url resolver:(RCTPromiseResolveBlock)re
     resolve([RNFetchBlobNetwork getCookies:url]);
 })
 
+# pragma mark - check expired network events
+
+RCT_EXPORT_METHOD(emitExpiredEvent:(RCTResponseSenderBlock)callback
+{
+    [RNFetchBlobNetwork emitExpiredTasks];
+})
+
 
 @end
