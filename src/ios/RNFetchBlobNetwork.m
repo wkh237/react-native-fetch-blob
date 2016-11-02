@@ -264,11 +264,10 @@ NSOperationQueue *taskQueue;
     __block UIApplication * app = [UIApplication sharedApplication];
 
     // #115 handling task expired when application entering backgound for a long time
-    [app beginBackgroundTaskWithName:taskId expirationHandler:^{
+    UIBackgroundTaskIdentifier tid = [app beginBackgroundTaskWithName:taskId expirationHandler:^{
         NSLog([NSString stringWithFormat:@"session %@ expired", taskId ]);
         [expirationTable setObject:task forKey:taskId];
-        [app endBackgroundTask:task];
-
+        [app endBackgroundTask:tid];
     }];
 
 
@@ -285,10 +284,13 @@ NSOperationQueue *taskQueue;
         RCTBridge * bridge = [RNFetchBlob getRCTBridge];
         NSData * args = @{ @"taskId": key };
         [bridge.eventDispatcher sendDeviceEventWithName:EVENT_EXPIRE body:args];
+
     }
     
-    // emit expired event once
+    // clear expired task entries
     [expirationTable removeAllObjects];
+    expirationTable = [[NSMapTable alloc] init];
+
 }
 
 ////////////////////////////////////////
