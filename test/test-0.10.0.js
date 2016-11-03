@@ -13,13 +13,15 @@ import {
   AsyncStorage,
   Image,
 } from 'react-native';
+window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
+window.Blob = RNFetchBlob.polyfill.Blob
 const JSONStream = RNFetchBlob.JSONStream
 const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
   group : '0.10.0',
   run : true,
-  expand : true,
+  expand : false,
   timeout : 20000,
 })
 const { TEST_SERVER_URL, TEST_SERVER_URL_SSL, FILENAME, DROPBOX_TOKEN, styles } = prop()
@@ -72,73 +74,56 @@ describe('json stream via fs', (report, done) => {
     })
   })
 })
-//
-// describe('issue #102', (report, done) => {
-//   let tmp = null
-//   RNFetchBlob.config({ fileCache: true, appendExt : 'png' })
-//     .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
-//     .then((res) => {
-//       tmp = res
-//       RNFetchBlob.ios.previewDocument(res.path())
-//       return RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload-form`, {},
-//       [{ name : String(1), data : RNFetchBlob.wrap(res.path()), filename: '#102-test-image.png' }])
-//     })
-//     .then((res) =>  tmp.flush())
-//     .then(() => {
-//       done()
-//     })
-//
-// })
 
-// describe('#154 Allow passing unparsed response body to error handler ', (report, done) =>{
-//
-//   RNFetchBlob.fetch('get', `${TEST_SERVER_URL}/err-body`)
-//   .then((res) => {
-//     console.log(res)
-//   })
-//   .catch((err) => {
-//     console.log(err)
-//   })
-//
-// })
-//
-// describe('cookie test', (report, done) => {
-//
-//   RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/cookie`)
-//   .then((res) => {
-//     return RNFetchBlotesb.fetch('GET', `${TEST_SERVER_URL}/xhr-header`)
-//   })
-//   .then((res) => {
-//     console.log(res)
-//     RNFetchBlob.net.getCookies(`${TEST_SERVER_URL}`)
-//     .then((cookies) => {
-//       console.log(cookies)
-//     })
-//   })
-//
-// })
 
-// describe('SSL test #159', (report, done) => {
-//   RNFetchBlob.config({
-//     trusty : true
-//     }).fetch('GET', `${TEST_SERVER_URL_SSL}/public/github.png`, {
-//       'Cache-Control' : 'no-store'
-//     })
-//     .then(res => {
-//       report(<Assert key="trusty request should pass" expect={true} actual={true}/>)
-//       return RNFetchBlob.fetch('GET',`${TEST_SERVER_URL_SSL}/public/github.png`)
-//     })
-//     .catch(e => {
-//       report(<Assert key="non-trusty request should not pass" expect={true} actual={true}/>)
-//       done()
-//     })
-// })
+describe('cookie test', (report, done) => {
+  let time = Date.now()
+  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/cookie/${time}`)
+  .then((res) => RNFetchBlob.net.getCookies(`${TEST_SERVER_URL}`))
+  .then((cookies) => {
+    let result = /cookieName\=[^;]+/.exec(cookies[0])
+    console.log(result, 'cookieName=' + time)
+    report(<Assert key="cookie should not be empty"
+      expect={'cookieName=' + time}
+      actual={result[0]}/>)
+    done()
+  })
 
-// describe('#162 get free disk space', (report, done) => {
-//
-//   fs.df().then((stat) => {
-//     console.log(stat);
-//     done();
-//   })
-//
-// })
+})
+
+describe('SSL test #159', (report, done) => {
+  RNFetchBlob.config({
+    trusty : true
+    })
+    .fetch('GET', `${TEST_SERVER_URL_SSL}/public/github.png`, {
+      'Cache-Control' : 'no-store'
+    })
+    .then(res => {
+      report(<Assert key="trusty request should pass" expect={true} actual={true}/>)
+      return RNFetchBlob.fetch('GET',`${TEST_SERVER_URL_SSL}/public/github.png`)
+    })
+    .catch(e => {
+      report(<Assert key="non-trusty request should not pass" expect={true} actual={true}/>)
+      done()
+    })
+})
+
+describe('#171 appendExt verify', (report, done) => {
+
+  RNFetchBlob.config({
+    fileCache : true,
+    appendExt : 'png'
+  })
+  .fetch('GET', `${TEST_SERVER_URL}/public/github.png`, {
+    'Cache-Control' : 'no-store'
+  })
+  .then(res => {
+    report(<Assert key="extension appended to tmp path" actual={/.png$/.test(res.path())} expect={true}/>)
+    return fs.stat(res.path())
+  })
+  .then(stat => {
+    report(<Assert key="verify the file existence" expect="23975" actual={stat.size} />)
+    done()
+  })
+
+})
