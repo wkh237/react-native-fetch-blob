@@ -2,11 +2,8 @@ package com.RNFetchBlob;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Bundle;
-import android.widget.SearchView;
 
 import com.RNFetchBlob.Utils.RNFBCookieJar;
-import com.facebook.react.LifecycleState;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.Promise;
