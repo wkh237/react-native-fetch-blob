@@ -136,7 +136,6 @@ function fetchFile(options = {}, method, url, headers = {}, body):Promise {
   let total = -1
   let cacheData = ''
   let info = null
-  let {x,y} = a.props
   let _progress, _uploadProgress, _stateChange
 
   switch(method.toLowerCase()) {
