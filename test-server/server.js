@@ -233,8 +233,8 @@ app.all('/long/', (req, res) => {  var count = 0;
 
 })
 
-app.all('/cookie', (req, res) => {
-  res.cookie('cookieName',Math.random(), { maxAge: 900000, httpOnly: true });
+app.all('/cookie/:data', (req, res) => {
+  res.cookie('cookieName', req.params.data);
   res.end()
 })
 
