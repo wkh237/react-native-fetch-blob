@@ -127,3 +127,46 @@ describe('#171 appendExt verify', (report, done) => {
   })
 
 })
+
+describe('#173 issue with append option', (report, done) => {
+  let dest = dirs.DocumentDir + '/tmp' + Date.now()
+  RNFetchBlob.config({
+    path : dest,
+    overwrite : true
+  })
+  .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+  .then((res) => fs.stat(res.path()))
+  .then((stat) => {
+    report(<Assert key="file size check #1" expect="23975" actual={stat.size}/>)
+    return RNFetchBlob.config({
+      path : dest,
+      overwrite : false
+    })
+    .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+  })
+  .then((res) => fs.stat(res.path()))
+  .then((stat) => {
+    report(<Assert key="file size check #2" expect="47950" actual={stat.size}/>)
+    return RNFetchBlob.config({
+      path : dest,
+      overwrite : true
+    })
+    .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+  })
+  .then((res) => fs.stat(res.path()))
+  .then((stat) => {
+    report(<Assert key="file size check #3" expect="23975" actual={stat.size}/>)
+    return RNFetchBlob.config({
+      path : dest,
+    })
+    .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+  })
+  .then((res) => fs.stat(res.path()))
+  .then((stat) => {
+    report(<Assert key="it should successfully overwrite existing file without config"
+      expect="23975"
+      actual={stat.size}/>)
+    done()
+  })
+
+})
