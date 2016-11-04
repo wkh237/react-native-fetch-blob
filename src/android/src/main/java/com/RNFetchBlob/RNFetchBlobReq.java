@@ -328,7 +328,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                                         RNFetchBlob.RCTContext,
                                         taskId,
                                         originalResponse.body(),
-                                        destPath);
+                                        destPath,
+                                        options.overwrite);
                                 break;
                             default:
                                 extended = new RNFetchBlobDefaultResp(

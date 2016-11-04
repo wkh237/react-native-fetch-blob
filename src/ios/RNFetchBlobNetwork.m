@@ -413,7 +413,11 @@ NSOperationQueue *taskQueue;
             {
                 [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:nil];
             }
+            BOOL overwrite = [options valueForKey:@"overwrite"] == nil ? YES : [[options valueForKey:@"overwrite"] boolValue];
             BOOL appendToExistingFile = [destPath RNFBContainsString:@"?append=true"];
+            
+            appendToExistingFile = !overwrite;
+
             // For solving #141 append response data if the file already exists
             // base on PR#139 @kejinliang
             if(appendToExistingFile)
@@ -424,7 +428,7 @@ NSOperationQueue *taskQueue;
             {
                 [fm createFileAtPath:destPath contents:[[NSData alloc] init] attributes:nil];
             }
-            writeStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:YES];
+            writeStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:appendToExistingFile];
             [writeStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
             [writeStream open];
         }
