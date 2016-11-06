@@ -64,11 +64,11 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             this.getReactApplicationContext().startActivity(intent);
             ActionViewVisible = true;
-            final boolean triggered = false;
+
             final LifecycleEventListener listener = new LifecycleEventListener() {
                 @Override
                 public void onHostResume() {
-                    if(triggered)
+                    if(ActionViewVisible)
                         promise.resolve(null);
                     RCTContext.removeLifecycleEventListener(this);
                 }
