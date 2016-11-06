@@ -13,8 +13,10 @@ import {
   AsyncStorage,
   Image,
 } from 'react-native';
+
 window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
 window.Blob = RNFetchBlob.polyfill.Blob
+
 const JSONStream = RNFetchBlob.JSONStream
 const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
@@ -99,11 +101,17 @@ describe('SSL test #159', (report, done) => {
       'Cache-Control' : 'no-store'
     })
     .then(res => {
-      report(<Assert key="trusty request should pass" expect={true} actual={true}/>)
+      report(<Assert
+        key="trusty request should pass"
+        expect={true}
+        actual={true}/>)
       return RNFetchBlob.fetch('GET',`${TEST_SERVER_URL_SSL}/public/github.png`)
     })
     .catch(e => {
-      report(<Assert key="non-trusty request should not pass" expect={true} actual={true}/>)
+      report(<Assert
+        key="non-trusty request should not pass"
+        expect={true}
+        actual={true}/>)
       done()
     })
 })
@@ -118,11 +126,18 @@ describe('#171 appendExt verify', (report, done) => {
     'Cache-Control' : 'no-store'
   })
   .then(res => {
-    report(<Assert key="extension appended to tmp path" actual={/.png$/.test(res.path())} expect={true}/>)
+    console.log(res.path())
+    report(<Assert
+      key="extension appended to tmp path"
+      actual={/.png$/.test(res.path())}
+      expect={true}/>)
     return fs.stat(res.path())
   })
   .then(stat => {
-    report(<Assert key="verify the file existence" expect="23975" actual={stat.size} />)
+    report(<Assert
+      key="verify the file existence"
+      expect="23975"
+      actual={stat.size} />)
     done()
   })
 
@@ -137,7 +152,10 @@ describe('#173 issue with append option', (report, done) => {
   .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
   .then((res) => fs.stat(res.path()))
   .then((stat) => {
-    report(<Assert key="file size check #1" expect="23975" actual={stat.size}/>)
+    report(<Assert
+      key="file size check #1"
+      expect="23975"
+      actual={stat.size}/>)
     return RNFetchBlob.config({
       path : dest,
       overwrite : false
@@ -146,7 +164,10 @@ describe('#173 issue with append option', (report, done) => {
   })
   .then((res) => fs.stat(res.path()))
   .then((stat) => {
-    report(<Assert key="file size check #2" expect="47950" actual={stat.size}/>)
+    report(<Assert
+      key="file size check #2"
+      expect="47950"
+      actual={stat.size}/>)
     return RNFetchBlob.config({
       path : dest,
       overwrite : true
@@ -155,7 +176,10 @@ describe('#173 issue with append option', (report, done) => {
   })
   .then((res) => fs.stat(res.path()))
   .then((stat) => {
-    report(<Assert key="file size check #3" expect="23975" actual={stat.size}/>)
+    report(<Assert
+      key="file size check #3"
+      expect="23975"
+      actual={stat.size}/>)
     return RNFetchBlob.config({
       path : dest,
     })
@@ -163,10 +187,28 @@ describe('#173 issue with append option', (report, done) => {
   })
   .then((res) => fs.stat(res.path()))
   .then((stat) => {
-    report(<Assert key="it should successfully overwrite existing file without config"
+    report(<Assert
+      key="it should successfully overwrite existing file without config"
       expect="23975"
       actual={stat.size}/>)
     done()
   })
+
+})
+
+describe('#171 verification ', (report, done) => {
+
+  RNFetchBlob
+    .config({
+      session: 'SESSION_NAME',
+      fileCache: true,
+      appendExt: 'mp4'
+    })
+    .fetch('GET', `${TEST_SERVER_URL}/public/cat-fu.mp4`)
+    .then(res => {
+      console.log(res.path())
+    })
+
+
 
 })

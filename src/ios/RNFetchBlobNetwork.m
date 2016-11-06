@@ -515,47 +515,46 @@ NSOperationQueue *taskQueue;
     {
         errMsg = [error localizedDescription];
     }
-//    else
-//    {
-        if(respFile == YES)
-        {
-            [writeStream close];
-            rnfbRespType = RESP_TYPE_PATH;
-            respStr = destPath;
-        }
-        // base64 response
-        else {
-            // #73 fix unicode data encoding issue :
-            // when response type is BASE64, we should first try to encode the response data to UTF8 format
-            // if it turns out not to be `nil` that means the response data contains valid UTF8 string,
-            // in order to properly encode the UTF8 string, use URL encoding before BASE64 encoding.
-            NSString * utf8 = [[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding];
 
-            if(responseFormat == BASE64)
-            {
-                rnfbRespType = RESP_TYPE_BASE64;
-                respStr = [respData base64EncodedStringWithOptions:0];
-            }
-            else if (responseFormat == UTF8)
+    if(respFile == YES)
+    {
+        [writeStream close];
+        rnfbRespType = RESP_TYPE_PATH;
+        respStr = destPath;
+    }
+    // base64 response
+    else {
+        // #73 fix unicode data encoding issue :
+        // when response type is BASE64, we should first try to encode the response data to UTF8 format
+        // if it turns out not to be `nil` that means the response data contains valid UTF8 string,
+        // in order to properly encode the UTF8 string, use URL encoding before BASE64 encoding.
+        NSString * utf8 = [[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding];
+        
+        if(responseFormat == BASE64)
+        {
+            rnfbRespType = RESP_TYPE_BASE64;
+            respStr = [respData base64EncodedStringWithOptions:0];
+        }
+        else if (responseFormat == UTF8)
+        {
+            rnfbRespType = RESP_TYPE_UTF8;
+            respStr = utf8;
+        }
+        else
+        {
+            if(utf8 != nil)
             {
                 rnfbRespType = RESP_TYPE_UTF8;
                 respStr = utf8;
             }
             else
             {
-                if(utf8 != nil)
-                {
-                    rnfbRespType = RESP_TYPE_UTF8;
-                    respStr = utf8;
-                }
-                else
-                {
-                    rnfbRespType = RESP_TYPE_BASE64;
-                    respStr = [respData base64EncodedStringWithOptions:0];
-                }
+                rnfbRespType = RESP_TYPE_BASE64;
+                respStr = [respData base64EncodedStringWithOptions:0];
             }
         }
-//    }
+        }
+
 
     callback(@[ errMsg, rnfbRespType, respStr]);
 
