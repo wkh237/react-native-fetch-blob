@@ -87,7 +87,7 @@ pre 0.29 projects
 RNFB_ANDROID_PERMISSIONS=true rnpm link
 ```
 
-The link script might not take effect if you have non-default project structure, please visit [the wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Manually-Link-Package/_edit) to manually link the package.
+The link script might not take effect if you have non-default project structure, please visit [the wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Manually-Link-Package) to manually link the package.
 
 **Grant Permission to External storage for Android 5.0 or lower**
 
