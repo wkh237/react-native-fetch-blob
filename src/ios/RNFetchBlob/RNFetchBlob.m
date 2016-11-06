@@ -446,7 +446,9 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
     UIViewController *rootCtrl = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
     documentController.delegate = self;
     if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
-        [documentController  presentOptionsMenuFromRect:rootCtrl.view.bounds inView:rootCtrl.view animated:YES];
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            [documentController  presentOptionsMenuFromRect:rootCtrl.view.bounds inView:rootCtrl.view animated:YES];
+        });
         resolve(@[[NSNull null]]);
     } else {
         reject(@"RNFetchBlob could not open document", @"scheme is not supported", nil);
@@ -463,7 +465,9 @@ RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme resolver
     documentController.delegate = self;
     
     if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
-        [documentController presentPreviewAnimated:YES];
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            [documentController presentPreviewAnimated:YES];
+        });
         resolve(@[[NSNull null]]);
     } else {
         reject(@"RNFetchBlob could not open document", @"scheme is not supported", nil);
