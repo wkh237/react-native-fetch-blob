@@ -2,6 +2,7 @@ package com.RNFetchBlob;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.support.annotation.Nullable;
 
 import com.RNFetchBlob.Utils.RNFBCookieJar;
 import com.facebook.react.bridge.Callback;
@@ -304,6 +305,28 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     @ReactMethod
     public void fetchBlobForm(ReadableMap options, String taskId, String method, String url, ReadableMap headers, ReadableArray body, final Callback callback) {
         new RNFetchBlobReq(options, taskId, method, url, headers, null, body, callback).run();
+    }
+
+    @ReactMethod
+    public void read(final String path, final String encoding, final int offset, final int length, final @Nullable String dest, final Promise promise) {
+        fsThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS fs = new RNFetchBlobFS(RCTContext);
+                fs.read(path, encoding, offset, length, dest, promise);
+            }
+        });
+    }
+
+    @ReactMethod
+    public void write(final String path, final String data, final String encoding, final int offset, final int length, final Promise promise) {
+        fsThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS fs = new RNFetchBlobFS(RCTContext);
+                fs.write(path, encoding, data, offset, length, promise);
+            }
+        });
     }
 
 }
