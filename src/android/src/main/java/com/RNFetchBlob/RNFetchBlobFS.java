@@ -1,10 +1,14 @@
 package com.RNFetchBlob;
 
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
+import android.os.StatFs;
 import android.os.SystemClock;
 import android.util.Base64;
 
@@ -184,6 +188,7 @@ public class RNFetchBlobFS {
      */
     static public Map<String, Object> getSystemfolders(ReactApplicationContext ctx) {
         Map<String, Object> res = new HashMap<>();
+
         res.put("DocumentDir", ctx.getFilesDir().getAbsolutePath());
         res.put("CacheDir", ctx.getCacheDir().getAbsolutePath());
         res.put("DCIMDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath());
@@ -192,7 +197,12 @@ public class RNFetchBlobFS {
         res.put("DownloadDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
         res.put("MovieDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getAbsolutePath());
         res.put("RingtoneDir", Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_RINGTONES).getAbsolutePath());
-        res.put("SDCard", Environment.getExternalStorageDirectory().getAbsolutePath());
+        String state;
+        state = Environment.getExternalStorageState();
+        if (state.equals(Environment.MEDIA_MOUNTED)) {
+            res.put("SDCard", Environment.getExternalStorageDirectory().getAbsolutePath());
+        }
+        res.put("MainBundleDir", ctx.getApplicationInfo().dataDir);
         return res;
     }
 
@@ -687,7 +697,7 @@ public class RNFetchBlobFS {
             }
             else {
                 if (!created) {
-                    callback.invoke("create file error: failed to create file at path `" + path + "` for its parent path may not exists");
+                    callback.invoke("create file error: failed to create file at path `" + path + "` for its parent path may not exists, or the file already exists. If you intended to overwrite the existing file use fs.writeFile instead.");
                     return;
                 }
                 OutputStream ostream = new FileOutputStream(dest);
@@ -728,6 +738,20 @@ public class RNFetchBlobFS {
         } catch(Exception err) {
             callback.invoke(err.getLocalizedMessage());
         }
+    }
+
+    static void df(Callback callback) {
+        StatFs stat = new StatFs(Environment.getDataDirectory().getPath());
+        WritableMap args = Arguments.createMap();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            args.putString("internal_free", String.valueOf(stat.getFreeBytes()));
+            args.putString("internal_total", String.valueOf(stat.getTotalBytes()));
+            StatFs statEx = new StatFs(Environment.getExternalStorageDirectory().getPath());
+            args.putString("external_free", String.valueOf(statEx.getFreeBytes()));
+            args.putString("external_total", String.valueOf(statEx.getTotalBytes()));
+
+        }
+        callback.invoke(null ,args);
     }
 
     /**
@@ -782,14 +806,14 @@ public class RNFetchBlobFS {
      * @param event Event name, `data`, `end`, `error`, etc.
      * @param data  Event data
      */
-    void emitStreamEvent(String streamName, String event, String data) {
+    private void emitStreamEvent(String streamName, String event, String data) {
         WritableMap eventData = Arguments.createMap();
         eventData.putString("event", event);
         eventData.putString("detail", data);
         this.emitter.emit(streamName, eventData);
     }
 
-    void emitStreamEvent(String streamName, String event, WritableArray  data) {
+    private void emitStreamEvent(String streamName, String event, WritableArray data) {
         WritableMap eventData = Arguments.createMap();
         eventData.putString("event", event);
         eventData.putArray("detail", data);
@@ -838,13 +862,13 @@ public class RNFetchBlobFS {
 
     }
 
-    public static boolean isAsset(String path) {
+    static boolean isAsset(String path) {
         if(path != null)
             return path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET);
         return false;
     }
 
-    public static String normalizePath(String path) {
+    static String normalizePath(String path) {
         if(path == null)
             return null;
         Uri uri = Uri.parse(path);

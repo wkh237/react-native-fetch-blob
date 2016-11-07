@@ -11,8 +11,6 @@ extern NSString *const FILE_PREFIX = @"RNFetchBlob-file://";
 extern NSString *const ASSET_PREFIX = @"bundle-assets://";
 extern NSString *const AL_PREFIX = @"assets-library://";
 
-
-
 // fetch configs
 extern NSString *const CONFIG_USE_TEMP = @"fileCache";
 extern NSString *const CONFIG_FILE_PATH = @"path";
@@ -26,6 +24,7 @@ extern NSString *const EVENT_STATE_CHANGE = @"RNFetchBlobState";
 extern NSString *const EVENT_SERVER_PUSH = @"RNFetchBlobServerPush";
 extern NSString *const EVENT_PROGRESS = @"RNFetchBlobProgress";
 extern NSString *const EVENT_PROGRESS_UPLOAD = @"RNFetchBlobProgress-upload";
+extern NSString *const EVENT_EXPIRE = @"RNFetchBlobExpire";
 
 extern NSString *const MSG_EVENT = @"RNFetchBlobMessage";
 extern NSString *const MSG_EVENT_LOG = @"log";

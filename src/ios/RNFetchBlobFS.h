@@ -39,6 +39,7 @@
 @property (nonatomic) BOOL appendData;
 
 // get dirs
++ (NSString *) getMainBundleDir;
 + (NSString *) getTempPath;
 + (NSString *) getCacheDir;
 + (NSString *) getDocumentDir;
@@ -65,6 +66,7 @@
 //+ (void) writeFileFromFile:(NSString *)src toFile:(NSString *)dest append:(BOOL)append;
 + (void) writeAssetToPath:(ALAssetRepresentation * )rep dest:(NSString *)dest;
 + (void) readStream:(NSString *)uri encoding:(NSString * )encoding bufferSize:(int)bufferSize tick:(int)tick streamId:(NSString *)streamId bridgeRef:(RCTBridge *)bridgeRef;
++ (void) df:(RCTResponseSenderBlock)callback;
 
 // constructor
 - (id) init;
@@ -81,6 +83,8 @@
 
 - (void) closeInStream;
 - (void) closeOutStream;
+
+- (void) openFile:( NSString * _Nonnull ) uri;
 
 @end
 

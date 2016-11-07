@@ -39,6 +39,7 @@ node -e "var fs=require('fs'); var pkg = JSON.parse(fs.readFileSync('./RNFetchBl
 cd "${TEST_APP_PATH}"
 # npm install --save "${CWD}/src"
 npm install --save react-native-fetch-blob
+# libs that requires web API polyfills
 npm install --save firebase
 react-native link
 

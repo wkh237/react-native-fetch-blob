@@ -6,8 +6,8 @@
 //  Copyright © 2016 wkh237. All rights reserved.
 //
 
-#ifndef RNFetchBlobResp_h
-#define RNFetchBlobResp_h
+#ifndef RNFetchBlobNetwork_h
+#define RNFetchBlobNetwork_h
 
 #import <Foundation/Foundation.h>
 #import "RCTBridgeModule.h"
@@ -33,17 +33,22 @@ typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse 
 @property (nullable, nonatomic) NSError * error;
 
 
-- (nullable id) init;
-- (void) sendRequest;
-
 + (NSMutableDictionary  * _Nullable ) normalizeHeaders:(NSDictionary * _Nullable)headers;
 + (void) cancelRequest:(NSString *)taskId;
++ (void) enableProgressReport:(NSString *) taskId;
++ (void) enableUploadProgress:(NSString *) taskId;
++ (void) emitExpiredTasks;
+
+- (nullable id) init;
+- (void) sendRequest;
+- (void) sendRequest:(NSDictionary  * _Nullable )options contentLength:(long)contentLength bridge:(RCTBridge * _Nullable)bridgeRef taskId:(NSString * _Nullable)taskId withRequest:(NSURLRequest * _Nullable)req callback:(_Nullable RCTResponseSenderBlock) callback;
 + (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config;
 + (void) enableUploadProgress:(NSString *) taskId config:(RNFetchBlobProgress *)config;
-- (void) sendRequest:(NSDictionary  * _Nullable )options contentLength:(long)contentLength bridge:(RCTBridge * _Nullable)bridgeRef taskId:(NSString * _Nullable)taskId withRequest:(NSURLRequest * _Nullable)req callback:(_Nullable RCTResponseSenderBlock) callback;
++ (NSArray *) getCookies:(NSString *) url;
+
 
 
 @end
 
 
-#endif /* RNFetchBlobResp_h */
+#endif /* RNFetchBlobNetwork_h */

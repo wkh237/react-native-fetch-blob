@@ -3,13 +3,16 @@ package com.RNFetchBlob;
 import android.content.Intent;
 import android.net.Uri;
 
+import com.RNFetchBlob.Utils.RNFBCookieJar;
 import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableArray;
 
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -23,10 +26,12 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
     static LinkedBlockingQueue<Runnable> fsTaskQueue = new LinkedBlockingQueue<>();
     static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    static public boolean ActionViewVisible = false;
 
     public RNFetchBlob(ReactApplicationContext reactContext) {
 
         super(reactContext);
+
         RCTContext = reactContext;
     }
 
@@ -52,14 +57,33 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void actionViewIntent(String path, String mime, Promise promise) {
+    public void actionViewIntent(String path, String mime, final Promise promise) {
         try {
             Intent intent= new Intent(Intent.ACTION_VIEW)
                     .setDataAndType(Uri.parse("file://" + path), mime);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
             this.getReactApplicationContext().startActivity(intent);
-            promise.resolve(null);
+            ActionViewVisible = true;
+
+            final LifecycleEventListener listener = new LifecycleEventListener() {
+                @Override
+                public void onHostResume() {
+                    if(ActionViewVisible)
+                        promise.resolve(null);
+                    RCTContext.removeLifecycleEventListener(this);
+                }
+
+                @Override
+                public void onHostPause() {
+
+                }
+
+                @Override
+                public void onHostDestroy() {
+
+                }
+            };
+            RCTContext.addLifecycleEventListener(listener);
         } catch(Exception ex) {
             promise.reject(ex.getLocalizedMessage());
         }
@@ -205,6 +229,20 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     /**
+     * Get cookies belongs specific host.
+     * @param host String host name.
+     */
+    public void getCookies(String host, Promise promise) {
+        try {
+            WritableArray cookies = RNFBCookieJar.getCookies(host);
+            promise.resolve(cookies);
+        } catch(Exception err) {
+            promise.reject("RNFetchBlob.getCookies", err.getMessage());
+        }
+    }
+
+    @ReactMethod
+    /**
      * @param path Stream file path
      * @param encoding Stream encoding, should be one of `base64`, `ascii`, and `utf8`
      * @param bufferSize Stream buffer size, default to 4096 or 4095(base64).
@@ -240,6 +278,17 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
         RNFetchBlobProgressConfig config = new RNFetchBlobProgressConfig(true, interval, count, RNFetchBlobProgressConfig.ReportType.Download);
         RNFetchBlobReq.progressReport.put(taskId, config);
     }
+
+    @ReactMethod
+    public void df(final Callback callback) {
+        fsThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS.df(callback);
+            }
+        });
+    }
+
 
     @ReactMethod
     public void enableUploadProgressReport(String taskId, int interval, int count) {

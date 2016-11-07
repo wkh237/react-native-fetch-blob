@@ -24,7 +24,10 @@ NSMutableDictionary *fileStreams = nil;
 //  File system access methods
 //
 ////////////////////////////////////////
-
+@interface RNFetchBlobFS() {
+    UIDocumentInteractionController * docCtrl;
+}
+@end
 @implementation RNFetchBlobFS
 
 
@@ -82,6 +85,10 @@ NSMutableDictionary *fileStreams = nil;
 
 #pragma mark - system directories
 
++ (NSString *) getMainBundleDir {
+    return [[NSBundle mainBundle] bundlePath];
+}
+
 + (NSString *) getCacheDir {
     return [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
 }
@@ -104,7 +111,7 @@ NSMutableDictionary *fileStreams = nil;
 
 + (NSString *) getTempPath {
     
-    return [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingString:@"/RNFetchBlob_tmp"];
+    return NSTemporaryDirectory();
 }
 
 + (NSString *) getTempPath:(NSString*)taskId withExtension:(NSString *)ext {
@@ -409,9 +416,9 @@ NSMutableDictionary *fileStreams = nil;
             }
             else
             {
-                BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:path];
-                if(!exists) {
-                    reject(@"RNFetchBlobFS readFile error", @"file not exists", [[NSError alloc]init]);
+                if(![[NSFileManager defaultManager] fileExistsAtPath:path]) {
+                    
+                    reject(@"RNFetchBlobFS readFile error", @"file not exists", nil);
                     return;
                 }
                 fileContent = [NSData dataWithContentsOfFile:path];
@@ -713,6 +720,31 @@ NSMutableDictionary *fileStreams = nil;
     {
         onComplete([[self class] getPathOfAsset:uri], nil);
     }
+}
+
+#pragma mark - get disk space
+
++(void) df:(RCTResponseSenderBlock)callback
+{
+    uint64_t totalSpace = 0;
+    uint64_t totalFreeSpace = 0;
+    NSError *error = nil;
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSDictionary *dictionary = [[NSFileManager defaultManager] attributesOfFileSystemForPath:[paths lastObject] error: &error];
+    
+    if (dictionary) {
+        NSNumber *fileSystemSizeInBytes = [dictionary objectForKey: NSFileSystemSize];
+        NSNumber *freeFileSystemSizeInBytes = [dictionary objectForKey:NSFileSystemFreeSize];
+        totalSpace = [fileSystemSizeInBytes unsignedLongLongValue];
+        totalFreeSpace = [freeFileSystemSizeInBytes unsignedLongLongValue];
+        callback(@[[NSNull null], @{
+                  @"free" : [NSString stringWithFormat:@"%d", totalFreeSpace],
+                  @"total" : [NSString stringWithFormat:@"%d", totalSpace]
+                }]);
+    } else {
+        callback(@[@"failed to get storage usage."]);
+    }
+    
 }
 
 + (void) writeAssetToPath:(ALAssetRepresentation * )rep dest:(NSString *)dest

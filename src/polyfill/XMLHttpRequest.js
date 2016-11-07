@@ -7,6 +7,7 @@ import XMLHttpRequestEventTarget from './XMLHttpRequestEventTarget.js'
 import Log from '../utils/log.js'
 import Blob from './Blob.js'
 import ProgressEvent from './ProgressEvent.js'
+import URIUtil from '../utils/uri'
 
 const log = new Log('XMLHttpRequest')
 
@@ -30,8 +31,9 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
 
   // readonly
   _readyState : number = UNSENT;
+  _uriType : 'net' | 'file' = 'net';
   _response : any = '';
-  _responseText : any = null;
+  _responseText : any = '';
   _responseHeaders : any = {};
   _responseType : '' | 'arraybuffer' | 'blob'  | 'json' | 'text' = '';
   // TODO : not suppoted ATM
@@ -42,6 +44,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   _timeout : number = 60000;
   _sendFlag : boolean = false;
   _uploadStarted : boolean = false;
+  _increment : boolean = false;
 
   // RNFetchBlob compatible data structure
   _config : RNFetchBlobConfig = {};
@@ -129,6 +132,8 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     this._method = method
     this._url = url
     this._headers = {}
+    this._increment = URIUtil.isJSONStreamURI(this._url)
+    this._url = this._url.replace(/^JSONStream\:\/\//, '')
     this._dispatchReadStateChange(XMLHttpRequest.OPENED)
   }
 
@@ -137,7 +142,9 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
    * @param  {any} body Body in RNfetchblob flavor
    */
   send(body) {
+
     this._body = body
+
     if(this._readyState !== XMLHttpRequest.OPENED)
       throw 'InvalidStateError : XMLHttpRequest is not opened yet.'
     let promise = Promise.resolve()
@@ -171,10 +178,12 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
       for(let h in _headers) {
         _headers[h] = _headers[h].toString()
       }
+
       this._task = RNFetchBlob
                     .config({
                       auto: true,
                       timeout : this._timeout,
+                      increment : this._increment,
                       binaryContentTypes : XMLHttpRequest.binaryContentTypes
                     })
                     .fetch(_method, _url, _headers, body)
@@ -184,6 +193,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
           .progress(this._progressEvent.bind(this))
           .catch(this._onError.bind(this))
           .then(this._onDone.bind(this))
+
     })
   }
 
@@ -277,7 +287,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     this.upload.dispatchEvent('progress', new ProgressEvent(true, send, total))
   }
 
-  _progressEvent(send:number, total:number) {
+  _progressEvent(send:number, total:number, chunk:string) {
     log.verbose(this.readyState)
     if(this._readyState === XMLHttpRequest.HEADERS_RECEIVED)
       this._dispatchReadStateChange(XMLHttpRequest.LOADING)
@@ -285,6 +295,10 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     if(total && total >= 0)
         lengthComputable = true
     let e = new ProgressEvent(lengthComputable, send, total)
+
+    if(this._increment) {
+      this._responseText += chunk
+    }
     this.dispatchEvent('progress', e)
   }
 
@@ -417,7 +431,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     return this._responseType
   }
 
-  get isRNFBPolyfill() {
+  static get isRNFBPolyfill() {
     return true
   }
 

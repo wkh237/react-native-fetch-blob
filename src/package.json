@@ -1,6 +1,6 @@
 {
   "name": "react-native-fetch-blob",
-  "version": "0.9.6",
+  "version": "0.10.0",
   "description": "A module provides upload, download, and files access API. Supports file stream read/write for process large files.",
   "main": "index.js",
   "scripts": {
@@ -29,6 +29,23 @@
   "repository": {
     "url": "https://github.com/wkh237/react-native-fetch-blob.git"
   },
-  "author": "wkh237",
-  "license": "MIT"
+  "author": "wkh237 <xeiyan@gmail.com>",
+  "license": "MIT",
+  "contributors": [
+    "Andreas Amsenius <andreas@amsenius.se>",
+    "Corentin Smith <corentin.smith@gmail.com>",
+    "Dmitry Petukhov <dmitryvpetukhov@gmail.com>",
+    "Erik Smartt <code@eriksmartt.com>",
+    "Evgeniy Baraniuk <ev.baraniuk@gmail.com>",
+    "Juan B. Rodriguez <jbrodriguez@gmail.com>",
+    "Kaishley <kklingachetti@msn.com>",
+    "Mike Monteith <mike@mikemonteith.com>",
+    "Nguyen Cao Nhat Linh <nhatlinh95@gmail.com>",
+    "Tim Suchanek <tim.suchanek@gmail.com>",
+    "follower <github@rancidbacon.com>",
+    "francisco-sanchez-molina <psm1984@gmail.com>",
+    "kejinliang <kejinliang@users.noreply.github.com>",
+    "smartt <github@eriksmartt.com>",
+    ""
+  ]
 }

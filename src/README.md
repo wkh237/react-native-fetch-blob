@@ -1,10 +1,7 @@
 # react-native-fetch-blob
 [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/releases) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![](https://img.shields.io/badge/Wiki-Public-brightgreen.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/wiki) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]()
 
-
 A project committed to make file acess and data transfer easier, efficient for React Native developers.
-
-# [Please visit our Github Page for latest document](https://github.com/wkh237/react-native-fetch-blob)
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
@@ -85,7 +82,7 @@ pre 0.29 projects
 RNFB_ANDROID_PERMISSIONS=true rnpm link
 ```
 
-The link script might not take effect if you have non-default project structure, please visit [the wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Manually-Link-Package/_edit) to manually link the pacakge.
+The link script might not take effect if you have non-default project structure, please visit [the wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Manually-Link-Package) to manually link the pacakge.
 
 **Grant Permission to External storage for Android 5.0 or lower**
 
@@ -393,6 +390,30 @@ In `version >= 0.4.2` it is possible to know the upload/download progress. After
     })
     // listen to download progress event
     .progress((received, total) => {
+        console.log('progress', received / total)
+    })
+    .then((resp) => {
+      // ...
+    })
+    .catch((err) => {
+      // ...
+    })
+```
+
+In `0.9.6`, you can specify an optional first argument which contains `count` and `interval` to limit progress event frequency (this will be done in native context in order to reduce RCT bridge overhead). Notice that `count` argument will not work if the server does not provide response content length.
+
+
+```js
+  RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
+      ... some headers,
+      'Content-Type' : 'octet-stream'
+    }, base64DataString)
+    // listen to upload progress event, emit every 250ms
+    .uploadProgress({ interval : 250 },(written, total) => {
+        console.log('uploaded', written / total)
+    })
+    // listen to download progress event, every 10%
+    .progress({ count : 10 }, (received, total) => {
         console.log('progress', received / total)
     })
     .then((resp) => {

@@ -9,6 +9,7 @@ import {
   NativeAppEventEmitter,
   Platform,
   AsyncStorage,
+  AppState,
 } from 'react-native'
 import type {
   RNFetchBlobNative,
@@ -16,12 +17,16 @@ import type {
   RNFetchBlobStream,
   RNFetchBlobResponseInfo
 } from './types'
+import URIUtil from './utils/uri'
 import StatefulPromise from './class/StatefulPromise.js'
 import fs from './fs'
 import getUUID from './utils/uuid'
 import base64 from 'base-64'
 import polyfill from './polyfill'
 import android from './android'
+import ios from './ios'
+import net from './net'
+import JSONStream from './json-stream'
 const {
   RNFetchBlobSession,
   readStream,
@@ -38,13 +43,23 @@ const {
   cp
 } = fs
 
-
 const Blob = polyfill.Blob
 const emitter = DeviceEventEmitter
-const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
+const RNFetchBlob = NativeModules.RNFetchBlob
+
+// when app resumes, check if there's any expired network task and trigger
+// their .expire event
+if(Platform.OS === 'ios') {
+  AppState.addEventListener('change', (e) => {
+    console.log('app state changed', e)
+    if(e === 'active')
+      RNFetchBlob.emitExpiredEvent(()=>{})
+  })
+}
 
 // register message channel event handler.
 emitter.addListener("RNFetchBlobMessage", (e) => {
+
   if(e.event === 'warn') {
     console.warn(e.detail)
   }
@@ -100,6 +115,89 @@ function config (options:RNFetchBlobConfig) {
 }
 
 /**
+ * Fetch from file system, use the same interface as RNFB.fetch
+ * @param  {RNFetchBlobConfig} [options={}] Fetch configurations
+ * @param  {string} method     Should be one of `get`, `post`, `put`
+ * @param  {string} url        A file URI string
+ * @param  {string} headers    Arguments of file system API
+ * @param  {any} body       Data to put or post to file systen.
+ * @return {Promise}
+ */
+function fetchFile(options = {}, method, url, headers = {}, body):Promise {
+
+  if(!URIUtil.isFileURI(url)) {
+    throw `could not fetch file from an invalid URI : ${url}`
+  }
+
+  url = URIUtil.unwrapFileURI(url)
+
+  let promise = null
+  let cursor = 0
+  let total = -1
+  let cacheData = ''
+  let info = null
+  let _progress, _uploadProgress, _stateChange
+
+  switch(method.toLowerCase()) {
+
+    case 'post':
+    break
+
+    case 'put':
+    break
+
+    // read data from file system
+    default:
+      promise = fs.stat(url)
+      .then((stat) => {
+        total = stat.size
+        return fs.readStream(url,
+          headers.encoding || 'utf8',
+          Math.floor(headers.bufferSize) || 409600,
+          Math.floor(headers.interval) || 100
+        )
+      })
+      .then((stream) => new Promise((resolve, reject) => {
+        stream.open()
+        info = {
+          state : "2",
+          headers : { 'source' : 'system-fs' },
+          status : 200,
+          respType : 'text',
+          rnfbEncode : headers.encoding || 'utf8'
+        }
+        _stateChange(info)
+        stream.onData((chunk) => {
+          _progress && _progress(cursor, total, chunk)
+          if(headers.noCache)
+            return
+          cacheData += chunk
+        })
+        stream.onError((err) => { reject(err) })
+        stream.onEnd(() => {
+          resolve(new FetchBlobResponse(null, info, cacheData))
+        })
+      }))
+    break
+  }
+
+  promise.progress = (fn) => {
+    _progress = fn
+    return promise
+  }
+  promise.stateChange = (fn) => {
+    _stateChange = fn
+    return promise
+  }
+  promise.uploadProgress = (fn) => {
+    _uploadProgress = fn
+    return promise
+  }
+
+  return promise
+}
+
+/**
  * Create a HTTP request by settings, the `this` context is a `RNFetchBlobConfig` object.
  * @param  {string} method HTTP method, should be `GET`, `POST`, `PUT`, `DELETE`
  * @param  {string} url Request target url string.
@@ -118,15 +216,21 @@ function fetch(...args:any):Promise {
   let options = this || {}
   let subscription, subscriptionUpload, stateEvent, partEvent
   let respInfo = {}
+  let [method, url, headers, body] = [...args]
 
+  // fetch from file system
+  if(URIUtil.isFileURI(url)) {
+    return fetchFile(options, method, url, headers, body)
+  }
+
+  // from remote HTTP(S)
   let promise = new Promise((resolve, reject) => {
-    let [method, url, headers, body] = [...args]
     let nativeMethodName = Array.isArray(body) ? 'fetchBlobForm' : 'fetchBlob'
 
     // on progress event listener
     subscription = emitter.addListener('RNFetchBlobProgress', (e) => {
       if(e.taskId === taskId && promise.onProgress) {
-        promise.onProgress(e.written, e.total)
+        promise.onProgress(e.written, e.total, e.chunk)
       }
     })
 
@@ -140,6 +244,13 @@ function fetch(...args:any):Promise {
       respInfo = e
       if(e.taskId === taskId && promise.onStateChange) {
         promise.onStateChange(e)
+      }
+    })
+
+    subscription = emitter.addListener('RNFetchBlobExpire', (e) => {
+      console.log(e , 'EXPIRED!!')
+      if(e.taskId === taskId && promise.onExpire) {
+        promise.onExpire(e)
       }
     })
 
@@ -180,6 +291,7 @@ function fetch(...args:any):Promise {
       delete promise['stateChange']
       delete promise['part']
       delete promise['cancel']
+      // delete promise['expire']
       promise.cancel = () => {}
 
       if(err)
@@ -243,6 +355,10 @@ function fetch(...args:any):Promise {
   }
   promise.stateChange = (fn) => {
     promise.onStateChange = fn
+    return promise
+  }
+  promise.expire = (fn) => {
+    promise.onExpire = fn
     return promise
   }
   promise.cancel = (fn) => {
@@ -438,9 +554,12 @@ export default {
   fetch,
   base64,
   android,
+  ios,
   config,
   session,
   fs,
   wrap,
-  polyfill
+  net,
+  polyfill,
+  JSONStream
 }

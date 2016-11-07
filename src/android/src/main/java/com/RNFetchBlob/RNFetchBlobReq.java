@@ -11,6 +11,7 @@ import android.util.Base64;
 
 import com.RNFetchBlob.Response.RNFetchBlobDefaultResp;
 import com.RNFetchBlob.Response.RNFetchBlobFileResp;
+import com.RNFetchBlob.Utils.RNFBCookieJar;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -25,6 +26,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
@@ -39,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.ConnectionPool;
+import okhttp3.CookieJar;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
@@ -162,7 +167,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         // find cached result if `key` property exists
         String cacheKey = this.taskId;
-        String ext = this.options.appendExt.isEmpty() ? "." + this.options.appendExt : "";
+        String ext = this.options.appendExt.isEmpty() ? "" : "." + this.options.appendExt;
 
         if (this.options.key != null) {
             cacheKey = RNFetchBlobUtils.getMD5(this.options.key);
@@ -182,6 +187,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             this.destPath = this.options.path;
         else if(this.options.fileCache)
             this.destPath = RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey) + ext;
+
 
         OkHttpClient.Builder clientBuilder;
 
@@ -220,7 +226,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
             }
 
-            if(method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put")) {
+            if(method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put") || method.equalsIgnoreCase("patch")) {
                 String cType = getHeaderIgnoreCases(mheaders, "Content-Type").toLowerCase();
 
                 if(rawRequestBodyArray != null) {
@@ -281,7 +287,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     break;
 
                 case WithoutBody:
-                    if(method.equalsIgnoreCase("POST") || method.equalsIgnoreCase("PUT"))
+                    if(method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put") || method.equalsIgnoreCase("patch"))
                     {
                         builder.method(method, RequestBody.create(null, new byte[0]));
                     }
@@ -290,7 +296,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     break;
             }
 
+            // #156 fix cookie issue
+
+
             final Request req = builder.build();
+            clientBuilder.cookieJar(new RNFBCookieJar());
             clientBuilder.addNetworkInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
@@ -310,20 +320,23 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                                 extended = new RNFetchBlobDefaultResp(
                                         RNFetchBlob.RCTContext,
                                         taskId,
-                                        originalResponse.body());
+                                        originalResponse.body(),
+                                        options.increment);
                                 break;
                             case FileStorage:
                                 extended = new RNFetchBlobFileResp(
                                         RNFetchBlob.RCTContext,
                                         taskId,
                                         originalResponse.body(),
-                                        destPath);
+                                        destPath,
+                                        options.overwrite);
                                 break;
                             default:
                                 extended = new RNFetchBlobDefaultResp(
                                         RNFetchBlob.RCTContext,
                                         taskId,
-                                        originalResponse.body());
+                                        originalResponse.body(),
+                                        options.increment);
                                 break;
                         }
                         return originalResponse.newBuilder().body(extended).build();
@@ -333,8 +346,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     }
                     catch (SocketTimeoutException e ){
                         timeout = true;
+                        RNFetchBlobUtils.emitWarningEvent("RNFetchBlob error when sending request : " + e.getLocalizedMessage());
                     } catch(Exception ex) {
-                        RNFetchBlobUtils.emitWarningEvent("RNFetchBlob error when sending request : " + ex.getLocalizedMessage());
+
                     }
                     return chain.proceed(chain.request());
                 }
@@ -486,7 +500,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     // and write response data to destination path.
                     resp.body().bytes();
                 } catch (Exception ignored) {
-                    ignored.printStackTrace();
+//                    ignored.printStackTrace();
                 }
                 this.destPath = this.destPath.replace("?append=true", "");
                 callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
@@ -613,6 +627,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 DownloadManager dm = (DownloadManager) appCtx.getSystemService(Context.DOWNLOAD_SERVICE);
                 dm.query(query);
                 Cursor c = dm.query(query);
+                String error = null;
                 String filePath = null;
                 // the file exists in media content database
                 if (c.moveToFirst()) {
@@ -623,11 +638,6 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     if (cursor != null) {
                         cursor.moveToFirst();
                         filePath = cursor.getString(0);
-                        cursor.close();
-                        if(filePath != null) {
-                            this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
-                            return;
-                        }
                     }
                 }
                 // When the file is not found in media content database, check if custom path exists
@@ -637,14 +647,20 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         boolean exists = new File(customDest).exists();
                         if(!exists)
                             throw new Exception("Download manager download failed, the file does not downloaded to destination.");
-                        callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, customDest);
+                        else
+                            this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, customDest);
 
                     } catch(Exception ex) {
-                        this.callback.invoke(ex.getLocalizedMessage(), null, null);
+                        error = ex.getLocalizedMessage();
                     }
                 }
-                else
-                    this.callback.invoke("Download manager could not resolve downloaded file path.", RNFetchBlobConst.RNFB_RESPONSE_PATH, null);
+                else {
+                    if(filePath == null)
+                        this.callback.invoke("Download manager could not resolve downloaded file path.", RNFetchBlobConst.RNFB_RESPONSE_PATH, null);
+                    else
+                        this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
+                }
+
             }
         }
     }

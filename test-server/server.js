@@ -66,6 +66,23 @@ app.use(function(req, res, next) {
   next();
 })
 
+
+app.get('/10s-download', (req,res) => {
+  var count = 0
+  var data = ''
+  for(var i =0;i<1024000;i++)
+    data += '1'
+  res.set('Contet-Length', 1024000*10)
+  var it = setInterval(() => {
+    res.write(data)
+    count++
+    if(count == 10) {
+      clearInterval(it)
+      res.end()
+    }
+  }, 1000)
+})
+
 app.get('/video/:count', (req, res) => {
   var count = 0
   res.set('Content-Type', 'multipart/x-mixed-replace; boundary="---osclivepreview---"')
@@ -191,24 +208,20 @@ app.all('/timeout408/:time', (req, res) => {
   }, 5000)
 })
 
-app.get('/10s-download', (req,res) => {
-  var count = 0
-  var data = ''
-  for(var i =0;i<1024000;i++)
-    data += '1'
-  res.set('Contet-Length', 1024000*10)
+app.all('/long/:ticks', (req, res) => {
+  var count = 0;
   var it = setInterval(() => {
-    res.write(data)
-    count++
-    if(count == 10) {
+    console.log('write data', count)
+    res.write('a')
+    if(++count > req.params.ticks){
       clearInterval(it)
       res.end()
     }
-  }, 1000)
+  }, 1000);
+
 })
 
-app.all('/long', (req, res) => {
-  var count = 0;
+app.all('/long/', (req, res) => {  var count = 0;
   var it = setInterval(() => {
     console.log('write data', count)
     res.write('a')
@@ -218,6 +231,17 @@ app.all('/long', (req, res) => {
     }
   }, 1000);
 
+})
+
+app.all('/cookie/:data', (req, res) => {
+  res.cookie('cookieName', req.params.data);
+  res.end()
+})
+
+app.all('/err-body', (req, res) => {
+  res.status(400)
+  res.write(JSON.stringify({ data : Date.now() }))
+  res.end()
 })
 
 app.all('/timeout', (req, res) => {

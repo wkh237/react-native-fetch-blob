@@ -1,10 +1,11 @@
 {
   "name": "react-native-fetch-blob-dev-env",
-  "description" : "RNFB development environment, not dist package",
-  "version": "0.9.6",
+  "description": "RNFB development environment, not dist package",
+  "version": "0.10.0-dev",
   "private": true,
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start",
+    "update-info": "sh scripts/contributors.sh",
     "test": "sh test.sh"
   },
   "devDependencies": {
@@ -13,5 +14,22 @@
     "chokidar": "^1.5.1",
     "express": "^4.13.4",
     "multer": "^1.1.0"
-  }
+  },
+  "contributors": [
+    "Andreas Amsenius <andreas@amsenius.se>",
+    "Corentin Smith <corentin.smith@gmail.com>",
+    "Dmitry Petukhov <dmitryvpetukhov@gmail.com>",
+    "Erik Smartt <code@eriksmartt.com>",
+    "Evgeniy Baraniuk <ev.baraniuk@gmail.com>",
+    "Juan B. Rodriguez <jbrodriguez@gmail.com>",
+    "Kaishley <kklingachetti@msn.com>",
+    "Mike Monteith <mike@mikemonteith.com>",
+    "Nguyen Cao Nhat Linh <nhatlinh95@gmail.com>",
+    "Tim Suchanek <tim.suchanek@gmail.com>",
+    "follower <github@rancidbacon.com>",
+    "francisco-sanchez-molina <psm1984@gmail.com>",
+    "kejinliang <kejinliang@users.noreply.github.com>",
+    "smartt <github@eriksmartt.com>",
+    ""
+  ]
 }

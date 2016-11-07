@@ -17,6 +17,7 @@ extern NSString *const MSG_EVENT_LOG;
 extern NSString *const MSG_EVENT_WARN;
 extern NSString *const MSG_EVENT_ERROR;
 
+extern NSString *const EVENT_EXPIRE;
 extern NSString *const EVENT_PROGRESS;
 extern NSString *const EVENT_SERVER_PUSH;
 extern NSString *const EVENT_PROGRESS_UPLOAD;

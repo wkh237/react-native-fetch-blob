@@ -34,7 +34,7 @@ public class RNFetchBlobFileResp extends ResponseBody {
     ReactApplicationContext rctContext;
     FileOutputStream ofStream;
 
-    public RNFetchBlobFileResp(ReactApplicationContext ctx, String taskId, ResponseBody body, String path) throws IOException {
+    public RNFetchBlobFileResp(ReactApplicationContext ctx, String taskId, ResponseBody body, String path, boolean overwrite) throws IOException {
         super();
         this.rctContext = ctx;
         this.mTaskId = taskId;
@@ -42,7 +42,7 @@ public class RNFetchBlobFileResp extends ResponseBody {
         assert path != null;
         this.mPath = path;
         if (path != null) {
-            boolean appendToExistingFile = path.contains("?append=true");
+            boolean appendToExistingFile = !overwrite;
             path = path.replace("?append=true", "");
             mPath = path;
             File f = new File(path);
