@@ -12,6 +12,7 @@ A project committed to make file acess and data transfer easier, efficient for R
 - Native-to-native file manipulation API, reduce JS bridging performance loss
 - File stream support for dealing with large file
 - Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN (experimental)
+- JSON stream supported base on [Oboe.js@jimhigson](https://github.com/jimhigson/oboe.js/)
 
 ## TOC
 * [About](#user-content-about)
