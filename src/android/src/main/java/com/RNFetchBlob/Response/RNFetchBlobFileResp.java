@@ -46,6 +46,12 @@ public class RNFetchBlobFileResp extends ResponseBody {
             path = path.replace("?append=true", "");
             mPath = path;
             File f = new File(path);
+
+            File parent = f.getParentFile();
+            if(!parent.exists() && !parent.mkdirs()){
+                throw new IllegalStateException("Couldn't create dir: " + parent);
+            }
+
             if(f.exists() == false)
                 f.createNewFile();
             ofStream = new FileOutputStream(new File(path), appendToExistingFile);
