@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.util.Base64;
 
 import com.RNFetchBlob.Response.RNFetchBlobDefaultResp;
@@ -18,6 +19,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
+import com.facebook.react.bridge.ReadableNativeArray;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -163,6 +165,39 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 return;
             }
 
+        }
+
+        if(this.options.largeFileUpload) {
+            HashMap<String, String> mheaders = new HashMap<>();
+            // set headers
+            if (headers != null) {
+                ReadableMapKeySetIterator it = headers.keySetIterator();
+                while (it.hasNextKey()) {
+                    String key = it.nextKey();
+                    String value = headers.getString(key);
+                    mheaders.put(key, value);
+                }
+            }
+
+            Bundle bundle = new Bundle();
+            bundle.putString("taskId", taskId);
+            bundle.putString("url", url);
+            bundle.putSerializable("mheaders", mheaders);
+            bundle.putSerializable("requestBodyArray", ((ReadableNativeArray)rawRequestBodyArray).toArrayList());
+
+            Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
+
+            IntentFilter filter = new IntentFilter(RNFetchBlobService.RNFetchBlobServiceBroadcast);
+            filter.addCategory(RNFetchBlobService.CategoryProgress);
+            filter.addCategory(RNFetchBlobService.CategorySuccess);
+            filter.addCategory(RNFetchBlobService.CategoryFail);
+            appCtx.registerReceiver(this, filter);
+
+            Intent intent = new Intent(appCtx, RNFetchBlobService.class);
+            intent.putExtras(bundle);
+            appCtx.startService(intent);
+
+            return;
         }
 
         // find cached result if `key` property exists
@@ -661,6 +696,35 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, filePath);
                 }
 
+            }
+        } else if (RNFetchBlobService.RNFetchBlobServiceBroadcast.equals(action)) {
+            if (intent.hasCategory(RNFetchBlobService.CategoryProgress)) {
+                HashMap map = (HashMap)intent.getSerializableExtra(RNFetchBlobService.BroadcastProgressMap);
+                String taskId = (String)map.get(RNFetchBlobService.KeyTaskId);
+                WritableMap args = Arguments.createMap();
+                args.putString("taskId", taskId);
+                args.putString("written", String.valueOf(map.get(RNFetchBlobService.KeyWritten)));
+                args.putString("total", String.valueOf(map.get(RNFetchBlobService.KeyTotal)));
+
+                // emit event to js context
+                RNFetchBlob.RCTContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                        .emit(RNFetchBlobConst.EVENT_UPLOAD_PROGRESS, args);
+            } else if (intent.hasCategory(RNFetchBlobService.CategorySuccess)) {
+                // Could be fail.
+                try {
+                    byte[] bytes = intent.getByteArrayExtra(RNFetchBlobService.BroadcastMsg);
+                    callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, new String(bytes, "UTF-8"));
+                } catch (IOException e) {
+                    callback.invoke("RNFetchBlob failed to encode response data to UTF8 string.", null);
+                } finally {
+                    // lets unregister.
+                    Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
+                    appCtx.unregisterReceiver(this);
+                }
+            } else if (intent.hasCategory(RNFetchBlobService.CategoryFail)) {
+                callback.invoke("Request failed.", null, null);
+                Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
+                appCtx.unregisterReceiver(this);
             }
         }
     }

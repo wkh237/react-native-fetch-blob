@@ -20,6 +20,7 @@ public class RNFetchBlobConfig {
     public long timeout = 60000;
     public Boolean increment = false;
     public ReadableArray binaryContentTypes = null;
+    public Boolean largeFileUpload;
 
     RNFetchBlobConfig(ReadableMap options) {
         if(options == null)
@@ -46,6 +47,7 @@ public class RNFetchBlobConfig {
         if(options.hasKey("timeout")) {
             this.timeout = options.getInt("timeout");
         }
+        this.largeFileUpload = options.hasKey("largeFileUpload") ? options.getBoolean("largeFileUpload") : false;
     }
 
 }
