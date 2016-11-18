@@ -698,36 +698,37 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
             }
         } else if (RNFetchBlobService.RNFetchBlobServiceBroadcast.equals(action)) {
-            if (intent.hasCategory(RNFetchBlobService.CategoryProgress)) {
-                HashMap map = (HashMap)intent.getSerializableExtra(RNFetchBlobService.BroadcastProgressMap);
-                String taskId = (String)map.get(RNFetchBlobService.KeyTaskId);
-                WritableMap args = Arguments.createMap();
-                args.putString("taskId", taskId);
-                args.putString("written", String.valueOf(map.get(RNFetchBlobService.KeyWritten)));
-                args.putString("total", String.valueOf(map.get(RNFetchBlobService.KeyTotal)));
+            String _taskId = intent.getStringExtra(RNFetchBlobService.BroadcastTaskId);
+            if (this.taskId.equals(_taskId)) {
+                if (intent.hasCategory(RNFetchBlobService.CategoryProgress)) {
+                    HashMap map = (HashMap) intent.getSerializableExtra(RNFetchBlobService.BroadcastProgressMap);
 
-                // emit event to js context
-                RNFetchBlob.RCTContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit(RNFetchBlobConst.EVENT_UPLOAD_PROGRESS, args);
-            } else if (intent.hasCategory(RNFetchBlobService.CategorySuccess)) {
-                // Could be fail.
-                try {
-                    byte[] bytes = intent.getByteArrayExtra(RNFetchBlobService.BroadcastMsg);
-                    callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, new String(bytes, "UTF-8"));
-                } catch (IOException e) {
-                    callback.invoke("RNFetchBlob failed to encode response data to UTF8 string.", null);
-                } finally {
-                    // lets unregister.
+                    WritableMap args = Arguments.createMap();
+                    args.putString("taskId", _taskId);
+                    args.putString("written", String.valueOf(map.get(RNFetchBlobService.KeyWritten)));
+                    args.putString("total", String.valueOf(map.get(RNFetchBlobService.KeyTotal)));
+
+                    // emit event to js context
+                    RNFetchBlob.RCTContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                            .emit(RNFetchBlobConst.EVENT_UPLOAD_PROGRESS, args);
+                } else if (intent.hasCategory(RNFetchBlobService.CategorySuccess)) {
+                    // Could be fail.
+                    try {
+                        byte[] bytes = intent.getByteArrayExtra(RNFetchBlobService.BroadcastMsg);
+                        callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, new String(bytes, "UTF-8"));
+                    } catch (IOException e) {
+                        callback.invoke("RNFetchBlob failed to encode response data to UTF8 string.", null);
+                    } finally {
+                        // lets unregister.
+                        Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
+                        appCtx.unregisterReceiver(this);
+                    }
+                } else if (intent.hasCategory(RNFetchBlobService.CategoryFail)) {
+                    callback.invoke("Request failed.", null, null);
                     Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
                     appCtx.unregisterReceiver(this);
                 }
-            } else if (intent.hasCategory(RNFetchBlobService.CategoryFail)) {
-                callback.invoke("Request failed.", null, null);
-                Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
-                appCtx.unregisterReceiver(this);
             }
         }
     }
-
-
 }

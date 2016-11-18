@@ -40,8 +40,8 @@ public class RNFetchBlobService extends IntentService implements ProgressListene
 
     public static String BroadcastMsg = "BroadcastMsg";
     public static String BroadcastProgressMap = "BroadcastProgressMap";
+    public static String BroadcastTaskId = "BroadcastTaskId";
 
-    public static String KeyTaskId = "KeyTaskId";
     public static String KeyWritten = "KeyWritten";
     public static String KeyTotal = "KeyTotal";
 
@@ -133,6 +133,7 @@ public class RNFetchBlobService extends IntentService implements ProgressListene
                 broadcastIntent.setAction(RNFetchBlobServiceBroadcast);
                 broadcastIntent.addCategory(CategoryFail);
                 broadcastIntent.putExtra(BroadcastMsg, e.getMessage().getBytes());
+                broadcastIntent.putExtra(BroadcastTaskId, _taskId);
                 sendBroadcast(broadcastIntent);
                 call.cancel();
             }
@@ -144,6 +145,7 @@ public class RNFetchBlobService extends IntentService implements ProgressListene
                 broadcastIntent.setAction(RNFetchBlobServiceBroadcast);
                 broadcastIntent.addCategory(CategorySuccess);
                 broadcastIntent.putExtra(BroadcastMsg, response.body().bytes());
+                broadcastIntent.putExtra(BroadcastTaskId, _taskId);
                 sendBroadcast(broadcastIntent);
 
                 response.body().close();
@@ -175,13 +177,11 @@ public class RNFetchBlobService extends IntentService implements ProgressListene
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(RNFetchBlobServiceBroadcast);
         broadcastIntent.addCategory(CategoryProgress);
+        broadcastIntent.putExtra(BroadcastTaskId, _taskId);
         HashMap map = new HashMap();
         map.put(KeyWritten, Long.valueOf(bytesWritten));
         map.put(KeyTotal, Long.valueOf(contentLength));
-        map.put(KeyTaskId, this._taskId);
         broadcastIntent.putExtra(BroadcastProgressMap, map);
         sendBroadcast(broadcastIntent);
     }
 }
-
-
