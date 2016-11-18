@@ -20,7 +20,7 @@ public class RNFetchBlobConfig {
     public long timeout = 60000;
     public Boolean increment = false;
     public ReadableArray binaryContentTypes = null;
-    public Boolean largeFileUpload;
+    public boolean largeFileUpload;
 
     RNFetchBlobConfig(ReadableMap options) {
         if(options == null)

@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 
 import com.facebook.react.modules.network.*;
 
@@ -78,17 +79,16 @@ public class RNFetchBlobService extends IntentService implements ProgressListene
                         : MediaType.parse("application/octet-stream");
                 if(filename != null && data.startsWith("RNFetchBlob-")) {
                     try {
-                        String newData = data.replace(RNFetchBlobConst.FILE_PREFIX, "");
-                        String normalizedUri = RNFetchBlobFS.normalizePath(newData);
+                        String normalizedUri = RNFetchBlobFS.normalizePath(data.replace(RNFetchBlobConst.FILE_PREFIX, ""));
                         file = new File(String.valueOf(Uri.parse(normalizedUri)));
                     } catch (Exception e) {
-                        //
+                        file = null;
                     }
                 }
 
                 String contentDisposition = "form-data"
-                        + (name != null && name.length() > 0 ? "; name=" + name : "")
-                        + (filename != null && filename.length() > 0 ? "; filename=" + filename : "");
+                        + (!TextUtils.isEmpty(name) ? "; name=" + name : "")
+                        + (!TextUtils.isEmpty(filename) ? "; filename=" + filename : "");
 
                 requestBuilder.addPart(
                         Headers.of("Content-Disposition", contentDisposition),
