@@ -235,7 +235,7 @@ public class RNFetchBlobBody extends RequestBody{
             }
             // data field
             else {
-                header += "Content-Disposition: form-data; name=" + name + "\r\n";
+                header += "Content-Disposition: form-data; name=\"" + name + "\"\r\n";
                 header += "Content-Type: " + field.mime + "\r\n\r\n";
                 os.write(header.getBytes());
                 byte[] fieldData = field.data.getBytes();
