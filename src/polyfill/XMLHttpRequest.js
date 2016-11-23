@@ -53,6 +53,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   _headers: any = {
     'Content-Type' : 'text/plain'
   };
+  _cleanUp : () => void = null;
   _body: any;
 
   // RNFetchBlob promise object, which has `progress`, `uploadProgress`, and
@@ -158,9 +159,16 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
       log.debug('sending blob body', body._blobCreated)
       promise = new Promise((resolve, reject) => {
           body.onCreated((blob) => {
-              log.debug('body created send request')
-              body = RNFetchBlob.wrap(blob.getRNFetchBlobRef())
-              resolve()
+            // when the blob is derived (not created by RN developer), the blob
+            // will be released after XMLHttpRequest sent
+            if(blob.isDerived) {
+              this._cleanUp = () => {
+                blob.close()
+              }
+            }
+            log.debug('body created send request')
+            body = RNFetchBlob.wrap(blob.getRNFetchBlobRef())
+            resolve()
           })
         })
     }

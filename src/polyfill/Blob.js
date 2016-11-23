@@ -73,6 +73,7 @@ export default class Blob extends EventTarget {
     cType = cType || {}
     this.cacheName = getBlobName()
     this.isRNFetchBlobPolyfill = true
+    this.isDerived = defer
     this.type = cType.type || 'text/plain'
     log.verbose('Blob constructor called', 'mime', this.type, 'type', typeof data, 'length', data?  data.length:0)
     this._ref = blobCacheDir + this.cacheName
