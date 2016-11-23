@@ -196,7 +196,7 @@ public class RNFetchBlobBody extends RequestBody{
             // form begin
             String header = "--" + boundary + "\r\n";
             if (field.filename != null) {
-                header += "Content-Disposition: form-data; name=\"" + name + "\"; filename=" + field.filename + "\r\n";
+                header += "Content-Disposition: form-data; name=\"" + name + "\"; filename=\"" + field.filename + "\"\r\n";
                 header += "Content-Type: " + field.mime + "\r\n\r\n";
                 os.write(header.getBytes());
                 // file field header end
