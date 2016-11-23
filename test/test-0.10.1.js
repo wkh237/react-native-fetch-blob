@@ -31,46 +31,26 @@ const dirs = RNFetchBlob.fs.dirs
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 let begin = Date.now()
 
-describe('#177 multipart upload event only triggers once', (report, done) => {
+describe("Invalid promise.resolve call after task is canceled #176", (report, done) => {
 
-  try{
-    let localFile = null
-    let filename = 'dummy-'+Date.now()
-    RNFetchBlob.config({
-      fileCache : true
-    })
-    .fetch('GET', `${TEST_SERVER_URL}/public/6mb-dummy`)
-    .then((res) => {
-      localFile = res.path()
-      return RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload-form`, {
-          'Content-Type' : 'multipart/form-data',
-        }, [
-          { name : 'test-img', filename : filename, data: 'RNFetchBlob-file://' + localFile},
-          { name : 'test-text', filename : 'test-text.txt', data: RNFetchBlob.base64.encode('hello.txt')},
-          { name : 'field1', data : 'hello !!'},
-          { name : 'field2', data : 'hello2 !!'}
-        ])
-        .uploadProgress({ interval : 100 },(now, total) => {
-          console.log(now/total)
-        })
-    })
-    .then((resp) => {
-      resp = resp.json()
-      report(
-        <Assert key="check posted form data #1" expect="hello !!" actual={resp.fields.field1}/>,
-        <Assert key="check posted form data #2" expect="hello2 !!" actual={resp.fields.field2}/>,
-      )
-      return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/${filename}`)
-    })
-    .then((resp) => {
-      report(<Info key="uploaded image">
-        <Image
-          style={styles.image}
-          source={{ uri : 'data:image/png;base64, '+ resp.base64()}}/>
-      </Info>)
-      done()
-    })
-  } catch(err) {
-    console.log(err)
-  }
+  let task = RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/22mb-dummy`)
+
+  task
+  .then(() => {
+    report(<Assert key="Promise should not resolved" expect={true} actual={false}/>);
+  })
+
+  .catch(() => {
+    report(<Assert key="Promise should not resolved" expect={true} actual={true}/>);
+    done()
+  });
+
+  task.progress((current, total) => {
+    report(<Info key={`${Math.floor(current/1024)}kb of ${Math.floor(total/1024)}kb`} uid="report"/>)
+  })
+
+  setTimeout(() => {
+    task.cancel();
+  }, 2000)
+
 })
