@@ -1,7 +1,7 @@
 {
   "name": "react-native-fetch-blob-dev-env",
   "description": "RNFB development environment, not dist package",
-  "version": "0.10.0-dev",
+  "version": "0.10.2-dev",
   "private": true,
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start",
