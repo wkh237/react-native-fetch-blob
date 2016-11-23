@@ -69,10 +69,11 @@ describe('json stream via fs', (report, done) => {
       if(Date.now() - begin < 100)
       return
       begin = Date.now()
-      report(<Info key="report" uid="100">
-        <Text>{count} records</Text>
-      </Info>)
-      done()
+      console.log(count);
+      // report(<Info key="report" uid="100">
+      //   <Text>{count} records</Text>
+      // </Info>)
+      // done()
     })
   })
 })
