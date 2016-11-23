@@ -51,13 +51,14 @@ export default class EventTarget {
 
   /**
    * Dispatch an event
-   * @param {Evnet} event Event data payload.
+   * @param {string} type Event type.
+   * @param {Event} event Event data payload.
    */
-  dispatchEvent(event:Event) {
+  dispatchEvent(type:string,event:Event) {
     log.info('dispatch event', event)
-    if(!(event.type in this.listeners))
+    if(!(type in this.listeners))
       return
-    let handlers = this.listeners[event.type]
+    let handlers = this.listeners[type]
     for(let i in handlers) {
       handlers[i].call(this, event)
     }
@@ -71,7 +72,7 @@ export default class EventTarget {
    */
   clearEventListeners() {
     for(let i in this.listeners) {
-      delete listeners[i]
+      delete this.listeners[i]
     }
   }
 
