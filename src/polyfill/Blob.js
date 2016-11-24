@@ -229,16 +229,26 @@ export default class Blob extends EventTarget {
     if(this._closed)
       throw 'Blob has been released.'
     log.verbose('slice called', start, end, contentType)
+
+
     let resPath = blobCacheDir + getBlobName()
     let pass = false
     log.debug('fs.slice new blob will at', resPath)
     let result = new Blob(RNFetchBlob.wrap(resPath), { type : contentType }, true)
-    fs.slice(this._ref, resPath, start, end).then((dest) => {
+    fs.exists(blobCacheDir)
+    .then((exist) => {
+      if(exist)
+        return Promise.resolve()
+      return fs.mkdir(blobCacheDir)
+    })
+    .then(() => fs.slice(this._ref, resPath, start, end))
+    .then((dest) => {
       log.debug('fs.slice done', dest)
       result._invokeOnCreateEvent()
       pass = true
     })
     .catch((err) => {
+      console.warn('Blob.slice failed:', err)
       pass = true
     })
     log.debug('slice returning new Blob')
