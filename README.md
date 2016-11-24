@@ -4,9 +4,9 @@
 
 A project committed to make file acess and data transfer easier, efficient for React Native developers.
 
-> If you're going to use github repo as npm dependency please use the [archive repository](https://github.com/wkh237/react-native-fetch-blob-package/releases/tag/v0.9.6).
+> If you're going to use github repo as npm dependency please visit the [archive repository](https://github.com/wkh237/react-native-fetch-blob-package/releases/tag/v0.9.6).
 
-> If you're using this library as Firebase Storage solution, please upgrade to 0.9.6 since XMLHttpRequest polyfill has way better compatibility than previous versions.
+> For Firebase Storage solution, please upgrade to 0.10.1-beta.1 for best compatibility.
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
