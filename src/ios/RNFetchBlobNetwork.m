@@ -225,7 +225,6 @@ NSOperationQueue *taskQueue;
     }
     
     defaultConfigObject.sessionSendsLaunchEvents = YES;
-    defaultConfigObject.discretionary = NO;
     
     defaultConfigObject.HTTPMaximumConnectionsPerHost = 10;
     session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:taskQueue];
