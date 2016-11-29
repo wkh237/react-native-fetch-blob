@@ -167,7 +167,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
         }
 
-        if(this.options.largeFileUpload) {
+        if(this.options.multipartFileUpload) {
             HashMap<String, String> mheaders = new HashMap<>();
             // set headers
             if (headers != null) {
