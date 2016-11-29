@@ -29,14 +29,6 @@
                      body:(NSString *)body
                onComplete:(void(^)(NSURLRequest * req, long bodyLength))onComplete;
 
-+(void) buildEncodedRequest:(NSDictionary *)options
-                      taskId:(NSString *)taskId
-                      method:(NSString *)method
-                         url:(NSString *)url
-                     headers:(NSDictionary *)headers
-                        form:(NSString *)body
-                  onComplete:(void(^)(__weak NSURLRequest * req, long bodyLength))onComplete;
-
 +(NSString *) getHeaderIgnoreCases:(NSString *)field fromHeaders:(NSMutableArray *) headers;
 
 

@@ -4,7 +4,9 @@
 
 A project committed to make file acess and data transfer easier, efficient for React Native developers.
 
-> The npm package is inside `src` folder, if you're going to install using github repository do not point to here directly
+> If you're going to use github repo as npm dependency please use the [archive repository](https://github.com/wkh237/react-native-fetch-blob-package/releases/tag/v0.9.6).
+
+> If you're using this library as Firebase Storage solution, please upgrade to 0.9.6 since XMLHttpRequest polyfill has way better compatibility than previous versions.
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
@@ -12,6 +14,7 @@ A project committed to make file acess and data transfer easier, efficient for R
 - Native-to-native file manipulation API, reduce JS bridging performance loss
 - File stream support for dealing with large file
 - Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN (experimental)
+- JSON stream supported base on [Oboe.js@jimhigson](https://github.com/jimhigson/oboe.js/)
 
 ## TOC
 * [About](#user-content-about)
@@ -34,7 +37,7 @@ A project committed to make file acess and data transfer easier, efficient for R
 * [Web API Polyfills](#user-content-web-api-polyfills)
 * [Performance Tips](#user-content-performance-tips)
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
-* [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting)
+* [Caveats](#user-content-caveats)
 * [Development](#user-content-development)
 
 ## About
@@ -55,8 +58,8 @@ npm install --save react-native-fetch-blob
 Or if using CocoaPods, add the pod to your `Podfile`, for example:
 
 ```
-pod 'react-native-fetch-blob,
-    :path => '../node_modules/react-native-fetch-blob
+pod 'react-native-fetch-blob',
+    :path => '../node_modules/react-native-fetch-blob'
 ```
 
 **Automatically Link Native Modules**
@@ -403,7 +406,7 @@ In `version >= 0.4.2` it is possible to know the upload/download progress. After
     })
 ```
 
-In `0.9.6`, you can specify an optional first argument which contains `count` and `interval` to limit progress event frequency (this will be done in native context in order to reduce RCT bridge overhead). Notice that `count` argument will not work if the server does not provide response content length.
+In `0.9.6`, you can specify an object as first argument which contains `count` and `interval`, to the frequency of progress event (this will be done in native context in order to reduce RCT bridge overhead). Notice that `count` argument will not work if the server does not provide response content length.
 
 
 ```js
@@ -429,7 +432,7 @@ In `0.9.6`, you can specify an optional first argument which contains `count` an
 
 ### Cancel Request
 
-After `0.7.0` it is possible to cancel a HTTP request. When the request cancel, it will definately throws an promise rejection, be sure to catch it.
+After `0.7.0` it is possible to cancel an HTTP request. When the request is cancelled, it will throw a promise rejection, be sure to catch it.
 
 ```js
 let task = RNFetchBlob.fetch('GET', 'http://example.com/file/1')
@@ -735,7 +738,7 @@ Here's a [sample app](https://github.com/wkh237/rn-firebase-storage-upload-sampl
 
 ## Performance Tips
 
-**Read Stream Event Overhead**
+**Read Stream and Progress Event Overhead**
 
 When reading data via `fs.readStream` the process seems blocking JS thread when file is large, it's because the default buffer size is quite small (4kb) which result in large amount of events triggered in JS thread, try to increase the buffer size (for example 100kb = 102400) and set a larger interval (which is introduced in 0.9.4 default value is 10ms) to limit the frequency.
 
@@ -756,6 +759,16 @@ Due to the [lack of typed array implementation in JavascriptCore, and limitation
 If you're going to concatenate files, you don't have to read the data to JS context anymore ! In `0.8.0` we introduced new encoding `uri` for writeFile and appendFile API. Which make it possible to done the whole process in native.
 
 <img src="img/performance_f2f.png" style="width : 100%"/>
+
+## Caveats
+
+* This library does not urlencode unicode characters in URL automatically, see [#146](https://github.com/wkh237/react-native-fetch-blob/issues/146).
+* When a `Blob` is created from existing file, the file **WILL BE REMOVE** if you `close` the blob.
+* If you replaced `window.XMLHttpRequest` for some reason (e.g. make Firebase SDK work), it will also effect how official `fetch` works (basically it should work just fine).
+* When file stream and upload/download progress event slow down your app, consider upgrade to `0.9.6+`, use [additional arguments](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogressconfig-eventlistenerpromisernfetchblobresponse) to limit its frequency.
+* When passing a file path to the library, remove `file://` prefix.
+
+when you got problem, have a look at [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting) or [issues labeled Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/issues?utf8=✓&q=label%3A%22trouble%20shooting%22%20), there'd be some helpful information.
 
 ## Changes
 
