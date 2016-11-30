@@ -223,6 +223,9 @@ NSOperationQueue *taskQueue;
     {
         defaultConfigObject.timeoutIntervalForRequest = timeout/1000;
     }
+    
+    defaultConfigObject.sessionSendsLaunchEvents = YES;
+    
     defaultConfigObject.HTTPMaximumConnectionsPerHost = 10;
     session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:taskQueue];
     if(path != nil || [self.options valueForKey:CONFIG_USE_TEMP]!= nil)
@@ -254,7 +257,13 @@ NSOperationQueue *taskQueue;
         respFile = NO;
     }
 
-    __block NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
+    __block NSURLSessionDataTask * task;
+    if (path && req.HTTPMethod == @"POST") {
+        task = [session uploadTaskWithRequest:req fromFile:path];
+    } else {
+        task = [session dataTaskWithRequest:req];
+    }
+    
     [taskTable setObject:task forKey:taskId];
     [task resume];
 

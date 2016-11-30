@@ -381,6 +381,48 @@ What if you want to append a file to form data ? Just like [upload a file from s
   })
 ```
 
+When you append files to form-data and you want to continue uploading while the app is in background on Android, you can use IntentService to upload by adding `multipartFileUpload` flag to config.
+
+```js
+
+  RNFetchBlob.config({
+    multipartFileUpload: true,
+  })
+  .fetch('POST', 'http://www.example.com/upload-form', {
+    Authorization : "Bearer access-token",
+    otherHeader : "foo",
+    // this is required, otherwise it won't be process as a multipart/form-data request
+    'Content-Type' : 'multipart/form-data',
+  }, [
+    // append field data from file path
+    {
+      name : 'avatar',
+      filename : 'avatar.png',
+      // Change BASE64 encoded data to a file path with prefix `RNFetchBlob-file://`.
+      // Or simply wrap the file path with RNFetchBlob.wrap().
+      data: RNFetchBlob.wrap(PATH_TO_THE_FILE)
+    },
+    {
+      name : 'ringtone',
+      filename : 'ring.mp3',
+      // use custom MIME type
+      type : 'application/mp3',
+      // upload a file from asset is also possible in version >= 0.6.2
+      data : RNFetchBlob.wrap(RNFetchBlob.fs.asset('default-ringtone.mp3'))
+    }
+    // elements without property `filename` will be sent as plain text
+    { name : 'name', data : 'user'},
+    { name : 'info', data : JSON.stringify({
+      mail : 'example@example.com',
+      tel : '12345678'
+    })},
+  ]).then((resp) => {
+    // ...
+  }).catch((err) => {
+    // ...
+  })
+```
+
 ### Upload/Download progress
 
 In `version >= 0.4.2` it is possible to know the upload/download progress. After `0.7.0` IOS and Android upload progress are also supported.
