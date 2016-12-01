@@ -608,10 +608,10 @@ When calling `readStream` method, you have to `open` the stream, and start to re
 ```js
 let data = ''
 RNFetchBlob.fs.readStream(
-    // encoding, should be one of `base64`, `utf8`, `ascii`
-    'base64',
     // file path
     PATH_TO_THE_FILE,
+    // encoding, should be one of `base64`, `utf8`, `ascii`
+    'base64',
     // (optional) buffer size, default to 4096 (4095 for BASE64 encoded data)
     // when reading file in BASE64 encoding, buffer size must be multiples of 3.
     4095)
