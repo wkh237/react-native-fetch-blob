@@ -54,3 +54,27 @@ describe("Invalid promise.resolve call after task is canceled #176", (report, do
   }, 2000)
 
 })
+
+describe('passing empty value to fs.lstat doest not crash the app #205', (report, done) => {
+  let path = fs.dirs.DocumentDir +'/testfile' + Date.now()
+  fs.createFile(path, path, 'utf8')
+    .then(() => fs.lstat(null))
+    .catch(() => {
+      done()
+    })
+})
+
+describe('media scanner test #203', (report, done) => {
+
+  RNFetchBlob
+  .config({ path : fs.dirs.DownloadDir +'/#203-'+Date.now()+'.png' , appendExt : 'png' })
+  .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+  .then((res) => {
+    console.log(res.path())
+    fs.scanFile([ { path : res.path() } ])
+  })
+  .then(() => {
+    done()
+  })
+
+})
