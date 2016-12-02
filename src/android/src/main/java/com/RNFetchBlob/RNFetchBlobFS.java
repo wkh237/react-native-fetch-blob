@@ -572,6 +572,10 @@ public class RNFetchBlobFS {
             @Override
             protected Integer doInBackground(String ...args) {
                 WritableArray res = Arguments.createArray();
+                if(args[0] == null) {
+                    callback.invoke("lstat error: the path specified for lstat is either `null` or `undefined`.");
+                    return 0;
+                }
                 File src = new File(args[0]);
                 if(!src.exists()) {
                     callback.invoke("lstat error: failed to list path `" + args[0] + "` for it is not exist or it is not a folder");
