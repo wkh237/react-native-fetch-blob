@@ -32,6 +32,31 @@ NSMapTable * cookiesTable;
 NSMutableDictionary * progressTable;
 NSMutableDictionary * uploadProgressTable;
 
+__attribute__((constructor))
+static void initialize_tables() {
+    if(expirationTable == nil)
+    {
+        expirationTable = [[NSMapTable alloc] init];
+    }
+    if(taskTable == nil)
+    {
+        taskTable = [[NSMapTable alloc] init];
+    }
+    if(progressTable == nil)
+    {
+        progressTable = [[NSMutableDictionary alloc] init];
+    }
+    if(uploadProgressTable == nil)
+    {
+        uploadProgressTable = [[NSMutableDictionary alloc] init];
+    }
+    if(cookiesTable == nil)
+    {
+        cookiesTable = [[NSMapTable alloc] init];
+    }
+}
+
+
 typedef NS_ENUM(NSUInteger, ResponseFormat) {
     UTF8,
     BASE64,
@@ -77,26 +102,6 @@ NSOperationQueue *taskQueue;
     if(taskQueue == nil) {
         taskQueue = [[NSOperationQueue alloc] init];
         taskQueue.maxConcurrentOperationCount = 10;
-    }
-    if(expirationTable == nil)
-    {
-        expirationTable = [[NSMapTable alloc] init];
-    }
-    if(taskTable == nil)
-    {
-        taskTable = [[NSMapTable alloc] init];
-    }
-    if(progressTable == nil)
-    {
-        progressTable = [[NSMutableDictionary alloc] init];
-    }
-    if(uploadProgressTable == nil)
-    {
-        uploadProgressTable = [[NSMutableDictionary alloc] init];
-    }
-    if(cookiesTable == nil)
-    {
-        cookiesTable = [[NSMapTable alloc] init];
     }
     return self;
 }
