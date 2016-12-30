@@ -4,9 +4,9 @@
 
 A project committed to make file acess and data transfer easier, efficient for React Native developers.
 
-> If you're going to use github repo as npm dependency please use the [archive repository](https://github.com/wkh237/react-native-fetch-blob-package/releases/tag/v0.9.6).
+> If you're going to use github repo as npm dependency please visit the [archive repository](https://github.com/wkh237/react-native-fetch-blob-package/releases/tag/v0.9.6).
 
-> If you're using this library as Firebase Storage solution, please upgrade to 0.9.6 since XMLHttpRequest polyfill has way better compatibility than previous versions.
+> For Firebase Storage solution, please upgrade to 0.10.1-beta.1 for best compatibility.
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
@@ -14,7 +14,7 @@ A project committed to make file acess and data transfer easier, efficient for R
 - Native-to-native file manipulation API, reduce JS bridging performance loss
 - File stream support for dealing with large file
 - Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN (experimental)
-- JSON stream supported base on [Oboe.js@jimhigson](https://github.com/jimhigson/oboe.js/)
+- JSON stream supported base on [Oboe.js](https://github.com/jimhigson/oboe.js/) @jimhigson
 
 ## TOC
 * [About](#user-content-about)
@@ -608,10 +608,10 @@ When calling `readStream` method, you have to `open` the stream, and start to re
 ```js
 let data = ''
 RNFetchBlob.fs.readStream(
-    // encoding, should be one of `base64`, `utf8`, `ascii`
-    'base64',
     // file path
     PATH_TO_THE_FILE,
+    // encoding, should be one of `base64`, `utf8`, `ascii`
+    'base64',
     // (optional) buffer size, default to 4096 (4095 for BASE64 encoded data)
     // when reading file in BASE64 encoding, buffer size must be multiples of 3.
     4095)
