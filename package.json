@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start",
     "update-info": "sh scripts/contributors.sh",
-    "test": "sh ./scrips/test.sh"
+    "test": "sh ./scripts/test.sh"
   },
   "devDependencies": {
     "body-parser": "^1.15.0",
