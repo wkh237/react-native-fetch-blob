@@ -6,13 +6,20 @@
 //  Copyright © 2016 wkh237. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
+#import "RNFetchBlobProgress.h"
+#import "RNFetchBlobFS.h"
+
+#ifdef OLD_IMPORT
+#import "RCTBridgeModule.h"
+#else
+#import "<React/RCTBridgeModule.h>"
+#endif
+
 #ifndef RNFetchBlobNetwork_h
 #define RNFetchBlobNetwork_h
 
-#import <Foundation/Foundation.h>
-#import "RCTBridgeModule.h"
-#import "RNFetchBlobProgress.h"
-#import "RNFetchBlobFS.h"
+
 
 typedef void(^CompletionHander)(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error);
 typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error);

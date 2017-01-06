@@ -5,15 +5,28 @@
 //
 
 #import "RNFetchBlob.h"
-#import "RCTLog.h"
-#import "RCTRootView.h"
-#import "RCTBridge.h"
-#import "RCTEventDispatcher.h"
 #import "RNFetchBlobFS.h"
 #import "RNFetchBlobNetwork.h"
 #import "RNFetchBlobConst.h"
 #import "RNFetchBlobReqBuilder.h"
 #import "RNFetchBlobProgress.h"
+
+
+#ifdef OLD_IMPORT
+
+#import "RCTLog.h"
+#import "RCTRootView.h"
+#import "RCTBridge.h"
+#import "RCTEventDispatcher.h"
+
+#else
+
+#import "<React/RCTLog.h>"
+#import "<React/RCTRootView.h>"
+#import "<React/RCTBridge.h>"
+#import "<React/RCTEventDispatcher.h>"
+
+#endif
 
 
 __strong RCTBridge * bridgeRef;

@@ -6,15 +6,20 @@
 //  Copyright © 2016年 suzuri04x2. All rights reserved.
 //
 
-
 #import <Foundation/Foundation.h>
-#import "RCTBridge.h"
 #import "RNFetchBlob.h"
-#import "RCTEventDispatcher.h"
 #import "RNFetchBlobFS.h"
 #import "RNFetchBlobConst.h"
 #import "IOS7Polyfill.h"
 @import AssetsLibrary;
+
+#ifdef OLD_IMPORT
+#import "RCTBridge.h"
+#import "RCTEventDispatcher.h"
+#else
+#import "<React/RCTBridge.h>"
+#import "<React/RCTEventDispatcher.h>"
+#endif
 
 
 NSMutableDictionary *fileStreams = nil;

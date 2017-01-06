@@ -6,19 +6,28 @@
 //  Copyright © 2016 wkh237. All rights reserved.
 //
 
-#import "RCTLog.h"
+
 #import <Foundation/Foundation.h>
-#import "RCTBridge.h"
 #import "RNFetchBlob.h"
-#import "RCTEventDispatcher.h"
 #import "RNFetchBlobFS.h"
-#import "RCTRootView.h"
 #import "RNFetchBlobNetwork.h"
 #import "RNFetchBlobConst.h"
 #import "RNFetchBlobReqBuilder.h"
 #import "IOS7Polyfill.h"
 #import <CommonCrypto/CommonDigest.h>
 #import "RNFetchBlobProgress.h"
+
+#ifdef OLD_IMPORT
+#import "RCTRootView.h"
+#import "RCTLog.h"
+#import "RCTEventDispatcher.h"
+#import "RCTBridge.h"
+#else
+#import "<React/RCTRootView.h>"
+#import "<React/RCTLog.h>"
+#import "<React/RCTEventDispatcher.h>"
+#import "<React/RCTBridge.h>"
+#endif
 
 ////////////////////////////////////////
 //
