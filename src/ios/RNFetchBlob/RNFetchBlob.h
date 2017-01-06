@@ -4,6 +4,7 @@
 //  Created by wkh237 on 2016/4/28.
 //
 
+// comment out this line if your RN project >= 0.40
 #define OLD_IMPORT
 
 #ifndef RNFetchBlob_h
