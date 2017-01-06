@@ -6,6 +6,8 @@
 //  Copyright © 2016年 suzuri04x2. All rights reserved.
 //
 
+#define OLD_IMPORT
+
 #ifndef RNFetchBlobConst_h
 #define RNFetchBlobConst_h
 
