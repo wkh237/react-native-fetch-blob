@@ -12,23 +12,6 @@
 #import "RNFetchBlobProgress.h"
 
 
-#ifdef OLD_IMPORT
-
-#import "RCTLog.h"
-#import "RCTRootView.h"
-#import "RCTBridge.h"
-#import "RCTEventDispatcher.h"
-
-#else
-
-#import <React/RCTLog.h>
-#import <React/RCTRootView.h>
-#import <React/RCTBridge.h>
-#import <React/RCTEventDispatcher.h>
-
-#endif
-
-
 __strong RCTBridge * bridgeRef;
 dispatch_queue_t commonTaskQueue;
 dispatch_queue_t fsQueue;
