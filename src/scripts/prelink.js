@@ -27,7 +27,7 @@ try {
         var target = process.cwd() + '/' + files[0];
         console.log('\033[92mPatching .. \033[97m' + target);
         var data = fs.readFileSync(target);
-        fs.writeFileSync(target, String(data).replace(/^#define OLD_IMPORT$/, '// #define OLD_IMPORT'));
+        fs.writeFileSync(target, String(data).replace(/#define OLD_IMPORT/, ''));
         console.log('done.')
       }
     })
