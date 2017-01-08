@@ -23,10 +23,10 @@
 #import "RCTEventDispatcher.h"
 #import "RCTBridge.h"
 #else
-#import "<React/RCTRootView.h>"
-#import "<React/RCTLog.h>"
-#import "<React/RCTEventDispatcher.h>"
-#import "<React/RCTBridge.h>"
+#import <React/RCTRootView.h>
+#import <React/RCTLog.h>
+#import <React/RCTEventDispatcher.h>
+#import <React/RCTBridge.h>
 #endif
 
 ////////////////////////////////////////

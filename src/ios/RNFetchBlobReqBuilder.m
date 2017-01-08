@@ -16,7 +16,7 @@
 #ifdef OLD_IMPORT
 #import "RCTLog.h"
 #else
-#import "<React/RCTLog.h>"
+#import <React/RCTLog.h>
 #endif
 
 @interface RNFetchBlobReqBuilder()

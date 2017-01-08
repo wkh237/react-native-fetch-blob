@@ -13,7 +13,7 @@
 #ifdef OLD_IMPORT
 #import "RCTBridgeModule.h"
 #else
-#import "<React/RCTBridgeModule.h>"
+#import <React/RCTBridgeModule.h>
 #endif
 #import <UIKit/UIKit.h>
 
