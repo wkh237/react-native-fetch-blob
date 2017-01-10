@@ -6,7 +6,7 @@ A project committed to make file acess and data transfer easier, efficient for R
 
 > If you're going to use github repo as npm dependency please visit the [archive repository](https://github.com/wkh237/react-native-fetch-blob-package/releases/tag/v0.9.6).
 
-> For Firebase Storage solution, please upgrade to 0.10.1-beta.1 for best compatibility.
+> For Firebase Storage solution, please upgrade to latest version for best compatibility.
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
