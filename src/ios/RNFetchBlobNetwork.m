@@ -159,11 +159,19 @@ NSOperationQueue *taskQueue;
 
 + (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config
 {
+    if(progressTable == nil)
+    {
+        progressTable = [[NSMutableDictionary alloc] init];
+    }
     [progressTable setValue:config forKey:taskId];
 }
 
 + (void) enableUploadProgress:(NSString *) taskId config:(RNFetchBlobProgress *)config
 {
+    if(uploadProgressTable == nil)
+    {
+        uploadProgressTable = [[NSMutableDictionary alloc] init];
+    }
     [uploadProgressTable setValue:config forKey:taskId];
 }
 
