@@ -491,7 +491,7 @@ When using DownloadManager, `fileCache` and `path` properties in `config` will n
 ```js
 RNFetchBlob
     .config({
-        addAdnroidDownloads : {
+        addAndroidDownloads : {
             useDownloadManager : true, // <-- this is the only thing required
             // Optional, override notification setting (default to true)
             notification : false,
@@ -530,7 +530,7 @@ RNFetchBlob.config({
     description : 'An image file.',
     mime : 'image/png',
     // Make the file scannable  by media scanner
-    meidaScannable : true,
+    mediaScannable : true,
   }
 })
 .fetch('GET', 'http://example.com/image1.png')
