@@ -42,6 +42,26 @@ const describe = RNTest.config({
 
 // init
 
+describe('#225 upload progress should fire correctly', (report, done) => {
+
+  let data = '';
+  let fired = false;
+  for(let i =0; i< 100000; i++) {
+    data += 'chunkchunk'
+  }
+  let upload = RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload`, {
+    'Content-Type' : 'text/plain;BASE64'
+  }, data)
+  upload.uploadProgress((total, now) => {
+    console.log(total, now)
+    fired = true;
+  })
+  upload.then(() => {
+    report(<Assert key="progress event fired" expect={true} actual={fired}/>);
+    done()
+  })
+})
+
 describe('GET image from server', (report, done) => {
 
   RNFetchBlob
