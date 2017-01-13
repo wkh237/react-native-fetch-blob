@@ -201,8 +201,11 @@ function stat(path:string):Promise<RNFetchBlobFile> {
     RNFetchBlob.stat(path, (err, stat) => {
       if(err)
         reject(new Error(err))
-      else
+      else {
+        if(stat)
+          stat.lastModified = parseInt(stat.lastModified)
         resolve(stat)
+      }
     })
   })
 }
