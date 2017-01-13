@@ -630,7 +630,7 @@ public class RNFetchBlobFS {
                 stat.putString("path", path);
                 stat.putString("type", "asset");
                 stat.putString("size", String.valueOf(fd.getLength()));
-                stat.putString("lastModified", "0");
+                stat.putInt("lastModified", 0);
             }
             else {
                 File target = new File(path);
@@ -641,8 +641,8 @@ public class RNFetchBlobFS {
                 stat.putString("path", target.getPath());
                 stat.putString("type", target.isDirectory() ? "directory" : "file");
                 stat.putString("size", String.valueOf(target.length()));
-                String lastModified = String.valueOf(target.lastModified());
-                stat.putString("lastModified", lastModified);
+                int lastModified = (int) target.lastModified();
+                stat.putInt("lastModified", lastModified);
 
             }
             return stat;
