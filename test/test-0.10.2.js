@@ -38,7 +38,7 @@ describe('#227 IOS file modification date correctness', (report, done) => {
   fs.createFile(path, 'datafornow')
   .then(() => fs.stat(path))
   .then((stat) => {
-    let date = Math.floor(stat.lastModified);
+    let date = stat.lastModified;
     console.log(date, stat);
     let correct = date/Date.now() > 0.95 || date/Date.now() < 1.05;
     report(<Assert key="modification date should be correct"
