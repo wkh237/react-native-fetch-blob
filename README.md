@@ -204,7 +204,7 @@ RNFetchBlob
     fileCache : true,
   })
   .fetch('GET', 'http://www.example.com/file/example.zip', {
-    some headers ..
+    //some headers ..
   })
   .then((res) => {
     // the temp file path
@@ -224,7 +224,7 @@ RNFetchBlob
     appendExt : 'png'
   })
   .fetch('GET', 'http://www.example.com/file/example.zip', {
-    some headers ..
+    //some headers ..
   })
   .then((res) => {
     // the temp file path with file extension `png`
@@ -387,7 +387,7 @@ In `version >= 0.4.2` it is possible to know the upload/download progress. After
 
 ```js
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
-      ... some headers,
+      //... some headers,
       'Content-Type' : 'octet-stream'
     }, base64DataString)
     // listen to upload progress event
@@ -411,7 +411,7 @@ In `0.9.6`, you can specify an object as first argument which contains `count` a
 
 ```js
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
-      ... some headers,
+      //... some headers,
       'Content-Type' : 'octet-stream'
     }, base64DataString)
     // listen to upload progress event, emit every 250ms
