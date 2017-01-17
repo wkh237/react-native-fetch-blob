@@ -17,16 +17,16 @@
 #import <CommonCrypto/CommonDigest.h>
 #import "RNFetchBlobProgress.h"
 
-#ifdef OLD_IMPORT
-#import "RCTRootView.h"
-#import "RCTLog.h"
-#import "RCTEventDispatcher.h"
-#import "RCTBridge.h"
-#else
+#ifdef RN040_IMPORT
 #import <React/RCTRootView.h>
 #import <React/RCTLog.h>
 #import <React/RCTEventDispatcher.h>
 #import <React/RCTBridge.h>
+#else
+#import "RCTRootView.h"
+#import "RCTLog.h"
+#import "RCTEventDispatcher.h"
+#import "RCTBridge.h"
 #endif
 
 ////////////////////////////////////////

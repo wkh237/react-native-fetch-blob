@@ -10,10 +10,10 @@
 #import "RNFetchBlobProgress.h"
 #import "RNFetchBlobFS.h"
 
-#ifdef OLD_IMPORT
-#import "RCTBridgeModule.h"
-#else
+#ifdef RN040_IMPORT
 #import <React/RCTBridgeModule.h>
+#else
+#import "RCTBridgeModule.h"
 #endif
 
 #ifndef RNFetchBlobNetwork_h

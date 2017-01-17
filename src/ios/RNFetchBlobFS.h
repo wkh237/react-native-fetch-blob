@@ -12,10 +12,10 @@
 #import "RNFetchBlob.h"
 
 #import <Foundation/Foundation.h>
-#ifdef OLD_IMPORT
-#import "RCTBridgeModule.h"
-#else
+#ifdef RN040_IMPORT
 #import <React/RCTBridgeModule.h>
+#else
+#import "RCTBridgeModule.h"
 #endif
 
 @import AssetsLibrary;

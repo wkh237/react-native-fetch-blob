@@ -4,25 +4,26 @@
 //  Created by wkh237 on 2016/4/28.
 //
 
-// comment out this line if your RN project >= 0.40
-#define OLD_IMPORT
+//XXX: DO NO REMOVE THIS LINE IF YOU'RE USING IT ON RN > 0.40 PROJECT
+//#define RN040_IMPORT
+
 
 #ifndef RNFetchBlob_h
 #define RNFetchBlob_h
 
 
-#ifdef OLD_IMPORT
-#import "RCTBridgeModule.h"
-#import "RCTLog.h"
-#import "RCTRootView.h"
-#import "RCTBridge.h"
-#import "RCTEventDispatcher.h"
-#else
+#ifdef RN040_IMPORT
 #import <React/RCTLog.h>
 #import <React/RCTRootView.h>
 #import <React/RCTBridge.h>
 #import <React/RCTEventDispatcher.h>
 #import <React/RCTBridgeModule.h>
+#else
+#import "RCTBridgeModule.h"
+#import "RCTLog.h"
+#import "RCTRootView.h"
+#import "RCTBridge.h"
+#import "RCTEventDispatcher.h"
 #endif
 
 #import <UIKit/UIKit.h>

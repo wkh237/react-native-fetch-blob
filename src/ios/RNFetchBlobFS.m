@@ -13,12 +13,12 @@
 #import "IOS7Polyfill.h"
 @import AssetsLibrary;
 
-#ifdef OLD_IMPORT
-#import "RCTBridge.h"
-#import "RCTEventDispatcher.h"
-#else
+#ifdef RN040_IMPORT
 #import <React/RCTBridge.h>
 #import <React/RCTEventDispatcher.h>
+#else
+#import "RCTBridge.h"
+#import "RCTEventDispatcher.h"
 #endif
 
 

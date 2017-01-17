@@ -13,10 +13,10 @@
 #import "RNFetchBlobFS.h"
 #import "IOS7Polyfill.h"
 
-#ifdef OLD_IMPORT
-#import "RCTLog.h"
-#else
+#ifdef RN040_IMPORT
 #import <React/RCTLog.h>
+#else
+#import "RCTLog.h"
 #endif
 
 @interface RNFetchBlobReqBuilder()
