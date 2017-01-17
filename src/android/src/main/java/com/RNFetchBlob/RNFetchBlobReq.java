@@ -362,7 +362,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 
             clientBuilder.connectionPool(pool);
             clientBuilder.retryOnConnectionFailure(false);
-            clientBuilder.followRedirects(true);
+            clientBuilder.followRedirects(options.followRedirect);
+            clientBuilder.followSslRedirects(options.followRedirect);
 
 
             OkHttpClient client = clientBuilder.retryOnConnectionFailure(true).build();

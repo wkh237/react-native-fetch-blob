@@ -48,3 +48,16 @@ describe('#227 IOS file modification date correctness', (report, done) => {
   })
 
 })
+
+describe('#230 add and option for setting if the request follow redirect or not', (report, done) => {
+
+  RNFetchBlob
+  .config({ followRedirect : false })
+  .fetch('GET',`${TEST_SERVER_URL}/redirect`)
+  .then((res) => {
+    console.log(res.data)
+    report(<Assert key="should not redirect twice" expect={1} actual={res.info().redirects.length}/>);
+    done();
+  })
+
+})

@@ -86,6 +86,7 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     NSInteger respStatus;
     NSMutableArray * redirects;
     ResponseFormat responseFormat;
+    BOOL * followRedirect;
 }
 
 @end
@@ -214,6 +215,7 @@ NSOperationQueue *taskQueue;
     self.expectedBytes = 0;
     self.receivedBytes = 0;
     self.options = options;
+    followRedirect = [options valueForKey:@"followRedirect"] == nil ? YES : [[options valueForKey:@"followRedirect"] boolValue];
     isIncrement = [options valueForKey:@"increment"] == nil ? NO : [[options valueForKey:@"increment"] boolValue];
     redirects = [[NSMutableArray alloc] init];
     if(req.URL != nil)
@@ -236,8 +238,15 @@ NSOperationQueue *taskQueue;
     bodyLength = contentLength;
 
     // the session trust any SSL certification
-//    NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
-    NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:taskId];
+    NSURLSessionConfiguration *defaultConfigObject;
+    if(!followRedirect)
+    {
+        defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
+    }
+    else
+    {
+        NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:taskId];
+    }
 
     // set request timeout
     float timeout = [options valueForKey:@"timeout"] == nil ? -1 : [[options valueForKey:@"timeout"] floatValue];
@@ -275,7 +284,7 @@ NSOperationQueue *taskQueue;
         respData = [[NSMutableData alloc] init];
         respFile = NO;
     }
-
+    
     __block NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
     [taskTable setObject:task forKey:taskId];
     [task resume];
@@ -284,14 +293,13 @@ NSOperationQueue *taskQueue;
     if([[options objectForKey:CONFIG_INDICATOR] boolValue] == YES)
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
     __block UIApplication * app = [UIApplication sharedApplication];
-
+    
     // #115 handling task expired when application entering backgound for a long time
     UIBackgroundTaskIdentifier tid = [app beginBackgroundTaskWithName:taskId expirationHandler:^{
         NSLog([NSString stringWithFormat:@"session %@ expired", taskId ]);
         [expirationTable setObject:task forKey:taskId];
         [app endBackgroundTask:tid];
     }];
-
 
 }
 
@@ -575,7 +583,7 @@ NSOperationQueue *taskQueue;
                 respStr = [respData base64EncodedStringWithOptions:0];
             }
         }
-        }
+    }
 
 
     callback(@[ errMsg, rnfbRespType, respStr]);
@@ -644,9 +652,17 @@ NSOperationQueue *taskQueue;
 
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler
 {
-    if(request.URL != nil)
-        [redirects addObject:[request.URL absoluteString]];
-    completionHandler(request);
+    
+    if(followRedirect)
+    {
+        if(request.URL != nil)
+            [redirects addObject:[request.URL absoluteString]];
+        completionHandler(request);
+    }
+    else
+    {
+        completionHandler(nil);
+    }
 }
 
 @end
