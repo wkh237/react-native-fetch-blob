@@ -20,14 +20,15 @@ try {
     fs.writeFileSync(PACKAGE_GRADLE, main);
     console.log('adding OkHttp3 dependency to pre 0.28 project .. ok')
   }
-  else if (VERSION >= 0.40) {
-    console.log('Adding RN040_IMPORT for RN >= 0.40 project ..')
+
+  if (VERSION < 0.40) {
+    console.log('Removing RN040_IMPORT for RN < 0.40 project ..')
     glob('**/RNFetchBlob.h',{}, function(err, files) {
       if(Array.isArray(files)) {
         var target = process.cwd() + '/' + files[0];
         console.log('\033[92mPatching .. \033[97m' + target);
         var data = fs.readFileSync(target);
-        fs.writeFileSync(target, String(data).replace(/\/\/#define RN040_IMPORT/, '#define RN040_IMPORT'));
+        fs.writeFileSync(target, String(data).replace(/#define RN040_IMPORT/, ''));
         console.log('done.')
       }
     })
