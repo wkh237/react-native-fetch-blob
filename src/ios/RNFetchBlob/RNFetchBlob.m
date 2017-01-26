@@ -472,6 +472,22 @@ RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme resolver
     }
 })
 
+# pragma mark - exclude from backup key
+
+RCT_EXPORT_METHOD(excludeFromBackupKey:(NSString *)url resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject
+{
+    NSError *error = nil;
+    [ [NSURL URLWithString:url] setResourceValue:[NSNumber numberWithBool:YES] forKey:NSURLIsExcludedFromBackupKey error:&error];
+    if(!error)
+    {
+        resolve(@[[NSNull null]]);
+    } else {
+        reject(@"RNFetchBlob could not open document", [error description], nil);
+    }
+    
+})
+
+
 RCT_EXPORT_METHOD(df:(RCTResponseSenderBlock)callback
 {
     [RNFetchBlobFS df:callback];

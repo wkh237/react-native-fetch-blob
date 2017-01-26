@@ -208,6 +208,7 @@ NSMutableDictionary *fileStreams = nil;
         
     }];
     
+    
 }
 
 // send read stream chunks via native event emitter

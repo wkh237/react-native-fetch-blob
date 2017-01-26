@@ -217,6 +217,10 @@ function fetch(...args:any):Promise {
   let respInfo = {}
   let [method, url, headers, body] = [...args]
 
+  // # 241 normalize null or undefined headers, in case nil or null string
+  // pass to native context
+  headers = _.map(headers, (h) =>  h || '');
+
   // fetch from file system
   if(URIUtil.isFileURI(url)) {
     return fetchFile(options, method, url, headers, body)
