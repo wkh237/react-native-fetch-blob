@@ -5,14 +5,14 @@
 //
 
 //XXX: DO NO REMOVE THIS LINE IF YOU'RE USING IT ON RN > 0.40 PROJECT
-#define RN040_IMPORT
+
 
 
 #ifndef RNFetchBlob_h
 #define RNFetchBlob_h
 
 
-#ifdef RN040_IMPORT
+#if __has_include(<React/RCTAssert.h>)
 #import <React/RCTLog.h>
 #import <React/RCTRootView.h>
 #import <React/RCTBridge.h>

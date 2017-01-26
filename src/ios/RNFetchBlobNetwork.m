@@ -17,7 +17,7 @@
 #import <CommonCrypto/CommonDigest.h>
 #import "RNFetchBlobProgress.h"
 
-#ifdef RN040_IMPORT
+#if __has_include(<React/RCTAssert.h>)
 #import <React/RCTRootView.h>
 #import <React/RCTLog.h>
 #import <React/RCTEventDispatcher.h>

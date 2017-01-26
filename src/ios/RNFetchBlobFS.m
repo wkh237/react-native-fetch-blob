@@ -13,7 +13,7 @@
 #import "IOS7Polyfill.h"
 @import AssetsLibrary;
 
-#ifdef RN040_IMPORT
+#if __has_include(<React/RCTAssert.h>)
 #import <React/RCTBridge.h>
 #import <React/RCTEventDispatcher.h>
 #else
