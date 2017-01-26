@@ -10,7 +10,7 @@
 #import "RNFetchBlobProgress.h"
 #import "RNFetchBlobFS.h"
 
-#ifdef RN040_IMPORT
+#ifdef __has_include(<React/RCTBridgeModule.h>)
 #import <React/RCTBridgeModule.h>
 #else
 #import "RCTBridgeModule.h"

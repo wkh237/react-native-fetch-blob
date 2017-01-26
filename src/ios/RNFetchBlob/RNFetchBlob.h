@@ -12,7 +12,7 @@
 #define RNFetchBlob_h
 
 
-#ifdef RN040_IMPORT
+#ifdef __has_include(<React/RCTBridge.h>)
 #import <React/RCTLog.h>
 #import <React/RCTRootView.h>
 #import <React/RCTBridge.h>
