@@ -22,6 +22,7 @@ import fs from './fs'
 import getUUID from './utils/uuid'
 import base64 from 'base-64'
 import polyfill from './polyfill'
+import _ from 'lodash'
 import android from './android'
 import ios from './ios'
 import net from './net'
@@ -219,7 +220,9 @@ function fetch(...args:any):Promise {
 
   // # 241 normalize null or undefined headers, in case nil or null string
   // pass to native context
-  headers = _.map(headers, (h) =>  h || '');
+  _.each(headers, (h,i) =>  {
+    headers[i] = h || ''
+  });
 
   // fetch from file system
   if(URIUtil.isFileURI(url)) {

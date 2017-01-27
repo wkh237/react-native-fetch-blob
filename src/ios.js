@@ -49,5 +49,6 @@ function excludeFromBackupKey(url:string) {
 
 export default {
   openDocument,
-  previewDocument
+  previewDocument,
+  excludeFromBackupKey
 }
