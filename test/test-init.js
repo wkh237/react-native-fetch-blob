@@ -1,5 +1,6 @@
 import RNTest from './react-native-testkit/'
 import React from 'react'
+import _ from 'lodash'
 import RNFetchBlob from 'react-native-fetch-blob'
 
 import {
@@ -20,8 +21,8 @@ const { Assert, Comparer, Info, prop } = RNTest
 prop('FILENAME', `${Platform.OS}-0.10.0-${Date.now()}.png`)
 prop('TEST_SERVER_URL', 'http://localhost:8123')
 prop('TEST_SERVER_URL_SSL', 'https://localhost:8124')
-// prop('TEST_SERVER_URL', 'http://192.168.17.185:8123')
-// prop('TEST_SERVER_URL_SSL', 'https://192.168.17.185:8124')
+// prop('TEST_SERVER_URL', 'http://192.168.0.13:8123')
+// prop('TEST_SERVER_URL_SSL', 'https://192.168.0.13:8124')
 prop('DROPBOX_TOKEN', 'fsXcpmKPrHgAAAAAAAAAoXZhcXYWdgLpQMan6Tb_bzJ237DXhgQSev12hA-gUXt4')
 prop('styles', {
   image : {

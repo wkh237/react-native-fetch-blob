@@ -1,5 +1,6 @@
 import RNTest from './react-native-testkit/'
 import React from 'react'
+import _ from 'lodash'
 import RNFetchBlob from 'react-native-fetch-blob'
 import {
   StyleSheet,
@@ -21,7 +22,7 @@ const JSONStream = RNFetchBlob.JSONStream
 const fs = RNFetchBlob.fs
 const { Assert, Comparer, Info, prop } = RNTest
 const describe = RNTest.config({
-  group : '0.10.1',
+  group : '0.10.2',
   run : true,
   expand : true,
   timeout : 20000,
@@ -58,6 +59,19 @@ describe('#230 add and option for setting if the request follow redirect or not'
     console.log(res.data)
     report(<Assert key="should not redirect twice" expect={1} actual={res.info().redirects.length}/>);
     done()
+  })
+
+})
+
+describe('#240 openDocument does not support file URI', (report, done) => {
+  RNFetchBlob
+  .config({ fileCache : true })
+  .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+  .then((res) => {
+    RNFetchBlob.ios.openDocument(res.path())
+    .then(() => {
+      done();
+    })
   })
 
 })
