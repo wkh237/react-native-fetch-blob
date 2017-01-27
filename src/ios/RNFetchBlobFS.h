@@ -12,7 +12,7 @@
 #import "RNFetchBlob.h"
 
 #import <Foundation/Foundation.h>
-#ifdef RN040_IMPORT
+#ifdef __has_include(<React/RCTBridgeModule.h>)
 #import <React/RCTBridgeModule.h>
 #else
 #import "RCTBridgeModule.h"

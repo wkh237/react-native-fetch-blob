@@ -13,7 +13,7 @@
 #import "RNFetchBlobFS.h"
 #import "IOS7Polyfill.h"
 
-#ifdef RN040_IMPORT
+#ifdef __has_include(<React/RCTLog.h>)
 #import <React/RCTLog.h>
 #else
 #import "RCTLog.h"
