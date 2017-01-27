@@ -10,7 +10,6 @@
 #define RNFetchBlobFS_h
 
 #import "RNFetchBlob.h"
-
 #import <Foundation/Foundation.h>
 
 #if __has_include(<React/RCTAssert.h>)

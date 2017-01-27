@@ -43,7 +43,7 @@ describe('#227 IOS file modification date correctness', (report, done) => {
     let correct = date/Date.now() > 0.95 || date/Date.now() < 1.05;
     report(<Assert key="modification date should be correct"
       expect={true} actual={correct}/>);
-    done();
+    done()
 
   })
 
@@ -57,7 +57,17 @@ describe('#230 add and option for setting if the request follow redirect or not'
   .then((res) => {
     console.log(res.data)
     report(<Assert key="should not redirect twice" expect={1} actual={res.info().redirects.length}/>);
-    done();
+    done()
   })
 
+})
+
+describe('#241 null header silent failed issue', (report, done) => {
+
+  RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/public/github.png`, {
+    foo : null
+  })
+  .then(() => {
+    done()
+  })
 })

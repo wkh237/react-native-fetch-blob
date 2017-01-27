@@ -39,7 +39,7 @@
 {
     //    NSString * encodedUrl = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSString * encodedUrl = url;
-    
+
     // send request
     __block NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString: encodedUrl]];
     __block NSMutableDictionary *mheaders = [[NSMutableDictionary alloc] initWithDictionary:[RNFetchBlobNetwork normalizeHeaders:headers]];
@@ -102,7 +102,7 @@
                 {
                     [mheaders setValue:@"application/octet-stream" forKey:@"Content-Type"];
                 }
-                
+
                 // when body is a string contains file path prefix, try load file from the path
                 if([body hasPrefix:FILE_PREFIX]) {
                     __block NSString * orgPath = [body substringFromIndex:[FILE_PREFIX length]];
@@ -130,7 +130,7 @@
                 }
                 // otherwise convert it as BASE64 data string
                 else {
-                    
+
                     __block NSString * cType = [[self class]getHeaderIgnoreCases:@"content-type" fromHeaders:mheaders];
                     // when content-type is application/octet* decode body string using BASE64 decoder
                     if([[cType lowercaseString] hasPrefix:@"application/octet"] || [[cType lowercaseString] RNFBContainsString:@";base64"])
@@ -253,14 +253,14 @@
 }
 
 +(NSString *) getHeaderIgnoreCases:(NSString *)field fromHeaders:(NSMutableDictionary *) headers {
-    
+
     NSString * normalCase = [headers valueForKey:field];
     NSString * ignoredCase = [headers valueForKey:[field lowercaseString]];
     if( normalCase != nil)
         return normalCase;
     else
         return ignoredCase;
-    
+
 }
 
 

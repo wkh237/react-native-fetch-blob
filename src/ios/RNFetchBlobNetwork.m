@@ -127,7 +127,7 @@ NSOperationQueue *taskQueue;
         [cookieStr appendString:cookie.name];
         [cookieStr appendString:@"="];
         [cookieStr appendString:cookie.value];
-        
+
         if(cookie.expiresDate == nil) {
             [cookieStr appendString:@"; max-age=0"];
         }
@@ -138,18 +138,18 @@ NSOperationQueue *taskQueue;
             NSString *strDate = [dateFormatter stringFromDate:cookie.expiresDate];
             [cookieStr appendString:strDate];
         }
-        
-        
+
+
         [cookieStr appendString:@"; domain="];
         [cookieStr appendString:hostname];
         [cookieStr appendString:@"; path="];
         [cookieStr appendString:cookie.path];
-        
-        
+
+
         if (cookie.isSecure) {
             [cookieStr appendString:@"; secure"];
         }
-        
+
         if (cookie.isHTTPOnly) {
             [cookieStr appendString:@"; httponly"];
         }
@@ -284,7 +284,7 @@ NSOperationQueue *taskQueue;
         respData = [[NSMutableData alloc] init];
         respFile = NO;
     }
-    
+
     __block NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
     [taskTable setObject:task forKey:taskId];
     [task resume];
@@ -293,7 +293,7 @@ NSOperationQueue *taskQueue;
     if([[options objectForKey:CONFIG_INDICATOR] boolValue] == YES)
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
     __block UIApplication * app = [UIApplication sharedApplication];
-    
+
     // #115 handling task expired when application entering backgound for a long time
     UIBackgroundTaskIdentifier tid = [app beginBackgroundTaskWithName:taskId expirationHandler:^{
         NSLog([NSString stringWithFormat:@"session %@ expired", taskId ]);
@@ -316,7 +316,7 @@ NSOperationQueue *taskQueue;
         [bridge.eventDispatcher sendDeviceEventWithName:EVENT_EXPIRE body:args];
 
     }
-    
+
     // clear expired task entries
     [expirationTable removeAllObjects];
     expirationTable = [[NSMapTable alloc] init];
@@ -422,7 +422,7 @@ NSOperationQueue *taskQueue;
                 [cookiesTable setObject:cookies forKey:response.URL.host];
             }
         }
-        
+
         [self.bridge.eventDispatcher
          sendDeviceEventWithName: EVENT_STATE_CHANGE
          body:respInfo
@@ -445,7 +445,7 @@ NSOperationQueue *taskQueue;
             }
             BOOL overwrite = [options valueForKey:@"overwrite"] == nil ? YES : [[options valueForKey:@"overwrite"] boolValue];
             BOOL appendToExistingFile = [destPath RNFBContainsString:@"?append=true"];
-            
+
             appendToExistingFile = !overwrite;
 
             // For solving #141 append response data if the file already exists
@@ -559,7 +559,7 @@ NSOperationQueue *taskQueue;
         // if it turns out not to be `nil` that means the response data contains valid UTF8 string,
         // in order to properly encode the UTF8 string, use URL encoding before BASE64 encoding.
         NSString * utf8 = [[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding];
-        
+
         if(responseFormat == BASE64)
         {
             rnfbRespType = RESP_TYPE_BASE64;
@@ -652,7 +652,7 @@ NSOperationQueue *taskQueue;
 
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler
 {
-    
+
     if(followRedirect)
     {
         if(request.URL != nil)

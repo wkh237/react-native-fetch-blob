@@ -64,7 +64,7 @@ NSMutableDictionary *fileStreams = nil;
 
 // static member getter
 + (NSArray *) getFileStreams {
-    
+
     if(fileStreams == nil)
         fileStreams = [[NSMutableDictionary alloc] init];
     return fileStreams;
@@ -115,12 +115,12 @@ NSMutableDictionary *fileStreams = nil;
 }
 
 + (NSString *) getTempPath {
-    
+
     return NSTemporaryDirectory();
 }
 
 + (NSString *) getTempPath:(NSString*)taskId withExtension:(NSString *)ext {
-    
+
     NSString * documentDir = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
     NSString * filename = [NSString stringWithFormat:@"/RNFetchBlob_tmp/RNFetchBlobTmp_%@", taskId];
     if(ext != nil)
@@ -129,7 +129,7 @@ NSMutableDictionary *fileStreams = nil;
     return tempPath;
 }
 
-#pragma margk - readStream 
+#pragma margk - readStream
 
 + (void) readStream:(NSString *)uri
            encoding:(NSString * )encoding
@@ -139,7 +139,7 @@ NSMutableDictionary *fileStreams = nil;
           bridgeRef:(RCTBridge *)bridgeRef
 {
     [[self class] getPathFromUri:uri completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
-    
+
         __block RCTEventDispatcher * event = bridgeRef.eventDispatcher;
         __block int read = 0;
         __block int backoff = tick *1000;
@@ -193,7 +193,7 @@ NSMutableDictionary *fileStreams = nil;
             // release buffer
             if(buffer != nil)
                 free(buffer);
-            
+
         }
         @catch (NSError * err)
         {
@@ -205,10 +205,10 @@ NSMutableDictionary *fileStreams = nil;
             NSDictionary * payload = @{ @"event": FS_EVENT_END, @"detail": @"" };
             [event sendDeviceEventWithName:streamId body:payload];
         }
-        
+
     }];
-    
-    
+
+
 }
 
 // send read stream chunks via native event emitter
@@ -243,8 +243,8 @@ NSMutableDictionary *fileStreams = nil;
         NSDictionary * payload = @{ @"event": FS_EVENT_DATA,  @"detail" : asciiArray };
         [event sendDeviceEventWithName:streamId body:payload];
     }
-    
-    
+
+
 }
 
 # pragma write file from file
@@ -274,7 +274,7 @@ NSMutableDictionary *fileStreams = nil;
         }
         else if(asset != nil)
         {
-            
+
             __block NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:append];
             int read = 0;
             int cursor = 0;
@@ -293,7 +293,7 @@ NSMutableDictionary *fileStreams = nil;
         else
             callback(@"failed to resolve path", nil);
     }];
-    
+
     return 0;
 }
 
@@ -342,7 +342,7 @@ NSMutableDictionary *fileStreams = nil;
             [content writeToFile:path atomically:YES];
         }
         fm = nil;
-        
+
         resolve([NSNumber numberWithInteger:[content length]]);
     }
     @catch (NSException * e)
@@ -423,16 +423,16 @@ NSMutableDictionary *fileStreams = nil;
             else
             {
                 if(![[NSFileManager defaultManager] fileExistsAtPath:path]) {
-                    
+
                     reject(@"RNFetchBlobFS readFile error", @"file not exists", nil);
                     return;
                 }
                 fileContent = [NSData dataWithContentsOfFile:path];
-                
+
             }
             if(onComplete != nil)
                 onComplete(fileContent);
-            
+
             if([[encoding lowercaseString] isEqualToString:@"utf8"]) {
                 if(resolve != nil) {
                     NSString * utf8 = [[NSString alloc] initWithData:fileContent encoding:NSUTF8StringEncoding];
@@ -480,7 +480,7 @@ NSMutableDictionary *fileStreams = nil;
 
 + (NSDictionary *) stat:(NSString *) path error:(NSError **) error {
 
-    
+
     BOOL isDir = NO;
     NSFileManager * fm = [NSFileManager defaultManager];
     if([fm fileExistsAtPath:path isDirectory:&isDir] == NO) {
@@ -498,7 +498,7 @@ NSMutableDictionary *fileStreams = nil;
              @"lastModified" : [NSNumber numberWithLong:(time_t) [lastModified timeIntervalSince1970]*1000],
              @"type" : isDir ? @"directory" : @"file"
             };
-    
+
 }
 
 # pragma mark - exists
@@ -584,7 +584,7 @@ NSMutableDictionary *fileStreams = nil;
         [self.outStream close];
         self.outStream = nil;
     }
-    
+
 }
 
 // Slice a file into another file, generally for support Blob implementation.
@@ -614,14 +614,14 @@ NSMutableDictionary *fileStreams = nil;
             }
             long size = [fm attributesOfItemAtPath:path error:nil].fileSize;
             long max = MIN(size, [end longValue]);
-            
+
             if(![fm fileExistsAtPath:dest]) {
                 [fm createFileAtPath:dest contents:@"" attributes:nil];
             }
             [handle seekToFileOffset:[start longValue]];
             while(read < expected)
             {
-                
+
                 NSData * chunk;
                 long chunkSize = 0;
                 if([start longValue] + read + 10240 > max)
@@ -639,7 +639,7 @@ NSMutableDictionary *fileStreams = nil;
                 if([chunk length] <= 0)
                     break;
                 long remain = expected - read;
-                
+
                 [os write:[chunk bytes] maxLength:chunkSize];
                 read += [chunk length];
             }
@@ -656,10 +656,10 @@ NSMutableDictionary *fileStreams = nil;
             [os open];
             long size = asset.size;
             long max = MIN(size, [end longValue]);
-            
+
             while(read < expected)
             {
-                
+
                 uint8_t * chunk[10240];
                 long chunkSize = 0;
                 if([start longValue] + read + 10240 > max)
@@ -677,7 +677,7 @@ NSMutableDictionary *fileStreams = nil;
                 if( chunkRead <= 0)
                     break;
                 long remain = expected - read;
-                
+
                 [os write:chunk maxLength:chunkSize];
                 read += chunkRead;
             }
@@ -688,7 +688,7 @@ NSMutableDictionary *fileStreams = nil;
         {
             reject(@"slice error",  [NSString stringWithFormat: @"could not resolve URI %@", path ], nil);
         }
-        
+
     }];
 }
 
@@ -701,7 +701,7 @@ NSMutableDictionary *fileStreams = nil;
         [[RNFetchBlobFS getFileStreams] setValue:nil forKey:self.streamId];
         self.streamId = nil;
     }
-    
+
 }
 
 
@@ -737,7 +737,7 @@ NSMutableDictionary *fileStreams = nil;
     NSError *error = nil;
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSDictionary *dictionary = [[NSFileManager defaultManager] attributesOfFileSystemForPath:[paths lastObject] error: &error];
-    
+
     if (dictionary) {
         NSNumber *fileSystemSizeInBytes = [dictionary objectForKey: NSFileSystemSize];
         NSNumber *freeFileSystemSizeInBytes = [dictionary objectForKey:NSFileSystemFreeSize];
@@ -750,7 +750,7 @@ NSMutableDictionary *fileStreams = nil;
     } else {
         callback(@[@"failed to get storage usage."]);
     }
-    
+
 }
 
 + (void) writeAssetToPath:(ALAssetRepresentation * )rep dest:(NSString *)dest
