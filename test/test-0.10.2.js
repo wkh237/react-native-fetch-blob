@@ -63,18 +63,21 @@ describe('#230 add and option for setting if the request follow redirect or not'
 
 })
 
-describe('#240 openDocument does not support file URI', (report, done) => {
-  RNFetchBlob
-  .config({ fileCache : true })
-  .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
-  .then((res) => {
-    RNFetchBlob.ios.openDocument(res.path())
-    .then(() => {
-      done();
-    })
-  })
-
-})
+// describe('#240 openDocument does not support file URI', (report, done) => {
+//   RNFetchBlob
+//   .config({ path : dirs.DocumentDir + '/app copy.png' })
+//   .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+//   .then((res) => {
+//     RNFetchBlob.ios.openDocument(res.path())
+//     .then(() => {
+//       done();
+//     })
+//     .catch((err) => {
+//       console.log(err)
+//     })
+//   })
+//
+// })
 
 describe('#241 null header silent failed issue', (report, done) => {
 
@@ -82,6 +85,28 @@ describe('#241 null header silent failed issue', (report, done) => {
     foo : null
   })
   .then(() => {
+    report(<Assert key="null header should not crash the app"
+      expect={true}
+      actual={true}/>)
     done()
   })
+})
+
+describe('#247 binary data UTF8 encoding causes app crash', (report, done) => {
+
+  RNFetchBlob
+  .config({fileCache : true})
+  .fetch('GET', `${TEST_SERVER_URL}/public/github.png`)
+  .then((res) => fs.readStream(res.path(), 'utf8'))
+  .then((stream) => {
+    stream.open()
+    stream.onError((err) => {
+      report(<Assert
+        key="read binary data to UTF8 should cause error but not crash the app"
+        expect={true}
+        actual={true}/>)
+      done()
+    })
+  })
+
 })

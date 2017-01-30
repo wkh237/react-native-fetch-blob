@@ -214,37 +214,58 @@ NSMutableDictionary *fileStreams = nil;
 // send read stream chunks via native event emitter
 + (void) emitDataChunks:(NSData *)data encoding:(NSString *) encoding streamId:(NSString *)streamId event:(RCTEventDispatcher *)event
 {
-    NSString * encodedChunk = @"";
-    if([[encoding lowercaseString] isEqualToString:@"utf8"])
+    @try
     {
-        NSDictionary * payload = @{ @"event": FS_EVENT_DATA,  @"detail" : [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] };
-        [event sendDeviceEventWithName:streamId body:payload];
-    }
-    else if ([[encoding lowercaseString] isEqualToString:@"base64"])
-    {
-        NSDictionary * payload = @{ @"event": FS_EVENT_DATA,  @"detail" : [data base64EncodedStringWithOptions:0] };
-        [event sendDeviceEventWithName:streamId body:payload];
-    }
-    else if([[encoding lowercaseString] isEqualToString:@"ascii"])
-    {
-        // RCTBridge only emits string data, so we have to create JSON byte array string
-        NSMutableArray * asciiArray = [NSMutableArray array];
-        unsigned char *bytePtr;
-        if (data.length > 0)
+        NSString * encodedChunk = @"";
+        if([[encoding lowercaseString] isEqualToString:@"utf8"])
         {
-            bytePtr = (unsigned char *)[data bytes];
-            NSInteger byteLen = data.length/sizeof(uint8_t);
-            for (int i = 0; i < byteLen; i++)
-            {
-                [asciiArray addObject:[NSNumber numberWithChar:bytePtr[i]]];
-            }
+            NSDictionary * payload = @{
+                                       @"event": FS_EVENT_DATA,
+                                       @"detail" : [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]
+                                       };
+            [event sendDeviceEventWithName:streamId body:payload];
         }
-
-        NSDictionary * payload = @{ @"event": FS_EVENT_DATA,  @"detail" : asciiArray };
-        [event sendDeviceEventWithName:streamId body:payload];
+        else if ([[encoding lowercaseString] isEqualToString:@"base64"])
+        {
+            NSDictionary * payload = @{ @"event": FS_EVENT_DATA,  @"detail" : [data base64EncodedStringWithOptions:0] };
+            [event sendDeviceEventWithName:streamId body:payload];
+        }
+        else if([[encoding lowercaseString] isEqualToString:@"ascii"])
+        {
+            // RCTBridge only emits string data, so we have to create JSON byte array string
+            NSMutableArray * asciiArray = [NSMutableArray array];
+            unsigned char *bytePtr;
+            if (data.length > 0)
+            {
+                bytePtr = (unsigned char *)[data bytes];
+                NSInteger byteLen = data.length/sizeof(uint8_t);
+                for (int i = 0; i < byteLen; i++)
+                {
+                    [asciiArray addObject:[NSNumber numberWithChar:bytePtr[i]]];
+                }
+            }
+            
+            NSDictionary * payload = @{ @"event": FS_EVENT_DATA,  @"detail" : asciiArray };
+            [event sendDeviceEventWithName:streamId body:payload];
+        }
+        
     }
-
-
+    @catch (NSException * ex)
+    {
+        NSString * message = [NSString stringWithFormat:@"Failed to convert data to '%@' encoded string, this might due to the source data is not able to convert using this encoding. source = %@", encoding, [ex description]];
+        [event
+         sendDeviceEventWithName:streamId
+         body:@{
+                @"event" : MSG_EVENT_ERROR,
+                @"detail" : message
+                }];
+        [event
+         sendDeviceEventWithName:MSG_EVENT
+         body:@{
+                @"event" : MSG_EVENT_WARN,
+                @"detail" : message
+                }];
+    }
 }
 
 # pragma write file from file

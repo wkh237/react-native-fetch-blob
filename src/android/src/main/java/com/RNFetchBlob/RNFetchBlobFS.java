@@ -28,7 +28,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -243,8 +245,12 @@ public class RNFetchBlobFS {
             boolean error = false;
 
             if (encoding.equalsIgnoreCase("utf8")) {
+                CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
                 while ((cursor = fs.read(buffer)) != -1) {
-                    String chunk = new String(buffer, 0, cursor, "UTF-8");
+                    encoder.encode(ByteBuffer.wrap(buffer).asCharBuffer());
+                    // if the data contains invalid characters the following lines will be
+                    // skipped.
+                    String chunk = new String(buffer);
                     emitStreamEvent(streamId, "data", chunk);
                     if(tick > 0)
                         SystemClock.sleep(tick);
@@ -286,7 +292,7 @@ public class RNFetchBlobFS {
             buffer = null;
 
         } catch (Exception err) {
-            emitStreamEvent(streamId, "error", err.getLocalizedMessage());
+            emitStreamEvent(streamId, "error", "Failed to convert data to "+encoding+" encoded string, this might due to the source data is not able to convert using this encoding.");
         }
     }
 
