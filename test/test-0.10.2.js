@@ -110,3 +110,45 @@ describe('#247 binary data UTF8 encoding causes app crash', (report, done) => {
   })
 
 })
+
+
+describe('#248 create blob from file has spaces in filename', (report, done) => {
+
+  let source = '',
+      size = 0,
+      path = 'archive image.zip'
+  RNFetchBlob
+  .config({path : fs.dirs.DocumentDir +'/' + path})
+  .fetch('GET', `${TEST_SERVER_URL}/public/issue-248-dummy.zip`)
+  .then((res) => {
+    source = res.path();
+    console.log('source=', source)
+    window.Blob = RNFetchBlob.polyfill.Blob;
+    return Blob.build(RNFetchBlob.wrap(source), { type : 'application/zip'})
+  })
+  .then((b) => {
+    console.log(b)
+    size = b.size
+    return fs.stat(b._ref)
+  })
+  .then((stat) => {
+    report(<Assert key="blob created without error"
+      expect={stat.size} actual={size}/>)
+    return RNFetchBlob.fetch('POST',
+    `${TEST_SERVER_URL}/upload-form`,
+    {
+      'Content-Type' : 'multipart/form-data'
+    }, [
+      {
+        name : 'file',
+        filename : 'file name '+Platform.OS+'.zip',
+        type : 'application/zip',
+        data : RNFetchBlob.wrap(source)
+      }
+    ])
+  })
+  .then(() => {
+    done()
+  })
+
+})
