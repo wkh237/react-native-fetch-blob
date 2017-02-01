@@ -204,7 +204,7 @@ RNFetchBlob
     fileCache : true,
   })
   .fetch('GET', 'http://www.example.com/file/example.zip', {
-    some headers ..
+    //some headers ..
   })
   .then((res) => {
     // the temp file path
@@ -224,7 +224,7 @@ RNFetchBlob
     appendExt : 'png'
   })
   .fetch('GET', 'http://www.example.com/file/example.zip', {
-    some headers ..
+    //some headers ..
   })
   .then((res) => {
     // the temp file path with file extension `png`
@@ -387,7 +387,7 @@ In `version >= 0.4.2` it is possible to know the upload/download progress. After
 
 ```js
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
-      ... some headers,
+      //... some headers,
       'Content-Type' : 'octet-stream'
     }, base64DataString)
     // listen to upload progress event
@@ -411,7 +411,7 @@ In `0.9.6`, you can specify an object as first argument which contains `count` a
 
 ```js
   RNFetchBlob.fetch('POST', 'http://www.example.com/upload', {
-      ... some headers,
+      //... some headers,
       'Content-Type' : 'octet-stream'
     }, base64DataString)
     // listen to upload progress event, emit every 250ms
@@ -491,7 +491,7 @@ When using DownloadManager, `fileCache` and `path` properties in `config` will n
 ```js
 RNFetchBlob
     .config({
-        addAdnroidDownloads : {
+        addAndroidDownloads : {
             useDownloadManager : true, // <-- this is the only thing required
             // Optional, override notification setting (default to true)
             notification : false,
@@ -530,7 +530,7 @@ RNFetchBlob.config({
     description : 'An image file.',
     mime : 'image/png',
     // Make the file scannable  by media scanner
-    meidaScannable : true,
+    mediaScannable : true,
   }
 })
 .fetch('GET', 'http://example.com/image1.png')
