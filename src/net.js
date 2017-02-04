@@ -20,6 +20,17 @@ function getCookies(url:string):Promise<Array<String>> {
   return RNFetchBlob.getCookies(url)
 }
 
+/**
+ * Remove cookies for a specific domain
+ * @param  {?string} domain Domain of the cookies to be removed, remove all
+ * cookies when this is null.
+ * @return {Promise<null>}
+ */
+function removeCookies(domain:?string):Promise<null> {
+  return RNFetchBlob.removeCookies(url || null)
+}
+
 export default {
-  getCookies
+  getCookies,
+  removeCookies
 }

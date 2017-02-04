@@ -243,6 +243,21 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     /**
+     * Remove cookies for specific domain
+     * @param domain String of the domain
+     * @param promise JSC promise injected by RN
+     */
+    public void removeCookies(String domain, Promise promise) {
+        try {
+            RNFBCookieJar.removeCookies(domain);
+            promise.resolve(null);
+        } catch(Exception err) {
+            promise.reject("RNFetchBlob.removeCookies", err.getMessage());
+        }
+    }
+
+    @ReactMethod
+    /**
      * @param path Stream file path
      * @param encoding Stream encoding, should be one of `base64`, `ascii`, and `utf8`
      * @param bufferSize Stream buffer size, default to 4096 or 4095(base64).

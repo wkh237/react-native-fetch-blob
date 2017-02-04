@@ -35,6 +35,14 @@ public class RNFBCookieJar implements CookieJar {
         return cookies != null ? cookies : new ArrayList<Cookie>();
     }
 
+    public static void removeCookies(String domain) {
+        if(domain == null) {
+            cookieStore.clear();
+        }
+        else if(cookieStore.containsKey(domain))
+            cookieStore.remove(domain);
+    }
+
     public static WritableArray getCookies(String host) {
         HttpUrl url = HttpUrl.parse(host);
         List<Cookie> cookies = null;
