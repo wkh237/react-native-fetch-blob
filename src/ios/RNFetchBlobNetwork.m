@@ -579,20 +579,27 @@ NSOperationQueue *taskQueue;
 
 # pragma mark - cookies handling API
 
-+ (NSArray *) getCookies:(NSString *) domain
++ (NSDictionary *) getCookies:(NSString *) domain
 {
-    NSMutableArray * cookies = [NSMutableArray new];
+    NSMutableDictionary * result = [NSMutableDictionary new];
     NSHTTPCookieStorage * cookieStore = [NSHTTPCookieStorage sharedHTTPCookieStorage];
-    for(NSHTTPCookie * cookie in cookieStore)
+    for(NSHTTPCookie * cookie in [cookieStore cookies])
     {
-        if([[cookie domain] isEqualToString:domain])
+        NSString * cDomain = [cookie domain];
+        if([result objectForKey:cDomain] == nil)
+        {
+            [result setObject:[NSMutableArray new] forKey:cDomain];
+        }
+        if([cDomain isEqualToString:domain] || [domain length] == 0)
         {
             NSMutableString * cookieStr = [[NSMutableString alloc] init];
             cookieStr = [[self class] getCookieString:cookie];
-            [cookies addObject:cookieStr];
+            NSMutableArray * ary = [result objectForKey:cDomain];
+            [ary addObject:cookieStr];
+            [result setObject:ary forKey:cDomain];
         }
     }
-    return cookies;
+    return result;
 }
 
 // remove cookies for given domain, if domain is empty remove all cookies in shared cookie storage.
@@ -601,9 +608,9 @@ NSOperationQueue *taskQueue;
     @try
     {
         NSHTTPCookieStorage * cookies = [NSHTTPCookieStorage sharedHTTPCookieStorage];
-        for(NSHTTPCookie * cookie in cookies)
+        for(NSHTTPCookie * cookie in [cookies cookies])
         {
-            BOOL shouldRemove = domain == nil || [[cookie domain] isEqualToString:domain];
+            BOOL shouldRemove = domain == nil || [domain length] < 1 || [[cookie domain] isEqualToString:domain];
             if(shouldRemove)
             {
                 [cookies deleteCookie:cookie];

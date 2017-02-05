@@ -13,11 +13,11 @@ const RNFetchBlob = NativeModules.RNFetchBlob
 
 /**
  * Get cookie according to the given url.
- * @param  {string} url HTTP URL string.
+ * @param  {string} domain Domain of the cookies to be removed, remove all
  * @return {Promise<Array<String>>}     Cookies of a specific domain.
  */
-function getCookies(url:string):Promise<Array<String>> {
-  return RNFetchBlob.getCookies(url)
+function getCookies(domain:string):Promise<Array<String>> {
+  return RNFetchBlob.getCookies(domain || '')
 }
 
 /**
@@ -27,7 +27,7 @@ function getCookies(url:string):Promise<Array<String>> {
  * @return {Promise<null>}
  */
 function removeCookies(domain:?string):Promise<null> {
-  return RNFetchBlob.removeCookies(url || null)
+  return RNFetchBlob.removeCookies(domain || '')
 }
 
 export default {

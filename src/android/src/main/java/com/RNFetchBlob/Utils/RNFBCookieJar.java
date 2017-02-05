@@ -8,6 +8,7 @@ import com.facebook.react.bridge.WritableMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import okhttp3.Cookie;
 import okhttp3.CookieJar;
@@ -36,26 +37,30 @@ public class RNFBCookieJar implements CookieJar {
     }
 
     public static void removeCookies(String domain) {
-        if(domain == null) {
-            cookieStore.clear();
+        if(domain != null && domain.length() > 0) {
+            if(cookieStore.containsKey(domain))
+                cookieStore.remove(domain);
         }
-        else if(cookieStore.containsKey(domain))
-            cookieStore.remove(domain);
+        else
+            cookieStore.clear();
     }
 
-    public static WritableArray getCookies(String host) {
-        HttpUrl url = HttpUrl.parse(host);
-        List<Cookie> cookies = null;
-        if(url != null) {
-            cookies = cookieStore.get(url.host());
+    public static WritableMap getCookies(String host) {
+        Set<String> domains = cookieStore.keySet();
+        WritableMap cookieMap = Arguments.createMap();
+        if(host.length() > 0 && cookieStore.containsKey(host)) {
+            domains.clear();
+            domains.add(host);
         }
-        WritableArray cookieList = Arguments.createArray();
-        if(cookies != null) {
-            for(Cookie c : cookies){
-                cookieList.pushString(c.toString());
+        // no domain specified, return all cookies
+        for(String key : domains) {
+            WritableArray cookiesInDomain = Arguments.createArray();
+            for(Cookie c: cookieStore.get(key)){
+                cookiesInDomain.pushString(c.toString());
             }
-            return cookieList;
+            cookieMap.putArray(key, cookiesInDomain);
         }
-        return null;
+
+        return cookieMap;
     }
 }

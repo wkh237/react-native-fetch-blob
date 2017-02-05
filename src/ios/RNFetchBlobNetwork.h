@@ -52,7 +52,7 @@ typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse 
 + (void) removeCookies:(NSString *) domain error:(NSError **)error;
 + (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config;
 + (void) enableUploadProgress:(NSString *) taskId config:(RNFetchBlobProgress *)config;
-+ (NSArray *) getCookies:(NSString *) url;
++ (NSDictionary *) getCookies:(NSString *) url;
 
 
 
