@@ -4,7 +4,7 @@
 
 A project committed to make file access and data transfer easier, efficient for React Native developers.
 
-> If you're going to use github repo as npm dependency please visit the [archive repository](https://github.com/wkh237/react-native-fetch-blob-package/releases/tag/v0.9.6).
+> If you're going to use GitHub repo as npm dependency please visit the [archive repository](https://github.com/wkh237/react-native-fetch-blob-package/releases/tag/v0.9.6).
 
 > For Firebase Storage solution, please upgrade to latest version for best compatibility.
 
@@ -42,7 +42,7 @@ A project committed to make file access and data transfer easier, efficient for 
 
 ## About
 
-This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854), because React Native lack of `Blob` implementation and it will cause some problem when transferring binary data. Now, this project is committed to make file access and transfer more easier, efficient for React Native developers. We've implemented highly customizable filesystem and network module which plays well together. For example, upload and download data directly from/to storage which is much more efficient in some cases(especially for large ones). The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
+This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854) because React Native lack of `Blob` implementation and it will cause some problem when transferring binary data. Now, this project is committed to making file access and transfer easier, efficient for React Native developers. We've implemented highly customizable filesystem and network module which plays well together. For example, upload and download data directly from/to storage which is much more efficient in some cases(especially for large ones). The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
 
 In `0.8.0` we introduced experimental Web API polyfills that make it possible to use browser-based libraries in React Native, such as, [FireBase JS SDK](https://github.com/wkh237/rn-firebase-storage-upload-sample)
 
@@ -64,7 +64,7 @@ pod 'react-native-fetch-blob',
 
 **Automatically Link Native Modules**
 
-For 0.29.2+ projects, simply link native packages via following command because rnpm has been merged into react-native, you no longer need it.
+For 0.29.2+ projects, simply link native packages via the following command because rnpm has been merged into react-native, you no longer need it.
 
 ```
 react-native link
@@ -88,11 +88,11 @@ pre 0.29 projects
 RNFB_ANDROID_PERMISSIONS=true rnpm link
 ```
 
-The link script might not take effect if you have non-default project structure, please visit [the wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Manually-Link-Package) to manually link the pacakge.
+The link script might not take effect if you have non-default project structure, please visit [the wiki](https://github.com/wkh237/react-native-fetch-blob/wiki/Manually-Link-Package) to manually link the package.
 
 **Grant Permission to External storage for Android 5.0 or lower**
 
-Mechanism about granting Android permissions has slightly different since Android 6.0 released, please refer to [Official Document](https://developer.android.com/training/permissions/requesting.html).
+Mechanism for granting Android permissions has slightly different since Android 6.0 released, please refer to [Official Document](https://developer.android.com/training/permissions/requesting.html).
 
 If you're going to access external storage (say, SD card storage) for `Android 5.0` (or lower) devices, you might have to add the following line to `AndroidManifest.xml`.
 
@@ -123,7 +123,7 @@ Also, if you're going to use `Android Download Manager` you have to add this to 
 
 **Grant Access Permission for Android 6.0**
 
-Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. So adding permissions in `AndroidManifest.xml` won't work in Android 6.0 devices. To grant permissions in runtime, you might use modules like [react-native-android-permissions](https://github.com/lucasferreira/react-native-android-permissions).
+Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. So adding permissions in `AndroidManifest.xml` won't work f Android 6.0 devices. To grant permissions in runtime, you might use modules like [react-native-android-permissions](https://github.com/lucasferreira/react-native-android-permissions).
 
 ## Usage
 
@@ -148,23 +148,23 @@ var RNFetchBlob = require('react-native-fetch-blob').default
 
 ### Regular Request
 
-After `0.8.0` react-native-fetch-blob automatically decide how to send the body by checking its type and `Content-Type` in header. The rule is described in the following diagram
+After `0.8.0` react-native-fetch-blob automatically decide how to send the body by checking its type and `Content-Type` in the header. The rule is described in the following diagram
 
 <img src="img/RNFB-flow (1).png" style="width : 90%" />
 
-To sum up :
+To sum up:
 
-- To send a form data, the `Content-Type` header does not matters. When the body is an `Array` we will set proper content type for you.
+- To send a form data, the `Content-Type` header does not matter. When the body is an `Array` we will set proper content type for you.
 - To send binary data, you have two choices, use BASE64 encoded string or path points to a file contains the body.
  - If the `Content-Type` containing substring`;BASE64` or `application/octet` the given body will be considered as a BASE64 encoded data which will be decoded to binary data as the request body.   
- - Otherwise, if a string starts with `RNFetchBlob-file://` (which can simply done by `RNFetchBlob.wrap(PATH_TO_THE_FILE)`), it will try to find the data from the URI string after `RNFetchBlob-file://` and use it as request body.
+ - Otherwise, if a string starts with `RNFetchBlob-file://` (which can simply be done by `RNFetchBlob.wrap(PATH_TO_THE_FILE)`), it will try to find the data from the URI string after `RNFetchBlob-file://` and use it as the request body.
 - To send the body as-is, simply use a `Content-Type` header not containing `;BASE64` or `application/octet`.
 
-> It is Worth to mentioning that the HTTP request uses cache by default, if you're going to disable it simply add a Cache Control header `'Cache-Control' : 'no-store'`
+> It is Worth to mentioning that the HTTP request uses cache by default, if you're going to disable it simply add a Cache-Control header `'Cache-Control' : 'no-store'`
 
 > After 0.9.4, we disabled `Chunked` transfer encoding by default, if you're going to use it, you should explicitly set header `Transfer-Encoding` to `Chunked`.
 
-### Download example : Fetch files that needs authorization token
+### Download example: Fetch files that need authorization token
 
 Most simple way is download to memory and stored as BASE64 encoded string, this is handy when the response data is small.
 
@@ -214,7 +214,7 @@ RNFetchBlob
 
 **Set Temp File Extension**
 
-Sometimes you might need a file extension for some reason. For example, when using file path as source of `Image` component, the path should end with something like .png or .jpg, you can do this by add `appendExt` option to `config`.
+Sometimes you might need a file extension for some reason. For example, when using file path as the source of `Image` component, the path should end with something like .png or .jpg, you can do this by add `appendExt` option to `config`.
 
 ```js
 RNFetchBlob
@@ -259,7 +259,7 @@ RNFetchBlob
 
 ####  Upload example : Dropbox [files-upload](https://www.dropbox.com/developers/documentation/http/documentation#files-upload) API
 
-`react-native-fetch-blob` will convert the base64 string in `body` to binary format using native API, this process will be  done in a separated thread, so it won't block your GUI.
+`react-native-fetch-blob` will convert the base64 string in `body` to binary format using native API, this process will be done in a separated thread, so it won't block your GUI.
 
 ```js
 
@@ -310,11 +310,11 @@ RNFetchBlob.fetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
   })
 ```
 
-### Multipart/form-data example : Post form data with file and data
+### Multipart/form-data example: Post form data with file and data
 
 In `version >= 0.3.0` you can also post files with form data, just put an array in `body`, with elements have property `name`, `data`, and `filename`(optional).
 
-Elements have property `filename` will be transformed into binary format, otherwise it turns into utf8 string.
+Elements have property `filename` will be transformed into binary format, otherwise, it turns into utf8 string.
 
 ```js
 
@@ -342,7 +342,7 @@ Elements have property `filename` will be transformed into binary format, otherw
   })
 ```
 
-What if you want to append a file to form data ? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, wrap `data` by `wrap` API (this feature is only available for `version >= v0.5.0`). On version >= `0.6.2`, it is possible to set custom MIME type when appending file to form data. But keep in mind when the file is large it's likely crash your app. Please consider use other strategy (see [#94](https://github.com/wkh237/react-native-fetch-blob/issues/94)).
+What if you want to append a file to form data? Just like [upload a file from storage](#user-content-upload-a-file-from-storage) example, wrap `data` by `wrap` API (this feature is only available for `version >= v0.5.0`). On version >= `0.6.2`, it is possible to set custom MIME type when appending a file to form data. But keep in mind when the file is large it's likely to crash your app. Please consider use other strategy (see [#94](https://github.com/wkh237/react-native-fetch-blob/issues/94)).
 
 ```js
 
@@ -406,7 +406,7 @@ In `version >= 0.4.2` it is possible to know the upload/download progress. After
     })
 ```
 
-In `0.9.6`, you can specify an object as first argument which contains `count` and `interval`, to the frequency of progress event (this will be done in native context in order to reduce RCT bridge overhead). Notice that `count` argument will not work if the server does not provide response content length.
+In `0.9.6`, you can specify an object as the first argument which contains `count` and `interval`, to the frequency of progress event (this will be done in the native context  a  reduce RCT bridge overhead). Notice that `count` argument will not work if the server does not provide response content length.
 
 
 ```js
@@ -432,7 +432,7 @@ In `0.9.6`, you can specify an object as first argument which contains `count` a
 
 ### Cancel Request
 
-After `0.7.0` it is possible to cancel an HTTP request. When the request is cancelled, it will throw a promise rejection, be sure to catch it.
+After `0.7.0` it is possible to cancel an HTTP request. When the request is canceled, it will throw a promise rejection, be sure to catch it.
 
 ```js
 let task = RNFetchBlob.fetch('GET', 'http://example.com/file/1')
@@ -461,7 +461,7 @@ If you want to make a file in `External Storage` becomes visible in Picture, Dow
 
 **Media Scanner**
 
-Media scanner scan the file and categorize by given MIME type, if MIME type not specified, it will try to resolve the file using its file extension.
+Media scanner scans the file and categorize by given MIME type, if MIME type not specified, it will try to resolve the file using its file extension.
 
 ```js
 
@@ -482,7 +482,7 @@ RNFetchBlob
 
 **Download Manager**
 
-When download large files on Android it is recommended to use `Download Manager`, it supports lot of native features like progress bar, and notification, also the download task will be handled by OS, and more effective.
+When downloading large files on Android it is recommended to use `Download Manager`, it supports a lot of native features like the progress bar, and notification, also the download task will be handled by OS, and more effective.
 
 <img src="img/download-manager.png" width="256">
 
@@ -509,13 +509,13 @@ RNFetchBlob
 ```
 
 
-**Download Notification and Visibiliy in Download App (Android Only)**
+**Download Notification and Visibility in Download App (Android Only)**
 
 <img src="img/android-notification1.png" width="256">
 <img src="img/android-notification2.png" width="256">
 
 
-If you want to display a notification when file's completely download to storage (as the above), or make the downloaded file visible in "Downloads" app. You have to add some options to `config`.
+If you want to display a notification when the file is completely download to storage (as the above) or make the downloaded file visible in "Downloads" app. You have to add some options to `config`.
 
 ```js
 RNFetchBlob.config({
@@ -539,9 +539,9 @@ RNFetchBlob.config({
 
 **Open Downloaded File with Intent**
 
-This is a new feature added in `0.9.0`, if you're going to open a file path using official [Linking](https://facebook.github.io/react-native/docs/linking.html) API that might not work as expected, also, if you're going to install an APK in `Downloads` app, that will not work too. As an alternative, you can try `actionViewIntent` API, which will send an ACTION_VIEW intent for you which uses the given `MIME` type.
+This is a new feature added in `0.9.0` if you're going to open a file path using official [Linking](https://facebook.github.io/react-native/docs/linking.html) API that might not work as expected, also, if you're going to install an APK in `Downloads` app, that will not work too. As an alternative, you can try `actionViewIntent` API, which will send an ACTION_VIEW intent for you which uses the given `MIME` type.
 
-Download and install an APK programatically
+Download and install an APK programmatically
 
 ```js
 
@@ -573,7 +573,7 @@ Or show an image in image viewer
 
 ### File Access
 
-File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However we realized that, it's hard to find a great solution to manage cached files, every one who use this moudle may need these APIs for there cases.
+File access APIs were made when developing `v0.5.0`, which helping us write tests, and was not planned to be a part of this module. However, we realized that it's hard to find a great solution to manage cached files, everyone who uses this module may need these APIs for there cases.
 
 Before start using file APIs, we recommend read [Differences between File Source](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#differences-between-file-source) first.
 
@@ -601,9 +601,9 @@ See [File API](https://github.com/wkh237/react-native-fetch-blob/wiki/File-Syste
 
 ### File Stream
 
-In `v0.5.0` we've added  `writeStream` and `readStream`, which allows your app read/write data from file path. This API creates a file stream, rather than convert whole data into BASE64 encoded string, it's handy when processing **large files**.
+In `v0.5.0` we've added  `writeStream` and `readStream`, which allows your app read/write data from the file path. This API creates a file stream, rather than convert whole data into BASE64 encoded string, it's handy when processing **large files**.
 
-When calling `readStream` method, you have to `open` the stream, and start to read data. When the file is large, consider use an appropriate `bufferSize` and `interval` to reduce the native event dispatching overhead (see [Performance Tips](#user-content-performance-tips))
+When calling `readStream` method, you have to `open` the stream, and start to read data. When the file is large, consider using an appropriate `bufferSize` and `interval` to reduce the native event dispatching overhead (see [Performance Tips](#user-content-performance-tips))
 
 ```js
 let data = ''
@@ -631,7 +631,7 @@ RNFetchBlob.fs.readStream(
 })
 ```
 
-When use `writeStream`, the stream is also opened immediately, but you have to `write`, and `close` by yourself.
+When using `writeStream`, the stream is also opened immediately, but you have to `write`, and `close` by yourself.
 
 ```js
 RNFetchBlob.fs.writeStream(
@@ -650,7 +650,7 @@ RNFetchBlob.fs.writeStream(
 
 ### Cache File Management
 
-When using `fileCache` or `path` options along with `fetch` API, response data will automatically stored into file system. The files will **NOT** removed unless you `unlink` it. There're several ways to remove the files
+When using `fileCache` or `path` options along with `fetch` API, response data will automatically store into the file system. The files will **NOT** removed unless you `unlink` it. There're several ways to remove the files
 
 ```js
 
@@ -671,7 +671,7 @@ When using `fileCache` or `path` options along with `fetch` API, response data w
 
 ```
 
-You can also grouping requests by using `session` API, and use `dispose` to remove them all when needed.
+You can also group requests by using `session` API and use `dispose` to remove them all when needed.
 
 ```js
 
@@ -707,7 +707,7 @@ You can also grouping requests by using `session` API, and use `dispose` to remo
 
 ### Transfer Encoding
 
-After `0.9.4`, the `Chunked` transfer encoding is disabled by default due to some service provoder may not support chunked transfer. To enable it, set `Transfer-Encoding` header to `Chunked`.
+After `0.9.4`, the `Chunked` transfer encoding is disabled by default due to some service provider may not support chunked transfer. To enable it, set `Transfer-Encoding` header to `Chunked`.
 
 ```js
 RNFetchBlob.fetch('POST', 'http://example.com/upload', { 'Transfer-Encoding' : 'Chunked' }, bodyData)
@@ -740,11 +740,11 @@ Here's a [sample app](https://github.com/wkh237/rn-firebase-storage-upload-sampl
 
 **Read Stream and Progress Event Overhead**
 
-When reading data via `fs.readStream` the process seems blocking JS thread when file is large, it's because the default buffer size is quite small (4kb) which result in large amount of events triggered in JS thread, try to increase the buffer size (for example 100kb = 102400) and set a larger interval (which is introduced in 0.9.4 default value is 10ms) to limit the frequency.
+When reading data via `fs.readStream` the process seems to block JS thread when file is large, it's because the default buffer size is quite small (4kb) which result in large amount of events triggered in JS thread, try to increase the buffer size (for example 100kb = 102400) and set a larger interval (which is introduced in 0.9.4 default value is 10ms) to limit the frequency.
 
 **Reduce RCT Bridge and BASE64 Overhead**
 
-React Native connects JS and Native context by passing JSON around React Native bridge, and there will be an overhead to convert data before they sent to each side. When data is large, this will be quite a performance impact to your app, it's recommended to use file storage instead of BASE64 if possible.The following chart shows how much faster when loading data from storage than BASE64 encoded string on iphone 6.
+React Native connects JS and Native context by passing JSON around React Native bridge, and there will be an overhead to convert data before they sent to each side. When data is large, this will be quite a performance impact to your app, it's recommended to use file storage instead of BASE64 if possible.The following chart shows how much faster when loading data from storage than BASE64 encoded string on iPhone 6.
 
 <img src="img/performance_1.png" style="width : 100%"/>
 
@@ -756,19 +756,19 @@ Due to the [lack of typed array implementation in JavascriptCore, and limitation
 
 **Concate and Replacing Files**
 
-If you're going to concatenate files, you don't have to read the data to JS context anymore ! In `0.8.0` we introduced new encoding `uri` for writeFile and appendFile API. Which make it possible to done the whole process in native.
+If you're going to concatenate files, you don't have to read the data to JS context anymore! In `0.8.0` we introduced new encoding `uri` for writeFile and appendFile API. Which make it possible to done the whole process in native.
 
 <img src="img/performance_f2f.png" style="width : 100%"/>
 
 ## Caveats
 
 * This library does not urlencode unicode characters in URL automatically, see [#146](https://github.com/wkh237/react-native-fetch-blob/issues/146).
-* When a `Blob` is created from existing file, the file **WILL BE REMOVE** if you `close` the blob.
-* If you replaced `window.XMLHttpRequest` for some reason (e.g. make Firebase SDK work), it will also effect how official `fetch` works (basically it should work just fine).
-* When file stream and upload/download progress event slow down your app, consider upgrade to `0.9.6+`, use [additional arguments](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogressconfig-eventlistenerpromisernfetchblobresponse) to limit its frequency.
+* When a `Blob` ,  from existing file, the file **WILL BE REMOVE** if you `close` the blob.
+* If you replaced `window.XMLHttpRequest` for some reason (e.g. make Firebase SDK work), it will also affect how official `fetch` works (basically it should work just fine).
+* When file stream and upload/download progress event slow down your app, consider an upgrade to `0.9.6+`, use [additional arguments](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogressconfig-eventlistenerpromisernfetchblobresponse) to limit its frequency.
 * When passing a file path to the library, remove `file://` prefix.
 
-when you got problem, have a look at [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting) or [issues labeled Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/issues?utf8=✓&q=label%3A%22trouble%20shooting%22%20), there'd be some helpful information.
+when you got problem, have a look at [Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/wiki/Trouble-Shooting) or [issues labeled Trouble Shooting](https://github.com/wkh237/react-native-fetch-blob/issues?utf8=✓&q=label:%22trouble%20shooting%22%20), there'd be some helpful information.
 
 ## Changes
 
