@@ -234,8 +234,14 @@ app.all('/long/', (req, res) => {  var count = 0;
 })
 
 app.all('/cookie/:data', (req, res) => {
-  res.cookie('cookieName', req.params.data);
+  for(var i =0;i<10;i++) {
+    res.cookie('cookie'+i, req.params.data);
+  }
   res.end()
+})
+
+app.all('/cookie-echo', (req, res) => {
+  res.send(req.headers.cookie)
 })
 
 app.all('/err-body', (req, res) => {

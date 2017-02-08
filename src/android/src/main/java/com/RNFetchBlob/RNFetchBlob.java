@@ -14,6 +14,7 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
+import com.facebook.react.bridge.WritableMap;
 
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -231,14 +232,29 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     @ReactMethod
     /**
      * Get cookies belongs specific host.
-     * @param host String host name.
+     * @param host String domain name.
      */
-    public void getCookies(String host, Promise promise) {
+    public void getCookies(String domain, Promise promise) {
         try {
-            WritableArray cookies = RNFBCookieJar.getCookies(host);
+            WritableMap cookies = RNFBCookieJar.getCookies(domain);
             promise.resolve(cookies);
         } catch(Exception err) {
             promise.reject("RNFetchBlob.getCookies", err.getMessage());
+        }
+    }
+
+    @ReactMethod
+    /**
+     * Remove cookies for specific domain
+     * @param domain String of the domain
+     * @param promise JSC promise injected by RN
+     */
+    public void removeCookies(String domain, Promise promise) {
+        try {
+            RNFBCookieJar.removeCookies(domain);
+            promise.resolve(null);
+        } catch(Exception err) {
+            promise.reject("RNFetchBlob.removeCookies", err.getMessage());
         }
     }
 

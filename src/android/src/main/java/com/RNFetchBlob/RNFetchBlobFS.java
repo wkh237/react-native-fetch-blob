@@ -30,7 +30,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -202,7 +204,7 @@ public class RNFetchBlobFS {
         String state;
         state = Environment.getExternalStorageState();
         if (state.equals(Environment.MEDIA_MOUNTED)) {
-            res.put("SDCard", Environment.getExternalStorageDirectory().getAbsolutePath());
+            res.put("SDCardDir", Environment.getExternalStorageDirectory().getAbsolutePath());
         }
         res.put("MainBundleDir", ctx.getApplicationInfo().dataDir);
         return res;
@@ -245,8 +247,12 @@ public class RNFetchBlobFS {
             boolean error = false;
 
             if (encoding.equalsIgnoreCase("utf8")) {
+                CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
                 while ((cursor = fs.read(buffer)) != -1) {
-                    String chunk = new String(buffer, 0, cursor, "UTF-8");
+                    encoder.encode(ByteBuffer.wrap(buffer).asCharBuffer());
+                    // if the data contains invalid characters the following lines will be
+                    // skipped.
+                    String chunk = new String(buffer);
                     emitStreamEvent(streamId, "data", chunk);
                     if(tick > 0)
                         SystemClock.sleep(tick);
@@ -288,7 +294,7 @@ public class RNFetchBlobFS {
             buffer = null;
 
         } catch (Exception err) {
-            emitStreamEvent(streamId, "error", err.getLocalizedMessage());
+            emitStreamEvent(streamId, "error", "Failed to convert data to "+encoding+" encoded string, this might due to the source data is not able to convert using this encoding.");
         }
     }
 
@@ -574,6 +580,10 @@ public class RNFetchBlobFS {
             @Override
             protected Integer doInBackground(String ...args) {
                 WritableArray res = Arguments.createArray();
+                if(args[0] == null) {
+                    callback.invoke("lstat error: the path specified for lstat is either `null` or `undefined`.");
+                    return 0;
+                }
                 File src = new File(args[0]);
                 if(!src.exists()) {
                     callback.invoke("lstat error: failed to list path `" + args[0] + "` for it is not exist or it is not a folder");
@@ -628,7 +638,7 @@ public class RNFetchBlobFS {
                 stat.putString("path", path);
                 stat.putString("type", "asset");
                 stat.putString("size", String.valueOf(fd.getLength()));
-                stat.putString("lastModified", "0");
+                stat.putInt("lastModified", 0);
             }
             else {
                 File target = new File(path);

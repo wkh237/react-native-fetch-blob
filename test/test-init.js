@@ -1,5 +1,6 @@
 import RNTest from './react-native-testkit/'
 import React from 'react'
+import _ from 'lodash'
 import RNFetchBlob from 'react-native-fetch-blob'
 
 import {
@@ -18,10 +19,10 @@ const { Assert, Comparer, Info, prop } = RNTest
 // test environment variables
 
 prop('FILENAME', `${Platform.OS}-0.10.0-${Date.now()}.png`)
-// prop('TEST_SERVER_URL', 'http://localhost:8123')
-// prop('TEST_SERVER_URL_SSL', 'https://localhost:8124')
-prop('TEST_SERVER_URL', 'http://192.168.17.185:8123')
-prop('TEST_SERVER_URL_SSL', 'https://192.168.17.185:8124')
+prop('TEST_SERVER_URL', 'http://localhost:8123')
+prop('TEST_SERVER_URL_SSL', 'https://localhost:8124')
+// prop('TEST_SERVER_URL', 'http://192.168.0.13:8123')
+// prop('TEST_SERVER_URL_SSL', 'https://192.168.0.13:8124')
 prop('DROPBOX_TOKEN', 'fsXcpmKPrHgAAAAAAAAAoXZhcXYWdgLpQMan6Tb_bzJ237DXhgQSev12hA-gUXt4')
 prop('styles', {
   image : {
@@ -41,6 +42,26 @@ const describe = RNTest.config({
 })
 
 // init
+
+describe('#225 upload progress should fire correctly', (report, done) => {
+
+  let data = '';
+  let fired = false;
+  for(let i =0; i< 100000; i++) {
+    data += 'chunkchunk'
+  }
+  let upload = RNFetchBlob.fetch('POST', `${TEST_SERVER_URL}/upload`, {
+    'Content-Type' : 'text/plain;BASE64'
+  }, data)
+  upload.uploadProgress((total, now) => {
+    console.log(total, now)
+    fired = true;
+  })
+  upload.then(() => {
+    report(<Assert key="progress event fired" expect={true} actual={fired}/>);
+    done()
+  })
+})
 
 describe('GET image from server', (report, done) => {
 
@@ -74,7 +95,9 @@ describe('GET image from server', (report, done) => {
 // require('./test-0.9.5')
 // require('./test-0.9.6')
 // require('./test-0.10.0')
-require('./test-0.10.1')
+// require('./test-0.10.1')
+// require('./test-0.10.2')
+require('./test-0.10.3')
 // require('./test-background.js')
 // require('./test-stream')
 // require('./test-fetch')

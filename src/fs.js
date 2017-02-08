@@ -1,7 +1,6 @@
 // Copyright 2016 wkh237@github. All rights reserved.
 // Use of this source code is governed by a MIT-style license that can be
 // found in the LICENSE file.
-// @flow
 
 import {
   NativeModules,
@@ -201,8 +200,13 @@ function stat(path:string):Promise<RNFetchBlobFile> {
     RNFetchBlob.stat(path, (err, stat) => {
       if(err)
         reject(new Error(err))
-      else
+      else {
+        if(stat) {
+          stat.size = parseInt(stat.size)
+          stat.lastModified = parseInt(stat.lastModified)
+        }
         resolve(stat)
+      }
     })
   })
 }

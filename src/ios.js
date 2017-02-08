@@ -1,7 +1,6 @@
 // Copyright 2016 wkh237@github. All rights reserved.
 // Use of this source code is governed by a MIT-style license that can be
 // found in the LICENSE file.
-// @flow
 
 import {
   NativeModules,
@@ -38,7 +37,18 @@ function openDocument(path:string, scheme:string) {
     return Promise.reject('RNFetchBlob.previewDocument only supports IOS.')
 }
 
+/**
+ * Set excludeFromBackupKey to a URL to prevent the resource to be backuped to
+ * iCloud.
+ * @param  {string} url URL of the resource, only file URL is supported
+ * @return {Promise}
+ */
+function excludeFromBackupKey(url:string) {
+  return RNFetchBlob.excludeFromBackupKey('file://' + path);
+}
+
 export default {
   openDocument,
-  previewDocument
+  previewDocument,
+  excludeFromBackupKey
 }

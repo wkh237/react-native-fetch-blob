@@ -6,13 +6,20 @@
 //  Copyright © 2016 wkh237. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
+#import "RNFetchBlobProgress.h"
+#import "RNFetchBlobFS.h"
+
+#if __has_include(<React/RCTAssert.h>)
+#import <React/RCTBridgeModule.h>
+#else
+#import "RCTBridgeModule.h"
+#endif
+
 #ifndef RNFetchBlobNetwork_h
 #define RNFetchBlobNetwork_h
 
-#import <Foundation/Foundation.h>
-#import "RCTBridgeModule.h"
-#import "RNFetchBlobProgress.h"
-#import "RNFetchBlobFS.h"
+
 
 typedef void(^CompletionHander)(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error);
 typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error);
@@ -42,9 +49,10 @@ typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse 
 - (nullable id) init;
 - (void) sendRequest;
 - (void) sendRequest:(NSDictionary  * _Nullable )options contentLength:(long)contentLength bridge:(RCTBridge * _Nullable)bridgeRef taskId:(NSString * _Nullable)taskId withRequest:(NSURLRequest * _Nullable)req callback:(_Nullable RCTResponseSenderBlock) callback;
++ (void) removeCookies:(NSString *) domain error:(NSError **)error;
 + (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config;
 + (void) enableUploadProgress:(NSString *) taskId config:(RNFetchBlobProgress *)config;
-+ (NSArray *) getCookies:(NSString *) url;
++ (NSDictionary *) getCookies:(NSString *) url;
 
 
 

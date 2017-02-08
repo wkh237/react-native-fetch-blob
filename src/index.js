@@ -1,7 +1,6 @@
 // Copyright 2016 wkh237@github. All rights reserved.
 // Use of this source code is governed by a MIT-style license that can be
 // found in the LICENSE file.
-// @flow
 
 import {
   NativeModules,
@@ -23,6 +22,7 @@ import fs from './fs'
 import getUUID from './utils/uuid'
 import base64 from 'base-64'
 import polyfill from './polyfill'
+import _ from 'lodash'
 import android from './android'
 import ios from './ios'
 import net from './net'
@@ -217,6 +217,12 @@ function fetch(...args:any):Promise {
   let subscription, subscriptionUpload, stateEvent, partEvent
   let respInfo = {}
   let [method, url, headers, body] = [...args]
+
+  // # 241 normalize null or undefined headers, in case nil or null string
+  // pass to native context
+  _.each(headers, (h,i) =>  {
+    headers[i] = h || ''
+  });
 
   // fetch from file system
   if(URIUtil.isFileURI(url)) {
