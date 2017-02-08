@@ -75,3 +75,17 @@ describe('#230 #249 cookies manipulation', (report, done) => {
   })
 
 })
+
+describe('#254 IOS fs.stat lastModified date correction', (report, done) => {
+
+  let path = dirs.DocumentDir + '/temp' + Date.now()
+  fs.createFile(path, 'hello', 'utf8' )
+    .then(() => fs.stat(path))
+    .then((stat) => {
+      console.log(stat)
+      let p = stat.lastModified / Date.now()
+      report(<Assert key="date is correct" expect={true} actual={ p< 1.05 && p > 0.95}/>)
+      done()
+    })
+
+})
