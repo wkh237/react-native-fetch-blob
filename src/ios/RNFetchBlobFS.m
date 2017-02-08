@@ -516,7 +516,7 @@ NSMutableDictionary *fileStreams = nil;
              @"size" : size,
              @"filename" : filename,
              @"path" : path,
-             @"lastModified" : [NSNumber numberWithLong:(time_t) [lastModified timeIntervalSince1970]*1000],
+             @"lastModified" : [NSString stringWithFormat:@"%@", [NSNumber numberWithLong:(time_t) [lastModified timeIntervalSince1970]*1000]],
              @"type" : isDir ? @"directory" : @"file"
             };
 
