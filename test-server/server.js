@@ -240,6 +240,13 @@ app.all('/cookie/:data', (req, res) => {
   res.end()
 })
 
+app.all('/interrupt', (req, res) => {
+  res.set('Content-Length', 10240000)
+  setInterval(() => {
+    res.write('A')
+  }, 300)
+})
+
 app.all('/cookie-echo', (req, res) => {
   res.send(req.headers.cookie)
 })

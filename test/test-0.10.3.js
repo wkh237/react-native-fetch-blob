@@ -113,3 +113,39 @@ describe('#263 parallel request', (report, done) => {
   })
 
 })
+
+describe('#264 network exceptions should be catachable', (report, done) => {
+
+  let task = RNFetchBlob
+  .config({ fileCache : true})
+  .fetch('GET',`${TEST_SERVER_URL}/interrupt`)
+  task
+  .then((res) => {
+    console.log(res.data)
+    console.log(res.info())
+  })
+  .catch((err) => {
+    console.log('##err',err)
+  })
+
+})
+
+describe('readstream with empty buffer', (report, done) => {
+
+  let data = { cool : 100 }
+  let path = dirs.DocumentDir + '/test' + Date.now()
+  let result = ''
+
+  fs.writeFile(path, JSON.stringify(data), 'utf8')
+    .then(() => fs.readStream(path, 'utf8'))
+    .then((stream) => {
+      stream.open()
+      stream.onData((chunk) => { result += chunk })
+      stream.onError((err) => console.log('err' + err))
+      stream.onEnd(() => {
+        console.log(result)
+        console.log(JSON.parse(result))
+      })
+    })
+
+})
