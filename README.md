@@ -42,7 +42,8 @@ A project committed to making file access and data transfer easier, efficient fo
 
 ## About
 
-This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854) because React Native lack of `Blob` implementation and it will cause some problem when transferring binary data. Now, this project is committed to making file access and transfer easier, efficient for React Native developers. We've implemented highly customizable filesystem and network module which plays well together. For example, upload and download data directly from/to storage which is much more efficient in some cases(especially for large ones). The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
+This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854) because React Native lack of `Blob` implementation and it's problematic when transferring binary data. Now the project is committed to making file access and transfer easier, efficient for React Native developers. 
+We've implemented highly customizable filesystem and network module which plays well together. For example, upload and download data directly from/to storage which is much more efficient in some cases(especially for large ones). The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
 
 In `0.8.0` we introduced experimental Web API polyfills that make it possible to use browser-based libraries in React Native, such as, [FireBase JS SDK](https://github.com/wkh237/rn-firebase-storage-upload-sample)
 
@@ -123,7 +124,7 @@ Also, if you're going to use `Android Download Manager` you have to add this to 
 
 **Grant Access Permission for Android 6.0**
 
-Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. So adding permissions in `AndroidManifest.xml` won't work f Android 6.0 devices. To grant permissions in runtime, you might use modules like [react-native-android-permissions](https://github.com/lucasferreira/react-native-android-permissions).
+Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. So adding permissions in `AndroidManifest.xml` won't work for Android 6.0+ devices. To grant permissions in runtime, you might use [PermissionAndroid API](https://facebook.github.io/react-native/docs/permissionsandroid.html).
 
 ## Usage
 
