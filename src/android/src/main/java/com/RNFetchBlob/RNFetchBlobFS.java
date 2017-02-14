@@ -248,9 +248,9 @@ public class RNFetchBlobFS {
                 CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
                 while ((cursor = fs.read(buffer)) != -1) {
                     encoder.encode(ByteBuffer.wrap(buffer).asCharBuffer());
-                    // if the data contains invalid characters the following lines will be
-                    // skipped.
                     String chunk = new String(buffer);
+                    if(cursor != bufferSize)
+                        chunk = chunk.substring(0, cursor);
                     emitStreamEvent(streamId, "data", chunk);
                     if(tick > 0)
                         SystemClock.sleep(tick);
