@@ -247,14 +247,12 @@ function fetch(...args:any):Promise {
     })
 
     stateEvent = emitter.addListener('RNFetchBlobState', (e) => {
-      respInfo = e
-      if(e.taskId === taskId && promise.onStateChange) {
-        promise.onStateChange(e)
-      }
+      if(e.taskId === taskId)
+        respInfo = e
+      promise.onStateChange && promise.onStateChange(e)
     })
 
     subscription = emitter.addListener('RNFetchBlobExpire', (e) => {
-      console.log(e , 'EXPIRED!!')
       if(e.taskId === taskId && promise.onExpire) {
         promise.onExpire(e)
       }

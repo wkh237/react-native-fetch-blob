@@ -61,30 +61,6 @@ static void initialize_tables() {
 }
 
 
-typedef NS_ENUM(NSUInteger, ResponseFormat) {
-    UTF8,
-    BASE64,
-    AUTO
-};
-
-
-@interface RNFetchBlobNetwork ()
-{
-    BOOL * respFile;
-    BOOL isNewPart;
-    BOOL * isIncrement;
-    NSMutableData * partBuffer;
-    NSString * destPath;
-    NSOutputStream * writeStream;
-    long bodyLength;
-    NSMutableDictionary * respInfo;
-    NSInteger respStatus;
-    NSMutableArray * redirects;
-    ResponseFormat responseFormat;
-    BOOL * followRedirect;
-}
-
-@end
 
 @implementation RNFetchBlobNetwork
 
@@ -96,9 +72,22 @@ NSOperationQueue *taskQueue;
 @synthesize callback;
 @synthesize bridge;
 @synthesize options;
+@synthesize redirects;
 @synthesize fileTaskCompletionHandler;
 @synthesize dataTaskCompletionHandler;
 @synthesize error;
+
+@synthesize respFile;
+@synthesize isNewPart;
+@synthesize isIncrement;
+@synthesize partBuffer;
+@synthesize destPath;
+@synthesize writeStream;
+@synthesize bodyLength;
+@synthesize respInfo;
+@synthesize respStatus;
+@synthesize responseFormat;
+@synthesize followRedirect;
 
 
 // constructor
