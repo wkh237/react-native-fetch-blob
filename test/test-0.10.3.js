@@ -31,63 +31,63 @@ const { TEST_SERVER_URL, TEST_SERVER_URL_SSL, FILENAME, DROPBOX_TOKEN, styles } 
 const dirs = RNFetchBlob.fs.dirs
 let prefix = ((Platform.OS === 'android') ? 'file://' : '')
 let begin = Date.now()
-//
-// describe('#230 #249 cookies manipulation', (report, done) => {
-//
-//   RNFetchBlob
-//   .fetch('GET', `${TEST_SERVER_URL}/cookie/249230`)
-//   .then((res) => RNFetchBlob.net.getCookies())
-//   .then((cookies) => {
-//     console.log(cookies)
-//     report(<Assert
-//       key="should set 10 cookies"
-//       expect={10}
-//       actual={cookies['localhost'].length}/>)
-//     return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/cookie-echo`)
-//   })
-//   .then((res) => {
-//     console.log(res.data)
-//     let cookies = String(res.data).split(';')
-//     report(<Assert
-//       key="should send 10 cookies"
-//       expect={10}
-//       actual={cookies.length}/>)
-//     return RNFetchBlob.net.removeCookies()
-//   })
-//   .then(() => RNFetchBlob.net.getCookies('localhost'))
-//   .then((cookies) => {
-//     report(<Assert
-//       key="should have no cookies"
-//       expect={undefined}
-//       actual={cookies['localhost']}/>)
-//     return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/cookie-echo`)
-//   })
-//   .then((res) => {
-//     console.log(res.data)
-//     let cookies = String(res.data).split(';')
-//     cookies = _.reject(cookies, r => r.length < 2)
-//     report(<Assert
-//       key="should send no cookies"
-//       expect={0}
-//       actual={cookies.length}/>)
-//     done()
-//   })
-//
-// })
-//
-// describe('#254 IOS fs.stat lastModified date correction', (report, done) => {
-//
-//   let path = dirs.DocumentDir + '/temp' + Date.now()
-//   fs.createFile(path, 'hello', 'utf8' )
-//     .then(() => fs.stat(path))
-//     .then((stat) => {
-//       console.log(stat)
-//       let p = stat.lastModified / Date.now()
-//       report(<Assert key="date is correct" expect={true} actual={ p< 1.05 && p > 0.95}/>)
-//       done()
-//     })
-//
-// })
+
+describe('#230 #249 cookies manipulation', (report, done) => {
+
+  RNFetchBlob
+  .fetch('GET', `${TEST_SERVER_URL}/cookie/249230`)
+  .then((res) => RNFetchBlob.net.getCookies())
+  .then((cookies) => {
+    console.log(cookies)
+    report(<Assert
+      key="should set 10 cookies"
+      expect={10}
+      actual={cookies['localhost'].length}/>)
+    return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/cookie-echo`)
+  })
+  .then((res) => {
+    console.log(res.data)
+    let cookies = String(res.data).split(';')
+    report(<Assert
+      key="should send 10 cookies"
+      expect={10}
+      actual={cookies.length}/>)
+    return RNFetchBlob.net.removeCookies()
+  })
+  .then(() => RNFetchBlob.net.getCookies('localhost'))
+  .then((cookies) => {
+    report(<Assert
+      key="should have no cookies"
+      expect={undefined}
+      actual={cookies['localhost']}/>)
+    return RNFetchBlob.fetch('GET', `${TEST_SERVER_URL}/cookie-echo`)
+  })
+  .then((res) => {
+    console.log(res.data)
+    let cookies = String(res.data).split(';')
+    cookies = _.reject(cookies, r => r.length < 2)
+    report(<Assert
+      key="should send no cookies"
+      expect={0}
+      actual={cookies.length}/>)
+    done()
+  })
+
+})
+
+describe('#254 IOS fs.stat lastModified date correction', (report, done) => {
+
+  let path = dirs.DocumentDir + '/temp' + Date.now()
+  fs.createFile(path, 'hello', 'utf8' )
+    .then(() => fs.stat(path))
+    .then((stat) => {
+      console.log(stat)
+      let p = stat.lastModified / Date.now()
+      report(<Assert key="date is correct" expect={true} actual={ p< 1.05 && p > 0.95}/>)
+      done()
+    })
+
+})
 
 describe('#263 parallel request', (report, done) => {
   let urls = [
