@@ -1,20 +1,36 @@
 {
-  "name": "react-native-fetch-blob-dev-env",
-  "description": "RNFB development environment, not dist package",
-  "version": "0.10.3-dev",
-  "private": true,
+  "name": "react-native-fetch-blob",
+  "version": "0.10.3-beta.1",
+  "description": "A module provides upload, download, and files access API. Supports file stream read/write for process large files.",
+  "main": "index.js",
   "scripts": {
-    "start": "node node_modules/react-native/local-cli/cli.js start",
-    "update-info": "sh scripts/contributors.sh",
-    "test": "sh ./scripts/test.sh"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "devDependencies": {
-    "body-parser": "^1.15.0",
-    "chalk": "^1.1.3",
-    "chokidar": "^1.5.1",
-    "express": "^4.13.4",
-    "multer": "^1.1.0"
+  "dependencies": {
+    "base-64": "0.1.0",
+    "glob": "^7.0.6"
   },
+  "keywords": [
+    "react-native",
+    "fetch",
+    "blob",
+    "fs",
+    "upload",
+    "file",
+    "download",
+    "filestream",
+    "image header"
+  ],
+  "rnpm": {
+    "commands": {
+      "prelink": "node ./node_modules/react-native-fetch-blob/scripts/prelink.js"
+    }
+  },
+  "repository": {
+    "url": "https://github.com/wkh237/react-native-fetch-blob.git"
+  },
+  "author": "wkh237 <xeiyan@gmail.com>",
+  "license": "MIT",
   "contributors": [
     "960px <pinovel@gmail.com>",
     "Andreas Amsenius <andreas@amsenius.se>",
