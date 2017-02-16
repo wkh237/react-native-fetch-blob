@@ -21,6 +21,7 @@ public class RNFetchBlobConfig {
     public Boolean increment = false;
     public Boolean followRedirect = true;
     public ReadableArray binaryContentTypes = null;
+    public boolean multipartFileUpload;
 
     RNFetchBlobConfig(ReadableMap options) {
         if(options == null)
@@ -49,6 +50,7 @@ public class RNFetchBlobConfig {
         if(options.hasKey("timeout")) {
             this.timeout = options.getInt("timeout");
         }
+        this.multipartFileUpload = options.hasKey("multipartFileUpload") ? options.getBoolean("multipartFileUpload") : false;
     }
 
 }
