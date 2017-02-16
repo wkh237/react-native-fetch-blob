@@ -3,7 +3,6 @@
 
 
 A project committed to making file access and data transfer easier, efficient for React Native developers.
-
 > For Firebase Storage solution, please upgrade to latest version for best compatibility.
 
 ## Features
@@ -61,6 +60,12 @@ pod 'react-native-fetch-blob',
     :path => '../node_modules/react-native-fetch-blob'
 ```
 
+After `0.10.3` you can install this package directly from Github 
+
+```
+## replace <branch_name> with any one of the branches
+npm install --save github:wkh237/react-native-fetch-blob-package#<branch_name>
+```
 **Automatically Link Native Modules**
 
 For 0.29.2+ projects, simply link native packages via the following command because rnpm has been merged into react-native, you no longer need it.
