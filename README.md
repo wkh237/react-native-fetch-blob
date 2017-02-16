@@ -4,8 +4,6 @@
 
 A project committed to making file access and data transfer easier, efficient for React Native developers.
 
-> If you're going to use GitHub repo as npm dependency, please visit the [archive repository](https://github.com/wkh237/react-native-fetch-blob-package/releases/tag/v0.9.6).
-
 > For Firebase Storage solution, please upgrade to latest version for best compatibility.
 
 ## Features
