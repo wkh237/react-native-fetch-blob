@@ -1,9 +1,0 @@
-uploads/*
-public/*
-!public/github.png
-!public/github2.jpg
-!public/*-dummy*
-!public/beethoven.mp3
-!public/cat-fu.mp4
-!uploads/readme
-.imdone
