@@ -62,8 +62,8 @@ pod 'react-native-fetch-blob',
 
 After `0.10.3` you can install this package directly from Github 
 
-```
-## replace <branch_name> with any one of the branches
+```sh
+# replace <branch_name> with any one of the branches
 npm install --save github:wkh237/react-native-fetch-blob-package#<branch_name>
 ```
 **Automatically Link Native Modules**
