@@ -80,10 +80,25 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
                   callback:(RCTResponseSenderBlock)callback)
 {
 
-    [RNFetchBlobReqBuilder buildMultipartRequest:options taskId:taskId method:method url:url headers:headers form:form onComplete:^(__weak NSURLRequest *req, long bodyLength) {
+    [RNFetchBlobReqBuilder buildMultipartRequest:options
+                                          taskId:taskId
+                                          method:method
+                                             url:url
+                                         headers:headers
+                                            form:form
+                                      onComplete:^(__weak NSURLRequest *req, long bodyLength)
+    {
+        // something went wrong when building the request body
+        if(req == nil)
+        {
+            callback(@[@"RNFetchBlob.fetchBlobForm failed to create request body"]);
+        }
         // send HTTP request
-        RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-        [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+        else
+        {
+            RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
+            [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+        }
     }];
 
 }
@@ -97,10 +112,25 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                   headers:(NSDictionary *)headers
                   body:(NSString *)body callback:(RCTResponseSenderBlock)callback)
 {
-    [RNFetchBlobReqBuilder buildOctetRequest:options taskId:taskId method:method url:url headers:headers body:body onComplete:^(NSURLRequest *req, long bodyLength) {
+    [RNFetchBlobReqBuilder buildOctetRequest:options
+                                      taskId:taskId
+                                      method:method
+                                         url:url
+                                     headers:headers
+                                        body:body
+                                  onComplete:^(NSURLRequest *req, long bodyLength)
+    {
+        // something went wrong when building the request body
+        if(req == nil)
+        {
+            callback(@[@"RNFetchBlob.fetchBlob failed to create request body"]);
+        }
         // send HTTP request
-        __block RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-        [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+        else
+        {
+            __block RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
+            [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+        }
     }];
 }
 
@@ -394,10 +424,27 @@ RCT_EXPORT_METHOD(mkdir:(NSString *)path callback:(RCTResponseSenderBlock) callb
 }
 
 #pragma mark - fs.readFile
-RCT_EXPORT_METHOD(readFile:(NSString *)path encoding:(NSString *)encoding resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(readFile:(NSString *)path
+                  encoding:(NSString *)encoding
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
 {
 
-    [RNFetchBlobFS readFile:path encoding:encoding resolver:resolve rejecter:reject onComplete:nil];
+    [RNFetchBlobFS readFile:path encoding:encoding onComplete:^(id content, NSString * err) {
+        if(err != nil)
+        {
+            reject(@"RNFetchBlob failed to read file", err, nil);
+            return;
+        }
+        if(encoding == @"ascii")
+        {
+            resolve((NSMutableArray *)content);
+        }
+        else
+        {
+            resolve((NSString *)content);
+        }
+    }];
 }
 
 #pragma mark - fs.readStream
@@ -519,22 +566,9 @@ RCT_EXPORT_METHOD(df:(RCTResponseSenderBlock)callback)
 }
 
 # pragma mark - getCookies
-
 RCT_EXPORT_METHOD(getCookies:(NSString *)url resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
     resolve([RNFetchBlobNetwork getCookies:url]);
-}
-
-# pragma mark - removeCookie
-
-RCT_EXPORT_METHOD(removeCookies:(NSString *)domain resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
-{
-    NSError * err = nil;
-    [RNFetchBlobNetwork removeCookies:domain error:&err];
-    if(err)
-        reject(@"RNFetchBlob failed to remove cookie", @"RNFetchBlob failed to remove cookie", nil);
-    else
-        resolve(@[[NSNull null]]);
 }
 
 # pragma mark - check expired network events
@@ -543,8 +577,6 @@ RCT_EXPORT_METHOD(emitExpiredEvent:(RCTResponseSenderBlock)callback)
 {
     [RNFetchBlobNetwork emitExpiredTasks];
 }
-
-
 
 
 @end

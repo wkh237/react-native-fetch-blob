@@ -51,21 +51,29 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         __block NSMutableData * postData = [[NSMutableData alloc] init];
         // combine multipart/form-data body
-        [[self class] buildFormBody:form boundary:boundary onComplete:^(NSData *formData) {
-            if(formData != nil) {
-                [postData appendData:formData];
-                // close form data
-                [postData appendData: [[NSString stringWithFormat:@"--%@--\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-                [request setHTTPBody:postData];
+        [[self class] buildFormBody:form boundary:boundary onComplete:^(NSData *formData, BOOL hasError) {
+            if(hasError)
+            {
+                onComplete(nil, nil);
             }
-            // set content-length
-            [mheaders setValue:[NSString stringWithFormat:@"%lu",[postData length]] forKey:@"Content-Length"];
-            [mheaders setValue:@"100-continue" forKey:@"Expect"];
-            // appaned boundary to content-type
-            [mheaders setValue:[NSString stringWithFormat:@"multipart/form-data; charset=utf-8; boundary=%@", boundary] forKey:@"content-type"];
-            [request setHTTPMethod: method];
-            [request setAllHTTPHeaderFields:mheaders];
-            onComplete(request, [formData length]);
+            else
+            {
+                if(formData != nil)
+                {
+                    [postData appendData:formData];
+                    // close form data
+                    [postData appendData: [[NSString stringWithFormat:@"--%@--\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+                    [request setHTTPBody:postData];
+                }
+                // set content-length
+                [mheaders setValue:[NSString stringWithFormat:@"%lu",[postData length]] forKey:@"Content-Length"];
+                [mheaders setValue:@"100-continue" forKey:@"Expect"];
+                // appaned boundary to content-type
+                [mheaders setValue:[NSString stringWithFormat:@"multipart/form-data; charset=utf-8; boundary=%@", boundary] forKey:@"content-type"];
+                [request setHTTPMethod: method];
+                [request setAllHTTPHeaderFields:mheaders];
+                onComplete(request, [formData length]);
+            }
         }];
 
     });
@@ -109,12 +117,21 @@
                     orgPath = [RNFetchBlobFS getPathOfAsset:orgPath];
                     if([orgPath hasPrefix:AL_PREFIX])
                     {
-                        [RNFetchBlobFS readFile:orgPath encoding:@"utf8" resolver:nil rejecter:nil onComplete:^(NSData *content) {
-                            [request setHTTPBody:content];
-                            [request setHTTPMethod: method];
-                            [request setAllHTTPHeaderFields:mheaders];
-                            onComplete(request, [content length]);
+                        
+                        [RNFetchBlobFS readFile:orgPath encoding:nil onComplete:^(NSData *content, NSString * err) {
+                            if(err != nil)
+                            {
+                                onComplete(nil, nil);
+                            }
+                            else
+                            {
+                                [request setHTTPBody:content];
+                                [request setHTTPMethod: method];
+                                [request setAllHTTPHeaderFields:mheaders];
+                                onComplete(request, [content length]);
+                            }
                         }];
+                        
                         return;
                     }
                     size = [[[NSFileManager defaultManager] attributesOfItemAtPath:orgPath error:nil] fileSize];
@@ -161,11 +178,11 @@
     });
 }
 
-+(void) buildFormBody:(NSArray *)form boundary:(NSString *)boundary onComplete:(void(^)(NSData * formData))onComplete
++(void) buildFormBody:(NSArray *)form boundary:(NSString *)boundary onComplete:(void(^)(NSData * formData, BOOL hasError))onComplete
 {
     __block NSMutableData * formData = [[NSMutableData alloc] init];
     if(form == nil)
-        onComplete(nil);
+        onComplete(nil, NO);
     else
     {
         __block int i = 0;
@@ -202,7 +219,13 @@
                     {
                         NSString * orgPath = [content substringFromIndex:[FILE_PREFIX length]];
                         orgPath = [RNFetchBlobFS getPathOfAsset:orgPath];
-                        [RNFetchBlobFS readFile:orgPath encoding:@"utf8" resolver:nil rejecter:nil onComplete:^(NSData *content) {
+
+                        [RNFetchBlobFS readFile:orgPath encoding:nil onComplete:^(NSData *content, NSString * err) {
+                            if(err != nil)
+                            {
+                                onComplete(formData, YES);
+                                return;
+                            }
                             NSString * filename = [field valueForKey:@"filename"];
                             [formData appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
                             [formData appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"; filename=\"%@\"\r\n", name, filename] dataUsingEncoding:NSUTF8StringEncoding]];
@@ -217,7 +240,7 @@
                             }
                             else
                             {
-                                onComplete(formData);
+                                onComplete(formData, NO);
                                 getFieldData = nil;
                             }
                         }];
@@ -242,7 +265,7 @@
             }
             else
             {
-                onComplete(formData);
+                onComplete(formData, NO);
                 getFieldData = nil;
             }
 

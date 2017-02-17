@@ -37,6 +37,7 @@
 
 NSMapTable * taskTable;
 NSMapTable * expirationTable;
+NSMapTable * cookiesTable;
 NSMutableDictionary * progressTable;
 NSMutableDictionary * uploadProgressTable;
 
@@ -58,9 +59,37 @@ static void initialize_tables() {
     {
         uploadProgressTable = [[NSMutableDictionary alloc] init];
     }
+    if(cookiesTable == nil)
+    {
+        cookiesTable = [[NSMapTable alloc] init];
+    }
 }
 
 
+typedef NS_ENUM(NSUInteger, ResponseFormat) {
+    UTF8,
+    BASE64,
+    AUTO
+};
+
+
+@interface RNFetchBlobNetwork ()
+{
+    BOOL * respFile;
+    BOOL isNewPart;
+    BOOL * isIncrement;
+    NSMutableData * partBuffer;
+    NSString * destPath;
+    NSOutputStream * writeStream;
+    long bodyLength;
+    NSMutableDictionary * respInfo;
+    NSInteger respStatus;
+    NSMutableArray * redirects;
+    ResponseFormat responseFormat;
+    BOOL * followRedirect;
+}
+
+@end
 
 @implementation RNFetchBlobNetwork
 
@@ -72,22 +101,9 @@ NSOperationQueue *taskQueue;
 @synthesize callback;
 @synthesize bridge;
 @synthesize options;
-@synthesize redirects;
 @synthesize fileTaskCompletionHandler;
 @synthesize dataTaskCompletionHandler;
 @synthesize error;
-
-@synthesize respFile;
-@synthesize isNewPart;
-@synthesize isIncrement;
-@synthesize partBuffer;
-@synthesize destPath;
-@synthesize writeStream;
-@synthesize bodyLength;
-@synthesize respInfo;
-@synthesize respStatus;
-@synthesize responseFormat;
-@synthesize followRedirect;
 
 
 // constructor
@@ -98,6 +114,48 @@ NSOperationQueue *taskQueue;
         taskQueue.maxConcurrentOperationCount = 10;
     }
     return self;
+}
+
++ (NSArray *) getCookies:(NSString *) url
+{
+    NSString * hostname = [[NSURL URLWithString:url] host];
+    NSMutableArray * cookies = [NSMutableArray new];
+    NSArray * list = [cookiesTable objectForKey:hostname];
+    for(NSHTTPCookie * cookie in list)
+    {
+        NSMutableString * cookieStr = [[NSMutableString alloc] init];
+        [cookieStr appendString:cookie.name];
+        [cookieStr appendString:@"="];
+        [cookieStr appendString:cookie.value];
+
+        if(cookie.expiresDate == nil) {
+            [cookieStr appendString:@"; max-age=0"];
+        }
+        else {
+            [cookieStr appendString:@"; expires="];
+            NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+            [dateFormatter setDateFormat:@"EEE, dd MM yyyy HH:mm:ss ZZZ"];
+            NSString *strDate = [dateFormatter stringFromDate:cookie.expiresDate];
+            [cookieStr appendString:strDate];
+        }
+
+
+        [cookieStr appendString:@"; domain="];
+        [cookieStr appendString:hostname];
+        [cookieStr appendString:@"; path="];
+        [cookieStr appendString:cookie.path];
+
+
+        if (cookie.isSecure) {
+            [cookieStr appendString:@"; secure"];
+        }
+
+        if (cookie.isHTTPOnly) {
+            [cookieStr appendString:@"; httponly"];
+        }
+        [cookies addObject:cookieStr];
+    }
+    return cookies;
 }
 
 + (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config
@@ -359,10 +417,9 @@ NSOperationQueue *taskQueue;
         // # 153 get cookies
         if(response.URL != nil)
         {
-            NSHTTPCookieStorage * cookieStore = [NSHTTPCookieStorage sharedHTTPCookieStorage];
             NSArray<NSHTTPCookie *> * cookies = [NSHTTPCookie cookiesWithResponseHeaderFields: headers forURL:response.URL];
             if(cookies != nil && [cookies count] > 0) {
-                [cookieStore setCookies:cookies forURL:response.URL mainDocumentURL:nil];
+                [cookiesTable setObject:cookies forKey:response.URL.host];
             }
         }
 
@@ -564,89 +621,6 @@ NSOperationQueue *taskQueue;
                 }
          ];
     }
-}
-
-# pragma mark - cookies handling API
-
-+ (NSDictionary *) getCookies:(NSString *) domain
-{
-    NSMutableDictionary * result = [NSMutableDictionary new];
-    NSHTTPCookieStorage * cookieStore = [NSHTTPCookieStorage sharedHTTPCookieStorage];
-    for(NSHTTPCookie * cookie in [cookieStore cookies])
-    {
-        NSString * cDomain = [cookie domain];
-        if([result objectForKey:cDomain] == nil)
-        {
-            [result setObject:[NSMutableArray new] forKey:cDomain];
-        }
-        if([cDomain isEqualToString:domain] || [domain length] == 0)
-        {
-            NSMutableString * cookieStr = [[NSMutableString alloc] init];
-            cookieStr = [[self class] getCookieString:cookie];
-            NSMutableArray * ary = [result objectForKey:cDomain];
-            [ary addObject:cookieStr];
-            [result setObject:ary forKey:cDomain];
-        }
-    }
-    return result;
-}
-
-// remove cookies for given domain, if domain is empty remove all cookies in shared cookie storage.
-+ (void) removeCookies:(NSString *) domain error:(NSError **)error
-{
-    @try
-    {
-        NSHTTPCookieStorage * cookies = [NSHTTPCookieStorage sharedHTTPCookieStorage];
-        for(NSHTTPCookie * cookie in [cookies cookies])
-        {
-            BOOL shouldRemove = domain == nil || [domain length] < 1 || [[cookie domain] isEqualToString:domain];
-            if(shouldRemove)
-            {
-                [cookies deleteCookie:cookie];
-            }
-        }
-    }
-    @catch(NSError * err)
-    {
-        *error = err;
-    }
-}
-
-// convert NSHTTPCookie to string
-+ (NSString *) getCookieString:(NSHTTPCookie *) cookie
-{
-    NSMutableString * cookieStr = [[NSMutableString alloc] init];
-    [cookieStr appendString:cookie.name];
-    [cookieStr appendString:@"="];
-    [cookieStr appendString:cookie.value];
-    
-    if(cookie.expiresDate == nil) {
-        [cookieStr appendString:@"; max-age=0"];
-    }
-    else {
-        [cookieStr appendString:@"; expires="];
-        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-        [dateFormatter setDateFormat:@"EEE, dd MM yyyy HH:mm:ss ZZZ"];
-        NSString *strDate = [dateFormatter stringFromDate:cookie.expiresDate];
-        [cookieStr appendString:strDate];
-    }
-    
-    
-    [cookieStr appendString:@"; domain="];
-    [cookieStr appendString: [cookie domain]];
-    [cookieStr appendString:@"; path="];
-    [cookieStr appendString:cookie.path];
-    
-    
-    if (cookie.isSecure) {
-        [cookieStr appendString:@"; secure"];
-    }
-    
-    if (cookie.isHTTPOnly) {
-        [cookieStr appendString:@"; httponly"];
-    }
-    return cookieStr;
-
 }
 
 + (void) cancelRequest:(NSString *)taskId
