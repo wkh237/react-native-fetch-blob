@@ -220,9 +220,7 @@ function fetch(...args:any):Promise {
 
   // # 241 normalize null or undefined headers, in case nil or null string
   // pass to native context
-  _.each(headers, (h,i) =>  {
-    headers[i] = h || ''
-  });
+  headers = _.map(headers, (h) => h || '' );
 
   // fetch from file system
   if(URIUtil.isFileURI(url)) {
