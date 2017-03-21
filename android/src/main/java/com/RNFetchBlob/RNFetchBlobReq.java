@@ -265,7 +265,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                             .chunkedEncoding(isChunkedRequest)
                             .setRequestType(requestType)
                             .setBody(rawRequestBody)
-                            .setMIME(MediaType.parse(getHeaderIgnoreCases(mheaders, "content-type")));
+                            .setMIME(MediaType.parse(getHeaderIgnoreCases(mheaders, "Content-Type")));
                     builder.method(method, requestBody);
                     break;
                 case AsIs:
@@ -273,7 +273,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                             .chunkedEncoding(isChunkedRequest)
                             .setRequestType(requestType)
                             .setBody(rawRequestBody)
-                            .setMIME(MediaType.parse(getHeaderIgnoreCases(mheaders, "content-type")));
+                            .setMIME(MediaType.parse(getHeaderIgnoreCases(mheaders, "Content-Type")));
                     builder.method(method, requestBody);
                     break;
                 case Form:
