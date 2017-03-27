@@ -138,16 +138,26 @@ public class RNFetchBlobFS {
      * @param promise
      */
     static public void readFile(String path, String encoding, final Promise promise ) {
-        path = normalizePath(path);
+        String resolved = normalizePath(path);
+        if(resolved != null)
+            path = resolved;
         try {
             byte[] bytes;
 
-            if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
+            if(resolved != null && resolved.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
                 String assetName = path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
                 long length = RNFetchBlob.RCTContext.getAssets().openFd(assetName).getLength();
                 bytes = new byte[(int) length];
                 InputStream in = RNFetchBlob.RCTContext.getAssets().open(assetName);
                 in.read(bytes, 0, (int) length);
+                in.close();
+            }
+            // issue 287
+            else if(resolved == null) {
+                InputStream in = RNFetchBlob.RCTContext.getContentResolver().openInputStream(Uri.parse(path));
+                int length = (int) in.available();
+                bytes = new byte[length];
+                in.read(bytes);
                 in.close();
             }
             else {
@@ -225,7 +235,9 @@ public class RNFetchBlobFS {
      * @param bufferSize    Buffer size of read stream, default to 4096 (4095 when encode is `base64`)
      */
     public void readStream(String path, String encoding, int bufferSize, int tick, final String streamId) {
-        path = normalizePath(path);
+        String resolved = normalizePath(path);
+        if(resolved != null)
+            path = resolved;
         try {
 
             int chunkSize = encoding.equalsIgnoreCase("base64") ? 4095 : 4096;
@@ -233,8 +245,12 @@ public class RNFetchBlobFS {
                 chunkSize = bufferSize;
 
             InputStream fs;
-            if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
+            if(resolved != null && path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
                 fs = RNFetchBlob.RCTContext.getAssets().open(path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, ""));
+            }
+            // fix issue 287
+            else if(resolved == null) {
+                fs = RNFetchBlob.RCTContext.getContentResolver().openInputStream(Uri.parse(path));
             }
             else {
                 fs = new FileInputStream(new File(path));
