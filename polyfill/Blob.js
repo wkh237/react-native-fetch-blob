@@ -11,8 +11,8 @@ import EventTarget from './EventTarget'
 const log = new Log('Blob')
 const blobCacheDir = fs.dirs.DocumentDir + '/RNFetchBlob-blobs/'
 
-log.disable()
-// log.level(3)
+// log.disable()
+log.level(3)
 
 /**
  * A RNFetchBlob style Blob polyfill class, this is a Blob which compatible to
@@ -113,7 +113,7 @@ export default class Blob extends EventTarget {
           formArray.push('\r\n--'+boundary+'\r\n')
           let part = parts[i]
           for(let j in part.headers) {
-            formArray.push(j + ': ' +part.headers[j] + ';\r\n')
+            formArray.push(j + ': ' +part.headers[j] + '\r\n')
           }
           formArray.push('\r\n')
           if(part.isRNFetchBlobPolyfill)
@@ -342,5 +342,6 @@ function createMixedBlobData(ref, dataArray) {
       return fs.appendFile(...arg)
     }.bind(args[i]))
   }
+  console.log('###ref', ref)
   return p.then(() => Promise.resolve(size))
 }
