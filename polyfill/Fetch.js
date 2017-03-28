@@ -6,8 +6,8 @@ import Blob from './Blob'
 
 const log = new Log('FetchPolyfill')
 
-// log.disable()
-log.level(3)
+log.disable()
+// log.level(3)
 
 export default class Fetch {
 
@@ -67,7 +67,7 @@ class RNFetchBlobFetchPolyfill {
         log.verbose('response', resp)
         // release blob cache created when sending request
         if(blobCache !== null && blobCache instanceof Blob)
-          // blobCache.close()
+          blobCache.close()
         return Promise.resolve(new RNFetchBlobFetchRepsonse(resp))
       })
 
