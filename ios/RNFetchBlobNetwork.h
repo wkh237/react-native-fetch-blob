@@ -44,6 +44,7 @@ typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse 
 + (void) cancelRequest:(NSString *)taskId;
 + (void) enableProgressReport:(NSString *) taskId;
 + (void) enableUploadProgress:(NSString *) taskId;
++ (void) beginBackgroundTask:(NSString *) taskId;
 + (void) emitExpiredTasks;
 
 - (nullable id) init;

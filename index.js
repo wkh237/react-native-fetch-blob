@@ -47,16 +47,6 @@ const Blob = polyfill.Blob
 const emitter = DeviceEventEmitter
 const RNFetchBlob = NativeModules.RNFetchBlob
 
-// when app resumes, check if there's any expired network task and trigger
-// their .expire event
-if(Platform.OS === 'ios') {
-  AppState.addEventListener('change', (e) => {
-    console.log('app state changed', e)
-    if(e === 'active')
-      RNFetchBlob.emitExpiredEvent(()=>{})
-  })
-}
-
 // register message channel event handler.
 emitter.addListener("RNFetchBlobMessage", (e) => {
 
@@ -70,6 +60,15 @@ emitter.addListener("RNFetchBlobMessage", (e) => {
     console.log("RNFetchBlob native message", e.detail)
   }
 })
+
+// when app resumes, check if there's any expired network task and trigger
+// their .expire event
+if(Platform.OS === 'ios') {
+  AppState.addEventListener('change', (e) => {
+    if(e === 'active' )
+      RNFetchBlob.emitExpiredEvent(()=>{})
+  })
+}
 
 // Show warning if native module not detected
 if(!RNFetchBlob || !RNFetchBlob.fetchBlobForm || !RNFetchBlob.fetchBlob) {
@@ -107,6 +106,7 @@ function wrap(path:string):string {
  *                   If it doesn't exist, the file is downloaded as usual
  *         @property {number} timeout
  *                   Request timeout in millionseconds, by default it's 30000ms.
+ *         @property {RNFetchBlobIOSConfig} ios
  *
  * @return {function} This method returns a `fetch` method instance.
  */
@@ -217,6 +217,21 @@ function fetch(...args:any):Promise {
   let subscription, subscriptionUpload, stateEvent, partEvent
   let respInfo = {}
   let [method, url, headers, body] = [...args]
+
+
+
+  // if `options.ios.background` is set, move this task into background when
+  // app state changed to `background`
+  if(Platform.OS === 'ios' && options.ios && options.ios.background) {
+    let backgroundHandler = (e) => {
+      if ( e === 'background' ) {
+        RNFetchBlob.beginBackgroundTask(taskId)
+        AppState.removeEventListener('change', backgroundHandler)
+      }
+    }
+    AppState.addEventListener('change', backgroundHandler)
+  }
+
 
   // # 241 normalize null or undefined headers, in case nil or null string
   // pass to native context

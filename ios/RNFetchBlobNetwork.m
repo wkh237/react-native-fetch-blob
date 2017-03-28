@@ -292,16 +292,25 @@ NSOperationQueue *taskQueue;
     // network status indicator
     if([[options objectForKey:CONFIG_INDICATOR] boolValue] == YES)
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
-    __block UIApplication * app = [UIApplication sharedApplication];
 
+}
+
++ (void) beginBackgroundTask:(NSString *) taskId
+{
+    
     // #115 handling task expired when application entering backgound for a long time
-    UIBackgroundTaskIdentifier tid = [app beginBackgroundTaskWithName:taskId expirationHandler:^{
-        NSLog([NSString stringWithFormat:@"session %@ expired", taskId ]);
-        [expirationTable setObject:task forKey:taskId];
-        // comment out this one as it might cause app crash #271
-//        [app endBackgroundTask:tid];
-    }];
-
+    if([taskTable objectForKey:taskId] != nil)
+    {
+        NSLog(@"Moving taskId=%@ to background", taskId);
+        __block UIBackgroundTaskIdentifier backgroundId = [[UIApplication sharedApplication]
+                                          beginBackgroundTaskWithName:taskId
+                                          expirationHandler:^{
+                                              NSLog([NSString stringWithFormat:@"session %@ expired", taskId ]);
+                                              [expirationTable setObject:taskId forKey:taskId];
+                                              [[UIApplication sharedApplication] endBackgroundTask:backgroundId];
+                                          }];
+    }
+    
 }
 
 // #115 Invoke fetch.expire event on those expired requests so that the expired event can be handled

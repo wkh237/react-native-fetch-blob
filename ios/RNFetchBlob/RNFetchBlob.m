@@ -578,5 +578,12 @@ RCT_EXPORT_METHOD(emitExpiredEvent:(RCTResponseSenderBlock)callback)
     [RNFetchBlobNetwork emitExpiredTasks];
 }
 
+#pragma mark - begin background task
+// move specified task into background by its task ID
+RCT_EXPORT_METHOD(beginBackgroundTask:(NSString *)taskId)
+{
+    [RNFetchBlobNetwork beginBackgroundTask:taskId];
+}
+
 
 @end
