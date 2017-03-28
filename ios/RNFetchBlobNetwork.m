@@ -298,7 +298,8 @@ NSOperationQueue *taskQueue;
     UIBackgroundTaskIdentifier tid = [app beginBackgroundTaskWithName:taskId expirationHandler:^{
         NSLog([NSString stringWithFormat:@"session %@ expired", taskId ]);
         [expirationTable setObject:task forKey:taskId];
-        [app endBackgroundTask:tid];
+        // comment out this one as it might cause app crash #271
+//        [app endBackgroundTask:tid];
     }];
 
 }
