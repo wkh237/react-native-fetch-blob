@@ -65,8 +65,12 @@ emitter.addListener("RNFetchBlobMessage", (e) => {
 // their .expire event
 if(Platform.OS === 'ios') {
   AppState.addEventListener('change', (e) => {
-    if(e === 'active' )
-      RNFetchBlob.emitExpiredEvent(()=>{})
+    if(e === 'active' ) {
+      RNFetchBlob.endBackgroundTask()
+      // RNFetchBlob.emitExpiredEvent(()=>{})
+    }
+    else if (e === 'background')
+      RNFetchBlob.beginBackgroundTask()
   })
 }
 
@@ -106,7 +110,6 @@ function wrap(path:string):string {
  *                   If it doesn't exist, the file is downloaded as usual
  *         @property {number} timeout
  *                   Request timeout in millionseconds, by default it's 30000ms.
- *         @property {RNFetchBlobIOSConfig} ios
  *
  * @return {function} This method returns a `fetch` method instance.
  */
@@ -218,21 +221,6 @@ function fetch(...args:any):Promise {
   let respInfo = {}
   let [method, url, headers, body] = [...args]
 
-
-
-  // if `options.ios.background` is set, move this task into background when
-  // app state changed to `background`
-  if(Platform.OS === 'ios' && options.ios && options.ios.background) {
-    let backgroundHandler = (e) => {
-      if ( e === 'background' ) {
-        RNFetchBlob.beginBackgroundTask(taskId)
-        AppState.removeEventListener('change', backgroundHandler)
-      }
-    }
-    AppState.addEventListener('change', backgroundHandler)
-  }
-
-
   // # 241 normalize null or undefined headers, in case nil or null string
   // pass to native context
   headers = _.reduce(headers, (result, value, key) => {
@@ -262,16 +250,12 @@ function fetch(...args:any):Promise {
       }
     })
 
-    stateEvent = emitter.addListener('RNFetchBlobState', (e) => {
-      if(e.taskId === taskId)
-        respInfo = e
-      promise.onStateChange && promise.onStateChange(e)
+    stateEvent = emitter.addListener('RNFetchBlobState', () => {
+      promise.onStateChange && promise.onStateChange()
     })
 
     subscription = emitter.addListener('RNFetchBlobExpire', (e) => {
-      if(e.taskId === taskId && promise.onExpire) {
-        promise.onExpire(e)
-      }
+      promise.onExpire(e)
     })
 
     partEvent = emitter.addListener('RNFetchBlobServerPush', (e) => {

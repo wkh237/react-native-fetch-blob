@@ -36,17 +36,14 @@
 ////////////////////////////////////////
 
 NSMapTable * taskTable;
-NSMapTable * expirationTable;
 NSMapTable * cookiesTable;
 NSMutableDictionary * progressTable;
 NSMutableDictionary * uploadProgressTable;
+UIBackgroundTaskIdentifier bgTask;
 
 __attribute__((constructor))
 static void initialize_tables() {
-    if(expirationTable == nil)
-    {
-        expirationTable = [[NSMapTable alloc] init];
-    }
+    
     if(taskTable == nil)
     {
         taskTable = [[NSMapTable alloc] init];
@@ -295,42 +292,33 @@ NSOperationQueue *taskQueue;
 
 }
 
-+ (void) beginBackgroundTask:(NSString *) taskId
++ (void) beginBackgroundTask
 {
-    
+    NSLog(@"RNFetchBlob starting background task");
     // #115 handling task expired when application entering backgound for a long time
-    if([taskTable objectForKey:taskId] != nil)
-    {
-        NSLog(@"Moving taskId=%@ to background", taskId);
-        __block UIBackgroundTaskIdentifier backgroundId = [[UIApplication sharedApplication]
-                                          beginBackgroundTaskWithName:taskId
-                                          expirationHandler:^{
-                                              NSLog([NSString stringWithFormat:@"session %@ expired", taskId ]);
-                                              [expirationTable setObject:taskId forKey:taskId];
-                                              [[UIApplication sharedApplication] endBackgroundTask:backgroundId];
-                                          }];
-    }
+    bgTask = [[UIApplication sharedApplication]
+                                                       beginBackgroundTaskWithName:@"bgtask"
+                                                       expirationHandler:^{
+                                                           NSLog(@"background session expired");
+                                                           bgTask = UIBackgroundTaskInvalid;
+                                                           RCTBridge * bridge = [RNFetchBlob getRCTBridge];
+                                                           [bridge.eventDispatcher sendDeviceEventWithName:EVENT_EXPIRE body:@{}];
+                                                       }];
     
 }
 
-// #115 Invoke fetch.expire event on those expired requests so that the expired event can be handled
++ (void) endBackgroundTask
+{
+    if(bgTask != nil)
+    [[UIApplication sharedApplication] endBackgroundTask:bgTask];
+    
+}
+
+// #115 Invoke fetch.expire event for those expired requests
 + (void) emitExpiredTasks
 {
-    NSEnumerator * emu =  [expirationTable keyEnumerator];
-    NSString * key;
-
-    while((key = [emu nextObject]))
-    {
-        RCTBridge * bridge = [RNFetchBlob getRCTBridge];
-        NSData * args = @{ @"taskId": key };
-        [bridge.eventDispatcher sendDeviceEventWithName:EVENT_EXPIRE body:args];
-
-    }
-
-    // clear expired task entries
-    [expirationTable removeAllObjects];
-    expirationTable = [[NSMapTable alloc] init];
-
+//    RCTBridge * bridge = [RNFetchBlob getRCTBridge];
+//    [bridge.eventDispatcher sendDeviceEventWithName:EVENT_EXPIRE body:@{}];
 }
 
 ////////////////////////////////////////
