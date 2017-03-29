@@ -250,8 +250,10 @@ function fetch(...args:any):Promise {
       }
     })
 
-    stateEvent = emitter.addListener('RNFetchBlobState', () => {
-      promise.onStateChange && promise.onStateChange()
+    stateEvent = emitter.addListener('RNFetchBlobState', (e) => {
+      if(e.taskId === taskId)
+        respInfo = e
+      promise.onStateChange && promise.onStateChange(e)
     })
 
     subscription = emitter.addListener('RNFetchBlobExpire', (e) => {
