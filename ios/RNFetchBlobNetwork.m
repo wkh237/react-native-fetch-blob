@@ -297,20 +297,22 @@ NSOperationQueue *taskQueue;
     NSLog(@"RNFetchBlob starting background task");
     // #115 handling task expired when application entering backgound for a long time
     bgTask = [[UIApplication sharedApplication]
-                                                       beginBackgroundTaskWithName:@"bgtask"
-                                                       expirationHandler:^{
-                                                           NSLog(@"background session expired");
-                                                           bgTask = UIBackgroundTaskInvalid;
-                                                           RCTBridge * bridge = [RNFetchBlob getRCTBridge];
-                                                           [bridge.eventDispatcher sendDeviceEventWithName:EVENT_EXPIRE body:@{}];
-                                                       }];
+              beginBackgroundTaskWithExpirationHandler:^{
+                  NSLog(@"background session expired");
+                  bgTask = UIBackgroundTaskInvalid;
+                  RCTBridge * bridge = [RNFetchBlob getRCTBridge];
+                  [bridge.eventDispatcher sendDeviceEventWithName:EVENT_EXPIRE body:@{}];
+              }];
     
 }
 
 + (void) endBackgroundTask
 {
     if(bgTask != nil)
-    [[UIApplication sharedApplication] endBackgroundTask:bgTask];
+    {
+        [[UIApplication sharedApplication] endBackgroundTask:bgTask];
+    }
+    
     
 }
 
