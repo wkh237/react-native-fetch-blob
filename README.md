@@ -13,7 +13,7 @@ A project committed to making file access and data transfer easier, efficient fo
 - Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN (experimental)
 - JSON stream supported base on [Oboe.js](https://github.com/jimhigson/oboe.js/) @jimhigson
 
-## TOC (visit [Wiki](https://github.com/wkh237/react-native-fetch-blob/wiki) to get complete documentation)
+## TOC (visit [Wiki](https://github.com/wkh237/react-native-fetch-blob/wiki) to get the complete documentation)
 * [About](#user-content-about)
 * [Installation](#user-content-installation)
 * [HTTP Data Transfer](#user-content-http-data-transfer)
