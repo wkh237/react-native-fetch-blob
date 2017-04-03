@@ -2,8 +2,8 @@
 [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/releases) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![](https://img.shields.io/badge/Wiki-Public-brightgreen.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/wiki) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]()
 
 
-A project committed to making file access and data transfer easier, efficient for React Native developers.
-> For Firebase Storage solution, please upgrade to latest version for best compatibility.
+A project committed to making file access and data transfer easier and more efficient for React Native developers.
+> For Firebase Storage solution, please upgrade to the latest version for the best compatibility.
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
@@ -39,8 +39,8 @@ A project committed to making file access and data transfer easier, efficient fo
 
 ## About
 
-This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854) because React Native lack of `Blob` implementation and it's problematic when transferring binary data. Now the project is committed to making file access and transfer easier, efficient for React Native developers. 
-We've implemented highly customizable filesystem and network module which plays well together. For example, upload and download data directly from/to storage which is much more efficient in some cases(especially for large ones). The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
+This project was initially created to solve the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854) because React Native lacks any `Blob` implementation and is problematic when transferring binary data. The project is committed to making file access and transfer easier and more efficient for React Native developers. 
+We've implemented highly customizable filesystem and network module which plays well together. For example, developers can upload and download data directly from/to storage, which is more efficient, especially for large files. The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
 
 In `0.8.0` we introduced experimental Web API polyfills that make it possible to use browser-based libraries in React Native, such as, [FireBase JS SDK](https://github.com/wkh237/rn-firebase-storage-upload-sample)
 
@@ -53,7 +53,7 @@ Install package from npm
 npm install --save react-native-fetch-blob
 ```
 
-Or if using CocoaPods, add the pod to your `Podfile`, for example:
+Or if using CocoaPods, add the pod to your `Podfile`
 
 ```
 pod 'react-native-fetch-blob',
@@ -68,7 +68,7 @@ npm install --save github:wkh237/react-native-fetch-blob-package#<branch_name>
 ```
 **Automatically Link Native Modules**
 
-For 0.29.2+ projects, simply link native packages via the following command because rnpm has been merged into react-native, you no longer need it.
+For 0.29.2+ projects, simply link native packages via the following command (note: rnpm has been merged into react-native)
 
 ```
 react-native link
@@ -115,7 +115,7 @@ If you're going to access external storage (say, SD card storage) for `Android 5
 
 ```
 
-Also, if you're going to use `Android Download Manager` you have to add this to `AndroidManifetst.xml`
+Also, if you're going to use `Android Download Manager` you have to add this to `AndroidManifest.xml`
 
 ```diff
     <intent-filter>
@@ -152,7 +152,7 @@ var RNFetchBlob = require('react-native-fetch-blob').default
 
 ### Regular Request
 
-After `0.8.0` react-native-fetch-blob automatically decide how to send the body by checking its type and `Content-Type` in the header. The rule is described in the following diagram
+After `0.8.0` react-native-fetch-blob automatically decides how to send the body by checking its type and `Content-Type` in the header. The rule is described in the following diagram
 
 <img src="img/RNFB-flow (1).png" style="width : 90%" />
 
