@@ -509,8 +509,9 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
     UIViewController *rootCtrl = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
     documentController.delegate = self;
     if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
+        CGRect rect = CGRectMake(0.0, 0.0, 0.0, 0.0);
         dispatch_sync(dispatch_get_main_queue(), ^{
-            [documentController  presentOptionsMenuFromRect:rootCtrl.view.bounds inView:rootCtrl.view animated:YES];
+            [documentController  presentOptionsMenuFromRect:rect inView:rootCtrl.view animated:YES];
         });
         resolve(@[[NSNull null]]);
     } else {
