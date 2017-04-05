@@ -758,8 +758,6 @@ NSMutableDictionary *fileStreams = nil;
 
 +(void) df:(RCTResponseSenderBlock)callback
 {
-    uint64_t totalSpace = 0;
-    uint64_t totalFreeSpace = 0;
     NSError *error = nil;
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSDictionary *dictionary = [[NSFileManager defaultManager] attributesOfFileSystemForPath:[paths lastObject] error: &error];
@@ -767,11 +765,10 @@ NSMutableDictionary *fileStreams = nil;
     if (dictionary) {
         NSNumber *fileSystemSizeInBytes = [dictionary objectForKey: NSFileSystemSize];
         NSNumber *freeFileSystemSizeInBytes = [dictionary objectForKey:NSFileSystemFreeSize];
-        totalSpace = [fileSystemSizeInBytes unsignedLongLongValue];
-        totalFreeSpace = [freeFileSystemSizeInBytes unsignedLongLongValue];
+        
         callback(@[[NSNull null], @{
-                  @"free" : [NSNumber numberWithUnsignedLongLong: totalFreeSpace],
-                  @"total" : [NSNumber numberWithUnsignedLongLong: totalSpace],
+                  @"free" : freeFileSystemSizeInBytes,
+                  @"total" : fileSystemSizeInBytes,
                 }]);
     } else {
         callback(@[@"failed to get storage usage."]);
