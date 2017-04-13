@@ -114,6 +114,10 @@ NSMutableDictionary *fileStreams = nil;
     return [NSSearchPathForDirectoriesInDomains(NSPicturesDirectory, NSUserDomainMask, YES) firstObject];
 }
 
++ (NSString *) getLibraryDir {
+    return [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) firstObject];
+}
+
 + (NSString *) getTempPath {
 
     return NSTemporaryDirectory();
