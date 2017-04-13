@@ -184,6 +184,20 @@ RCT_EXPORT_METHOD(createFileASCII:(NSString *)path data:(NSArray *)dataArray cal
 
 }
 
+#pragma mark - fs.pathForAppGroup
+RCT_EXPORT_METHOD(pathForAppGroup:(NSString *)groupName
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    NSString * path = [RNFetchBlobFS getPathForAppGroup:groupName];
+
+    if(path) {
+        resolve(path);
+    } else {
+        reject(@"RNFetchBlob file not found", @"could not find path for app group", nil);
+    }
+}
+
 #pragma mark - fs.exists
 RCT_EXPORT_METHOD(exists:(NSString *)path callback:(RCTResponseSenderBlock)callback) {
     [RNFetchBlobFS exists:path callback:callback];

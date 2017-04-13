@@ -138,6 +138,15 @@ function mkdir(path:string):Promise {
 }
 
 /**
+ * Returns the path for the app group.
+ * @param  {string} groupName Name of app group
+ * @return {Promise}
+ */
+function pathForAppGroup(groupName:string):Promise {
+  return RNFetchBlob.pathForAppGroup(groupName);
+}
+
+/**
  * Wrapper method of readStream.
  * @param  {string} path Path of the file.
  * @param  {'base64' | 'utf8' | 'ascii'} encoding Encoding of read stream.
@@ -366,6 +375,7 @@ export default {
   writeStream,
   writeFile,
   appendFile,
+  pathForAppGroup,
   readFile,
   exists,
   createFile,
