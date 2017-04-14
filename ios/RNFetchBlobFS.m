@@ -129,6 +129,16 @@ NSMutableDictionary *fileStreams = nil;
     return tempPath;
 }
 
++ (NSString *) getPathForAppGroup:(NSString *)groupName {
+    NSFileManager* fileManager = [NSFileManager defaultManager];
+    NSURL* containerURL = [fileManager containerURLForSecurityApplicationGroupIdentifier:groupName];
+    if(containerURL) {
+        return [containerURL path];
+    } else {
+        return nil;
+    }
+}
+
 #pragma margk - readStream
 
 + (void) readStream:(NSString *)uri
