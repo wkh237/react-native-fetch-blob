@@ -490,7 +490,12 @@ When downloading large files on Android it is recommended to use `Download Manag
 
 <img src="img/download-manager.png" width="256">
 
-When using DownloadManager, `fileCache` and `path` properties in `config` will not take effect, because Android DownloadManager can only store files to external storage. When download complete, DownloadManager will generate a file path so that you can deal with it.
+When using DownloadManager, `fileCache` and `path` properties in `config` will not take effect, because Android DownloadManager can only store files to external storage, also notice that Download Manager can only support `GET` method, which means the request body will be ignored.
+
+When download complete, DownloadManager will generate a file path so that you can deal with it.
+
+
+
 
 ```js
 RNFetchBlob
