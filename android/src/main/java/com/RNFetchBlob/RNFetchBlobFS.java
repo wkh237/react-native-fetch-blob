@@ -397,14 +397,16 @@ public class RNFetchBlobFS {
         }
     }
 
-    static void deleteRecursive(File fileOrDirectory) {
+    static void deleteRecursive(File fileOrDirectory) throws Exception {
 
         if (fileOrDirectory.isDirectory()) {
             for (File child : fileOrDirectory.listFiles()) {
                 deleteRecursive(child);
             }
         }
-        fileOrDirectory.delete();
+        boolean removed = fileOrDirectory.delete();
+        if(!removed)
+            throw new Exception("file at path " + fileOrDirectory.getAbsolutePath() + " could not be removed.");
     }
 
     /**
