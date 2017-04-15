@@ -406,7 +406,7 @@ public class RNFetchBlobFS {
         }
         boolean removed = fileOrDirectory.delete();
         if(!removed)
-            throw new Exception("file at path " + fileOrDirectory.getAbsolutePath() + " could not be removed.");
+            throw new Exception("RNFetchBlobFS.deleteRecursive failed to remove file at path " + fileOrDirectory.getAbsolutePath());
     }
 
     /**
