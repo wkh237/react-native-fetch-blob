@@ -648,12 +648,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         String customDest = options.addAndroidDownloads.getString("path");
                         boolean exists = new File(customDest).exists();
                         if(!exists)
-                            throw new Exception("Download manager download failed, the file does not downloaded to destination.");
+                            throw new Exception("Download manager download failed, the file did not downloaded to destination.");
                         else
                             this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, customDest);
 
                     } catch(Exception ex) {
                         error = ex.getLocalizedMessage();
+                        this.callback.invoke(error, null);
                     }
                 }
                 else {
