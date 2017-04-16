@@ -234,7 +234,8 @@ public class RNFetchBlobFS {
 
             InputStream fs;
             if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
-                fs = RNFetchBlob.RCTContext.getAssets().open(path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, ""));
+                fs = RNFetchBlob.RCTContext.getAssets()
+                        .open(path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, ""));
             }
             else {
                 fs = new FileInputStream(new File(path));
