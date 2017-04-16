@@ -2,8 +2,7 @@
     package="com.RNFetchBlob">
 
     <application
-        android:label="@string/app_name"
-        android:supportsRtl="true">
+        android:label="@string/app_name">
 
     </application>
 
