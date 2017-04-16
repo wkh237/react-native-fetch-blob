@@ -59,6 +59,14 @@ public class PathResolver {
 
                 return getDataColumn(context, contentUri, selection, selectionArgs);
             }
+            else if ("content".equalsIgnoreCase(uri.getScheme())) {
+
+                // Return the remote address
+                if (isGooglePhotosUri(uri))
+                    return uri.getLastPathSegment();
+
+                return getDataColumn(context, uri, null, null);
+            }
         }
         // MediaStore (and general)
         else if ("content".equalsIgnoreCase(uri.getScheme())) {
@@ -103,7 +111,12 @@ public class PathResolver {
                 final int index = cursor.getColumnIndexOrThrow(column);
                 return cursor.getString(index);
             }
-        } finally {
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
+        finally {
             if (cursor != null)
                 cursor.close();
         }
