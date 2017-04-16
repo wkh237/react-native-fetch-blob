@@ -130,6 +130,7 @@ export default class Blob extends EventTarget {
     // Blob data from file path
     else if(typeof data === 'string' && data.startsWith('RNFetchBlob-file://')) {
       log.verbose('create Blob cache file from file path', data)
+      this._hasSourceFile = true
       this._ref = String(data).replace('RNFetchBlob-file://', '')
       let orgPath = this._ref
       if(defer)
@@ -277,6 +278,23 @@ export default class Blob extends EventTarget {
     if(this._closed)
       return Promise.reject('Blob has been released.')
     this._closed = true
+    return fs.unlink(this._ref).catch((err) => {
+      console.warn(err)
+    })
+  }
+
+  /**
+   * As an alternative to `close`, this method will also release resources
+   * of the blob instance. However, if the instance is created from an existing
+   * file, the file will not be removed. #316
+   * @return {Promise}
+   */
+  safeClose() {
+    if(this._closed)
+      return Promise.reject('Blob has been released.')
+    this._closed = true
+    if(this._hasSourceFile)
+      return Promise.resolve()
     return fs.unlink(this._ref).catch((err) => {
       console.warn(err)
     })
