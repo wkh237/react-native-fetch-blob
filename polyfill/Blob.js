@@ -113,7 +113,7 @@ export default class Blob extends EventTarget {
           formArray.push('\r\n--'+boundary+'\r\n')
           let part = parts[i]
           for(let j in part.headers) {
-            formArray.push(j + ': ' +part.headers[j] + ';\r\n')
+            formArray.push(j + ': ' +part.headers[j] + '\r\n')
           }
           formArray.push('\r\n')
           if(part.isRNFetchBlobPolyfill)

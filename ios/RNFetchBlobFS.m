@@ -418,54 +418,49 @@ NSMutableDictionary *fileStreams = nil;
 
 # pragma mark - read file
 
-+ (void) readFile:(NSString *)path encoding:(NSString *)encoding
-         resolver:(RCTPromiseResolveBlock)resolve
-         rejecter:(RCTPromiseRejectBlock)reject
-       onComplete:(void (^)(NSData * content))onComplete
++ (void) readFile:(NSString *)path
+         encoding:(NSString *)encoding
+       onComplete:(void (^)(id content, NSString * errMsg))onComplete
 {
-    @try
-    {
-        [[self class] getPathFromUri:path completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
-            __block NSData * fileContent;
-            NSError * err;
-            __block Byte * buffer;
-            if(asset != nil)
+    [[self class] getPathFromUri:path completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
+        __block NSData * fileContent;
+        NSError * err;
+        __block Byte * buffer;
+        if(asset != nil)
+        {
+            buffer = malloc(asset.size);
+            [asset getBytes:buffer fromOffset:0 length:asset.size error:&err];
+            if(err != nil)
             {
-                buffer = malloc(asset.size);
-                [asset getBytes:buffer fromOffset:0 length:asset.size error:&err];
-                if(err != nil)
-                {
-                    reject(@"RNFetchBlobFS readFile error", @"failed to read asset", [err localizedDescription]);
-                    return;
-                }
-                fileContent = [NSData dataWithBytes:buffer length:asset.size];
+                onComplete(nil, [err description]);
                 free(buffer);
+                return;
             }
-            else
+            fileContent = [NSData dataWithBytes:buffer length:asset.size];
+            free(buffer);
+        }
+        else
+        {
+            if(![[NSFileManager defaultManager] fileExistsAtPath:path]) {
+                onComplete(nil, @"file not exists");
+                return;
+            }
+            fileContent = [NSData dataWithContentsOfFile:path];
+            
+        }
+        
+        if(encoding != nil)
+        {
+            if([[encoding lowercaseString] isEqualToString:@"utf8"])
             {
-                if(![[NSFileManager defaultManager] fileExistsAtPath:path]) {
-
-                    reject(@"RNFetchBlobFS readFile error", @"file not exists", nil);
-                    return;
-                }
-                fileContent = [NSData dataWithContentsOfFile:path];
-
-            }
-            if(onComplete != nil)
-                onComplete(fileContent);
-
-            if([[encoding lowercaseString] isEqualToString:@"utf8"]) {
-                if(resolve != nil) {
-                    NSString * utf8 = [[NSString alloc] initWithData:fileContent encoding:NSUTF8StringEncoding];
-                    if(utf8 == nil)
-                        resolve([[NSString alloc] initWithData:fileContent encoding:NSISOLatin1StringEncoding]);
-                    else
-                        resolve(utf8);
-                }
+                NSString * utf8 = [[NSString alloc] initWithData:fileContent encoding:NSUTF8StringEncoding];
+                if(utf8 == nil)
+                    onComplete([[NSString alloc] initWithData:fileContent encoding:NSISOLatin1StringEncoding], nil);
+                else
+                    onComplete(utf8, nil);
             }
             else if ([[encoding lowercaseString] isEqualToString:@"base64"]) {
-                if(resolve != nil)
-                    resolve([fileContent base64EncodedStringWithOptions:0]);
+                onComplete([fileContent base64EncodedStringWithOptions:0], nil);
             }
             else if ([[encoding lowercaseString] isEqualToString:@"ascii"]) {
                 NSMutableArray * resultArray = [NSMutableArray array];
@@ -473,17 +468,17 @@ NSMutableDictionary *fileStreams = nil;
                 for(int i=0;i<[fileContent length];i++) {
                     [resultArray addObject:[NSNumber numberWithChar:bytes[i]]];
                 }
-                if(resolve != nil)
-                    resolve(resultArray);
+                onComplete(resultArray, nil);
             }
-        }];
-    }
-    @catch(NSException * e)
-    {
-        if(reject != nil)
-            reject(@"RNFetchBlobFS readFile error", @"error", [e description]);
-    }
+        }
+        else
+        {
+            onComplete(fileContent, nil);
+        }
+        
+    }];
 }
+
 
 # pragma mark - mkdir
 
@@ -516,7 +511,7 @@ NSMutableDictionary *fileStreams = nil;
              @"size" : size,
              @"filename" : filename,
              @"path" : path,
-             @"lastModified" : [NSString stringWithFormat:@"%@", [NSNumber numberWithLong:(time_t) [lastModified timeIntervalSince1970]*1000]],
+             @"lastModified" : [NSNumber numberWithLong:(time_t) [lastModified timeIntervalSince1970]*1000],
              @"type" : isDir ? @"directory" : @"file"
             };
 
@@ -753,8 +748,6 @@ NSMutableDictionary *fileStreams = nil;
 
 +(void) df:(RCTResponseSenderBlock)callback
 {
-    uint64_t totalSpace = 0;
-    uint64_t totalFreeSpace = 0;
     NSError *error = nil;
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSDictionary *dictionary = [[NSFileManager defaultManager] attributesOfFileSystemForPath:[paths lastObject] error: &error];
@@ -762,11 +755,10 @@ NSMutableDictionary *fileStreams = nil;
     if (dictionary) {
         NSNumber *fileSystemSizeInBytes = [dictionary objectForKey: NSFileSystemSize];
         NSNumber *freeFileSystemSizeInBytes = [dictionary objectForKey:NSFileSystemFreeSize];
-        totalSpace = [fileSystemSizeInBytes unsignedLongLongValue];
-        totalFreeSpace = [freeFileSystemSizeInBytes unsignedLongLongValue];
+        
         callback(@[[NSNull null], @{
-                  @"free" : [NSString stringWithFormat:@"%d", totalFreeSpace],
-                  @"total" : [NSString stringWithFormat:@"%d", totalSpace]
+                  @"free" : freeFileSystemSizeInBytes,
+                  @"total" : fileSystemSizeInBytes,
                 }]);
     } else {
         callback(@[@"failed to get storage usage."]);

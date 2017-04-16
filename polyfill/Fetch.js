@@ -32,7 +32,6 @@ class RNFetchBlobFetchPolyfill {
       options.headers['Content-Type'] = ctype || ctypeH
       options.headers['content-type'] = ctype || ctypeH
       options.method = options.method || 'GET'
-
       if(body) {
         // When the request body is an instance of FormData, create a Blob cache
         // to upload the body.
@@ -55,7 +54,6 @@ class RNFetchBlobFetchPolyfill {
         else
           promise = Promise.resolve(body)
       }
-
       // task is a progress reportable and cancellable Promise, however,
       // task.then is not, so we have to extend task.then with progress and
       // cancel function

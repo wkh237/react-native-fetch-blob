@@ -23,11 +23,6 @@
 
 typedef void(^CompletionHander)(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error);
 typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error);
-typedef NS_ENUM(NSUInteger, ResponseFormat) {
-    UTF8,
-    BASE64,
-    AUTO
-};
 
 @interface RNFetchBlobNetwork : NSObject  <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate>
 
@@ -43,19 +38,6 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
 @property (strong, nonatomic) CompletionHander fileTaskCompletionHandler;
 @property (strong, nonatomic) DataTaskCompletionHander dataTaskCompletionHandler;
 @property (nullable, nonatomic) NSError * error;
-@property (nullable, nonatomic) NSMutableArray * redirects;
-
-@property (nonatomic) BOOL respFile;
-@property (nonatomic) BOOL isNewPart;
-@property (nonatomic) BOOL isIncrement;
-@property (nullable, nonatomic) NSMutableData * partBuffer;
-@property (nullable, nonatomic) NSString * destPath;
-@property (nullable, nonatomic) NSOutputStream * writeStream;
-@property (nonatomic) long bodyLength;
-@property (nullable, nonatomic) NSMutableDictionary * respInfo;
-@property (nonatomic) NSInteger respStatus;
-@property (nonatomic) ResponseFormat responseFormat;
-@property ( nonatomic) BOOL followRedirect;
 
 
 + (NSMutableDictionary  * _Nullable ) normalizeHeaders:(NSDictionary * _Nullable)headers;

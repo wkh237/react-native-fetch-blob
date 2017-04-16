@@ -1,9 +1,12 @@
 package com.RNFetchBlob;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 
 import com.RNFetchBlob.Utils.RNFBCookieJar;
+import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.Promise;
@@ -15,10 +18,15 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static android.app.Activity.RESULT_OK;
+import static com.RNFetchBlob.RNFetchBlobConst.GET_CONTENT_INTENT;
 
 public class RNFetchBlob extends ReactContextBaseJavaModule {
 
@@ -28,12 +36,28 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     static LinkedBlockingQueue<Runnable> fsTaskQueue = new LinkedBlockingQueue<>();
     static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
     static public boolean ActionViewVisible = false;
+    static HashMap<Integer, Promise> promiseTable = new HashMap<>();
 
     public RNFetchBlob(ReactApplicationContext reactContext) {
 
         super(reactContext);
 
         RCTContext = reactContext;
+        reactContext.addActivityEventListener(new ActivityEventListener() {
+            @Override
+            public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
+                if(requestCode == GET_CONTENT_INTENT && resultCode == RESULT_OK) {
+                    Uri d = data.getData();
+                    promiseTable.get(GET_CONTENT_INTENT).resolve(d.toString());
+                    promiseTable.remove(GET_CONTENT_INTENT);
+                }
+            }
+
+            @Override
+            public void onNewIntent(Intent intent) {
+
+            }
+        });
     }
 
     @Override
@@ -320,6 +344,18 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     @ReactMethod
     public void fetchBlobForm(ReadableMap options, String taskId, String method, String url, ReadableMap headers, ReadableArray body, final Callback callback) {
         new RNFetchBlobReq(options, taskId, method, url, headers, null, body, callback).run();
+    }
+
+    @ReactMethod
+    public void getContentIntent(String mime, Promise promise) {
+        Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+        if(mime != null)
+            i.setType(mime);
+        else
+            i.setType("*/*");
+        promiseTable.put(GET_CONTENT_INTENT, promise);
+        this.getReactApplicationContext().startActivityForResult(i, GET_CONTENT_INTENT, null);
+
     }
 
 }

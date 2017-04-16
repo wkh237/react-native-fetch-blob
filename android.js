@@ -24,7 +24,15 @@ function actionViewIntent(path:string, mime:string = 'text/plain') {
     return Promise.reject('RNFetchBlob.actionViewIntent only supports Android.')
 }
 
+function getContentIntent(mime:string) {
+  if(Platform.OS === 'android')
+    return RNFetchBlob.getContentIntent(mime)
+  else
+    return Promise.reject('RNFetchBlob.getContentIntent only supports Android.')
+}
+
 
 export default {
-  actionViewIntent
+  actionViewIntent,
+  getContentIntent
 }
