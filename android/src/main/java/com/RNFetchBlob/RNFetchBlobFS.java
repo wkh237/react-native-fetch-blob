@@ -249,8 +249,9 @@ public class RNFetchBlobFS {
                 while ((cursor = fs.read(buffer)) != -1) {
                     encoder.encode(ByteBuffer.wrap(buffer).asCharBuffer());
                     String chunk = new String(buffer);
-                    if(cursor != bufferSize)
+                    if(cursor != bufferSize) {
                         chunk = chunk.substring(0, cursor);
+                    }
                     emitStreamEvent(streamId, "data", chunk);
                     if(tick > 0)
                         SystemClock.sleep(tick);
@@ -292,7 +293,8 @@ public class RNFetchBlobFS {
             buffer = null;
 
         } catch (Exception err) {
-            emitStreamEvent(streamId, "error", "Failed to convert data to "+encoding+" encoded string, this might due to the source data is not able to convert using this encoding.");
+            emitStreamEvent(streamId, "warn", "Failed to convert data to "+encoding+" encoded string, this might due to the source data is not able to convert using this encoding.");
+            err.printStackTrace();
         }
     }
 
