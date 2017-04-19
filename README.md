@@ -39,8 +39,9 @@ A project committed to making file access and data transfer easier and more effi
 
 ## About
 
-This project was initially created to solve the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854) because React Native lacks any `Blob` implementation and is problematic when transferring binary data. The project is committed to making file access and transfer easier and more efficient for React Native developers. 
-We've implemented highly customizable filesystem and network module which plays well together. For example, developers can upload and download data directly from/to storage, which is more efficient, especially for large files. The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
+This project was started in the cause of solving issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854), React Native's lacks of `Blob` implementation which results into problems when transferring binary data. 
+
+It is committed to making file access and transfer easier and more efficient for React Native developers. We've implemented highly customizable filesystem and network module which plays well together. For example, developers can upload and download data directly from/to storage, which is more efficient, especially for large files. The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
 
 In `0.8.0` we introduced experimental Web API polyfills that make it possible to use browser-based libraries in React Native, such as, [FireBase JS SDK](https://github.com/wkh237/rn-firebase-storage-upload-sample)
 
