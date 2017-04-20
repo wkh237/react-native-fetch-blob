@@ -155,7 +155,7 @@ var RNFetchBlob = require('react-native-fetch-blob').default
 
 After `0.8.0` react-native-fetch-blob automatically decides how to send the body by checking its type and `Content-Type` in the header. The rule is described in the following diagram
 
-<img src="img/RNFB-Body.png" style="width : 90%" />
+<img src="img/RNFB-Flow-hd.png" style="width : 90%" />
 
 To sum up:
 
