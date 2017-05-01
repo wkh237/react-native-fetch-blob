@@ -629,17 +629,26 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 DownloadManager dm = (DownloadManager) appCtx.getSystemService(Context.DOWNLOAD_SERVICE);
                 dm.query(query);
                 Cursor c = dm.query(query);
-                String error = null;
+
+
                 String filePath = null;
                 // the file exists in media content database
                 if (c.moveToFirst()) {
+                    // #297 handle failed request
+                    int statusCode = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                    if(statusCode == DownloadManager.STATUS_FAILED) {
+                        this.callback.invoke("Download manager failed to download from  " + this.url + ". Statu Code = " + statusCode, null, null);
+                        return;
+                    }
                     String contentUri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
-                    Uri uri = Uri.parse(contentUri);
-                    Cursor cursor = appCtx.getContentResolver().query(uri, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
-                    // use default destination of DownloadManager
-                    if (cursor != null) {
-                        cursor.moveToFirst();
-                        filePath = cursor.getString(0);
+                    if (contentUri != null) {
+                        Uri uri = Uri.parse(contentUri);
+                        Cursor cursor = appCtx.getContentResolver().query(uri, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
+                        // use default destination of DownloadManager
+                        if (cursor != null) {
+                            cursor.moveToFirst();
+                            filePath = cursor.getString(0);
+                        }
                     }
                 }
                 // When the file is not found in media content database, check if custom path exists
@@ -653,7 +662,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                             this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, customDest);
 
                     } catch(Exception ex) {
-                        error = ex.getLocalizedMessage();
+                        ex.printStackTrace();
+                        this.callback.invoke(ex.getLocalizedMessage(), null);
                     }
                 }
                 else {

@@ -99,8 +99,8 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSMutableData * blobData;
         long size = -1;
-        // if method is POST or PUT, convert data string format
-        if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"]) {
+        // if method is POST, PUT or PATCH, convert data string format
+        if([[method lowercaseString] isEqualToString:@"post"] || [[method lowercaseString] isEqualToString:@"put"] || [[method lowercaseString] isEqualToString:@"patch"]) {
             // generate octet-stream body
             if(body != nil) {
                 __block NSString * cType = [[self class] getHeaderIgnoreCases:@"content-type" fromHeaders:mheaders];
@@ -201,16 +201,18 @@
                 RCTLogWarn(@"RNFetchBlob multipart request builder has found a field without `data` or `name` property, the field will be removed implicitly.");
                 return;
             }
-            contentType = contentType == nil ? @"application/octet-stream" : contentType;
+
             // field is a text field
             if([field valueForKey:@"filename"] == nil || content == nil) {
+                contentType = contentType == nil ? @"text/plain" : contentType;
                 [formData appendData:[[NSString stringWithFormat:@"--%@\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
                 [formData appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"\r\n", name] dataUsingEncoding:NSUTF8StringEncoding]];
-                [formData appendData:[[NSString stringWithFormat:@"Content-Type: text/plain\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+                [formData appendData:[[NSString stringWithFormat:@"Content-Type: %@\r\n\r\n", contentType] dataUsingEncoding:NSUTF8StringEncoding]];
                 [formData appendData:[[NSString stringWithFormat:@"%@\r\n", content] dataUsingEncoding:NSUTF8StringEncoding]];
             }
             // field contains a file
             else {
+                contentType = contentType == nil ? @"application/octet-stream" : contentType;
                 NSMutableData * blobData;
                 if(content != nil)
                 {

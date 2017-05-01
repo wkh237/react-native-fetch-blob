@@ -314,7 +314,7 @@ RCT_EXPORT_METHOD(ls:(NSString *)path callback:(RCTResponseSenderBlock) callback
 #pragma mark - fs.stat
 RCT_EXPORT_METHOD(stat:(NSString *)target callback:(RCTResponseSenderBlock) callback)
 {
-    
+
     [RNFetchBlobFS getPathFromUri:target completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
         __block NSMutableArray * result;
         if(path != nil)
@@ -323,14 +323,14 @@ RCT_EXPORT_METHOD(stat:(NSString *)target callback:(RCTResponseSenderBlock) call
             BOOL exist = nil;
             BOOL isDir = nil;
             NSError * error = nil;
-            
+
             exist = [fm fileExistsAtPath:path isDirectory:&isDir];
             if(exist == NO) {
                 callback(@[[NSString stringWithFormat:@"failed to stat path `%@` for it is not exist or it is not exist", path]]);
                 return ;
             }
             result = [RNFetchBlobFS stat:path error:&error];
-            
+
             if(error == nil)
                 callback(@[[NSNull null], result]);
             else
@@ -389,7 +389,7 @@ RCT_EXPORT_METHOD(lstat:(NSString *)path callback:(RCTResponseSenderBlock) callb
 #pragma mark - fs.cp
 RCT_EXPORT_METHOD(cp:(NSString*)src toPath:(NSString *)dest callback:(RCTResponseSenderBlock) callback)
 {
-    
+
 //    path = [RNFetchBlobFS getPathOfAsset:path];
     [RNFetchBlobFS getPathFromUri:src completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
         NSError * error = nil;
@@ -401,14 +401,14 @@ RCT_EXPORT_METHOD(cp:(NSString*)src toPath:(NSString *)dest callback:(RCTRespons
         else
         {
             BOOL result = [[NSFileManager defaultManager] copyItemAtURL:[NSURL fileURLWithPath:path] toURL:[NSURL fileURLWithPath:dest] error:&error];
-            
+
             if(error == nil)
                 callback(@[[NSNull null], @YES]);
             else
                 callback(@[[error localizedDescription], @NO]);
         }
     }];
-    
+
 }
 
 
@@ -470,7 +470,7 @@ RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding 
         else
             bufferSize = 4096;
     }
-    
+
     dispatch_async(fsQueue, ^{
         [RNFetchBlobFS readStream:path encoding:encoding bufferSize:bufferSize tick:tick streamId:streamId bridgeRef:_bridge];
     });
@@ -496,7 +496,7 @@ RCT_EXPORT_METHOD(cancelRequest:(NSString *)taskId callback:(RCTResponseSenderBl
 #pragma mark - net.enableProgressReport
 RCT_EXPORT_METHOD(enableProgressReport:(NSString *)taskId interval:(nonnull NSNumber*)interval count:(nonnull NSNumber*)count)
 {
-    
+
     RNFetchBlobProgress * cfg = [[RNFetchBlobProgress alloc] initWithType:Download interval:interval count:count];
     [RNFetchBlobNetwork enableProgressReport:taskId config:cfg];
 }
@@ -523,9 +523,10 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
     UIViewController *rootCtrl = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
     documentController.delegate = self;
     if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
-        dispatch_sync(dispatch_get_main_queue(), ^{
-            [documentController  presentOptionsMenuFromRect:rootCtrl.view.bounds inView:rootCtrl.view animated:YES];
-        });
+      CGRect rect = CGRectMake(0.0, 0.0, 0.0, 0.0);
+      dispatch_sync(dispatch_get_main_queue(), ^{
+          [documentController  presentOptionsMenuFromRect:rect inView:rootCtrl.view animated:YES];
+      });
         resolve(@[[NSNull null]]);
     } else {
         reject(@"RNFetchBlob could not open document", @"scheme is not supported", nil);
@@ -541,7 +542,7 @@ RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme resolver
     // NSURL * url = [[NSURL alloc] initWithString:uri];
     documentController = [UIDocumentInteractionController interactionControllerWithURL:url];
     documentController.delegate = self;
-    
+
     if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
         dispatch_sync(dispatch_get_main_queue(), ^{
             [documentController presentPreviewAnimated:YES];
@@ -564,7 +565,7 @@ RCT_EXPORT_METHOD(excludeFromBackupKey:(NSString *)url resolver:(RCTPromiseResol
     } else {
         reject(@"RNFetchBlob could not open document", [error description], nil);
     }
-    
+
 }
 
 
@@ -580,9 +581,22 @@ RCT_EXPORT_METHOD(df:(RCTResponseSenderBlock)callback)
 }
 
 # pragma mark - getCookies
+
 RCT_EXPORT_METHOD(getCookies:(NSString *)url resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
     resolve([RNFetchBlobNetwork getCookies:url]);
+}
+
+# pragma mark - removeCookie
+
+RCT_EXPORT_METHOD(removeCookies:(NSString *)domain resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+{
+    NSError * err = nil;
+    [RNFetchBlobNetwork removeCookies:domain error:&err];
+    if(err)
+        reject(@"RNFetchBlob failed to remove cookie", @"RNFetchBlob failed to remove cookie", nil);
+    else
+        resolve(@[[NSNull null]]);
 }
 
 # pragma mark - check expired network events
@@ -591,6 +605,8 @@ RCT_EXPORT_METHOD(emitExpiredEvent:(RCTResponseSenderBlock)callback)
 {
     [RNFetchBlobNetwork emitExpiredTasks];
 }
+
+
 
 
 @end
