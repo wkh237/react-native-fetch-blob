@@ -771,7 +771,7 @@ If you're going to concatenate files, you don't have to read the data to JS cont
 ## Caveats
 
 * This library does not urlencode unicode characters in URL automatically, see [#146](https://github.com/wkh237/react-native-fetch-blob/issues/146).
-* When a `Blob` ,  from existing file, the file **WILL BE REMOVE** if you `close` the blob.
+* When you create a `Blob` ,  from an existing file, the file **WILL BE REMOVED** if you `close` the blob.
 * If you replaced `window.XMLHttpRequest` for some reason (e.g. make Firebase SDK work), it will also affect how official `fetch` works (basically it should work just fine).
 * When file stream and upload/download progress event slow down your app, consider an upgrade to `0.9.6+`, use [additional arguments](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogressconfig-eventlistenerpromisernfetchblobresponse) to limit its frequency.
 * When passing a file path to the library, remove `file://` prefix.
