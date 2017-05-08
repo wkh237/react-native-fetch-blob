@@ -44,7 +44,7 @@ function openDocument(path:string, scheme:string) {
  * @return {Promise}
  */
 function excludeFromBackupKey(url:string) {
-  return RNFetchBlob.excludeFromBackupKey('file://' + path);
+  return RNFetchBlob.excludeFromBackupKey('file://' + url);
 }
 
 export default {
