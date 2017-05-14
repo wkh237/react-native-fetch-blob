@@ -242,7 +242,7 @@ RNFetchBlob
 
 **Use Specific File Path**
 
-If you prefer a particular file path rather than randomly generated one, you can use `path` option. We've added [several  constants](#user-content-dirs) in v0.5.0 which represents commonly used directories.
+If you prefer a particular file path rather than randomly generated one, you can use `path` option. We've added [several  constants](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#dirs) in v0.5.0 which represents commonly used directories.
 
 ```js
 let dirs = RNFetchBlob.fs.dirs
