@@ -51,6 +51,14 @@ type RNFetchBlobResponseInfo = {
   rnfbEncode : 'path' | 'base64' | 'ascii' | 'utf8'
 }
 
+type AndroidDownloadOption = {
+  title : string,
+  describe : string,
+  mime : ?string,
+  path : string,
+  showNotification : boolean,
+}
+
 type RNFetchBlobStream = {
   onData : () => void,
   onError : () => void,

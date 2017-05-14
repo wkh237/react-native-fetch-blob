@@ -885,7 +885,11 @@ public class RNFetchBlobFS {
         if(path == null)
             return null;
         Uri uri = Uri.parse(path);
-        if(uri.getScheme() == null) {
+        String scheme = uri.getScheme();
+        if(scheme == null) {
+            return path;
+        }
+        if(scheme.startsWith("file://") || scheme.startsWith("/")) {
             return path;
         }
         if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {

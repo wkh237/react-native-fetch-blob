@@ -1,6 +1,8 @@
 package com.RNFetchBlob;
 
 import android.app.Activity;
+import android.app.DownloadManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
@@ -355,6 +357,21 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             i.setType("*/*");
         promiseTable.put(GET_CONTENT_INTENT, promise);
         this.getReactApplicationContext().startActivityForResult(i, GET_CONTENT_INTENT, null);
+
+    }
+
+    @ReactMethod
+    public void addCompleteDownload(String title, String description, String mime, String path, boolean showNotification, Promise promise) {
+        try {
+            DownloadManager dm = (DownloadManager) RNFetchBlob.RCTContext.getSystemService(Context.DOWNLOAD_SERVICE);
+            WritableMap map = RNFetchBlobFS.statFile(path);
+            String length = map.getString("size");
+            long id = dm.addCompletedDownload(title, description, true, mime, path, Long.parseLong(length), showNotification);
+            promise.resolve(id);
+        }
+        catch(Exception ex) {
+            promise.resolve(ex.getMessage());
+        }
 
     }
 
