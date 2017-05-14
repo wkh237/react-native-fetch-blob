@@ -81,10 +81,25 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
                   callback:(RCTResponseSenderBlock)callback)
 {
 
-    [RNFetchBlobReqBuilder buildMultipartRequest:options taskId:taskId method:method url:url headers:headers form:form onComplete:^(__weak NSURLRequest *req, long bodyLength) {
+    [RNFetchBlobReqBuilder buildMultipartRequest:options
+                                          taskId:taskId
+                                          method:method
+                                             url:url
+                                         headers:headers
+                                            form:form
+                                      onComplete:^(__weak NSURLRequest *req, long bodyLength)
+    {
+        // something went wrong when building the request body
+        if(req == nil)
+        {
+            callback(@[@"RNFetchBlob.fetchBlobForm failed to create request body"]);
+        }
         // send HTTP request
-        RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-        [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+        else
+        {
+            RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
+            [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+        }
     }];
 
 }
@@ -98,10 +113,25 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                   headers:(NSDictionary *)headers
                   body:(NSString *)body callback:(RCTResponseSenderBlock)callback)
 {
-    [RNFetchBlobReqBuilder buildOctetRequest:options taskId:taskId method:method url:url headers:headers body:body onComplete:^(NSURLRequest *req, long bodyLength) {
+    [RNFetchBlobReqBuilder buildOctetRequest:options
+                                      taskId:taskId
+                                      method:method
+                                         url:url
+                                     headers:headers
+                                        body:body
+                                  onComplete:^(NSURLRequest *req, long bodyLength)
+    {
+        // something went wrong when building the request body
+        if(req == nil)
+        {
+            callback(@[@"RNFetchBlob.fetchBlob failed to create request body"]);
+        }
         // send HTTP request
-        __block RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-        [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+        else
+        {
+            __block RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
+            [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+        }
     }];
 }
 
@@ -153,6 +183,20 @@ RCT_EXPORT_METHOD(createFileASCII:(NSString *)path data:(NSArray *)dataArray cal
     else
         callback(@[[NSString stringWithFormat:@"failed to create new file at path %@ please ensure the folder exists"]]);
 
+}
+
+#pragma mark - fs.pathForAppGroup
+RCT_EXPORT_METHOD(pathForAppGroup:(NSString *)groupName
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    NSString * path = [RNFetchBlobFS getPathForAppGroup:groupName];
+
+    if(path) {
+        resolve(path);
+    } else {
+        reject(@"RNFetchBlob file not found", @"could not find path for app group", nil);
+    }
 }
 
 #pragma mark - fs.exists
@@ -271,7 +315,7 @@ RCT_EXPORT_METHOD(ls:(NSString *)path callback:(RCTResponseSenderBlock) callback
 #pragma mark - fs.stat
 RCT_EXPORT_METHOD(stat:(NSString *)target callback:(RCTResponseSenderBlock) callback)
 {
-    
+
     [RNFetchBlobFS getPathFromUri:target completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
         __block NSMutableArray * result;
         if(path != nil)
@@ -280,14 +324,14 @@ RCT_EXPORT_METHOD(stat:(NSString *)target callback:(RCTResponseSenderBlock) call
             BOOL exist = nil;
             BOOL isDir = nil;
             NSError * error = nil;
-            
+
             exist = [fm fileExistsAtPath:path isDirectory:&isDir];
             if(exist == NO) {
                 callback(@[[NSString stringWithFormat:@"failed to stat path `%@` for it is not exist or it is not exist", path]]);
                 return ;
             }
             result = [RNFetchBlobFS stat:path error:&error];
-            
+
             if(error == nil)
                 callback(@[[NSNull null], result]);
             else
@@ -346,7 +390,7 @@ RCT_EXPORT_METHOD(lstat:(NSString *)path callback:(RCTResponseSenderBlock) callb
 #pragma mark - fs.cp
 RCT_EXPORT_METHOD(cp:(NSString*)src toPath:(NSString *)dest callback:(RCTResponseSenderBlock) callback)
 {
-    
+
 //    path = [RNFetchBlobFS getPathOfAsset:path];
     [RNFetchBlobFS getPathFromUri:src completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
         NSError * error = nil;
@@ -358,14 +402,14 @@ RCT_EXPORT_METHOD(cp:(NSString*)src toPath:(NSString *)dest callback:(RCTRespons
         else
         {
             BOOL result = [[NSFileManager defaultManager] copyItemAtURL:[NSURL fileURLWithPath:path] toURL:[NSURL fileURLWithPath:dest] error:&error];
-            
+
             if(error == nil)
                 callback(@[[NSNull null], @YES]);
             else
                 callback(@[[error localizedDescription], @NO]);
         }
     }];
-    
+
 }
 
 
@@ -395,10 +439,27 @@ RCT_EXPORT_METHOD(mkdir:(NSString *)path callback:(RCTResponseSenderBlock) callb
 }
 
 #pragma mark - fs.readFile
-RCT_EXPORT_METHOD(readFile:(NSString *)path encoding:(NSString *)encoding resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(readFile:(NSString *)path
+                  encoding:(NSString *)encoding
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
 {
 
-    [RNFetchBlobFS readFile:path encoding:encoding resolver:resolve rejecter:reject onComplete:nil];
+    [RNFetchBlobFS readFile:path encoding:encoding onComplete:^(id content, NSString * err) {
+        if(err != nil)
+        {
+            reject(@"RNFetchBlob failed to read file", err, nil);
+            return;
+        }
+        if(encoding == @"ascii")
+        {
+            resolve((NSMutableArray *)content);
+        }
+        else
+        {
+            resolve((NSString *)content);
+        }
+    }];
 }
 
 #pragma mark - fs.readStream
@@ -410,7 +471,7 @@ RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding 
         else
             bufferSize = 4096;
     }
-    
+
     dispatch_async(fsQueue, ^{
         [RNFetchBlobFS readStream:path encoding:encoding bufferSize:bufferSize tick:tick streamId:streamId bridgeRef:_bridge];
     });
@@ -436,7 +497,7 @@ RCT_EXPORT_METHOD(cancelRequest:(NSString *)taskId callback:(RCTResponseSenderBl
 #pragma mark - net.enableProgressReport
 RCT_EXPORT_METHOD(enableProgressReport:(NSString *)taskId interval:(nonnull NSNumber*)interval count:(nonnull NSNumber*)count)
 {
-    
+
     RNFetchBlobProgress * cfg = [[RNFetchBlobProgress alloc] initWithType:Download interval:interval count:count];
     [RNFetchBlobNetwork enableProgressReport:taskId config:cfg];
 }
@@ -463,9 +524,10 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
     UIViewController *rootCtrl = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
     documentController.delegate = self;
     if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
-        dispatch_sync(dispatch_get_main_queue(), ^{
-            [documentController  presentOptionsMenuFromRect:rootCtrl.view.bounds inView:rootCtrl.view animated:YES];
-        });
+      CGRect rect = CGRectMake(0.0, 0.0, 0.0, 0.0);
+      dispatch_sync(dispatch_get_main_queue(), ^{
+          [documentController  presentOptionsMenuFromRect:rect inView:rootCtrl.view animated:YES];
+      });
         resolve(@[[NSNull null]]);
     } else {
         reject(@"RNFetchBlob could not open document", @"scheme is not supported", nil);
@@ -481,7 +543,7 @@ RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme resolver
     // NSURL * url = [[NSURL alloc] initWithString:uri];
     documentController = [UIDocumentInteractionController interactionControllerWithURL:url];
     documentController.delegate = self;
-    
+
     if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
         dispatch_sync(dispatch_get_main_queue(), ^{
             [documentController presentPreviewAnimated:YES];
@@ -504,7 +566,7 @@ RCT_EXPORT_METHOD(excludeFromBackupKey:(NSString *)url resolver:(RCTPromiseResol
     } else {
         reject(@"RNFetchBlob could not open document", [error description], nil);
     }
-    
+
 }
 
 

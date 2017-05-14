@@ -260,8 +260,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                             responseFormat = ResponseFormat.UTF8;
                     }
                     else {
-                        builder.header(key, value);
-                        mheaders.put(key, value);
+                        builder.header(key.toLowerCase(), value);
+                        mheaders.put(key.toLowerCase(), value);
                     }
                 }
             }
@@ -344,9 +344,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             clientBuilder.addNetworkInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
-                        redirects.add(chain.request().url().toString());
-                        return chain.proceed(chain.request());
-                    }
+                    redirects.add(chain.request().url().toString());
+                    return chain.proceed(chain.request());
+                }
             });
             // Add request interceptor for upload progress event
             clientBuilder.addInterceptor(new Interceptor() {
@@ -540,32 +540,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     // It uses customized response body which is able to report download progress
                     // and write response data to destination path.
                     resp.body().bytes();
-
                 } catch (Exception ignored) {
 //                    ignored.printStackTrace();
                 }
                 this.destPath = this.destPath.replace("?append=true", "");
-
-                try {
-                    long expectedLength = resp.body().contentLength();
-                    // when response contains Content-Length, check if the stream length is correct
-                    if(expectedLength > 0) {
-                        long actualLength = new File(this.destPath).length();
-                        if(actualLength != expectedLength) {
-                            callback.invoke("RNFetchBlob failed to write data to storage : expected " + expectedLength + " bytes but got " + actualLength + " bytes", null);
-                        }
-                        else {
-                            callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
-                        }
-                    }
-                    else {
-                        callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
-                    }
-                }
-                catch (Exception err) {
-                    callback.invoke(err.getMessage());
-                    err.printStackTrace();
-                }
+                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
                 break;
             default:
                 try {
@@ -576,7 +555,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 break;
         }
 //        if(!resp.isSuccessful())
-            resp.body().close();
+        resp.body().close();
         releaseTaskResource();
     }
 
@@ -618,7 +597,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         }
         WritableArray redirectList = Arguments.createArray();
         for(String r : redirects) {
-                redirectList.pushString(r);
+            redirectList.pushString(r);
         }
         info.putArray("redirects", redirectList);
         info.putMap("headers", headers);
@@ -669,7 +648,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     private String getHeaderIgnoreCases(HashMap<String,String> headers, String field) {
         String val = headers.get(field);
         if(val != null) return val;
-        return headers.get(field.toLowerCase()) == null ? "" : headers.get(field.toLowerCase());
+        String lowerCasedValue = headers.get(field.toLowerCase());
+        return lowerCasedValue == null ? "" : lowerCasedValue;
     }
 
     private void emitStateEvent(WritableMap args) {
@@ -689,17 +669,26 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 DownloadManager dm = (DownloadManager) appCtx.getSystemService(Context.DOWNLOAD_SERVICE);
                 dm.query(query);
                 Cursor c = dm.query(query);
-                String error = null;
+
+
                 String filePath = null;
                 // the file exists in media content database
                 if (c.moveToFirst()) {
+                    // #297 handle failed request
+                    int statusCode = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                    if(statusCode == DownloadManager.STATUS_FAILED) {
+                        this.callback.invoke("Download manager failed to download from  " + this.url + ". Statu Code = " + statusCode, null, null);
+                        return;
+                    }
                     String contentUri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
-                    Uri uri = Uri.parse(contentUri);
-                    Cursor cursor = appCtx.getContentResolver().query(uri, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
-                    // use default destination of DownloadManager
-                    if (cursor != null) {
-                        cursor.moveToFirst();
-                        filePath = cursor.getString(0);
+                    if (contentUri != null) {
+                        Uri uri = Uri.parse(contentUri);
+                        Cursor cursor = appCtx.getContentResolver().query(uri, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
+                        // use default destination of DownloadManager
+                        if (cursor != null) {
+                            cursor.moveToFirst();
+                            filePath = cursor.getString(0);
+                        }
                     }
                 }
                 // When the file is not found in media content database, check if custom path exists
@@ -713,7 +702,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                             this.callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, customDest);
 
                     } catch(Exception ex) {
-                        error = ex.getLocalizedMessage();
+                        ex.printStackTrace();
+                        this.callback.invoke(ex.getLocalizedMessage(), null);
                     }
                 }
                 else {

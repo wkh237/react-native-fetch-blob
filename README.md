@@ -2,11 +2,8 @@
 [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/releases) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![](https://img.shields.io/badge/Wiki-Public-brightgreen.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/wiki) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]()
 
 
-A project committed to making file access and data transfer easier, efficient for React Native developers.
-
-> If you're going to use GitHub repo as npm dependency, please visit the [archive repository](https://github.com/wkh237/react-native-fetch-blob-package/releases/tag/v0.9.6).
-
-> For Firebase Storage solution, please upgrade to latest version for best compatibility.
+A project committed to making file access and data transfer easier and more efficient for React Native developers.
+> For Firebase Storage solution, please upgrade to the latest version for the best compatibility.
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
@@ -16,7 +13,7 @@ A project committed to making file access and data transfer easier, efficient fo
 - Blob, File, XMLHttpRequest polyfills that make browser-based library available in RN (experimental)
 - JSON stream supported base on [Oboe.js](https://github.com/jimhigson/oboe.js/) @jimhigson
 
-## TOC
+## TOC (visit [Wiki](https://github.com/wkh237/react-native-fetch-blob/wiki) to get the complete documentation)
 * [About](#user-content-about)
 * [Installation](#user-content-installation)
 * [HTTP Data Transfer](#user-content-http-data-transfer)
@@ -35,15 +32,16 @@ A project committed to making file access and data transfer easier, efficient fo
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-cache-file-management)
 * [Web API Polyfills](#user-content-web-api-polyfills)
-* [Performance Tips](#user-content-performance-tips)
+* [Performance Tips](#user-content-performance-tipsd)
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
 * [Caveats](#user-content-caveats)
 * [Development](#user-content-development)
 
 ## About
 
-This project was initially for solving the issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854) because React Native lack of `Blob` implementation and it's problematic when transferring binary data. Now the project is committed to making file access and transfer easier, efficient for React Native developers. 
-We've implemented highly customizable filesystem and network module which plays well together. For example, upload and download data directly from/to storage which is much more efficient in some cases(especially for large ones). The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
+This project was started in the cause of solving issue [facebook/react-native#854](https://github.com/facebook/react-native/issues/854), React Native's lacks of `Blob` implementation which results into problems when transferring binary data. 
+
+It is committed to making file access and transfer easier and more efficient for React Native developers. We've implemented highly customizable filesystem and network module which plays well together. For example, developers can upload and download data directly from/to storage, which is more efficient, especially for large files. The file system supports file stream, so you don't have to worry about OOM problem when accessing large files.
 
 In `0.8.0` we introduced experimental Web API polyfills that make it possible to use browser-based libraries in React Native, such as, [FireBase JS SDK](https://github.com/wkh237/rn-firebase-storage-upload-sample)
 
@@ -56,16 +54,22 @@ Install package from npm
 npm install --save react-native-fetch-blob
 ```
 
-Or if using CocoaPods, add the pod to your `Podfile`, for example:
+Or if using CocoaPods, add the pod to your `Podfile`
 
 ```
 pod 'react-native-fetch-blob',
     :path => '../node_modules/react-native-fetch-blob'
 ```
 
+After `0.10.3` you can install this package directly from Github 
+
+```sh
+# replace <branch_name> with any one of the branches
+npm install --save github:wkh237/react-native-fetch-blob-package#<branch_name>
+```
 **Automatically Link Native Modules**
 
-For 0.29.2+ projects, simply link native packages via the following command because rnpm has been merged into react-native, you no longer need it.
+For 0.29.2+ projects, simply link native packages via the following command (note: rnpm has been merged into react-native)
 
 ```
 react-native link
@@ -112,7 +116,7 @@ If you're going to access external storage (say, SD card storage) for `Android 5
 
 ```
 
-Also, if you're going to use `Android Download Manager` you have to add this to `AndroidManifetst.xml`
+Also, if you're going to use `Android Download Manager` you have to add this to `AndroidManifest.xml`
 
 ```diff
     <intent-filter>
@@ -149,9 +153,9 @@ var RNFetchBlob = require('react-native-fetch-blob').default
 
 ### Regular Request
 
-After `0.8.0` react-native-fetch-blob automatically decide how to send the body by checking its type and `Content-Type` in the header. The rule is described in the following diagram
+After `0.8.0` react-native-fetch-blob automatically decides how to send the body by checking its type and `Content-Type` in the header. The rule is described in the following diagram
 
-<img src="img/RNFB-flow (1).png" style="width : 90%" />
+<img src="img/RNFB-Flow-hd.png" style="width : 90%" />
 
 To sum up:
 
@@ -238,7 +242,7 @@ RNFetchBlob
 
 **Use Specific File Path**
 
-If you prefer a particular file path rather than randomly generated one, you can use `path` option. We've added [several  constants](#user-content-dirs) in v0.5.0 which represents commonly used directories.
+If you prefer a particular file path rather than randomly generated one, you can use `path` option. We've added [several  constants](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#dirs) in v0.5.0 which represents commonly used directories.
 
 ```js
 let dirs = RNFetchBlob.fs.dirs
@@ -529,7 +533,9 @@ When downloading large files on Android it is recommended to use `Download Manag
 
 <img src="img/download-manager.png" width="256">
 
-When using DownloadManager, `fileCache` and `path` properties in `config` will not take effect, because Android DownloadManager can only store files to external storage. When download complete, DownloadManager will generate a file path so that you can deal with it.
+When using DownloadManager, `fileCache` and `path` properties in `config` will not take effect, because Android DownloadManager can only store files to external storage, also notice that Download Manager can only support `GET` method, which means the request body will be ignored.
+
+When download complete, DownloadManager will generate a file path so that you can deal with it.
 
 ```js
 RNFetchBlob
@@ -551,6 +557,7 @@ RNFetchBlob
     })
 ```
 
+Your app might not have right to remove/change the file created by Download Manager, therefore you might need to [set custom location to the download task](https://github.com/wkh237/react-native-fetch-blob/issues/236).
 
 **Download Notification and Visibility in Download App (Android Only)**
 
@@ -806,7 +813,7 @@ If you're going to concatenate files, you don't have to read the data to JS cont
 ## Caveats
 
 * This library does not urlencode unicode characters in URL automatically, see [#146](https://github.com/wkh237/react-native-fetch-blob/issues/146).
-* When a `Blob` ,  from existing file, the file **WILL BE REMOVE** if you `close` the blob.
+* When you create a `Blob` ,  from an existing file, the file **WILL BE REMOVED** if you `close` the blob.
 * If you replaced `window.XMLHttpRequest` for some reason (e.g. make Firebase SDK work), it will also affect how official `fetch` works (basically it should work just fine).
 * When file stream and upload/download progress event slow down your app, consider an upgrade to `0.9.6+`, use [additional arguments](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetchprogressconfig-eventlistenerpromisernfetchblobresponse) to limit its frequency.
 * When passing a file path to the library, remove `file://` prefix.
