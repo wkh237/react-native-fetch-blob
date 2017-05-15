@@ -196,11 +196,11 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
                     })
                     .fetch(_method, _url, _headers, body)
       this._task
-          .stateChange(this._headerReceived.bind(this))
-          .uploadProgress(this._uploadProgressEvent.bind(this))
-          .progress(this._progressEvent.bind(this))
-          .catch(this._onError.bind(this))
-          .then(this._onDone.bind(this))
+          .stateChange(this._headerReceived)
+          .uploadProgress(this._uploadProgressEvent)
+          .progress(this._progressEvent)
+          .catch(this._onError)
+          .then(this._onDone)
 
     })
   }
@@ -274,7 +274,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     return result.substr(0, result.length-2)
   }
 
-  _headerReceived(e) {
+  _headerReceived = (e) => {
     log.debug('header received ', this._task.taskId, e)
     this.responseURL = this._url
     if(e.state === "2") {
@@ -285,7 +285,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     }
   }
 
-  _uploadProgressEvent(send:number, total:number) {
+  _uploadProgressEvent = (send:number, total:number) => {
     if(!this._uploadStarted) {
       this.upload.dispatchEvent('loadstart')
       this._uploadStarted = true
@@ -295,7 +295,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     this.upload.dispatchEvent('progress', new ProgressEvent(true, send, total))
   }
 
-  _progressEvent(send:number, total:number, chunk:string) {
+  _progressEvent = (send:number, total:number, chunk:string) => {
     log.verbose(this.readyState)
     if(this._readyState === XMLHttpRequest.HEADERS_RECEIVED)
       this._dispatchReadStateChange(XMLHttpRequest.LOADING)
@@ -310,7 +310,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     this.dispatchEvent('progress', e)
   }
 
-  _onError(err) {
+  _onError = (err) => {
     let statusCode = Math.floor(this.status)
     if(statusCode >= 100 && statusCode !== 408) {
       return
@@ -331,7 +331,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
     this.clearEventListeners()
   }
 
-  _onDone(resp) {
+  _onDone = (resp) => {
     log.debug('XMLHttpRequest done', this._url, resp, this)
     this._statusText = this._status
     let responseDataReady = () => {
