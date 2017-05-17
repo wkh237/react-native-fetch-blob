@@ -13,6 +13,7 @@ import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.util.Base64;
 
+import com.RNFetchBlob.Utils.DataConverter;
 import com.RNFetchBlob.Utils.PathResolver;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
@@ -23,9 +24,10 @@ import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
-import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -897,134 +899,24 @@ public class RNFetchBlobFS {
             return PathResolver.getRealPathFromURI(RNFetchBlob.RCTContext, uri);
     }
 
-    /**
-     * Read file with range
-     * @param path      The path of file to read
-     * @param encoding  Encoding of the result data should be one of `utf8` | `ascii` | `base64` | `uri`
-     * @param offset    The position the process will start to read
-     * @param length    Length of result data, in byte.
-     * @param dest      Optional, if this argument is given, the result data will be write to the `dest` as a file
-     * @param promise   JS context promise
-     */
-    public void read(String path, String encoding, int offset, int length, @Nullable String dest, Promise promise) {
-        try {
-            File f = new File(normalizePath(path));
-            File destFile = null;
-            boolean destExists = true;
-            // if `dest` is given, create destination file.
-            if(dest != null) {
-                destFile = new File(dest);
-                if(!destFile.exists()) {
-                    destExists = destFile.createNewFile();
-                }
-                encoding = RNFetchBlobConst.DATA_ENCODE_URI;
-            }
-            if(!f.exists()) {
-                promise.reject("RNFB read fail", "path : " + path + "does not exists.");
-                return;
-            }
-            else if (!destExists) {
-                promise.reject("RNFB read fail", "could not create destination file : " + dest);
-                return;
-            }
-            FileInputStream in = new FileInputStream(f);
-            OutputStream os;
-            long bufferSize = 409500;
-            long done = 0;
-            int read = 0;
-            length = length > 0 ? length : in.available() - offset;
-            byte[] buffer = new byte[(int) bufferSize];
+    static Object readChunk(String path, String encoding, int offset, int length) throws Exception {
+        path = normalizePath(path);
+        if(path == null)
+            return null;
+        byte [] buffer = new byte[length];
+        InputStream in = new FileInputStream(path);
+        int read = in.read(buffer, offset, length);
 
-            in.skip(offset);
-            os = destFile == null ? new ByteArrayOutputStream() : new FileOutputStream(destFile);
-
-
-            while((length = length - (read = in.read(buffer))) > 0) {
-                os.write(buffer, (int) done, read);
-                done += read;
-            }
-
-            if(bufferSize + length > 0) {
-                os.write(buffer, (int)done, (int)bufferSize + length);
-            }
-
-            switch (encoding) {
-                case RNFetchBlobConst.DATA_ENCODE_UTF8 :
-                    promise.resolve(((ByteArrayOutputStream) os).toString("UTF-8"));
-                    break;
-                case RNFetchBlobConst.DATA_ENCODE_BASE64 :
-                    promise.resolve(Base64.encode(((ByteArrayOutputStream) os).toByteArray(), 0));
-                    break;
-                case RNFetchBlobConst.DATA_ENCODE_ASCII :
-                    WritableArray byteArrary = Arguments.createArray();
-                    for(byte b : ((ByteArrayOutputStream) os).toByteArray()) {
-                        byteArrary.pushInt((int)b);
-                    }
-                    promise.resolve(byteArrary);
-                    break;
-                case RNFetchBlobConst.DATA_ENCODE_URI :
-                    promise.resolve(dest);
-                    break;
-            }
-            in.close();
-            os.close();
-
-
+        if(encoding.equalsIgnoreCase(RNFetchBlobConst.RNFB_RESPONSE_BASE64)) {
+            return DataConverter.byteToBase64(buffer, read);
         }
-        catch(Exception ex) {
-            promise.reject("RNFB read error", ex.getMessage());
+        else if(encoding.equalsIgnoreCase(RNFetchBlobConst.RNFB_RESPONSE_UTF8)) {
+            return DataConverter.byteToUTF8(buffer, read);
         }
-    }
-
-    /**
-     * Write file to specific offset
-     * @param path      Path of the file to write.
-     * @param encoding  Encoding of the input data.
-     * @param data      Data to write to `path`.
-     * @param offset    Offset
-     * @param promise   JS context promise
-     */
-    public void write(String path, String encoding, String data, int offset, int length, Promise promise) {
-
-        try {
-            File f = new File(path);
-
-            if(!f.exists()) {
-                promise.reject("RNFB write failed", " path : " + path + "does not exists");
-                return;
-            }
-            byte[] bytes;
-            OutputStream os = new FileOutputStream(f);
-            switch (encoding) {
-                case RNFetchBlobConst.DATA_ENCODE_UTF8 :
-                    bytes = data.getBytes();
-                    os.write(bytes, offset, length);
-                    break;
-                case RNFetchBlobConst.DATA_ENCODE_BASE64 :
-                    bytes = Base64.decode(data.getBytes(),0);
-                    os.write(bytes, offset, length);
-                    break;
-                case RNFetchBlobConst.DATA_ENCODE_URI :
-                    FileInputStream in = new FileInputStream(new File(data));
-
-                    int bufferSize = 102400;
-                    int read = 0;
-                    byte[] buffer = new byte[bufferSize];
-                    int done = 0;
-                    while((length = length - (read = in.read(buffer))) > 0) {
-                        os.write(buffer, done, read);
-                        done += read;
-                    }
-                    if(bufferSize + length > 0 ){
-                        os.write(buffer, done, bufferSize + length );
-                    }
-                    os.close();
-            }
-            promise.resolve(length);
+        else if(encoding.equalsIgnoreCase(RNFetchBlobConst.RNFB_RESPONSE_ASCII)) {
+            return DataConverter.byteToRCTArray(buffer, read);
         }
-        catch (Exception ex) {
-            promise.reject("RNFB write error", ex.getMessage());
-        }
+        return null;
 
     }
 }

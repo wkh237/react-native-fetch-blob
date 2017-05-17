@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.RNFetchBlob.Utils.EncodingResolver;
 import com.RNFetchBlob.Utils.RNFBCookieJar;
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Callback;
@@ -328,6 +329,23 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                 RNFetchBlobFS.df(callback);
             }
         });
+    }
+
+    @ReactMethod
+    public void readChunk(final String path, final String encoding, final int offset, final int length, final Promise promise) {
+        fsThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Object result = RNFetchBlobFS.readChunk(path, encoding, offset, length);
+                    EncodingResolver.resolve(promise, encoding, result);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    promise.reject(e.getMessage(), e.getMessage()) ;
+                }
+            }
+        });
+
     }
 
 
