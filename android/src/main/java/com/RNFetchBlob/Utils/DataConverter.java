@@ -1,11 +1,20 @@
 package com.RNFetchBlob.Utils;
 
+import android.net.Uri;
 import android.os.SystemClock;
+import android.provider.ContactsContract;
 import android.util.Base64;
 
+import com.RNFetchBlob.RNFetchBlob;
+import com.RNFetchBlob.RNFetchBlobConst;
+import com.RNFetchBlob.RNFetchBlobFS;
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableArray;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
@@ -37,4 +46,13 @@ public class DataConverter {
         }
         return chunk;
     }
+
+    public static byte[] RCTArrayToBytes(ReadableArray data) {
+        byte [] bytes = new byte[data.size()];
+        for(int i=0;i<data.size();i++) {
+            bytes[i] = (byte) data.getInt(i);
+        }
+        return bytes;
+    }
+
 }

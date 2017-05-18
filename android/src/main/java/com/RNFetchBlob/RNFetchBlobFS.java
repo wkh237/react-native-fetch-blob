@@ -79,22 +79,14 @@ public class RNFetchBlobFS {
             FileOutputStream fout = new FileOutputStream(f, append);
             // write data from a file
             if(encoding.equalsIgnoreCase(RNFetchBlobConst.DATA_ENCODE_URI)) {
-                data = normalizePath(data);
-                File src = new File(data);
-                if(!src.exists()) {
-                    promise.reject("RNfetchBlob writeFileError", "source file : " + data + "not exists");
-                    fout.close();
-                    return ;
+                try {
+                    written = writeFileToFileWithOffset(data, path, 0, append);
+                    promise.resolve(written);
                 }
-                FileInputStream fin = new FileInputStream(src);
-                byte [] buffer = new byte [10240];
-                int read;
-                written = 0;
-                while((read = fin.read(buffer)) > 0) {
-                    fout.write(buffer, 0, read);
-                    written += read;
+                catch(Exception ex) {
+                    ex.printStackTrace();
+                    promise.reject("RNfetchBlob writeFileError", ex.getMessage());
                 }
-                fin.close();
             }
             else {
                 byte[] bytes = stringToBytes(data, encoding);
@@ -106,6 +98,22 @@ public class RNFetchBlobFS {
         } catch (Exception e) {
             promise.reject("RNFetchBlob writeFileError", e.getLocalizedMessage());
         }
+    }
+
+    private static int writeFileToFileWithOffset(String source, String dest, int offset, boolean append) throws IOException {
+
+        source = normalizePath(source);
+        FileOutputStream fout = new FileOutputStream(dest, append);
+        FileInputStream fin = new FileInputStream(source);
+        byte [] buffer = new byte [10240];
+        int read;
+        int written = 0;
+        while((read = fin.read(buffer)) > 0) {
+            fout.write(buffer, offset + written, read);
+            written += read;
+        }
+        fin.close();
+        return written;
     }
 
     /**
@@ -123,11 +131,7 @@ public class RNFetchBlobFS {
             if(!dir.exists())
                 dir.mkdirs();
             FileOutputStream os = new FileOutputStream(f, append);
-            byte [] bytes = new byte[data.size()];
-            for(int i=0;i<data.size();i++) {
-                bytes[i] = (byte) data.getInt(i);
-            }
-            os.write(bytes);
+            os.write(DataConverter.RCTArrayToBytes(data));
             os.close();
             promise.resolve(data.size());
         } catch (Exception e) {
@@ -337,7 +341,7 @@ public class RNFetchBlobFS {
      * @param data  Data chunk in string format
      * @param callback JS context callback
      */
-    static void writeChunk(String streamId, String data, Callback callback) {
+    static void writeStreamChunk(String streamId, String data, Callback callback) {
 
         RNFetchBlobFS fs = fileStreams.get(streamId);
         OutputStream stream = fs.writeStreamInstance;
@@ -900,24 +904,65 @@ public class RNFetchBlobFS {
             return PathResolver.getRealPathFromURI(RNFetchBlob.RCTContext, uri);
     }
 
+    /**
+     * Read {length} bytes from {path} from {offset} bytes.
+     * @param path Source file URI
+     * @param encoding The encoding of output data
+     * @param offset Offset of the file.
+     * @param length Length of data to read.
+     * @return Result of the operation.
+     * @throws Exception
+     */
     static Object readChunk(String path, String encoding, int offset, int length) throws Exception {
         path = normalizePath(path);
         if(path == null)
             return null;
         byte [] buffer = new byte[length];
-        InputStream in = new FileInputStream(path);
+        FileInputStream in = new FileInputStream(path);
         int read = in.read(buffer, offset, length);
-
+        Object result = null;
         if(encoding.equalsIgnoreCase(RNFetchBlobConst.RNFB_RESPONSE_BASE64)) {
-            return DataConverter.byteToBase64(buffer, read);
+            result = DataConverter.byteToBase64(buffer, read);
         }
         else if(encoding.equalsIgnoreCase(RNFetchBlobConst.RNFB_RESPONSE_UTF8)) {
-            return DataConverter.byteToUTF8(buffer, read);
+            result = DataConverter.byteToUTF8(buffer, read);
         }
         else if(encoding.equalsIgnoreCase(RNFetchBlobConst.RNFB_RESPONSE_ASCII)) {
-            return DataConverter.byteToRCTArray(buffer, read);
+            result = DataConverter.byteToRCTArray(buffer, read);
         }
-        return null;
+        in.close();
+        return result;
 
     }
+
+    /**
+     * Write specified data to destination start from {offset} bytes.
+     * @param path Destination file path.
+     * @param encoding Encoding of input data.
+     * @param data Data to be written to file.
+     * @param offset Offset of the operation.
+     */
+     static void writeChunk(String path, String encoding, Object data, int offset) throws Exception {
+        if(path == null)
+            return;
+        FileOutputStream out = new FileOutputStream(path);
+        byte [] bytes = null;
+        switch (encoding) {
+            case RNFetchBlobConst.DATA_ENCODE_BASE64 :
+                bytes = Base64.decode((String)data, 0);
+                break;
+            case RNFetchBlobConst.DATA_ENCODE_UTF8 :
+                bytes = ((String)data).getBytes();
+                break;
+            case RNFetchBlobConst.DATA_ENCODE_ASCII :
+                bytes = DataConverter.RCTArrayToBytes((ReadableArray) data);
+                break;
+            case RNFetchBlobConst.DATA_ENCODE_URI :
+                writeFileToFileWithOffset((String)data, path, offset, false);
+                return;
+        }
+        if(bytes != null)
+        out.write(bytes, offset, bytes.length);
+    }
+
 }

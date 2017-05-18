@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import com.RNFetchBlob.Utils.EncodingResolver;
 import com.RNFetchBlob.Utils.RNFBCookieJar;
@@ -17,12 +16,10 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -175,7 +172,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void writeChunk(String streamId, String data, Callback callback) {
-        RNFetchBlobFS.writeChunk(streamId, data, callback);
+        RNFetchBlobFS.writeStreamChunk(streamId, data, callback);
     }
 
     @ReactMethod
@@ -346,6 +343,22 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             }
         });
 
+    }
+
+    @ReactMethod
+    public void writeChunk(final String path, final String encoding, final String data, final int offset, final int length, final Promise promise) {
+        fsThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    RNFetchBlobFS.writeChunk(path, encoding, data, offset);
+                    promise.resolve(null);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    promise.reject(e.getMessage(), e.getMessage()) ;
+                }
+            }
+        });
     }
 
 
