@@ -171,12 +171,12 @@ function writeFile(path:string, data:string | Array<number>, encoding:?string):P
     return Promise.reject('Invalid argument "path" ')
   if(encoding.toLocaleLowerCase() === 'ascii') {
     if(!Array.isArray(data))
-      Promise.reject(new Error(`Expected "data" is an Array when encoding is "ascii", however got ${typeof data}`))
+      return Promise.reject(new Error(`Expected "data" is an Array when encoding is "ascii", however got ${typeof data}`))
     else
       return RNFetchBlob.writeFileArray(path, data, false);
   } else {
     if(typeof data !== 'string')
-      Promise.reject(new Error(`Expected "data" is a String when encoding is "utf8" or "base64", however got ${typeof data}`))
+      return Promise.reject(new Error(`Expected "data" is a String when encoding is "utf8" or "base64", however got ${typeof data}`))
     else
       return RNFetchBlob.writeFile(path, encoding, data, false);
   }
@@ -188,12 +188,12 @@ function appendFile(path:string, data:string | Array<number>, encoding:?string):
     return Promise.reject('Invalid argument "path" ')
   if(encoding.toLocaleLowerCase() === 'ascii') {
     if(!Array.isArray(data))
-      Promise.reject(new Error(`Expected "data" is an Array when encoding is "ascii", however got ${typeof data}`))
+      return Promise.reject(new Error(`Expected "data" is an Array when encoding is "ascii", however got ${typeof data}`))
     else
       return RNFetchBlob.writeFileArray(path, data, true);
   } else {
     if(typeof data !== 'string')
-      Promise.reject(new Error(`Expected "data" is a String when encoding is "utf8" or "base64", however got ${typeof data}`))
+      return Promise.reject(new Error(`Expected "data" is a String when encoding is "utf8" or "base64", however got ${typeof data}`))
     else
       return RNFetchBlob.writeFile(path, encoding, data, true);
   }
