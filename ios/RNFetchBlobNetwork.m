@@ -198,7 +198,7 @@ NSOperationQueue *taskQueue;
     }
     else
     {
-        NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:taskId];
+        defaultConfigObject = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:taskId];
     }
 
     // set request timeout
