@@ -580,25 +580,6 @@ RCT_EXPORT_METHOD(df:(RCTResponseSenderBlock)callback)
     return window.rootViewController;
 }
 
-# pragma mark - getCookies
-
-RCT_EXPORT_METHOD(getCookies:(NSString *)url resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
-{
-    resolve([RNFetchBlobNetwork getCookies:url]);
-}
-
-# pragma mark - removeCookie
-
-RCT_EXPORT_METHOD(removeCookies:(NSString *)domain resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
-{
-    NSError * err = nil;
-    [RNFetchBlobNetwork removeCookies:domain error:&err];
-    if(err)
-        reject(@"RNFetchBlob failed to remove cookie", @"RNFetchBlob failed to remove cookie", nil);
-    else
-        resolve(@[[NSNull null]]);
-}
-
 # pragma mark - check expired network events
 
 RCT_EXPORT_METHOD(emitExpiredEvent:(RCTResponseSenderBlock)callback)

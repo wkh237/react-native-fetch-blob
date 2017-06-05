@@ -52,7 +52,7 @@ public class RNFetchBlobUtils {
                 .emit(RNFetchBlobConst.EVENT_MESSAGE, args);
     }
 
-    public static OkHttpClient.Builder getUnsafeOkHttpClient() {
+    public static OkHttpClient.Builder getUnsafeOkHttpClient(OkHttpClient client) {
         try {
             // Create a trust manager that does not validate certificate chains
             final TrustManager[] trustAllCerts = new TrustManager[]{
@@ -78,7 +78,7 @@ public class RNFetchBlobUtils {
             // Create an ssl socket factory with our all-trusting manager
             final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 
-            OkHttpClient.Builder builder = new OkHttpClient.Builder();
+            OkHttpClient.Builder builder = client.newBuilder();
             builder.sslSocketFactory(sslSocketFactory);
             builder.hostnameVerifier(new HostnameVerifier() {
                 @Override
