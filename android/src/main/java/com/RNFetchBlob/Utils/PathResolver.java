@@ -8,6 +8,11 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.content.ContentUris;
 import android.os.Environment;
+import android.content.ContentResolver;
+import com.RNFetchBlob.RNFetchBlobUtils;
+import java.io.File;
+import java.io.InputStream;
+import java.io.FileOutputStream;
 
 public class PathResolver {
     public static String getRealPathFromURI(final Context context, final Uri uri) {
@@ -59,6 +64,29 @@ public class PathResolver {
 
                 return getDataColumn(context, contentUri, selection, selectionArgs);
             }
+            // Other Providers
+            else {
+                try {
+                    InputStream attachment = context.getContentResolver().openInputStream(uri);
+                    if (attachment != null) {
+                        String filename = getContentName(context.getContentResolver(), uri);
+                        if (filename != null) {
+                            File file = new File(context.getCacheDir(), filename);
+                            FileOutputStream tmp = new FileOutputStream(file);
+                            byte[] buffer = new byte[1024];
+                            while (attachment.read(buffer) > 0) {
+                                tmp.write(buffer);
+                            }
+                            tmp.close();
+                            attachment.close();
+                            return file.getAbsolutePath();
+                        }
+                    }
+                } catch (Exception e) {
+                    RNFetchBlobUtils.emitWarningEvent(e.toString());
+                    return null;
+                }
+            }
         }
         // MediaStore (and general)
         else if ("content".equalsIgnoreCase(uri.getScheme())) {
@@ -74,6 +102,18 @@ public class PathResolver {
             return uri.getPath();
         }
 
+        return null;
+    }
+
+    private static String getContentName(ContentResolver resolver, Uri uri) {
+        Cursor cursor = resolver.query(uri, null, null, null, null);
+        cursor.moveToFirst();
+        int nameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+        if (nameIndex >= 0) {
+            String name = cursor.getString(nameIndex);
+            cursor.close();
+            return name;
+        }
         return null;
     }
 

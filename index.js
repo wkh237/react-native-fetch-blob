@@ -50,7 +50,6 @@ const RNFetchBlob = NativeModules.RNFetchBlob
 // their .expire event
 if(Platform.OS === 'ios') {
   AppState.addEventListener('change', (e) => {
-    console.log('app state changed', e)
     if(e === 'active')
       RNFetchBlob.emitExpiredEvent(()=>{})
   })
