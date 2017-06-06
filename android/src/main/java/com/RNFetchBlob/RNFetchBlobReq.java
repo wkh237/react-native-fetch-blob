@@ -11,7 +11,6 @@ import android.util.Base64;
 
 import com.RNFetchBlob.Response.RNFetchBlobDefaultResp;
 import com.RNFetchBlob.Response.RNFetchBlobFileResp;
-import com.RNFetchBlob.Utils.RNFBCookieJar;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -21,14 +20,12 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.facebook.react.modules.network.OkHttpClientProvider;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.CookieHandler;
-import java.net.CookieManager;
-import java.net.CookiePolicy;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
@@ -43,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.ConnectionPool;
-import okhttp3.CookieJar;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
@@ -98,8 +94,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     WritableMap respInfo;
     boolean timeout = false;
     ArrayList<String> redirects = new ArrayList<>();
+    OkHttpClient client;
 
-    public RNFetchBlobReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, final Callback callback) {
+    public RNFetchBlobReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, OkHttpClient client, final Callback callback) {
         this.method = method.toUpperCase();
         this.options = new RNFetchBlobConfig(options);
         this.taskId = taskId;
@@ -108,6 +105,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         this.callback = callback;
         this.rawRequestBody = body;
         this.rawRequestBodyArray = arrayBody;
+        this.client = client;
 
         if(this.options.fileCache || this.options.path != null)
             responseType = ResponseType.FileStorage;
@@ -196,7 +194,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             if (this.options.trusty) {
                 clientBuilder = RNFetchBlobUtils.getUnsafeOkHttpClient();
             } else {
-                clientBuilder = new OkHttpClient.Builder();
+                clientBuilder = client.newBuilder();
             }
 
             final Request.Builder builder = new Request.Builder();
@@ -297,10 +295,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             }
 
             // #156 fix cookie issue
-
-
             final Request req = builder.build();
-            clientBuilder.cookieJar(new RNFBCookieJar());
             clientBuilder.addNetworkInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {

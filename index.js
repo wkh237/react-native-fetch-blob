@@ -25,7 +25,6 @@ import polyfill from './polyfill'
 import _ from 'lodash'
 import android from './android'
 import ios from './ios'
-import net from './net'
 import JSONStream from './json-stream'
 const {
   RNFetchBlobSession,
@@ -564,7 +563,6 @@ export default {
   session,
   fs,
   wrap,
-  net,
   polyfill,
   JSONStream
 }
