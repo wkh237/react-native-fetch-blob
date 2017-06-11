@@ -21,18 +21,26 @@ function actionViewIntent(path:string, mime:string = 'text/plain') {
   if(Platform.OS === 'android')
     return RNFetchBlob.actionViewIntent(path, mime)
   else
-    return Promise.reject('RNFetchBlob.actionViewIntent only supports Android.')
+    return Promise.reject('RNFetchBlob.android.actionViewIntent only supports Android.')
 }
 
 function getContentIntent(mime:string) {
   if(Platform.OS === 'android')
     return RNFetchBlob.getContentIntent(mime)
   else
-    return Promise.reject('RNFetchBlob.getContentIntent only supports Android.')
+    return Promise.reject('RNFetchBlob.android.getContentIntent only supports Android.')
+}
+
+function addCompleteDownload(config) {
+  if(Platform.OS === 'android')
+    return RNFetchBlob.addCompleteDownload(config)
+  else
+    return Promise.reject('RNFetchBlob.android.addCompleteDownload only supports Android.')
 }
 
 
 export default {
   actionViewIntent,
-  getContentIntent
+  getContentIntent,
+  addCompleteDownload
 }

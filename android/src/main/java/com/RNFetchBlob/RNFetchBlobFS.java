@@ -882,13 +882,21 @@ public class RNFetchBlobFS {
         return false;
     }
 
+    /**
+     * Normalize the path, remove URI scheme (xxx://) so that we can handle it.
+     * @param path URI string.
+     * @return Normalized string
+     */
     static String normalizePath(String path) {
         if(path == null)
             return null;
-        Uri uri = Uri.parse(path);
-        if(uri.getScheme() == null) {
+        if(!path.matches("\\w+\\:.*"))
             return path;
+        if(path.startsWith("file://")) {
+            return path.replace("file://", "");
         }
+
+        Uri uri = Uri.parse(path);
         if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
             return path;
         }
