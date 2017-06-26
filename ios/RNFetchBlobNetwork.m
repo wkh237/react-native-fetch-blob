@@ -82,6 +82,7 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     NSMutableArray * redirects;
     ResponseFormat responseFormat;
     BOOL * followRedirect;
+    BOOL backgroundTask;
 }
 
 @end
@@ -168,6 +169,8 @@ NSOperationQueue *taskQueue;
     self.expectedBytes = 0;
     self.receivedBytes = 0;
     self.options = options;
+    
+    backgroundTask = [options valueForKey:@"IOSBackgroundTask"] == nil ? NO : [[options valueForKey:@"IOSBackgroundTask"] boolValue];
     followRedirect = [options valueForKey:@"followRedirect"] == nil ? YES : [[options valueForKey:@"followRedirect"] boolValue];
     isIncrement = [options valueForKey:@"increment"] == nil ? NO : [[options valueForKey:@"increment"] boolValue];
     redirects = [[NSMutableArray alloc] init];
@@ -192,13 +195,12 @@ NSOperationQueue *taskQueue;
 
     // the session trust any SSL certification
     NSURLSessionConfiguration *defaultConfigObject;
-    if(!followRedirect)
+
+    defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
+
+    if(backgroundTask)
     {
-        defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
-    }
-    else
-    {
-        NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:taskId];
+        defaultConfigObject = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:taskId];
     }
 
     // set request timeout
@@ -246,14 +248,6 @@ NSOperationQueue *taskQueue;
     if([[options objectForKey:CONFIG_INDICATOR] boolValue] == YES)
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
     __block UIApplication * app = [UIApplication sharedApplication];
-
-    // #115 handling task expired when application entering backgound for a long time
-    UIBackgroundTaskIdentifier tid = [app beginBackgroundTaskWithName:taskId expirationHandler:^{
-        NSLog([NSString stringWithFormat:@"session %@ expired", taskId ]);
-        [expirationTable setObject:task forKey:taskId];
-        // comment out this one as it might cause app crash #271
-//        [app endBackgroundTask:tid];
-    }];
 
 }
 

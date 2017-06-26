@@ -1,6 +1,7 @@
 package com.RNFetchBlob;
 
 import android.app.Activity;
+import android.app.DownloadManager;
 import android.content.Intent;
 import android.net.Uri;
 
@@ -15,6 +16,7 @@ import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 
 // Cookies
+import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.network.ForwardingCookieHandler;
 import com.facebook.react.modules.network.CookieJarContainer;
 import com.facebook.react.modules.network.OkHttpClientProvider;
@@ -338,6 +340,33 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             i.setType("*/*");
         promiseTable.put(GET_CONTENT_INTENT, promise);
         this.getReactApplicationContext().startActivityForResult(i, GET_CONTENT_INTENT, null);
+
+    }
+
+    @ReactMethod
+    public void addCompleteDownload (ReadableMap config, Promise promise) {
+        DownloadManager dm = (DownloadManager) RNFetchBlob.RCTContext.getSystemService(RNFetchBlob.RCTContext.DOWNLOAD_SERVICE);
+        String path = RNFetchBlobFS.normalizePath(config.getString("path"));
+        if(path == null) {
+            promise.reject("RNFetchblob.addCompleteDownload can not resolve URI:" + config.getString("path"), "RNFetchblob.addCompleteDownload can not resolve URI:" + path);
+            return;
+        }
+        try {
+            WritableMap stat = RNFetchBlobFS.statFile(path);
+            dm.addCompletedDownload(
+                    config.hasKey("title") ? config.getString("title") : "",
+                    config.hasKey("description") ? config.getString("description") : "",
+                    true,
+                    config.hasKey("mime") ? config.getString("mime") : null,
+                    path,
+                    Long.valueOf(stat.getString("size")),
+                    config.hasKey("showNotification") && config.getBoolean("showNotification")
+            );
+            promise.resolve(null);
+        }
+        catch(Exception ex) {
+            promise.reject("RNFetchblob.addCompleteDownload failed", ex.getStackTrace().toString());
+        }
 
     }
 

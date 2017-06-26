@@ -250,10 +250,7 @@ public class RNFetchBlobFS {
                 CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
                 while ((cursor = fs.read(buffer)) != -1) {
                     encoder.encode(ByteBuffer.wrap(buffer).asCharBuffer());
-                    String chunk = new String(buffer);
-                    if(cursor != bufferSize) {
-                        chunk = chunk.substring(0, cursor);
-                    }
+                    String chunk = new String(buffer, 0, cursor);
                     emitStreamEvent(streamId, "data", chunk);
                     if(tick > 0)
                         SystemClock.sleep(tick);
@@ -882,13 +879,21 @@ public class RNFetchBlobFS {
         return false;
     }
 
+    /**
+     * Normalize the path, remove URI scheme (xxx://) so that we can handle it.
+     * @param path URI string.
+     * @return Normalized string
+     */
     static String normalizePath(String path) {
         if(path == null)
             return null;
-        Uri uri = Uri.parse(path);
-        if(uri.getScheme() == null) {
+        if(!path.matches("\\w+\\:.*"))
             return path;
+        if(path.startsWith("file://")) {
+            return path.replace("file://", "");
         }
+
+        Uri uri = Uri.parse(path);
         if(path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
             return path;
         }
