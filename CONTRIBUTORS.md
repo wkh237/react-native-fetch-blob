@@ -1,7 +1,10 @@
 960px <pinovel@gmail.com>
+Amerrnath <amerrnath.21@gmail.com>
 Andreas Amsenius <andreas@amsenius.se>
 Andrew Jack <me@andrewjack.uk>
 Arthur Ouaki <arthur.ouaki@gmail.com>
+Ben <benhsieh@catchplay.com>
+Ben Hsieh <benhsieh@catchplay.com>
 Binur Konarbai <binur95@gmail.com>
 Bronco <heybronco@gmail.com>
 Chris Sloey <chris@addjam.com>
@@ -12,6 +15,8 @@ Erik Smartt <code@eriksmartt.com>
 Evgeniy Baraniuk <ev.baraniuk@gmail.com>
 Frank van der Hoek <frank.vanderhoek@gmail.com>
 Guy Blank <blank.guy@gmail.com>
+Jacob Lauritzen <jacsebl@hotmail.com>
+Jeremi Stadler <stadler.jeremi@gmail.com>
 Jon San Miguel <sanmiguelje@gmail.com>
 Juan B. Rodriguez <jbrodriguez@gmail.com>
 Kaishley <kklingachetti@msn.com>
@@ -24,6 +29,7 @@ Nick Pomfret <npomfret@users.noreply.github.com>
 Oliver <spendabuk@hotmail.com>
 Petter Hesselberg <petterh@microsoft.com>
 Reza Ghorbani <r.ghorbani.f@gmail.com>
+Simón Gómez <simongomez95@gmail.com>
 Steve Liles <steveliles@gmail.com>
 Tim Suchanek <tim.suchanek@gmail.com>
 Yonsh Lin <yonsh@live.com>
