@@ -12,6 +12,8 @@ import RNFetchBlobSession from './class/RNFetchBlobSession'
 import RNFetchBlobWriteStream from './class/RNFetchBlobWriteStream'
 import RNFetchBlobReadStream from './class/RNFetchBlobReadStream'
 import RNFetchBlobFile from './class/RNFetchBlobFile'
+import RNFetchBlobFileHandle from './class/RNFetchBlobFileHandle'
+
 import type {
   RNFetchBlobNative,
   RNFetchBlobConfig,
@@ -363,6 +365,10 @@ function df():Promise<{ free : number, total : number }> {
         resolve(stat)
     })
   })
+}
+
+function open(uri:String, mode:'r' | 'rw' | 'w'):Promise<number> {
+  return RNFetchBlobFileHandle.create(uri, mode)
 }
 
 export default {

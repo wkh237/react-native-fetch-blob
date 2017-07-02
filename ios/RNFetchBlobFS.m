@@ -11,6 +11,7 @@
 #import "RNFetchBlobFS.h"
 #import "RNFetchBlobConst.h"
 #import "IOS7Polyfill.h"
+#import "RNFetchBlobFileHandle.h"
 @import AssetsLibrary;
 
 #if __has_include(<React/RCTAssert.h>)
@@ -23,6 +24,8 @@
 
 
 NSMutableDictionary *fileStreams = nil;
+NSMutableDictionary *fileHandles = nil;
+long openedHandleCount = 0;
 
 ////////////////////////////////////////
 //
@@ -31,10 +34,10 @@ NSMutableDictionary *fileStreams = nil;
 ////////////////////////////////////////
 @interface RNFetchBlobFS() {
     UIDocumentInteractionController * docCtrl;
+    
 }
 @end
 @implementation RNFetchBlobFS
-
 
 @synthesize outStream;
 @synthesize inStream;
@@ -737,6 +740,9 @@ NSMutableDictionary *fileStreams = nil;
 
 # pragma mark - get absolute path of resource
 
+// This method will try to get real path from the URI, and return a string path or ALAssetRepresentation if possible.
+// If it returns a non-empty `path`, which means it's not a Assets Library resource.
+// When passing a Assset Library URI the returned `path` will always be `nil`.
 + (void) getPathFromUri:(NSString *)uri completionHandler:(void(^)(NSString * path, ALAssetRepresentation *asset)) onComplete
 {
     if([uri hasPrefix:AL_PREFIX])
@@ -797,4 +803,60 @@ NSMutableDictionary *fileStreams = nil;
     return;
 }
 
++ (void) openFileHandle:(NSString * )uri
+                   mode:(NSString *)mode
+               resolver:(RCTPromiseResolveBlock)resolve
+               rejecter:(RCTPromiseRejectBlock)reject
+{
+    openedHandleCount ++;
+    RNFetchBlobFileHandle * handle;
+    handle = [[RNFetchBlobFileHandle alloc] initWithPath:uri mode:mode];
+    
+    if(fileHandles == nil)
+    {
+        fileHandles = [[NSMutableDictionary alloc] init];
+        [fileHandles setObject:handle forKey:[NSNumber numberWithLong:openedHandleCount]];
+    }
+    resolve([NSNumber numberWithLong:openedHandleCount]);
+}
+
++ (void) writeFileHandle:(NSNumber *)hid
+                encoding:(NSString *)encoding
+                    data:(NSString *)data
+                offset:(NSNumber *)offset
+                resolver:(RCTPromiseResolveBlock)resolve
+                rejecter:(RCTPromiseRejectBlock)reject
+{
+    if(fileHandles == nil)
+        return;
+    NSNumber * handleId = [NSNumber numberWithLong:[hid longValue]];
+    RNFetchBlobFileHandle * handle = [fileHandles objectForKey:handleId];
+    [handle write:encoding data:data offset:offset onComplete:^(NSNumber *written) {
+        resolve([NSNull null]);
+    }];
+    
+}
+
++ (void) readFileHandle:(NSNumber *)hid
+                encoding:(NSString *)encoding
+                offset:(NSNumber *)offset
+                length:(NSNumber *)length
+               resolver:(RCTPromiseResolveBlock)resolve
+               rejecter:(RCTPromiseRejectBlock)reject
+{
+    if(fileHandles == nil)
+        return;
+    NSNumber * handleId = [NSNumber numberWithLong:[hid longValue]];
+    [fileHandles objectForKey:handleId];
+    RNFetchBlobFileHandle * handle = [fileHandles objectForKey:handleId];
+    id result = [handle read:encoding offset:offset length:length];
+    if(![encoding isEqualToString:@"ascii"])
+    {
+        resolve((NSString *) result);
+    }
+    else
+    {
+        resolve((NSArray *) result);
+    }
+}
 @end

@@ -588,6 +588,15 @@ RCT_EXPORT_METHOD(emitExpiredEvent:(RCTResponseSenderBlock)callback)
     [RNFetchBlobNetwork emitExpiredTasks];
 }
 
+#pragma mark - fs.open
+RCT_EXPORT_METHOD(openFileHandle:(NSString *)uri
+                  mode:(nonnull NSNumber*)mode
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject
+{
+    // TODO
+})
+
 
 
 

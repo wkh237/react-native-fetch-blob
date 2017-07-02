@@ -39,6 +39,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.RNFetchBlob.RNFetchBlobOpenFile.*;
+
 public class RNFetchBlobFS {
 
     ReactApplicationContext mCtx;
@@ -47,6 +49,8 @@ public class RNFetchBlobFS {
     boolean append = false;
     OutputStream writeStreamInstance = null;
     static HashMap<String, RNFetchBlobFS> fileStreams = new HashMap<>();
+    static HashMap<Integer, RNFetchBlobOpenFile> fileHandles = new HashMap<>();
+
 
     RNFetchBlobFS(ReactApplicationContext ctx) {
         this.mCtx = ctx;
@@ -100,7 +104,7 @@ public class RNFetchBlobFS {
         }
     }
 
-    private static int writeFileToFileWithOffset(String source, String dest, int offset, boolean append) throws IOException {
+    static int writeFileToFileWithOffset(String source, String dest, int offset, boolean append) throws IOException {
 
         source = normalizePath(source);
         FileOutputStream fout = new FileOutputStream(dest, append);
@@ -915,65 +919,10 @@ public class RNFetchBlobFS {
             return PathResolver.getRealPathFromURI(RNFetchBlob.RCTContext, uri);
     }
 
-    /**
-     * Read {length} bytes from {path} from {offset} bytes.
-     * @param path Source file URI
-     * @param encoding The encoding of output data
-     * @param offset Offset of the file.
-     * @param length Length of data to read.
-     * @return Result of the operation.
-     * @throws Exception
-     */
-    static Object readChunk(String path, String encoding, int offset, int length) throws Exception {
-        path = normalizePath(path);
-        if(path == null)
-            return null;
-        byte [] buffer = new byte[length];
-        FileInputStream in = new FileInputStream(path);
-        int read = in.read(buffer, offset, length);
-        Object result = null;
-        if(encoding.equalsIgnoreCase(RNFetchBlobConst.RNFB_RESPONSE_BASE64)) {
-            result = DataConverter.byteToBase64(buffer, read);
-        }
-        else if(encoding.equalsIgnoreCase(RNFetchBlobConst.RNFB_RESPONSE_UTF8)) {
-            result = DataConverter.byteToUTF8(buffer, read);
-        }
-        else if(encoding.equalsIgnoreCase(RNFetchBlobConst.RNFB_RESPONSE_ASCII)) {
-            result = DataConverter.byteToRCTArray(buffer, read);
-        }
-        in.close();
-        return result;
-
-    }
-
-    /**
-     * Write specified data to destination start from {offset} bytes.
-     * @param path Destination file path.
-     * @param encoding Encoding of input data.
-     * @param data Data to be written to file.
-     * @param offset Offset of the operation.
-     */
-     static void writeChunk(String path, String encoding, Object data, int offset) throws Exception {
-        if(path == null)
-            return;
-        FileOutputStream out = new FileOutputStream(path);
-        byte [] bytes = null;
-        switch (encoding) {
-            case RNFetchBlobConst.DATA_ENCODE_BASE64 :
-                bytes = Base64.decode((String)data, 0);
-                break;
-            case RNFetchBlobConst.DATA_ENCODE_UTF8 :
-                bytes = ((String)data).getBytes();
-                break;
-            case RNFetchBlobConst.DATA_ENCODE_ASCII :
-                bytes = DataConverter.RCTArrayToBytes((ReadableArray) data);
-                break;
-            case RNFetchBlobConst.DATA_ENCODE_URI :
-                writeFileToFileWithOffset((String)data, path, offset, false);
-                return;
-        }
-        if(bytes != null)
-        out.write(bytes, offset, bytes.length);
+    static Integer openFile(String path, Mode mode) throws FileNotFoundException {
+        Integer id = ++OpenFileId;
+        RNFetchBlobFS.fileHandles.put(id, new RNFetchBlobOpenFile(path, mode));
+        return id;
     }
 
 }

@@ -15,6 +15,8 @@ import com.facebook.react.bridge.WritableArray;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
@@ -45,6 +47,12 @@ public class DataConverter {
             chunk.pushInt((int)data[i]);
         }
         return chunk;
+    }
+
+    public static String exceptionToStringStackTrace(Exception ex) {
+        StringWriter sw = new StringWriter();
+        ex.printStackTrace(new PrintWriter(sw));
+        return ex.toString();
     }
 
     public static byte[] RCTArrayToBytes(ReadableArray data) {

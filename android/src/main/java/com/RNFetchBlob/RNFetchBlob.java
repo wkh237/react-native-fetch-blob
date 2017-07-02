@@ -4,10 +4,8 @@ import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.annotation.Nullable;
 
-import com.RNFetchBlob.Utils.EncodingResolver;
-import com.RNFetchBlob.Utils.RNFBCookieJar;
+import com.RNFetchBlob.Utils.DataConverter;
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.LifecycleEventListener;
@@ -18,11 +16,9 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.modules.network.ForwardingCookieHandler;
 import com.facebook.react.modules.network.CookieJarContainer;
+import com.facebook.react.modules.network.ForwardingCookieHandler;
 import com.facebook.react.modules.network.OkHttpClientProvider;
-import okhttp3.OkHttpClient;
-import okhttp3.JavaNetCookieJar;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,8 +26,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.JavaNetCookieJar;
+import okhttp3.OkHttpClient;
+
 import static android.app.Activity.RESULT_OK;
 import static com.RNFetchBlob.RNFetchBlobConst.GET_CONTENT_INTENT;
+import static com.RNFetchBlob.RNFetchBlobConst.RNFB_RESPONSE_ASCII;
+import static com.RNFetchBlob.RNFetchBlobConst.RNFB_RESPONSE_BASE64;
+import static com.RNFetchBlob.RNFetchBlobConst.RNFB_RESPONSE_UTF8;
 
 public class RNFetchBlob extends ReactContextBaseJavaModule {
 
@@ -315,39 +317,6 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
         });
     }
 
-    @ReactMethod
-    public void readChunk(final String path, final String encoding, final int offset, final int length, final Promise promise) {
-        fsThreadPool.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Object result = RNFetchBlobFS.readChunk(path, encoding, offset, length);
-                    EncodingResolver.resolve(promise, encoding, result);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    promise.reject(e.getMessage(), e.getMessage()) ;
-                }
-            }
-        });
-
-    }
-
-    @ReactMethod
-    public void writeChunk(final String path, final String encoding, final String data, final int offset, final int length, final Promise promise) {
-        fsThreadPool.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    RNFetchBlobFS.writeChunk(path, encoding, data, offset);
-                    promise.resolve(null);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    promise.reject(e.getMessage(), e.getMessage()) ;
-                }
-            }
-        });
-    }
-
 
     @ReactMethod
     public void enableUploadProgressReport(String taskId, int interval, int count) {
@@ -366,25 +335,97 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void read(final String path, final String encoding, final int offset, final int length, final @Nullable String dest, final Promise promise) {
+    public void openFileHandle(final String path, final int mode, final Promise promise) {
         fsThreadPool.execute(new Runnable() {
             @Override
             public void run() {
-                RNFetchBlobFS fs = new RNFetchBlobFS(RCTContext);
-                fs.read(path, encoding, offset, length, dest, promise);
+                RNFetchBlobOpenFile.Mode accessMode = RNFetchBlobOpenFile.Mode.READ;
+                if(mode == 1)
+                    accessMode = RNFetchBlobOpenFile.Mode.READ;
+                else if (mode == 2)
+                    accessMode = RNFetchBlobOpenFile.Mode.WRITE;
+                else {
+                    accessMode = RNFetchBlobOpenFile.Mode.READWRITE;
+                }
+                try {
+                    Integer id = RNFetchBlobFS.openFile(path, accessMode);
+                    promise.resolve(id);
+                }
+                catch(Exception ex) {
+                    promise.reject(
+                            "RNFetchBlob failed to open file handle",
+                            DataConverter.exceptionToStringStackTrace(ex)
+                    );
+                }
             }
         });
     }
 
     @ReactMethod
-    public void write(final String path, final String data, final String encoding, final int offset, final int length, final Promise promise) {
+    public void readFromHandle(final int id, final String encoding, final int offset, final int length, final Promise promise) {
         fsThreadPool.execute(new Runnable() {
             @Override
             public void run() {
-                RNFetchBlobFS fs = new RNFetchBlobFS(RCTContext);
-                fs.write(path, encoding, data, offset, length, promise);
+                try {
+                    RNFetchBlobOpenFile handle = RNFetchBlobFS.fileHandles.get(id);
+                    Object result = handle.read(encoding, offset, length);
+                    switch (encoding) {
+                        case RNFB_RESPONSE_BASE64:
+                            promise.resolve((String) result);
+                            break;
+                        case RNFB_RESPONSE_UTF8:
+                            promise.resolve((String) result);
+                            break;
+                        case RNFB_RESPONSE_ASCII:
+                            promise.resolve((ReadableArray) result);
+                            break;
+                    }
+                }
+                catch (Exception ex) {
+                    promise.reject(
+                            "RNFetchBlob failed to read from file handle",
+                            DataConverter.exceptionToStringStackTrace(ex)
+                    );
+                }
+
             }
         });
+    }
+
+    @ReactMethod
+    public void writeToHandle(final int id, final String encoding, final int offset, final String data, final Promise promise) {
+
+        fsThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    RNFetchBlobOpenFile handle = RNFetchBlobFS.fileHandles.get(id);
+                    handle.write(encoding, data, offset);
+                    promise.resolve(null);
+                }
+                catch (Exception ex) {
+                    promise.reject(
+                            "RNFetchBlob failed to write tofile handle",
+                            DataConverter.exceptionToStringStackTrace(ex)
+                    );
+                }
+            }
+        });
+    }
+
+    @ReactMethod
+    public void closeHandle(final int id, Promise promise) {
+        try {
+            RNFetchBlobOpenFile handle = RNFetchBlobFS.fileHandles.get(id);
+            handle.close();
+            promise.resolve(null);
+        }
+        catch (Exception ex) {
+            promise.reject(
+                    "RNFetchBlob failed to close handle",
+                    DataConverter.exceptionToStringStackTrace(ex)
+            );
+        }
     }
 
     public void getContentIntent(String mime, Promise promise) {
