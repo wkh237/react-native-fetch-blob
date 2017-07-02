@@ -82,6 +82,7 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     NSMutableArray * redirects;
     ResponseFormat responseFormat;
     BOOL * followRedirect;
+    BOOL backgroundTask;
 }
 
 @end
@@ -168,6 +169,8 @@ NSOperationQueue *taskQueue;
     self.expectedBytes = 0;
     self.receivedBytes = 0;
     self.options = options;
+    
+    backgroundTask = [options valueForKey:@"IOSBackgroundTask"] == nil ? NO : [[options valueForKey:@"IOSBackgroundTask"] boolValue];
     followRedirect = [options valueForKey:@"followRedirect"] == nil ? YES : [[options valueForKey:@"followRedirect"] boolValue];
     isIncrement = [options valueForKey:@"increment"] == nil ? NO : [[options valueForKey:@"increment"] boolValue];
     redirects = [[NSMutableArray alloc] init];
@@ -192,13 +195,12 @@ NSOperationQueue *taskQueue;
 
     // the session trust any SSL certification
     NSURLSessionConfiguration *defaultConfigObject;
-    if(!followRedirect)
+
+    defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
+
+    if(backgroundTask)
     {
-        defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
-    }
-    else
-    {
-        NSURLSessionConfiguration *defaultConfigObject = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:taskId];
+        defaultConfigObject = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:taskId];
     }
 
     // set request timeout
@@ -255,14 +257,6 @@ NSOperationQueue *taskQueue;
     if([[options objectForKey:CONFIG_INDICATOR] boolValue] == YES)
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
     __block UIApplication * app = [UIApplication sharedApplication];
-
-    // #115 handling task expired when application entering backgound for a long time
-    UIBackgroundTaskIdentifier tid = [app beginBackgroundTaskWithName:taskId expirationHandler:^{
-        NSLog([NSString stringWithFormat:@"session %@ expired", taskId ]);
-        [expirationTable setObject:task forKey:taskId];
-        // comment out this one as it might cause app crash #271
-//        [app endBackgroundTask:tid];
-    }];
 
 }
 
@@ -585,89 +579,6 @@ NSOperationQueue *taskQueue;
                 }
          ];
     }
-}
-
-# pragma mark - cookies handling API
-
-+ (NSDictionary *) getCookies:(NSString *) domain
-{
-    NSMutableDictionary * result = [NSMutableDictionary new];
-    NSHTTPCookieStorage * cookieStore = [NSHTTPCookieStorage sharedHTTPCookieStorage];
-    for(NSHTTPCookie * cookie in [cookieStore cookies])
-    {
-        NSString * cDomain = [cookie domain];
-        if([result objectForKey:cDomain] == nil)
-        {
-            [result setObject:[NSMutableArray new] forKey:cDomain];
-        }
-        if([cDomain isEqualToString:domain] || [domain length] == 0)
-        {
-            NSMutableString * cookieStr = [[NSMutableString alloc] init];
-            cookieStr = [[self class] getCookieString:cookie];
-            NSMutableArray * ary = [result objectForKey:cDomain];
-            [ary addObject:cookieStr];
-            [result setObject:ary forKey:cDomain];
-        }
-    }
-    return result;
-}
-
-// remove cookies for given domain, if domain is empty remove all cookies in shared cookie storage.
-+ (void) removeCookies:(NSString *) domain error:(NSError **)error
-{
-    @try
-    {
-        NSHTTPCookieStorage * cookies = [NSHTTPCookieStorage sharedHTTPCookieStorage];
-        for(NSHTTPCookie * cookie in [cookies cookies])
-        {
-            BOOL shouldRemove = domain == nil || [domain length] < 1 || [[cookie domain] isEqualToString:domain];
-            if(shouldRemove)
-            {
-                [cookies deleteCookie:cookie];
-            }
-        }
-    }
-    @catch(NSError * err)
-    {
-        *error = err;
-    }
-}
-
-// convert NSHTTPCookie to string
-+ (NSString *) getCookieString:(NSHTTPCookie *) cookie
-{
-    NSMutableString * cookieStr = [[NSMutableString alloc] init];
-    [cookieStr appendString:cookie.name];
-    [cookieStr appendString:@"="];
-    [cookieStr appendString:cookie.value];
-    
-    if(cookie.expiresDate == nil) {
-        [cookieStr appendString:@"; max-age=0"];
-    }
-    else {
-        [cookieStr appendString:@"; expires="];
-        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-        [dateFormatter setDateFormat:@"EEE, dd MM yyyy HH:mm:ss ZZZ"];
-        NSString *strDate = [dateFormatter stringFromDate:cookie.expiresDate];
-        [cookieStr appendString:strDate];
-    }
-    
-    
-    [cookieStr appendString:@"; domain="];
-    [cookieStr appendString: [cookie domain]];
-    [cookieStr appendString:@"; path="];
-    [cookieStr appendString:cookie.path];
-    
-    
-    if (cookie.isSecure) {
-        [cookieStr appendString:@"; secure"];
-    }
-    
-    if (cookie.isHTTPOnly) {
-        [cookieStr appendString:@"; httponly"];
-    }
-    return cookieStr;
-
 }
 
 + (void) cancelRequest:(NSString *)taskId

@@ -1,6 +1,7 @@
 package com.RNFetchBlob;
 
 import android.app.Activity;
+import android.app.DownloadManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.Nullable;
@@ -17,6 +18,11 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.modules.network.ForwardingCookieHandler;
+import com.facebook.react.modules.network.CookieJarContainer;
+import com.facebook.react.modules.network.OkHttpClientProvider;
+import okhttp3.OkHttpClient;
+import okhttp3.JavaNetCookieJar;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +35,11 @@ import static com.RNFetchBlob.RNFetchBlobConst.GET_CONTENT_INTENT;
 
 public class RNFetchBlob extends ReactContextBaseJavaModule {
 
+    // Cookies
+    private final ForwardingCookieHandler mCookieHandler;
+    private final CookieJarContainer mCookieJarContainer;
+    private final OkHttpClient mClient;
+
     static ReactApplicationContext RCTContext;
     static LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
     static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
@@ -40,6 +51,11 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     public RNFetchBlob(ReactApplicationContext reactContext) {
 
         super(reactContext);
+
+        mClient = OkHttpClientProvider.getOkHttpClient();
+        mCookieHandler = new ForwardingCookieHandler(reactContext);
+        mCookieJarContainer = (CookieJarContainer) mClient.cookieJar();
+        mCookieJarContainer.setCookieJar(new JavaNetCookieJar(mCookieHandler));
 
         RCTContext = reactContext;
         reactContext.addActivityEventListener(new ActivityEventListener() {
@@ -253,35 +269,6 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     /**
-     * Get cookies belongs specific host.
-     * @param host String domain name.
-     */
-    public void getCookies(String domain, Promise promise) {
-        try {
-            WritableMap cookies = RNFBCookieJar.getCookies(domain);
-            promise.resolve(cookies);
-        } catch(Exception err) {
-            promise.reject("RNFetchBlob.getCookies", err.getMessage());
-        }
-    }
-
-    @ReactMethod
-    /**
-     * Remove cookies for specific domain
-     * @param domain String of the domain
-     * @param promise JSC promise injected by RN
-     */
-    public void removeCookies(String domain, Promise promise) {
-        try {
-            RNFBCookieJar.removeCookies(domain);
-            promise.resolve(null);
-        } catch(Exception err) {
-            promise.reject("RNFetchBlob.removeCookies", err.getMessage());
-        }
-    }
-
-    @ReactMethod
-    /**
      * @param path Stream file path
      * @param encoding Stream encoding, should be one of `base64`, `ascii`, and `utf8`
      * @param bufferSize Stream buffer size, default to 4096 or 4095(base64).
@@ -370,12 +357,12 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void fetchBlob(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, final Callback callback) {
-        new RNFetchBlobReq(options, taskId, method, url, headers, body, null, callback).run();
-    }
+        new RNFetchBlobReq(options, taskId, method, url, headers, body, null, mClient, callback).run();
+}
 
     @ReactMethod
     public void fetchBlobForm(ReadableMap options, String taskId, String method, String url, ReadableMap headers, ReadableArray body, final Callback callback) {
-        new RNFetchBlobReq(options, taskId, method, url, headers, null, body, callback).run();
+        new RNFetchBlobReq(options, taskId, method, url, headers, null, body, mClient, callback).run();
     }
 
     @ReactMethod
@@ -408,6 +395,33 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             i.setType("*/*");
         promiseTable.put(GET_CONTENT_INTENT, promise);
         this.getReactApplicationContext().startActivityForResult(i, GET_CONTENT_INTENT, null);
+
+    }
+
+    @ReactMethod
+    public void addCompleteDownload (ReadableMap config, Promise promise) {
+        DownloadManager dm = (DownloadManager) RNFetchBlob.RCTContext.getSystemService(RNFetchBlob.RCTContext.DOWNLOAD_SERVICE);
+        String path = RNFetchBlobFS.normalizePath(config.getString("path"));
+        if(path == null) {
+            promise.reject("RNFetchblob.addCompleteDownload can not resolve URI:" + config.getString("path"), "RNFetchblob.addCompleteDownload can not resolve URI:" + path);
+            return;
+        }
+        try {
+            WritableMap stat = RNFetchBlobFS.statFile(path);
+            dm.addCompletedDownload(
+                    config.hasKey("title") ? config.getString("title") : "",
+                    config.hasKey("description") ? config.getString("description") : "",
+                    true,
+                    config.hasKey("mime") ? config.getString("mime") : null,
+                    path,
+                    Long.valueOf(stat.getString("size")),
+                    config.hasKey("showNotification") && config.getBoolean("showNotification")
+            );
+            promise.resolve(null);
+        }
+        catch(Exception ex) {
+            promise.reject("RNFetchblob.addCompleteDownload failed", ex.getStackTrace().toString());
+        }
 
     }
 

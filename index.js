@@ -25,7 +25,6 @@ import polyfill from './polyfill'
 import _ from 'lodash'
 import android from './android'
 import ios from './ios'
-import net from './net'
 import JSONStream from './json-stream'
 const {
   RNFetchBlobSession,
@@ -51,7 +50,6 @@ const RNFetchBlob = NativeModules.RNFetchBlob
 // their .expire event
 if(Platform.OS === 'ios') {
   AppState.addEventListener('change', (e) => {
-    console.log('app state changed', e)
     if(e === 'active')
       RNFetchBlob.emitExpiredEvent(()=>{})
   })
@@ -564,7 +562,6 @@ export default {
   session,
   fs,
   wrap,
-  net,
   polyfill,
   JSONStream
 }

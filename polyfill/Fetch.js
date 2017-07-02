@@ -57,24 +57,38 @@ class RNFetchBlobFetchPolyfill {
       // task is a progress reportable and cancellable Promise, however,
       // task.then is not, so we have to extend task.then with progress and
       // cancel function
-      let task = promise
+      let progressHandler, uploadHandler, cancelHandler
+      let statefulPromise = promise
           .then((body) => {
-            return RNFetchBlob.config(config)
-            .fetch(options.method, url, options.headers, body)
+            let task = RNFetchBlob.config(config)
+              .fetch(options.method, url, options.headers, body)
+            if(progressHandler)
+              task.progress(progressHandler)
+            if(uploadHandler)
+              task.uploadProgress(uploadHandler)
+            if(cancelHandler)
+              task.cancel()
+            return task.then((resp) => {
+              log.verbose('response', resp)
+              // release blob cache created when sending request
+              if(blobCache !== null && blobCache instanceof Blob)
+                blobCache.close()
+              return Promise.resolve(new RNFetchBlobFetchRepsonse(resp))
+            })
           })
 
-      let statefulPromise = task.then((resp) => {
-        log.verbose('response', resp)
-        // release blob cache created when sending request
-        if(blobCache !== null && blobCache instanceof Blob)
-          blobCache.close()
-        return Promise.resolve(new RNFetchBlobFetchRepsonse(resp))
-      })
-
       // extend task.then progress with report and cancelling functions
-      statefulPromise.cancel = task.cancel
-      statefulPromise.progress = task.progress
-      statefulPromise.uploadProgress = task.uploadProgress
+      statefulPromise.progress = (fn) => {
+        progressHandler = fn
+      }
+      statefulPromise.uploadProgress = (fn) => {
+        uploadHandler = fn
+      }
+      statefulPromise.cancel = () => {
+        cancelHandler = true
+        if(task.cancel)
+          task.cancel()
+      }
 
       return statefulPromise
 
