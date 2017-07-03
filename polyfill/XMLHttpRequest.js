@@ -277,7 +277,7 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget{
   _headerReceived = (e) => {
     log.debug('header received ', this._task.taskId, e)
     this.responseURL = this._url
-    if(e.state === "2") {
+    if(e.state === "2" && e.taskId === this._task.taskId) {
       this._responseHeaders = e.headers
       this._statusText = e.status
       this._status = Math.floor(e.status)
