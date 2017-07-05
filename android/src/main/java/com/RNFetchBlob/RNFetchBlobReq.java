@@ -148,13 +148,12 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 if(options.addAndroidDownloads.hasKey("path")) {
                     req.setDestinationUri(Uri.parse("file://" + options.addAndroidDownloads.getString("path")));
                 }
-                // set headers
-                ReadableMapKeySetIterator it = headers.keySetIterator();
                 // #391 Add MIME type to the request
                 if(options.addAndroidDownloads.hasKey("mime")) {
                     req.setMimeType(options.addAndroidDownloads.getString("mime"));
                 }
-
+                // set headers
+                ReadableMapKeySetIterator it = headers.keySetIterator();
                 if(options.addAndroidDownloads.hasKey("mediaScannable") && options.addAndroidDownloads.hasKey("mediaScannable") == true ) {
                     req.allowScanningByMediaScanner();
                 }
