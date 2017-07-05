@@ -150,6 +150,14 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
                 // set headers
                 ReadableMapKeySetIterator it = headers.keySetIterator();
+                // #391 Add MIME type to the request
+                if(options.addAndroidDownloads.hasKey("mime")) {
+                    req.setMimeType(options.addAndroidDownloads.getString("mime"));
+                }
+
+                if(options.addAndroidDownloads.hasKey("mediaScannable") && options.addAndroidDownloads.hasKey("mediaScannable") == true ) {
+                    req.allowScanningByMediaScanner();
+                }
                 while (it.hasNextKey()) {
                     String key = it.nextKey();
                     req.addRequestHeader(key, headers.getString(key));
@@ -636,16 +644,20 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         return;
                     }
                     String contentUri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
-                    if (contentUri != null) {
+                    if ( contentUri != null &&
+                            options.addAndroidDownloads.hasKey("mime") &&
+                            options.addAndroidDownloads.getString("mime").contains("image")) {
                         Uri uri = Uri.parse(contentUri);
                         Cursor cursor = appCtx.getContentResolver().query(uri, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
-                        // use default destination of DownloadManager
+
+                            // use default destination of DownloadManager
                         if (cursor != null) {
                             cursor.moveToFirst();
                             filePath = cursor.getString(0);
                         }
                     }
                 }
+
                 // When the file is not found in media content database, check if custom path exists
                 if (options.addAndroidDownloads.hasKey("path")) {
                     try {
