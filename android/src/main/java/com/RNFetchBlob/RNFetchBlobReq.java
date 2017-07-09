@@ -506,7 +506,14 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
 //                    ignored.printStackTrace();
                 }
                 this.destPath = this.destPath.replace("?append=true", "");
-                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
+                // #268 `then` block invoked when cancal the task
+                if(!taskTable.containsKey(this.taskId)) {
+                    callback.invoke("Canceled", RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
+                }
+                else {
+                    callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
+                }
+
                 break;
             default:
                 try {
