@@ -568,11 +568,11 @@ NSMutableDictionary *fileStreams = nil;
 
 // Write file chunk into an opened stream
 - (void)writeEncodeChunk:(NSString *) chunk {
-    NSMutableData * decodedData = [NSData alloc];
+    NSData * decodedData = nil;
     if([[self.encoding lowercaseString] isEqualToString:@"base64"]) {
-        decodedData = [[NSData alloc] initWithBase64EncodedData:chunk options:0];
-    }
-    if([[self.encoding lowercaseString] isEqualToString:@"utf8"]) {
+        decodedData = [[NSData alloc] initWithBase64EncodedString:chunk options: NSDataBase64DecodingIgnoreUnknownCharacters];
+    } 
+    else if([[self.encoding lowercaseString] isEqualToString:@"utf8"]) {
         decodedData = [chunk dataUsingEncoding:NSUTF8StringEncoding];
     }
     else if([[self.encoding lowercaseString] isEqualToString:@"ascii"]) {
