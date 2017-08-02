@@ -26,13 +26,13 @@ A project committed to making file access and data transfer easier and more effi
  * [Android Media Scanner, and Download Manager Support](#user-content-android-media-scanner-and-download-manager-support)
  * [Self-Signed SSL Server](#user-content-self-signed-ssl-server)
  * [Transfer Encoding](#user-content-transfer-encoding)
- * [RNFetchBlob as Fetch](#user-content-rnfetchblob-as-fetch)
+ * [Drop-in Fetch Replacement](#user-content-drop-in-fetch-replacement)
 * [File System](#user-content-file-system)
  * [File access](#user-content-file-access)
  * [File stream](#user-content-file-stream)
  * [Manage cached files](#user-content-cache-file-management)
 * [Web API Polyfills](#user-content-web-api-polyfills)
-* [Performance Tips](#user-content-performance-tipsd)
+* [Performance Tips](#user-content-performance-tips)
 * [API References](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API)
 * [Caveats](#user-content-caveats)
 * [Development](#user-content-development)
@@ -452,11 +452,11 @@ task.cancel((err) => { ... })
 
 ```
 
-### RNFetchBlob as Fetch
+### Drop-in Fetch Replacement
 
 0.9.0
 
-If you have existing code that uses `whatwg-fetch`(the official **fetch**), you don't have to change them after 0.9.0, just use fetch replacement. The difference between Official fetch and fetch replacement is, official fetch uses [whatwg-fetch](https://github.com/github/fetch) js library which wraps XMLHttpRequest polyfill under the hood it's a great library for web developers, however that does not play very well with RN. Our implementation is simply a wrapper of  RNFetchBlob.fetch and fs APIs, so you can access all the features we provide.
+If you have existing code that uses `whatwg-fetch`(the official **fetch**), it's not necessary to replace them with `RNFetchblob.fetch`, you can simply use our **Fetch Replacement**. The difference between Official them is official fetch uses [whatwg-fetch](https://github.com/github/fetch) which wraps XMLHttpRequest polyfill under the hood. It's a great library for web developers, but does not play very well with RN. Our implementation is simply a wrapper of our `fetch` and `fs` APIs, so you can access all the features we provided.
 
 [See document and examples](https://github.com/wkh237/react-native-fetch-blob/wiki/Fetch-API#fetch-replacement)
 
@@ -612,6 +612,8 @@ See [File API](https://github.com/wkh237/react-native-fetch-blob/wiki/File-Syste
 In `v0.5.0` we've added  `writeStream` and `readStream`, which allows your app read/write data from the file path. This API creates a file stream, rather than convert entire data into BASE64 encoded string. It's handy when processing **large files**.
 
 When calling `readStream` method, you have to `open` the stream, and start to read data. When the file is large, consider using an appropriate `bufferSize` and `interval` to reduce the native event dispatching overhead (see [Performance Tips](#user-content-performance-tips))
+
+> The file stream event has a default throttle(10ms) and buffer size which preventing it cause too much overhead to main thread, yo can also [tweak these values](#user-content-performance-tips).
 
 ```js
 let data = ''
