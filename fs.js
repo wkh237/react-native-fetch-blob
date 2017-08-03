@@ -185,9 +185,7 @@ function appendFile(path: string, data: string | Array<number>, encoding?: strin
   }
   else {
     if (typeof data !== 'string') {
-      const err = new TypeError(`"data" must be a String when encoding is "utf8" or "base64", but it is "${typeof data}"`)
-      err.code = 'EINVAL'
-      return Promise.reject(err)
+      return Promise.reject(addCode('EINVAL'), new TypeError(`"data" must be a String when encoding is "utf8" or "base64", but it is "${typeof data}"`))
     }
     else
       return RNFetchBlob.writeFile(path, encoding, data, true)
