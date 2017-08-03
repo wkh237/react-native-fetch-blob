@@ -286,7 +286,7 @@ export default class Blob extends EventTarget {
 
   safeClose() {
     if(this._closed)
-      return Promise.reject('Blob has been released.)
+      return Promise.reject('Blob has been released.')
     this._closed = true
     if(!this._isReference) {
       return fs.unlink(this._ref).catch((err) => {
