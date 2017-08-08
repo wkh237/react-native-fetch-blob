@@ -14,9 +14,9 @@ export default class RNFetchBlobWriteStream {
 
   id : string;
   encoding : string;
-  append : bool;
+  append : boolean;
 
-  constructor(streamId:string, encoding:string, append:string) {
+  constructor(streamId:string, encoding:string, append:boolean) {
     this.id = streamId
     this.encoding = encoding
     this.append = append
