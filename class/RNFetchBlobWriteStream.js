@@ -9,7 +9,6 @@ import {
 } from 'react-native'
 
 const RNFetchBlob = NativeModules.RNFetchBlob
-const emitter = DeviceEventEmitter
 
 export default class RNFetchBlobWriteStream {
 
@@ -28,17 +27,17 @@ export default class RNFetchBlobWriteStream {
       try {
         let method = this.encoding === 'ascii' ? 'writeArrayChunk' : 'writeChunk'
         if(this.encoding.toLocaleLowerCase() === 'ascii' && !Array.isArray(data)) {
-            reject('ascii input data must be an Array')
+            reject(new Error('ascii input data must be an Array'))
             return
         }
         RNFetchBlob[method](this.id, data, (error) => {
           if(error)
-            reject(error)
+            reject(new Error(error))
           else
             resolve()
         })
       } catch(err) {
-        reject(err)
+        reject(new Error(err))
       }
     })
   }
@@ -50,7 +49,7 @@ export default class RNFetchBlobWriteStream {
           resolve()
         })
       } catch (err) {
-        reject(err)
+        reject(new Error(err))
       }
     })
   }

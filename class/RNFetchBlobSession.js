@@ -67,7 +67,7 @@ export default class RNFetchBlobSession {
     return new Promise((resolve, reject) => {
       RNFetchBlob.removeSession(sessions[this.name], (err) => {
         if(err)
-          reject(err)
+          reject(new Error(err))
         else {
           delete sessions[this.name]
           resolve()

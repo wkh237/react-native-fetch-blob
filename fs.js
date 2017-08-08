@@ -170,7 +170,7 @@ function readFile(path:string, encoding:string, bufferSize:?number):Promise<any>
 function writeFile(path:string, data:string | Array<number>, encoding:?string):Promise {
   encoding = encoding || 'utf8'
   if(typeof path !== 'string')
-    return Promise.reject('Invalid argument "path" ')
+    return Promise.reject(new Error('Invalid argument "path" '))
   if(encoding.toLocaleLowerCase() === 'ascii') {
     if(!Array.isArray(data))
       return Promise.reject(new Error(`Expected "data" is an Array when encoding is "ascii", however got ${typeof data}`))
@@ -187,7 +187,7 @@ function writeFile(path:string, data:string | Array<number>, encoding:?string):P
 function appendFile(path:string, data:string | Array<number>, encoding:?string):Promise {
   encoding = encoding || 'utf8'
   if(typeof path !== 'string')
-    return Promise.reject('Invalid argument "path" ')
+    return Promise.reject(new Error('Invalid argument "path" '))
   if(encoding.toLocaleLowerCase() === 'ascii') {
     if(!Array.isArray(data))
       return Promise.reject(new Error(`Expected "data" is an Array when encoding is "ascii", however got ${typeof data}`))
@@ -358,7 +358,7 @@ function df():Promise<{ free : number, total : number }> {
   return new Promise((resolve, reject) => {
     RNFetchBlob.df((err, stat) => {
       if(err)
-        reject(err)
+        reject(new Error(err))
       else
         resolve(stat)
     })
