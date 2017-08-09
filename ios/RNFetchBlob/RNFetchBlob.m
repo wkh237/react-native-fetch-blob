@@ -194,7 +194,7 @@ RCT_EXPORT_METHOD(pathForAppGroup:(NSString *)groupName
     if(path) {
         resolve(path);
     } else {
-        reject(@"RNFetchBlob file not found", @"could not find path for app group", nil);
+        reject(@"RNFetchBlob pathForAppGroup Error", @"could not find path for app group", nil);
     }
 }
 
@@ -223,7 +223,7 @@ RCT_EXPORT_METHOD(writeStream:(NSString *)path withEncoding:(NSString *)encoding
     BOOL isDir = nil;
     BOOL exist = [fm fileExistsAtPath:path isDirectory:&isDir];
     if( exist == NO || isDir == YES) {
-        callback(@[[NSString stringWithFormat:@"target path `%@` may not exists or it's a folder", path]]);
+        callback(@[[NSString stringWithFormat:@"target path `%@` may not exist or it is a folder", path]]);
         return;
     }
     NSString * streamId = [fileStream openWithPath:path encode:encoding appendData:append];
@@ -326,7 +326,7 @@ RCT_EXPORT_METHOD(stat:(NSString *)target callback:(RCTResponseSenderBlock) call
 
             exist = [fm fileExistsAtPath:path isDirectory:&isDir];
             if(exist == NO) {
-                callback(@[[NSString stringWithFormat:@"failed to stat path `%@` for it is not exist or it is not exist", path]]);
+                callback(@[[NSString stringWithFormat:@"failed to stat path `%@` because it does not exist or it is not a folder", path]]);
                 return ;
             }
             result = [RNFetchBlobFS stat:path error:&error];
@@ -362,7 +362,7 @@ RCT_EXPORT_METHOD(lstat:(NSString *)path callback:(RCTResponseSenderBlock) callb
 
     exist = [fm fileExistsAtPath:path isDirectory:&isDir];
     if(exist == NO) {
-        callback(@[[NSString stringWithFormat:@"failed to list path `%@` for it is not exist or it is not exist", path]]);
+        callback(@[[NSString stringWithFormat:@"failed to lstat path `%@` because it does not exist or it is not a folder", path]]);
         return ;
     }
     NSError * error = nil;
@@ -447,7 +447,7 @@ RCT_EXPORT_METHOD(readFile:(NSString *)path
     [RNFetchBlobFS readFile:path encoding:encoding onComplete:^(id content, NSString * err) {
         if(err != nil)
         {
-            reject(@"RNFetchBlob failed to read file", err, nil);
+            reject(@"RNFetchBlob readFile Error", err, nil);
             return;
         }
         if(encoding == @"ascii")
@@ -529,7 +529,7 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
       });
         resolve(@[[NSNull null]]);
     } else {
-        reject(@"RNFetchBlob could not open document", @"scheme is not supported", nil);
+        reject(@"RNFetchBlob previewDocument Error", @"scheme is not supported", nil);
     }
 }
 
@@ -549,7 +549,7 @@ RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme resolver
         });
         resolve(@[[NSNull null]]);
     } else {
-        reject(@"RNFetchBlob could not open document", @"scheme is not supported", nil);
+        reject(@"RNFetchBlob openDocument Error", @"scheme is not supported", nil);
     }
 }
 
@@ -563,7 +563,7 @@ RCT_EXPORT_METHOD(excludeFromBackupKey:(NSString *)url resolver:(RCTPromiseResol
     {
         resolve(@[[NSNull null]]);
     } else {
-        reject(@"RNFetchBlob could not open document", [error description], nil);
+        reject(@"RNFetchBlob excludeFromBackupKey Error", [error description], nil);
     }
 
 }

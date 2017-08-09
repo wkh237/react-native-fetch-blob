@@ -163,7 +163,7 @@ NSMutableDictionary *fileStreams = nil;
             {
                 if([[NSFileManager defaultManager] fileExistsAtPath:path] == NO)
                 {
-                    NSString * message = [NSString stringWithFormat:@"File not exists at path %@", path];
+                    NSString * message = [NSString stringWithFormat:@"File does not exist at path %@", path];
                     NSDictionary * payload = @{ @"event": FS_EVENT_ERROR, @"detail": message };
                     [event sendDeviceEventWithName:streamId body:payload];
                     free(buffer);
@@ -254,11 +254,11 @@ NSMutableDictionary *fileStreams = nil;
                     [asciiArray addObject:[NSNumber numberWithChar:bytePtr[i]]];
                 }
             }
-            
+
             NSDictionary * payload = @{ @"event": FS_EVENT_DATA,  @"detail" : asciiArray };
             [event sendDeviceEventWithName:streamId body:payload];
         }
-        
+
     }
     @catch (NSException * ex)
     {
@@ -335,7 +335,7 @@ NSMutableDictionary *fileStreams = nil;
     @try {
         NSFileManager * fm = [NSFileManager defaultManager];
         NSError * err = nil;
-        // check if the folder exists, if not exists, create folders recursively
+        // check if the folder exists, if it does not exist create folders recursively
         // after the folders created, write data into the file
         NSString * folder = [path stringByDeletingLastPathComponent];
         encoding = [encoding lowercaseString];
@@ -452,13 +452,13 @@ NSMutableDictionary *fileStreams = nil;
         else
         {
             if(![[NSFileManager defaultManager] fileExistsAtPath:path]) {
-                onComplete(nil, @"file not exists");
+                onComplete(nil, @"file does not exist");
                 return;
             }
             fileContent = [NSData dataWithContentsOfFile:path];
-            
+
         }
-        
+
         if(encoding != nil)
         {
             if([[encoding lowercaseString] isEqualToString:@"utf8"])
@@ -485,7 +485,7 @@ NSMutableDictionary *fileStreams = nil;
         {
             onComplete(fileContent, nil);
         }
-        
+
     }];
 }
 
@@ -495,7 +495,7 @@ NSMutableDictionary *fileStreams = nil;
 + (BOOL) mkdir:(NSString *) path {
     BOOL isDir;
     NSError * err = nil;
-    // if temp folder not exists, create one
+    // if temp folder does not exist create it
     if(![[NSFileManager defaultManager] fileExistsAtPath: path isDirectory:&isDir]) {
         [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&err];
     }
@@ -571,7 +571,7 @@ NSMutableDictionary *fileStreams = nil;
     NSData * decodedData = nil;
     if([[self.encoding lowercaseString] isEqualToString:@"base64"]) {
         decodedData = [[NSData alloc] initWithBase64EncodedString:chunk options: NSDataBase64DecodingIgnoreUnknownCharacters];
-    } 
+    }
     else if([[self.encoding lowercaseString] isEqualToString:@"utf8"]) {
         decodedData = [chunk dataUsingEncoding:NSUTF8StringEncoding];
     }
@@ -632,10 +632,10 @@ NSMutableDictionary *fileStreams = nil;
             NSFileManager * fm = [NSFileManager defaultManager];
             NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:NO];
             [os open];
-            // abort for the source file not exists
+            // abort because the source file does not exist
             if([fm fileExistsAtPath:path] == NO)
             {
-                reject(@"RNFetchBlob slice failed : the file does not exists", path, nil);
+                reject(@"RNFetchBlob slice Error : the file does not exist", path, nil);
                 return;
             }
             long size = [fm attributesOfItemAtPath:path error:nil].fileSize;
@@ -712,7 +712,7 @@ NSMutableDictionary *fileStreams = nil;
         }
         else
         {
-            reject(@"slice error",  [NSString stringWithFormat: @"could not resolve URI %@", path ], nil);
+            reject(@"RNFetchBlob slice Error",  [NSString stringWithFormat: @"could not resolve URI %@", path ], nil);
         }
 
     }];
@@ -765,7 +765,7 @@ NSMutableDictionary *fileStreams = nil;
     if (dictionary) {
         NSNumber *fileSystemSizeInBytes = [dictionary objectForKey: NSFileSystemSize];
         NSNumber *freeFileSystemSizeInBytes = [dictionary objectForKey:NSFileSystemFreeSize];
-        
+
         callback(@[[NSNull null], @{
                   @"free" : freeFileSystemSizeInBytes,
                   @"total" : fileSystemSizeInBytes,
