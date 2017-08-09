@@ -189,7 +189,7 @@ public class RNFetchBlobFS {
             }
         }
         catch(Exception err) {
-            promise.reject("ReadFile Error", err.getLocalizedMessage());
+            promise.reject("RNFetchBlob readFile error", err.getLocalizedMessage());
         }
 
     }
