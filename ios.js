@@ -43,7 +43,7 @@ function openDocument(path:string, scheme:string) {
  * @param  {string} url URL of the resource, only file URL is supported
  * @return {Promise}
  */
-function excludeFromBackupKey(url:string) {
+function excludeFromBackupKey(path:string) {
   return RNFetchBlob.excludeFromBackupKey('file://' + path);
 }
 
