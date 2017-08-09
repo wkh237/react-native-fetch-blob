@@ -22,7 +22,7 @@ export default class RNFetchBlobWriteStream {
     this.append = append
   }
 
-  write(data:string) {
+  write(data:string): Promise<RNFetchBlobWriteStream> {
     return new Promise((resolve, reject) => {
       try {
         let method = this.encoding === 'ascii' ? 'writeArrayChunk' : 'writeChunk'
@@ -34,7 +34,7 @@ export default class RNFetchBlobWriteStream {
           if(error)
             reject(new Error(error))
           else
-            resolve()
+            resolve(this)
         })
       } catch(err) {
         reject(new Error(err))
