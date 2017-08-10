@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -693,6 +694,52 @@ public class RNFetchBlobFS {
             });
         } catch(Exception err) {
             callback.invoke(err.getLocalizedMessage(), null);
+        }
+    }
+
+    static void hash(String path, String algorithm, Promise promise) {
+        try {
+            Map<String, String> algorithms = new HashMap<>();
+
+            algorithms.put("md5", "MD5");
+            algorithms.put("sha1", "SHA-1");
+            algorithms.put("sha224", "SHA-224");
+            algorithms.put("sha256", "SHA-256");
+            algorithms.put("sha384", "SHA-384");
+            algorithms.put("sha512", "SHA-512");
+
+            if (!algorithms.containsKey(algorithm)) throw new Exception("Invalid hash algorithm");
+
+            File file = new File(path);
+
+            if (file.isDirectory()) {
+                promise.reject("hash error", "EISDIR: illegal operation on a directory, read");
+                return;
+            }
+
+            if (!file.exists()) {
+                promise.reject("hash error", "ENOENT: no such file or directory, open '" + path + "'");
+                return;
+            }
+
+            MessageDigest md = MessageDigest.getInstance(algorithms.get(algorithm));
+
+            FileInputStream inputStream = new FileInputStream(path);
+            byte[] buffer = new byte[(int)file.length()];
+
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                md.update(buffer, 0, read);
+            }
+
+            StringBuilder hexString = new StringBuilder();
+            for (byte digestByte : md.digest())
+                hexString.append(String.format("%02x", digestByte));
+
+            promise.resolve(hexString.toString());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            promise.reject("hash error", ex.getLocalizedMessage());
         }
     }
 

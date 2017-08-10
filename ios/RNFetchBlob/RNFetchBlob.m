@@ -461,6 +461,15 @@ RCT_EXPORT_METHOD(readFile:(NSString *)path
     }];
 }
 
+#pragma mark - fs.hash
+RCT_EXPORT_METHOD(hash:(NSString *)path
+                  algorithm:(NSString *)algorithm
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    [RNFetchBlobFS hash:path algorithm:[NSString stringWithString:algorithm] resolver:resolve rejecter:reject];
+}
+
 #pragma mark - fs.readStream
 RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding bufferSize:(int)bufferSize tick:(int)tick streamId:(NSString *)streamId)
 {

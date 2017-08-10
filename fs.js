@@ -239,6 +239,15 @@ function scanFile(pairs:any):Promise {
   })
 }
 
+function hash(path: string, algorithm: string): Promise<string> {
+  if(typeof path !== 'string')
+    return Promise.reject(new Error('Invalid argument "path" '))
+  if(typeof algorithm !== 'string')
+    return Promise.reject(new Error('Invalid argument "algorithm" '))
+
+  return RNFetchBlob.hash(path, algorithm)
+}
+
 function cp(path:string, dest:string):Promise<boolean> {
   return new Promise((resolve, reject) => {
     RNFetchBlob.cp(path, dest, (err, res) => {
@@ -379,6 +388,7 @@ export default {
   appendFile,
   pathForAppGroup,
   readFile,
+  hash,
   exists,
   createFile,
   isDir,
