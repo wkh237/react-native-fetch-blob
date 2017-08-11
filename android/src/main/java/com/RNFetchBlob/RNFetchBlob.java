@@ -85,11 +85,21 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void createFile(final String path, final String content, final String encode, final Callback callback) {
+    public void createFile(final String path, final String content, final String encode, final Promise promise) {
         threadPool.execute(new Runnable() {
             @Override
             public void run() {
-                RNFetchBlobFS.createFile(path, content, encode, callback);
+                RNFetchBlobFS.createFile(path, content, encode, promise);
+            }
+        });
+    }
+
+    @ReactMethod
+    public void createFileASCII(final String path, final ReadableArray dataArray, final Promise promise) {
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS.createFileASCII(path, dataArray, promise);
             }
         });
 
@@ -129,17 +139,6 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void createFileASCII(final String path, final ReadableArray dataArray, final Callback callback) {
-        threadPool.execute(new Runnable() {
-            @Override
-            public void run() {
-                RNFetchBlobFS.createFileASCII(path, dataArray, callback);
-            }
-        });
-
-    }
-
-    @ReactMethod
     public void writeArrayChunk(final String streamId, final ReadableArray dataArray, final Callback callback) {
         RNFetchBlobFS.writeArrayChunk(streamId, dataArray, callback);
     }
@@ -150,8 +149,8 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void mkdir(String path, Callback callback) {
-        RNFetchBlobFS.mkdir(path, callback);
+    public void mkdir(String path, Promise promise) {
+        RNFetchBlobFS.mkdir(path, promise);
     }
 
     @ReactMethod
@@ -304,7 +303,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void slice(String src, String dest, int start, int end, Promise promise) {
+    public void slice(String src, String dest, long start, long end, Promise promise) {
         RNFetchBlobFS.slice(src, dest, start, end, "", promise);
     }
 

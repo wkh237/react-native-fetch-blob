@@ -13,6 +13,8 @@
 #import "IOS7Polyfill.h"
 @import AssetsLibrary;
 
+#import <CommonCrypto/CommonDigest.h>
+
 #if __has_include(<React/RCTAssert.h>)
 #import <React/RCTBridge.h>
 #import <React/RCTEventDispatcher.h>
@@ -330,7 +332,12 @@ NSMutableDictionary *fileStreams = nil;
 
 # pragma mark - write file
 
-+ (void) writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject
++ (void) writeFile:(NSString *)path
+                    encoding:(NSString *)encoding
+                    data:(NSString *)data
+                    append:(BOOL)append
+                    resolver:(RCTPromiseResolveBlock)resolve
+                    rejecter:(RCTPromiseRejectBlock)reject
 {
     @try {
         NSFileManager * fm = [NSFileManager defaultManager];
@@ -339,14 +346,19 @@ NSMutableDictionary *fileStreams = nil;
         // after the folders created, write data into the file
         NSString * folder = [path stringByDeletingLastPathComponent];
         encoding = [encoding lowercaseString];
+
         if(![fm fileExistsAtPath:folder]) {
             [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:&err];
-            [fm createFileAtPath:path contents:nil attributes:nil];
+            if(err != nil) {
+                reject(@"EUNSPECIFIED", [err description], nil);
+                return;
+            }
+            if(![fm createFileAtPath:path contents:nil attributes:nil]) {
+                reject(@"ENOENT", [NSString stringWithFormat:@"File '%@' does not exist and could not be created, or it is a directory", path], nil);
+                return;
+            }
         }
-        if(err != nil) {
-            reject(@"RNFetchBlob writeFile Error", @"could not create file at path", nil);
-            return;
-        }
+
         NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
         NSData * content = nil;
         if([encoding RNFBContainsString:@"base64"]) {
@@ -355,7 +367,7 @@ NSMutableDictionary *fileStreams = nil;
         else if([encoding isEqualToString:@"uri"]) {
             NSNumber* size = [[self class] writeFileFromFile:data toFile:path append:append callback:^(NSString *errMsg, NSNumber *size) {
                 if(errMsg != nil)
-                    reject(@"RNFetchBlob writeFile Error", errMsg, nil);
+                    reject(@"EUNSPECIFIED", errMsg, nil);
                 else
                     resolve(size);
             }];
@@ -378,13 +390,18 @@ NSMutableDictionary *fileStreams = nil;
     }
     @catch (NSException * e)
     {
-        reject(@"RNFetchBlob writeFile Error", @"Error", [e description]);
+        reject(@"EUNSPECIFIED", [e description], nil);
     }
 }
 
 # pragma mark - write file (array)
 
-+ (void) writeFileArray:(NSString *)path data:(NSArray *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
++ (void) writeFileArray:(NSString *)path
+                         data:(NSArray *)data
+                         append:(BOOL)append
+                         resolver:(RCTPromiseResolveBlock)resolve
+                         rejecter:(RCTPromiseRejectBlock)reject
+{
     @try {
         NSFileManager * fm = [NSFileManager defaultManager];
         NSError * err = nil;
@@ -393,7 +410,12 @@ NSMutableDictionary *fileStreams = nil;
         NSString * folder = [path stringByDeletingLastPathComponent];
         if(![fm fileExistsAtPath:folder]) {
             [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:&err];
+            if(err != nil) {
+                reject(@"EUNSPECIFIED", [err description], nil);
+                return;
+            }
         }
+
         NSMutableData * fileContent = [NSMutableData alloc];
         // prevent stack overflow, alloc on heap
         char * bytes = (char*) malloc([data count]);
@@ -422,7 +444,7 @@ NSMutableDictionary *fileStreams = nil;
     }
     @catch (NSException * e)
     {
-        reject(@"RNFetchBlob writeFile Error", @"Error", [e description]);
+        reject(@"EUNSPECIFIED", [e description], nil);
     }
 }
 
@@ -430,7 +452,7 @@ NSMutableDictionary *fileStreams = nil;
 
 + (void) readFile:(NSString *)path
          encoding:(NSString *)encoding
-       onComplete:(void (^)(id content, NSString * errMsg))onComplete
+       onComplete:(void (^)(id content, NSString * codeStr, NSString * errMsg))onComplete
 {
     [[self class] getPathFromUri:path completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
         __block NSData * fileContent;
@@ -442,7 +464,7 @@ NSMutableDictionary *fileStreams = nil;
             [asset getBytes:buffer fromOffset:0 length:asset.size error:&err];
             if(err != nil)
             {
-                onComplete(nil, [err description]);
+                onComplete(nil, @"EUNSPECIFIED", [err description]);
                 free(buffer);
                 return;
             }
@@ -452,7 +474,7 @@ NSMutableDictionary *fileStreams = nil;
         else
         {
             if(![[NSFileManager defaultManager] fileExistsAtPath:path]) {
-                onComplete(nil, @"file does not exist");
+                onComplete(nil, @"ENOENT", [NSString stringWithFormat:@"No such file '%@'", path]);
                 return;
             }
             fileContent = [NSData dataWithContentsOfFile:path];
@@ -465,12 +487,12 @@ NSMutableDictionary *fileStreams = nil;
             {
                 NSString * utf8 = [[NSString alloc] initWithData:fileContent encoding:NSUTF8StringEncoding];
                 if(utf8 == nil)
-                    onComplete([[NSString alloc] initWithData:fileContent encoding:NSISOLatin1StringEncoding], nil);
+                    onComplete([[NSString alloc] initWithData:fileContent encoding:NSISOLatin1StringEncoding], nil, nil);
                 else
-                    onComplete(utf8, nil);
+                    onComplete(utf8, nil, nil);
             }
             else if ([[encoding lowercaseString] isEqualToString:@"base64"]) {
-                onComplete([fileContent base64EncodedStringWithOptions:0], nil);
+                onComplete([fileContent base64EncodedStringWithOptions:0], nil, nil);
             }
             else if ([[encoding lowercaseString] isEqualToString:@"ascii"]) {
                 NSMutableArray * resultArray = [NSMutableArray array];
@@ -478,12 +500,12 @@ NSMutableDictionary *fileStreams = nil;
                 for(int i=0;i<[fileContent length];i++) {
                     [resultArray addObject:[NSNumber numberWithChar:bytes[i]]];
                 }
-                onComplete(resultArray, nil);
+                onComplete(resultArray, nil, nil);
             }
         }
         else
         {
-            onComplete(fileContent, nil);
+            onComplete(fileContent, nil, nil);
         }
 
     }];
@@ -499,7 +521,7 @@ RCT_EXPORT_METHOD(hash:(NSString *)filepath
   BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:filepath];
 
   if (!fileExists) {
-    return reject(@"ENOENT", [NSString stringWithFormat:@"ENOENT: no such file or directory, open '%@'", filepath], nil);
+    return reject(@"ENOENT", [NSString stringWithFormat:@"No such file '%@'", filepath], nil);
   }
 
   NSError *error = nil;
@@ -511,7 +533,7 @@ RCT_EXPORT_METHOD(hash:(NSString *)filepath
   }
 
   if ([attributes objectForKey:NSFileType] == NSFileTypeDirectory) {
-    return reject(@"EISDIR", @"EISDIR: illegal operation on a directory, read", nil);
+    return reject(@"EISDIR", [NSString stringWithFormat:@"Expecting a file but '%@' is a directory", filepath], nil);
   }
 
   NSData *content = [[NSFileManager defaultManager] contentsAtPath:filepath];
@@ -532,7 +554,7 @@ RCT_EXPORT_METHOD(hash:(NSString *)filepath
   int digestLength = [[keysToDigestLengths objectForKey:algorithm] intValue];
 
   if (!digestLength) {
-    return reject(@"Error", [NSString stringWithFormat:@"Invalid hash algorithm '%@'", algorithm], nil);
+    return reject(@"EINVAL", [NSString stringWithFormat:@"Invalid algorithm '%@', must be one of md5, sha1, sha224, sha256, sha384, sha512", algorithm], nil);
   }
 
   unsigned char buffer[digestLength];
@@ -550,7 +572,7 @@ RCT_EXPORT_METHOD(hash:(NSString *)filepath
   } else if ([algorithm isEqualToString:@"sha512"]) {
     CC_SHA512(content.bytes, (CC_LONG)content.length, buffer);
   } else {
-    return reject(@"Error", [NSString stringWithFormat:@"Invalid hash algorithm '%@'", algorithm], nil);
+    return reject(@"EINVAL", [NSString stringWithFormat:@"Invalid algorithm '%@', must be one of md5, sha1, sha224, sha256, sha384, sha512", algorithm], nil);
   }
 
   NSMutableString *output = [NSMutableString stringWithCapacity:digestLength * 2];
@@ -703,10 +725,8 @@ RCT_EXPORT_METHOD(hash:(NSString *)filepath
             NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:NO];
             [os open];
             // abort because the source file does not exist
-            if([fm fileExistsAtPath:path] == NO)
-            {
-                reject(@"RNFetchBlob slice Error : the file does not exist", path, nil);
-                return;
+            if([fm fileExistsAtPath:path] == NO) {
+                return reject(@"ENOENT", [NSString stringWithFormat: @"No such file '%@'", path ], nil);
             }
             long size = [fm attributesOfItemAtPath:path error:nil].fileSize;
             long max = MIN(size, [end longValue]);
@@ -715,9 +735,7 @@ RCT_EXPORT_METHOD(hash:(NSString *)filepath
                 [fm createFileAtPath:dest contents:@"" attributes:nil];
             }
             [handle seekToFileOffset:[start longValue]];
-            while(read < expected)
-            {
-
+            while(read < expected) {
                 NSData * chunk;
                 long chunkSize = 0;
                 if([start longValue] + read + 10240 > max)
@@ -753,9 +771,7 @@ RCT_EXPORT_METHOD(hash:(NSString *)filepath
             long size = asset.size;
             long max = MIN(size, [end longValue]);
 
-            while(read < expected)
-            {
-
+            while(read < expected) {
                 uint8_t * chunk[10240];
                 long chunkSize = 0;
                 if([start longValue] + read + 10240 > max)
@@ -780,9 +796,8 @@ RCT_EXPORT_METHOD(hash:(NSString *)filepath
             [os close];
             resolve(dest);
         }
-        else
-        {
-            reject(@"RNFetchBlob slice Error",  [NSString stringWithFormat: @"could not resolve URI %@", path ], nil);
+        else {
+            reject(@"EINVAL", [NSString stringWithFormat: @"Could not resolve URI %@", path ], nil);
         }
 
     }];

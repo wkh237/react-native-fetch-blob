@@ -58,25 +58,20 @@ function asset(path:string):string {
   return 'bundle-assets://' + path
 }
 
-function createFile(path:string, data:string, encoding: 'base64' | 'ascii' | 'utf8'):Promise {
+function createFile(path:string, data:string, encoding: 'base64' | 'ascii' | 'utf8'): Promise<string> {
   encoding = encoding || 'utf8'
-  return new Promise((resolve, reject) => {
-    let handler = (err) => {
-      if(err)
-        reject(new Error(err))
-      else
-        resolve()
-    }
-    if(encoding.toLowerCase() === 'ascii') {
-      if(Array.isArray(data))
-        RNFetchBlob.createFileASCII(path, data, handler)
-      else
-        reject(new Error('`data` of ASCII file must be an array contains numbers'))
-    }
+  if(encoding.toLowerCase() === 'ascii') {
+    if(Array.isArray(data))
+      return RNFetchBlob.createFileASCII(path, data)
     else {
-      RNFetchBlob.createFile(path, data, encoding, handler)
+      const err = new TypeError('`data` of ASCII file must be an array with 0..255 numbers')
+      err.code = 'EINVAL'
+      return Promise.reject(err)
     }
-  })
+  }
+  else {
+    return RNFetchBlob.createFile(path, data, encoding)
+  }
 }
 
 /**
@@ -128,16 +123,7 @@ function readStream(
  * @return {Promise}
  */
 function mkdir(path:string):Promise {
-
-  return new Promise((resolve, reject) => {
-    RNFetchBlob.mkdir(path, (err, res) => {
-      if(err)
-        reject(new Error(err))
-      else
-        resolve()
-    })
-  })
-
+    return RNFetchBlob.mkdir(path, (code, msg, res)
 }
 
 /**
@@ -146,7 +132,7 @@ function mkdir(path:string):Promise {
  * @return {Promise}
  */
 function pathForAppGroup(groupName:string):Promise {
-  return RNFetchBlob.pathForAppGroup(groupName);
+  return RNFetchBlob.pathForAppGroup(groupName)
 }
 
 /**
@@ -170,35 +156,54 @@ function readFile(path:string, encoding:string):Promise<any> {
  */
 function writeFile(path:string, data:string | Array<number>, encoding:?string):Promise {
   encoding = encoding || 'utf8'
-  if(typeof path !== 'string')
-    return Promise.reject(new Error('Invalid argument "path" '))
+  if(typeof path !== 'string') {
+    const err = new TypeError('Missing argument "path" ')
+    err.code = 'EINVAL'
+    return Promise.reject(err)
+  }
   if(encoding.toLocaleLowerCase() === 'ascii') {
-    if(!Array.isArray(data))
-      return Promise.reject(new Error(`Expected "data" is an Array when encoding is "ascii", however got ${typeof data}`))
+    if(!Array.isArray(data)) {
+      const err = new TypeError('"data" must be an Array when encoding is "ascii"')
+      err.code = 'EINVAL'
+      return Promise.reject(err)
+    }
     else
-      return RNFetchBlob.writeFileArray(path, data, false);
-  } else {
-    if(typeof data !== 'string')
-      return Promise.reject(new Error(`Expected "data" is a String when encoding is "utf8" or "base64", however got ${typeof data}`))
+      return RNFetchBlob.writeFileArray(path, data, false)
+  }
+  else {
+    if(typeof data !== 'string') {
+      const err = new TypeError(`"data" must be a String when encoding is "utf8" or "base64", but it is "${typeof data}"`)
+      err.code = 'EINVAL'
+      return Promise.reject(err)
+    }
     else
-      return RNFetchBlob.writeFile(path, encoding, data, false);
+      return RNFetchBlob.writeFile(path, encoding, data, false)
   }
 }
 
-function appendFile(path:string, data:string | Array<number>, encoding:?string):Promise {
+function appendFile(path:string, data:string | Array<number>, encoding:?string): Promise<number> {
   encoding = encoding || 'utf8'
-  if(typeof path !== 'string')
-    return Promise.reject(new Error('Invalid argument "path" '))
+  if(typeof path !== 'string') {
+    const err = new TypeError('Missing argument "path" ')
+    err.code = 'EINVAL'
+    return Promise.reject(err)
+  }
   if(encoding.toLocaleLowerCase() === 'ascii') {
-    if(!Array.isArray(data))
-      return Promise.reject(new Error(`Expected "data" is an Array when encoding is "ascii", however got ${typeof data}`))
+    if(!Array.isArray(data)) {
+      const err = new TypeError('`data` of ASCII file must be an array with 0..255 numbers')
+      err.code = 'EINVAL'
+      return Promise.reject(err)
+    }
     else
-      return RNFetchBlob.writeFileArray(path, data, true);
+      return RNFetchBlob.writeFileArray(path, data, true)
   } else {
-    if(typeof data !== 'string')
-      return Promise.reject(new Error(`Expected "data" is a String when encoding is "utf8" or "base64", however got ${typeof data}`))
+    if(typeof data !== 'string') {
+      const err = new TypeError(`"data" must be a String when encoding is "utf8" or "base64", but it is "${typeof data}"`)
+      err.code = 'EINVAL'
+      return Promise.reject(err)
+    }
     else
-      return RNFetchBlob.writeFile(path, encoding, data, true);
+      return RNFetchBlob.writeFile(path, encoding, data, true)
   }
 }
 
@@ -240,11 +245,6 @@ function scanFile(pairs:any):Promise {
 }
 
 function hash(path: string, algorithm: string): Promise<string> {
-  if(typeof path !== 'string')
-    return Promise.reject(new Error('Invalid argument "path" '))
-  if(typeof algorithm !== 'string')
-    return Promise.reject(new Error('Invalid argument "algorithm" '))
-
   return RNFetchBlob.hash(path, algorithm)
 }
 
@@ -350,7 +350,6 @@ function slice(src:string, dest:string, start:number, end:number):Promise {
 }
 
 function isDir(path:string):Promise<bool, bool> {
-
   return new Promise((resolve, reject) => {
     try {
       RNFetchBlob.exists(path, (exist, isDir) => {

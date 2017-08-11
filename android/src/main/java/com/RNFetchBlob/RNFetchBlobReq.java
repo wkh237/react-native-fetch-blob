@@ -463,7 +463,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         InputStream ins = resp.body().byteStream();
                         FileOutputStream os = new FileOutputStream(new File(dest));
                         int read;
-                        byte [] buffer = new byte[10240];
+                        byte[] buffer = new byte[10240];
                         while ((read = ins.read(buffer)) != -1) {
                             os.write(buffer, 0, read);
                         }

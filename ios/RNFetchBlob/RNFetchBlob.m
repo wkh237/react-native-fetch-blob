@@ -135,8 +135,12 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
 }
 
 #pragma mark - fs.createFile
-RCT_EXPORT_METHOD(createFile:(NSString *)path data:(NSString *)data encoding:(NSString *)encoding callback:(RCTResponseSenderBlock)callback) {
-
+RCT_EXPORT_METHOD(createFile:(NSString *)path
+                  data:(NSString *)data
+                  encoding:(NSString *)encoding
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
     NSFileManager * fm = [NSFileManager defaultManager];
     NSData * fileContent = nil;
 
@@ -154,18 +158,25 @@ RCT_EXPORT_METHOD(createFile:(NSString *)path data:(NSString *)data encoding:(NS
         fileContent = [[NSData alloc] initWithData:[data dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES]];
     }
 
-    BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
-    if(success == YES)
-        callback(@[[NSNull null]]);
-    else
-        callback(@[[NSString stringWithFormat:@"failed to create new file at path %@ please ensure the folder exists"]]);
-
+    if ([fm fileExistsAtPath:path]) {
+        reject(@"EEXIST", @[[NSString stringWithFormat:@"File '%@' already exists", path]], nil);
+    }
+    else {
+        BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
+        if(success == YES)
+            resolve(@[[NSNull null]]);
+        else
+            reject(@"EUNSPECIFIED", @[[NSString stringWithFormat:@"Failed to create new file at path '%@', please ensure the folder exists", path]], nil);
+    }
 }
 
 #pragma mark - fs.createFileASCII
 // method for create file with ASCII content
-RCT_EXPORT_METHOD(createFileASCII:(NSString *)path data:(NSArray *)dataArray callback:(RCTResponseSenderBlock)callback) {
-
+RCT_EXPORT_METHOD(createFileASCII:(NSString *)path
+                  data:(NSArray *)dataArray
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
     NSFileManager * fm = [NSFileManager defaultManager];
     NSMutableData * fileContent = [NSMutableData alloc];
     // prevent stack overflow, alloc on heap
@@ -174,14 +185,21 @@ RCT_EXPORT_METHOD(createFileASCII:(NSString *)path data:(NSArray *)dataArray cal
     for(int i = 0; i < dataArray.count; i++) {
         bytes[i] = [[dataArray objectAtIndex:i] charValue];
     }
-    [fileContent appendBytes:bytes length:dataArray.count];
-    BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
-    free(bytes);
-    if(success == YES)
-        callback(@[[NSNull null]]);
-    else
-        callback(@[[NSString stringWithFormat:@"failed to create new file at path %@ please ensure the folder exists"]]);
 
+    [fileContent appendBytes:bytes length:dataArray.count];
+
+    if ([fm fileExistsAtPath:path]) {
+        reject(@"EEXIST", @[[NSString stringWithFormat:@"File '%@' already exists", path]], nil);
+    }
+    else {
+        BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
+        if(success == YES)
+            resolve(@[[NSNull null]]);
+        else
+            reject(@"EUNSPECIFIED", @[[NSString stringWithFormat:@"failed to create new file at path '%@', please ensure the folder exists", path]], nil);
+    }
+
+    free(bytes);
 }
 
 #pragma mark - fs.pathForAppGroup
@@ -389,7 +407,6 @@ RCT_EXPORT_METHOD(lstat:(NSString *)path callback:(RCTResponseSenderBlock) callb
 #pragma mark - fs.cp
 RCT_EXPORT_METHOD(cp:(NSString*)src toPath:(NSString *)dest callback:(RCTResponseSenderBlock) callback)
 {
-
 //    path = [RNFetchBlobFS getPathOfAsset:path];
     [RNFetchBlobFS getPathFromUri:src completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
         NSError * error = nil;
@@ -400,6 +417,7 @@ RCT_EXPORT_METHOD(cp:(NSString*)src toPath:(NSString *)dest callback:(RCTRespons
         }
         else
         {
+            // If the destination exists there will be an error
             BOOL result = [[NSFileManager defaultManager] copyItemAtURL:[NSURL fileURLWithPath:path] toURL:[NSURL fileURLWithPath:dest] error:&error];
 
             if(error == nil)
@@ -408,7 +426,6 @@ RCT_EXPORT_METHOD(cp:(NSString*)src toPath:(NSString *)dest callback:(RCTRespons
                 callback(@[[error localizedDescription], @NO]);
         }
     }];
-
 }
 
 
@@ -426,15 +443,17 @@ RCT_EXPORT_METHOD(mv:(NSString *)path toPath:(NSString *)dest callback:(RCTRespo
 }
 
 #pragma mark - fs.mkdir
-RCT_EXPORT_METHOD(mkdir:(NSString *)path callback:(RCTResponseSenderBlock) callback)
+RCT_EXPORT_METHOD(mkdir:(NSString *)path
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     if([[NSFileManager defaultManager] fileExistsAtPath:path]) {
-        callback(@[@"mkdir failed, folder already exists"]);
-        return;
+        reject(@"EEXIST", @[[NSString stringWithFormat:@"Folder '%@' already exists", path]], nil);
     }
-    else
+    else {
         [RNFetchBlobFS mkdir:path];
-    callback(@[[NSNull null]]);
+        resolve(@[[NSNull null]]);
+    }
 }
 
 #pragma mark - fs.readFile
@@ -443,19 +462,15 @@ RCT_EXPORT_METHOD(readFile:(NSString *)path
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-
-    [RNFetchBlobFS readFile:path encoding:encoding onComplete:^(id content, NSString * err) {
-        if(err != nil)
-        {
-            reject(@"RNFetchBlob readFile Error", err, nil);
+    [RNFetchBlobFS readFile:path encoding:encoding onComplete:^(id content, NSString * code, NSString * err) {
+        if(err != nil) {
+            reject(code, err, nil);
             return;
         }
-        if(encoding == @"ascii")
-        {
+        if(encoding == @"ascii") {
             resolve((NSMutableArray *)content);
         }
-        else
-        {
+        else {
             resolve((NSString *)content);
         }
     }];
@@ -538,7 +553,7 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
       });
         resolve(@[[NSNull null]]);
     } else {
-        reject(@"RNFetchBlob previewDocument Error", @"scheme is not supported", nil);
+        reject(@"EINVAL", @"scheme is not supported", nil);
     }
 }
 
@@ -558,7 +573,7 @@ RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme resolver
         });
         resolve(@[[NSNull null]]);
     } else {
-        reject(@"RNFetchBlob openDocument Error", @"scheme is not supported", nil);
+        reject(@"EINVAL", @"scheme is not supported", nil);
     }
 }
 
@@ -572,7 +587,7 @@ RCT_EXPORT_METHOD(excludeFromBackupKey:(NSString *)url resolver:(RCTPromiseResol
     {
         resolve(@[[NSNull null]]);
     } else {
-        reject(@"RNFetchBlob excludeFromBackupKey Error", [error description], nil);
+        reject(@"EUNSPECIFIED", [error description], nil);
     }
 
 }

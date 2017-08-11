@@ -23,17 +23,16 @@ import okio.BufferedSink;
 
 public class RNFetchBlobBody extends RequestBody{
 
-    InputStream requestStream;
+    private InputStream requestStream;
     long contentLength = 0;
     ReadableArray form;
-    String mTaskId;
-    String rawBody;
-    RNFetchBlobReq.RequestType requestType;
+    private String mTaskId;
+    private String rawBody;
+    private RNFetchBlobReq.RequestType requestType;
     MediaType mime;
-    File bodyCache;
+    private File bodyCache;
     int reported = 0;
-    Boolean chunkedEncoding = false;
-
+    private Boolean chunkedEncoding = false;
 
     public RNFetchBlobBody(String taskId) {
         this.mTaskId = taskId;
@@ -49,7 +48,7 @@ public class RNFetchBlobBody extends RequestBody{
         return this;
     }
 
-    RNFetchBlobBody setRequestType( RNFetchBlobReq.RequestType type) {
+    RNFetchBlobBody setRequestType(RNFetchBlobReq.RequestType type) {
         this.requestType = type;
         return this;
     }
@@ -186,8 +185,7 @@ public class RNFetchBlobBody extends RequestBody{
         ArrayList<FormField> fields = countFormDataLength();
         ReactApplicationContext ctx = RNFetchBlob.RCTContext;
 
-        for(int i = 0;i < fields.size(); i++) {
-            FormField field = fields.get(i);
+        for(FormField field : fields) {
             String data = field.data;
             String name = field.name;
             // skip invalid fields
@@ -258,17 +256,14 @@ public class RNFetchBlobBody extends RequestBody{
      * @param sink      The request body buffer sink
      * @throws IOException
      */
-    private void pipeStreamToSink(InputStream stream, BufferedSink sink) throws Exception {
-
-        byte [] chunk = new byte[10240];
+    private void pipeStreamToSink(InputStream stream, BufferedSink sink) throws IOException {
+        byte[] chunk = new byte[10240];
         int totalWritten = 0;
         int read;
         while((read = stream.read(chunk, 0, 10240)) > 0) {
-            if(read > 0) {
-                sink.write(chunk, 0, read);
-                totalWritten += read;
-                emitUploadProgress(totalWritten);
-            }
+            sink.write(chunk, 0, read);
+            totalWritten += read;
+            emitUploadProgress(totalWritten);
         }
         stream.close();
     }
@@ -300,11 +295,11 @@ public class RNFetchBlobBody extends RequestBody{
         for(int i = 0;i < form.size(); i++) {
             FormField field = new FormField(form.getMap(i));
             list.add(field);
-            String data = field.data;
-            if(data == null) {
+            if(field.data == null) {
                 RNFetchBlobUtils.emitWarningEvent("RNFetchBlob multipart request builder has found a field without `data` property, the field `"+ field.name +"` will be removed implicitly.");
             }
             else if (field.filename != null) {
+                String data = field.data;
                 // upload from storage
                 if (data.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
                     String orgPath = data.substring(RNFetchBlobConst.FILE_PREFIX.length());
@@ -333,7 +328,7 @@ public class RNFetchBlobBody extends RequestBody{
             }
             // data field
             else {
-                total += field.data != null ? field.data.getBytes().length : 0;
+                total += field.data.getBytes().length;
             }
         }
         contentLength = total;
@@ -350,7 +345,7 @@ public class RNFetchBlobBody extends RequestBody{
         public String mime;
         public String data;
 
-        public FormField(ReadableMap rawData) {
+        FormField(ReadableMap rawData) {
             if(rawData.hasKey("name"))
                 name = rawData.getString("name");
             if(rawData.hasKey("filename"))
@@ -368,7 +363,7 @@ public class RNFetchBlobBody extends RequestBody{
 
     /**
      * Emit progress event
-     * @param written
+     * @param written  Integer
      */
     private void emitUploadProgress(int written) {
         RNFetchBlobProgressConfig config = RNFetchBlobReq.getReportUploadProgress(mTaskId);
