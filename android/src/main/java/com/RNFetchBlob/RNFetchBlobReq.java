@@ -22,8 +22,11 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-import com.facebook.react.modules.network.OkHttpClientProvider;
-import com.facebook.react.modules.network.TLSSocketFactory;
+
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.SSLContext;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -37,11 +40,15 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.security.KeyStore;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.HashMap;
 
 import java.util.concurrent.TimeUnit;
+
+import 	javax.net.ssl.SSLSocketFactory;
 
 import okhttp3.Call;
 import okhttp3.ConnectionPool;
@@ -83,7 +90,6 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     static HashMap<String, RNFetchBlobProgressConfig> uploadProgressReport = new HashMap<>();
     static ConnectionPool pool = new ConnectionPool();
 
-    ReactApplicationContext ctx;
     RNFetchBlobConfig options;
     String taskId;
     String method;
@@ -188,7 +194,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 cacheKey = this.taskId;
             }
 
-            File file = new File(RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey) + ext);
+            File file = new File(RNFetchBlobFS.getTmpPath(cacheKey) + ext);
 
             if (file.exists()) {
                 callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, file.getAbsolutePath());
@@ -199,7 +205,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         if(this.options.path != null)
             this.destPath = this.options.path;
         else if(this.options.fileCache)
-            this.destPath = RNFetchBlobFS.getTmpPath(RNFetchBlob.RCTContext, cacheKey) + ext;
+            this.destPath = RNFetchBlobFS.getTmpPath(cacheKey) + ext;
 
 
         OkHttpClient.Builder clientBuilder;
@@ -459,7 +465,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     // For XMLHttpRequest, automatic response data storing strategy, when response
                     // data is considered as binary data, write it to file system
                     if(isBlobResp && options.auto) {
-                        String dest = RNFetchBlobFS.getTmpPath(ctx, taskId);
+                        String dest = RNFetchBlobFS.getTmpPath(taskId);
                         InputStream ins = resp.body().byteStream();
                         FileOutputStream os = new FileOutputStream(new File(dest));
                         int read;
@@ -657,11 +663,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                             options.addAndroidDownloads.getString("mime").contains("image")) {
                         Uri uri = Uri.parse(contentUri);
                         Cursor cursor = appCtx.getContentResolver().query(uri, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
-
-                            // use default destination of DownloadManager
+                        // use default destination of DownloadManager
                         if (cursor != null) {
                             cursor.moveToFirst();
                             filePath = cursor.getString(0);
+                            cursor.close();
                         }
                     }
                 }
@@ -695,7 +701,19 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     public static OkHttpClient.Builder enableTls12OnPreLollipop(OkHttpClient.Builder client) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN && Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
             try {
-                client.sslSocketFactory(new TLSSocketFactory());
+                // Code from https://stackoverflow.com/a/40874952/544779
+                TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                trustManagerFactory.init((KeyStore) null);
+                TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+                if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
+                    throw new IllegalStateException("Unexpected default trust managers:" + Arrays.toString(trustManagers));
+                }
+                X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
+                SSLContext sslContext = SSLContext.getInstance("SSL");
+                sslContext.init(null, new TrustManager[] { trustManager }, null);
+                SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+
+                client.sslSocketFactory(sslSocketFactory, trustManager);
 
                 ConnectionSpec cs = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
                         .tlsVersions(TlsVersion.TLS_1_2)
