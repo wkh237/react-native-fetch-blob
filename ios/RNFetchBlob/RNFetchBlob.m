@@ -443,17 +443,9 @@ RCT_EXPORT_METHOD(mv:(NSString *)path toPath:(NSString *)dest callback:(RCTRespo
 }
 
 #pragma mark - fs.mkdir
-RCT_EXPORT_METHOD(mkdir:(NSString *)path
-                  resolver:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(mkdir:(NSString *)path resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
-    if([[NSFileManager defaultManager] fileExistsAtPath:path]) {
-        reject(@"EEXIST", @[[NSString stringWithFormat:@"Folder '%@' already exists", path]], nil);
-    }
-    else {
-        [RNFetchBlobFS mkdir:path];
-        resolve(@[[NSNull null]]);
-    }
+    [RNFetchBlobFS mkdir:path resolver:resolve rejecter:reject];
 }
 
 #pragma mark - fs.readFile

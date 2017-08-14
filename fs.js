@@ -312,9 +312,9 @@ function unlink(path:string):Promise {
 /**
  * Check if file exists and if it is a folder.
  * @param  {string} path Path to check
- * @return {Promise<boolean, boolean>}
+ * @return {Promise<boolean>}
  */
-function exists(path:string):Promise<boolean, boolean> {
+function exists(path:string):Promise<boolean> {
   return new Promise((resolve, reject) => {
     try {
       RNFetchBlob.exists(path, (exist) => {
@@ -349,7 +349,7 @@ function slice(src:string, dest:string, start:number, end:number):Promise {
   return p.then(() => RNFetchBlob.slice(src, dest, start, end))
 }
 
-function isDir(path:string):Promise<bool, bool> {
+function isDir(path:string):Promise<bool> {
   return new Promise((resolve, reject) => {
     try {
       RNFetchBlob.exists(path, (exist, isDir) => {

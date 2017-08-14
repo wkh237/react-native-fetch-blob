@@ -584,14 +584,22 @@ RCT_EXPORT_METHOD(hash:(NSString *)filepath
 
 # pragma mark - mkdir
 
-+ (BOOL) mkdir:(NSString *) path {
-    BOOL isDir;
++ (void) mkdir:(NSString *) path resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject
+{
+    BOOL isDir = NO;
     NSError * err = nil;
-    // if temp folder does not exist create it
-    if(![[NSFileManager defaultManager] fileExistsAtPath: path isDirectory:&isDir]) {
+    if([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir]) {
+        reject(@"EEXIST", @[[NSString stringWithFormat:@"%@ '%@' already exists", isDir ? @"Directory" : @"File", path]], nil);
+    }
+    else {
         [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&err];
     }
-    return err == nil;
+    if(err == nil) {
+        resolve(@YES);
+    }
+    else {
+        reject(@"EUNSPECIFIED", @[[NSString stringWithFormat:@"Error creating folder '%@', error: %@", path, [err description]]]], nil);
+    }
 }
 
 # pragma mark - stat
