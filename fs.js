@@ -123,7 +123,7 @@ function readStream(
  * @return {Promise}
  */
 function mkdir(path:string):Promise {
-    return RNFetchBlob.mkdir(path, (code, msg, res)
+    return RNFetchBlob.mkdir(path, (code, msg, res))
 }
 
 /**
