@@ -536,13 +536,14 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
 
 # pragma mark - open file with UIDocumentInteractionController and delegate
 
-RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme name:(NSString*)name resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
     NSString * utf8uri = [uri stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSURL * url = [[NSURL alloc] initWithString:utf8uri];
     // NSURL * url = [[NSURL alloc] initWithString:uri];
     documentController = [UIDocumentInteractionController interactionControllerWithURL:url];
     documentController.delegate = self;
+    documentController.name = name;
 
     if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
         dispatch_sync(dispatch_get_main_queue(), ^{
