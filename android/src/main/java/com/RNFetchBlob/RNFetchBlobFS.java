@@ -156,7 +156,7 @@ class RNFetchBlobFS {
             path = resolved;
         try {
             byte[] bytes;
-            long bytesRead;
+            int bytesRead;
             int length;  // max. array length limited to "int", also see https://stackoverflow.com/a/10787175/544779
 
             if(resolved != null && resolved.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
@@ -612,7 +612,7 @@ class RNFetchBlobFS {
      * @param end   End byte offset
      * @param encode NOT IMPLEMENTED
      */
-    static void slice(String src, String dest, long start, long end, String encode, Promise promise) {
+    static void slice(String src, String dest, int start, int end, String encode, Promise promise) {
         try {
             src = normalizePath(src);
             File source = new File(src);
@@ -624,21 +624,21 @@ class RNFetchBlobFS {
                 promise.reject("ENOENT", "No such file '" + src + "'");
                 return;
             }
-            long size = source.length();
-            long max = Math.min(size, end);
-            long expected = max - start;
-            long now = 0;
+            int size = (int) source.length();
+            int max = Math.min(size, end);
+            int expected = max - start;
+            int now = 0;
             FileInputStream in = new FileInputStream(new File(src));
             FileOutputStream out = new FileOutputStream(new File(dest));
-            long skipped = in.skip(start);
+            int skipped = (int) in.skip(start);
             if (skipped != start) {
                 promise.reject("EUNSPECIFIED", "Skipped " + skipped + " instead of the specified " + start + " bytes, size is " + size);
                 return;
             }
             byte[] buffer = new byte[10240];
             while(now < expected) {
-                long read = (long) in.read(buffer, 0, 10240);
-                long remain = expected - now;
+                int read = in.read(buffer, 0, 10240);
+                int remain = expected - now;
                 if(read <= 0) {
                     break;
                 }

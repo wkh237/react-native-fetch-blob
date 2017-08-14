@@ -300,7 +300,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void slice(String src, String dest, long start, long end, Promise promise) {
+    public void slice(String src, String dest, int start, int end, Promise promise) {
         RNFetchBlobFS.slice(src, dest, start, end, "", promise);
     }
 
