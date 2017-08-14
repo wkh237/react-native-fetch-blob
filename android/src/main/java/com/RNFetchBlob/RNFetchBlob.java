@@ -34,9 +34,6 @@ import static com.RNFetchBlob.RNFetchBlobConst.GET_CONTENT_INTENT;
 
 public class RNFetchBlob extends ReactContextBaseJavaModule {
 
-    // Cookies
-    private final ForwardingCookieHandler mCookieHandler;
-    private final CookieJarContainer mCookieJarContainer;
     private final OkHttpClient mClient;
 
     static ReactApplicationContext RCTContext;
@@ -52,8 +49,8 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
         super(reactContext);
 
         mClient = OkHttpClientProvider.getOkHttpClient();
-        mCookieHandler = new ForwardingCookieHandler(reactContext);
-        mCookieJarContainer = (CookieJarContainer) mClient.cookieJar();
+        ForwardingCookieHandler mCookieHandler = new ForwardingCookieHandler(reactContext);
+        CookieJarContainer mCookieJarContainer = (CookieJarContainer) mClient.cookieJar();
         mCookieJarContainer.setCookieJar(new JavaNetCookieJar(mCookieHandler));
 
         RCTContext = reactContext;

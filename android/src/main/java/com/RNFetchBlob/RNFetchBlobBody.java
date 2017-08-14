@@ -1,5 +1,6 @@
 package com.RNFetchBlob;
 
+import android.support.annotation.NonNull;
 import android.util.Base64;
 
 import com.facebook.react.bridge.Arguments;
@@ -21,20 +22,20 @@ import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okio.BufferedSink;
 
-public class RNFetchBlobBody extends RequestBody{
+class RNFetchBlobBody extends RequestBody{
 
     private InputStream requestStream;
-    long contentLength = 0;
-    ReadableArray form;
+    private long contentLength = 0;
+    private ReadableArray form;
     private String mTaskId;
     private String rawBody;
     private RNFetchBlobReq.RequestType requestType;
-    MediaType mime;
+    private MediaType mime;
     private File bodyCache;
     int reported = 0;
     private Boolean chunkedEncoding = false;
 
-    public RNFetchBlobBody(String taskId) {
+    RNFetchBlobBody(String taskId) {
         this.mTaskId = taskId;
     }
 
@@ -113,7 +114,7 @@ public class RNFetchBlobBody extends RequestBody{
     }
 
     @Override
-    public void writeTo(BufferedSink sink) {
+    public void writeTo(@NonNull BufferedSink sink) {
         try {
             pipeStreamToSink(requestStream, sink);
         } catch(Exception ex) {
@@ -286,7 +287,7 @@ public class RNFetchBlobBody extends RequestBody{
 
     /**
      * Compute approximate content length for form data
-     * @return
+     * @return ArrayList<FormField>
      */
     private ArrayList<FormField> countFormDataLength() {
         long total = 0;
@@ -341,8 +342,8 @@ public class RNFetchBlobBody extends RequestBody{
      */
     private class FormField {
         public String name;
-        public String filename;
-        public String mime;
+        String filename;
+        String mime;
         public String data;
 
         FormField(ReadableMap rawData) {

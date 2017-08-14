@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.util.Base64;
 
 import com.RNFetchBlob.Response.RNFetchBlobDefaultResp;
@@ -168,7 +169,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
                 // set headers
                 ReadableMapKeySetIterator it = headers.keySetIterator();
-                if(options.addAndroidDownloads.hasKey("mediaScannable") && options.addAndroidDownloads.hasKey("mediaScannable") == true ) {
+                if(options.addAndroidDownloads.hasKey("mediaScannable") && options.addAndroidDownloads.hasKey("mediaScannable")) {
                     req.allowScanningByMediaScanner();
                 }
                 while (it.hasNextKey()) {
@@ -327,7 +328,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             // Add request interceptor for upload progress event
             clientBuilder.addInterceptor(new Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
+                public Response intercept(@NonNull Chain chain) throws IOException {
                     try {
                         Response originalResponse = chain.proceed(req);
                         ResponseBody extended;
@@ -389,7 +390,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             call.enqueue(new okhttp3.Callback() {
 
                 @Override
-                public void onFailure(Call call, IOException e) {
+                public void onFailure(@NonNull Call call, IOException e) {
                     cancelTask(taskId);
                     if(respInfo == null) {
                         respInfo = Arguments.createMap();
@@ -406,7 +407,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
 
                 @Override
-                public void onResponse(Call call, Response response) throws IOException {
+                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                     ReadableMap notifyConfig = options.addAndroidDownloads;
                     // Download manager settings
                     if(notifyConfig != null ) {

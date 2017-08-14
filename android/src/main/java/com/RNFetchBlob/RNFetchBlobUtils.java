@@ -49,7 +49,7 @@ public class RNFetchBlobUtils {
         args.putString("detail", data);
 
         // emit event to js context
-        RNFetchBlob.RNFetchBlob.RCTContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+        RNFetchBlob.RCTContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit(RNFetchBlobConst.EVENT_MESSAGE, args);
     }
 
