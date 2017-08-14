@@ -637,7 +637,7 @@ class RNFetchBlobFS {
             }
             byte[] buffer = new byte[10240];
             while(now < expected) {
-                long read = in.read(buffer, 0, 10240);
+                long read = (long) in.read(buffer, 0, 10240);
                 long remain = expected - now;
                 if(read <= 0) {
                     break;
