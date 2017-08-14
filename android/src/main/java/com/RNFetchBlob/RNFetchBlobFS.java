@@ -482,7 +482,7 @@ class RNFetchBlobFS {
             promise.reject("EUNSPECIFIED", e.getLocalizedMessage());
             return;
         }
-        promise.resolve(null);
+        promise.resolve();
     }
 
     /**
