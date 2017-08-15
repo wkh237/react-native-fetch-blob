@@ -587,48 +587,56 @@ class RNFetchBlobFS {
      * @param path Target folder
      * @param callback  JS context callback
      */
-    static void ls(String path, Callback callback) {
-        path = normalizePath(path);
-        File src = new File(path);
-        if (!src.exists() || !src.isDirectory()) {
-            callback.invoke("failed to list path `" + path + "` for it is not exist or it is not a folder");
-            return;
+    static void ls(String path, Promise promise) {
+        try {
+            path = normalizePath(path);
+            File src = new File(path);
+            if (!src.exists()) {
+                promise.reject("ENOENT", "No such file '" + path + "'");
+                return;
+            }
+            if (!src.isDirectory()) {
+                promise.reject("ENODIR", "Not a directory '" + path + "'");
+                return;
+            }
+            String[] files = new File(path).list();
+            WritableArray arg = Arguments.createArray();
+            // File => list(): "If this abstract pathname does not denote a directory, then this method returns null."
+            // We excluded that possibility above - ignore the "can produce NullPointerException" warning of the IDE.
+            for (String i : files) {
+                arg.pushString(i);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            promise.reject("EUNSPECIFIED", e.getLocalizedMessage());
         }
-        String[] files = new File(path).list();
-        WritableArray arg = Arguments.createArray();
-        // File => list(): "If this abstract pathname does not denote a directory, then this method returns null."
-        // We excluded that possibility above - ignore the "can produce NullPointerException" warning of the IDE.
-        for (String i : files) {
-            arg.pushString(i);
-        }
-        callback.invoke(null, arg);
     }
 
     /**
      * Create a file by slicing given file path
-     * @param src   Source file path
+     * @param path   Source file path
      * @param dest  Destination of created file
      * @param start Start byte offset in source file
      * @param end   End byte offset
      * @param encode NOT IMPLEMENTED
      */
-    static void slice(String src, String dest, int start, int end, String encode, Promise promise) {
+    static void slice(String path, String dest, int start, int end, String encode, Promise promise) {
         try {
-            src = normalizePath(src);
-            File source = new File(src);
+            path = normalizePath(path);
+            File source = new File(path);
             if(source.isDirectory()){
-                promise.reject("EISDIR", "Expecting a file but '" + src + "' is a directory");
+                promise.reject("EISDIR", "Expecting a file but '" + path + "' is a directory");
                 return;
             }
             if(!source.exists()){
-                promise.reject("ENOENT", "No such file '" + src + "'");
+                promise.reject("ENOENT", "No such file '" + path + "'");
                 return;
             }
             int size = (int) source.length();
             int max = Math.min(size, end);
             int expected = max - start;
             int now = 0;
-            FileInputStream in = new FileInputStream(new File(src));
+            FileInputStream in = new FileInputStream(new File(path));
             FileOutputStream out = new FileOutputStream(new File(dest));
             int skipped = (int) in.skip(start);
             if (skipped != start) {

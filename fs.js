@@ -283,14 +283,7 @@ function lstat(path:string):Promise<Array<RNFetchBlobFile>> {
 }
 
 function ls(path:string):Promise<Array<String>> {
-  return new Promise((resolve, reject) => {
-    RNFetchBlob.ls(path, (err, res) => {
-      if(err)
-        reject(new Error(err))
-      else
-        resolve(res)
-    })
-  })
+    return RNFetchBlob.ls(path)
 }
 
 /**

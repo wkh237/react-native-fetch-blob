@@ -309,24 +309,25 @@ RCT_EXPORT_METHOD(removeSession:(NSArray *)paths callback:(RCTResponseSenderBloc
 }
 
 #pragma mark - fs.ls
-RCT_EXPORT_METHOD(ls:(NSString *)path callback:(RCTResponseSenderBlock) callback)
+RCT_EXPORT_METHOD(ls:(NSString *)path resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
     NSFileManager* fm = [NSFileManager defaultManager];
     BOOL exist = nil;
     BOOL isDir = nil;
     exist = [fm fileExistsAtPath:path isDirectory:&isDir];
-    if(exist == NO || isDir == NO) {
-        callback(@[[NSString stringWithFormat:@"failed to list path `%@` for it is not exist or it is not a folder", path]]);
-        return ;
+    if(exist == NO) {
+        return reject(@"ENOENT", [NSString stringWithFormat:@"No such file '%@'", path], nil);
+    }
+    if(isDir == NO) {
+        return reject(@"ENODIR", [NSString stringWithFormat:@"Not a directory '%@'", path], nil);
     }
     NSError * error = nil;
     NSArray * result = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
 
     if(error == nil)
-        callback(@[[NSNull null], result == nil ? [NSNull null] :result ]);
+        resolve(result);
     else
-        callback(@[[error localizedDescription], [NSNull null]]);
-
+        reject(@"EUNSPECIFIED", [error description], nil);
 }
 
 #pragma mark - fs.stat
