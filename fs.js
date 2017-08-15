@@ -142,6 +142,7 @@ function pathForAppGroup(groupName:string):Promise {
  * @return {Promise<Array<number> | string>}
  */
 function readFile(path:string, encoding:string):Promise<any> {
+  encoding = encoding || 'utf8'
   if(typeof path !== 'string')
     return Promise.reject(new Error('Invalid argument "path" '))
   return RNFetchBlob.readFile(path, encoding)
