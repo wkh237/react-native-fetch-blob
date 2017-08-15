@@ -173,8 +173,8 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void ls(String path, Callback callback) {
-        RNFetchBlobFS.ls(path, callback);
+    public void ls(String path, Promise promise) {
+        RNFetchBlobFS.ls(path, promise);
     }
 
     @ReactMethod
