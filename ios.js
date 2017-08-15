@@ -28,11 +28,12 @@ function previewDocument(path:string, scheme:string) {
  * Preview a file using UIDocumentInteractionController
  * @param  {string]} path Path of the file to be open.
  * @param  {string} scheme URI scheme that needs to support, optional
+ * @param  {string} name The name of the target file, optional
  * @return {Promise}
  */
-function openDocument(path:string, scheme:string) {
+function openDocument(path:string, scheme:string, name: string) {
   if(Platform.OS === 'ios')
-    return RNFetchBlob.openDocument('file://' + path, scheme)
+    return RNFetchBlob.openDocument('file://' + path, scheme, name)
   else
     return Promise.reject('RNFetchBlob.previewDocument only supports IOS.')
 }
