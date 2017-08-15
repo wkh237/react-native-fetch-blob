@@ -143,8 +143,11 @@ function pathForAppGroup(groupName:string):Promise {
  */
 function readFile(path:string, encoding:string):Promise<any> {
   encoding = encoding || 'utf8'
-  if(typeof path !== 'string')
-    return Promise.reject(new Error('Invalid argument "path" '))
+  if(typeof path !== 'string') {
+    const err = new TypeError('Missing argument "path" ')
+    err.code = 'EINVAL'
+    return Promise.reject(err)
+  }
   return RNFetchBlob.readFile(path, encoding)
 }
 
@@ -215,6 +218,11 @@ function appendFile(path:string, data:string | Array<number>, encoding:?string):
  */
 function stat(path:string):Promise<RNFetchBlobFile> {
   return new Promise((resolve, reject) => {
+    if(typeof path !== 'string') {
+      const err = new TypeError('Missing argument "path" ')
+      err.code = 'EINVAL'
+      return reject(err)
+    }
     RNFetchBlob.stat(path, (err, stat) => {
       if(err)
         reject(new Error(err))
@@ -246,6 +254,11 @@ function scanFile(pairs:any):Promise {
 }
 
 function hash(path: string, algorithm: string): Promise<string> {
+  if(typeof path !== 'string' || typeof algorithm !== 'string') {
+    const err = new TypeError('Missing argument "path" and/or "algorithm"')
+    err.code = 'EINVAL'
+    return Promise.reject(err)
+  }
   return RNFetchBlob.hash(path, algorithm)
 }
 
@@ -283,7 +296,12 @@ function lstat(path:string):Promise<Array<RNFetchBlobFile>> {
 }
 
 function ls(path:string):Promise<Array<String>> {
-    return RNFetchBlob.ls(path)
+  if(typeof path !== 'string') {
+    const err = new TypeError('Missing argument "path" ')
+    err.code = 'EINVAL'
+    return Promise.reject(err)
+  }
+  return RNFetchBlob.ls(path)
 }
 
 /**
