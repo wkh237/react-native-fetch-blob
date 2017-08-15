@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.SparseArray;
 
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Callback;
@@ -36,13 +37,13 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     private final OkHttpClient mClient;
 
-    static ReactApplicationContext RCTContext;
-    static LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
-    static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    ReactApplicationContext RCTContext;
+    private static LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
+    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
     static LinkedBlockingQueue<Runnable> fsTaskQueue = new LinkedBlockingQueue<>();
-    static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
-    static public boolean ActionViewVisible = false;
-    static HashMap<Integer, Promise> promiseTable = new HashMap<>();
+    private static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    private static boolean ActionViewVisible = false;
+    private static SparseArray<Promise> promiseTable = new SparseArray<>();
 
     public RNFetchBlob(ReactApplicationContext reactContext) {
 
