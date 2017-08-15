@@ -606,7 +606,7 @@ class RNFetchBlobFS {
             for (String i : files) {
                 arg.pushString(i);
             }
-            promise.resolve(arg)
+            promise.resolve(arg);
         } catch (Exception e) {
             e.printStackTrace();
             promise.reject("EUNSPECIFIED", e.getLocalizedMessage());
