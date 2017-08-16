@@ -19,7 +19,7 @@ import type {
 } from './types'
 
 const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
-const emitter = DeviceEventEmitter
+
 const dirs = {
     DocumentDir :  RNFetchBlob.DocumentDir,
     CacheDir : RNFetchBlob.CacheDir,
@@ -83,13 +83,13 @@ function createFile(path:string, data:string, encoding: 'base64' | 'ascii' | 'ut
  * Create write stream to a file.
  * @param  {string} path Target path of file stream.
  * @param  {string} encoding Encoding of input data.
- * @param  {bool} append  A flag represent if data append to existing ones.
- * @return {Promise<WriteStream>} A promise resolves a `WriteStream` object.
+ * @param  {boolean} [append]  A flag represent if data append to existing ones.
+ * @return {Promise<RNFetchBlobWriteStream>} A promise resolves a `WriteStream` object.
  */
 function writeStream(
   path : string,
   encoding : 'utf8' | 'ascii' | 'base64',
-  append? : ?bool,
+  append? : ?boolean,
 ):Promise<RNFetchBlobWriteStream> {
   if(!path)
     throw Error('RNFetchBlob could not open file stream with empty `path`')
@@ -110,6 +110,7 @@ function writeStream(
  * @param  {string} path   The file path.
  * @param  {string} encoding Data encoding, should be one of `base64`, `utf8`, `ascii`
  * @param  {boolean} bufferSize Size of stream buffer.
+ * @param  {number} [tick=10] Interval in milliseconds between reading chunks of data
  * @return {RNFetchBlobStream} RNFetchBlobStream stream instance.
  */
 function readStream(
@@ -154,7 +155,7 @@ function pathForAppGroup(groupName:string):Promise {
  * @param  {'base64' | 'utf8' | 'ascii'} encoding Encoding of read stream.
  * @return {Promise<Array<number> | string>}
  */
-function readFile(path:string, encoding:string, bufferSize:?number):Promise<any> {
+function readFile(path:string, encoding:string):Promise<any> {
   if(typeof path !== 'string')
     return Promise.reject(new Error('Invalid argument "path" '))
   return RNFetchBlob.readFile(path, encoding)
@@ -170,7 +171,7 @@ function readFile(path:string, encoding:string, bufferSize:?number):Promise<any>
 function writeFile(path:string, data:string | Array<number>, encoding:?string):Promise {
   encoding = encoding || 'utf8'
   if(typeof path !== 'string')
-    return Promise.reject('Invalid argument "path" ')
+    return Promise.reject(new Error('Invalid argument "path" '))
   if(encoding.toLocaleLowerCase() === 'ascii') {
     if(!Array.isArray(data))
       return Promise.reject(new Error(`Expected "data" is an Array when encoding is "ascii", however got ${typeof data}`))
@@ -187,7 +188,7 @@ function writeFile(path:string, data:string | Array<number>, encoding:?string):P
 function appendFile(path:string, data:string | Array<number>, encoding:?string):Promise {
   encoding = encoding || 'utf8'
   if(typeof path !== 'string')
-    return Promise.reject('Invalid argument "path" ')
+    return Promise.reject(new Error('Invalid argument "path" '))
   if(encoding.toLocaleLowerCase() === 'ascii') {
     if(!Array.isArray(data))
       return Promise.reject(new Error(`Expected "data" is an Array when encoding is "ascii", however got ${typeof data}`))
@@ -224,7 +225,7 @@ function stat(path:string):Promise<RNFetchBlobFile> {
 
 /**
  * Android only method, request media scanner to scan the file.
- * @param  {Array<Object<string, string>>} Array contains Key value pairs with key `path` and `mime`.
+ * @param  {Array<Object<string, string>>} pairs Array contains Key value pairs with key `path` and `mime`.
  * @return {Promise}
  */
 function scanFile(pairs:any):Promise {
@@ -236,6 +237,15 @@ function scanFile(pairs:any):Promise {
         resolve()
     })
   })
+}
+
+function hash(path: string, algorithm: string): Promise<string> {
+  if(typeof path !== 'string')
+    return Promise.reject(new Error('Invalid argument "path" '))
+  if(typeof algorithm !== 'string')
+    return Promise.reject(new Error('Invalid argument "algorithm" '))
+
+  return RNFetchBlob.hash(path, algorithm)
 }
 
 function cp(path:string, dest:string):Promise<boolean> {
@@ -302,10 +312,9 @@ function unlink(path:string):Promise {
 /**
  * Check if file exists and if it is a folder.
  * @param  {string} path Path to check
- * @return {Promise<bool, bool>}
+ * @return {Promise<boolean, boolean>}
  */
-function exists(path:string):Promise<bool, bool> {
-
+function exists(path:string):Promise<boolean, boolean> {
   return new Promise((resolve, reject) => {
     try {
       RNFetchBlob.exists(path, (exist) => {
@@ -358,7 +367,7 @@ function df():Promise<{ free : number, total : number }> {
   return new Promise((resolve, reject) => {
     RNFetchBlob.df((err, stat) => {
       if(err)
-        reject(err)
+        reject(new Error(err))
       else
         resolve(stat)
     })
@@ -379,6 +388,7 @@ export default {
   appendFile,
   pathForAppGroup,
   readFile,
+  hash,
   exists,
   createFile,
   isDir,
