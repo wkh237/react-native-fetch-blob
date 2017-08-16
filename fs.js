@@ -75,7 +75,7 @@ function createFile(path: string, data: string, encoding: 'base64' | 'ascii' | '
  */
 function writeStream(
   path: string,
-  encoding?: 'utf8' | 'ascii' | 'base64' = 'base64',
+  encoding?: 'utf8' | 'ascii' | 'base64' = 'utf8',
   append?: boolean = false,
 ): Promise<RNFetchBlobWriteStream> {
   if (typeof path !== 'string') {
@@ -101,7 +101,7 @@ function writeStream(
  */
 function readStream(
   path: string,
-  encoding: 'utf8' | 'ascii' | 'base64' = 'base64',
+  encoding: 'utf8' | 'ascii' | 'base64' = 'utf8',
   bufferSize?: number,
   tick?: number = 10
 ): Promise<RNFetchBlobReadStream> {
