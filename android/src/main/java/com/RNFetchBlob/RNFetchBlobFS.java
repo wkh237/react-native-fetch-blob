@@ -342,7 +342,6 @@ class RNFetchBlobFS {
                     "ENOENT",
                     "No such file '" + path + "'"
             );
-        }
         } catch (Exception err) {
             emitStreamEvent(
                     streamId,
