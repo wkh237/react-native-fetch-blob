@@ -83,10 +83,11 @@ function writeStream(
   }
   return new Promise((resolve, reject) => {
     RNFetchBlob.writeStream(path, encoding, append, (errCode, errMsg, streamId: string) => {
-      if (err)
+      if (err) {
         const err = new Error(errMsg)
         err.code = errCode
         reject(err)
+      }
       else
         resolve(new RNFetchBlobWriteStream(streamId, encoding))
     })
