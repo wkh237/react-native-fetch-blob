@@ -490,8 +490,13 @@ NSMutableDictionary *fileStreams = nil;
         }
         else
         {
-            if(![[NSFileManager defaultManager] fileExistsAtPath:path]) {
-                onComplete(nil, @"ENOENT", [NSString stringWithFormat:@"No such file '%@'", path]);
+            BOOL isDir = NO;
+            if(![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory: &isDir]) {
+                if (isDir) {
+                    onComplete(nil, @"EISDIR", [NSString stringWithFormat:@"Expecting a file but '%@' is a directory", path]);
+                } else {
+                    onComplete(nil, @"ENOENT", [NSString stringWithFormat:@"No such file '%@'", path]);
+                }
                 return;
             }
             fileContent = [NSData dataWithContentsOfFile:path];

@@ -214,7 +214,12 @@ class RNFetchBlobFS {
             }
         }
         catch(FileNotFoundException err) {
-            promise.reject("ENOENT", "No such file or directory '" + path + "'; " + err.getLocalizedMessage());
+            String msg = err.getLocalizedMessage();
+            if (msg.contains("EISDIR")) {
+                promise.reject("EISDIR", "Expecting a file but '" + path + "' is a directory; " +  msg);
+            } else {
+                promise.reject("ENOENT", "No such file or directory '" + path + "'; " + msg);
+            }
         }
         catch(Exception err) {
             promise.reject("EUNSPECIFIED", err.getLocalizedMessage());
