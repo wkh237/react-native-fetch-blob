@@ -55,27 +55,27 @@ class RNFetchBlobFS {
             int written;
             File f = new File(path);
             File dir = f.getParentFile();
-            if(!dir.exists()) {
-                boolean result = dir.mkdirs();
-                if (!result) {
-                    promise.reject("EUNSPECIFIED", "Failed to create parent directory '" + path + "'");
-                    return;
-                }
-            }
+
             if(!f.exists()) {
-                boolean result = f.createNewFile();
-                if (!result) {
-                    promise.reject("EUNSPECIFIED", "Failed to create file '" + path + "'");
+                if(!dir.exists()) {
+                    if (!dir.mkdirs()) {
+                        promise.reject("EUNSPECIFIED", "Failed to create parent directory '" + path + "'");
+                        return;
+                    }
+                }
+                if(!f.createNewFile()) {
+                    promise.reject("ENOENT", "File '" + path + "' does not exist and could not be created");
                     return;
                 }
             }
+
             FileOutputStream fout = new FileOutputStream(f, append);
             // write data from a file
             if(encoding.equalsIgnoreCase(RNFetchBlobConst.DATA_ENCODE_URI)) {
                 String normalizedData = normalizePath(data);
                 File src = new File(normalizedData);
                 if (!src.exists()) {
-                    promise.reject("ENOENT", "No such file '" + normalizedData + "'");
+                    promise.reject("ENOENT", "No such file '" + path + "' " + "('" + normalizedData + "')");
                     fout.close();
                     return;
                 }
@@ -114,20 +114,20 @@ class RNFetchBlobFS {
         try {
             File f = new File(path);
             File dir = f.getParentFile();
-            if(!dir.exists()) {
-                boolean result = dir.mkdirs();
-                if (!result) {
-                    promise.reject("EUNSPECIFIED", "Failed to create parent directory '" + path + "'");
-                    return;
-                }
-            }
+
             if(!f.exists()) {
-                boolean result = f.createNewFile();
-                if (!result) {
-                    promise.reject("ENOENT", "File '" + path + "' does not exist and could not be created, or it is a directory");
+                if(!dir.exists()) {
+                    if (!dir.mkdirs()) {
+                        promise.reject("EUNSPECIFIED", "Failed to create parent directory '" + path + "'");
+                        return;
+                    }
+                }
+                if(!f.createNewFile()) {
+                    promise.reject("ENOENT", "File '" + path + "' does not exist and could not be created");
                     return;
                 }
             }
+
             FileOutputStream os = new FileOutputStream(f, append);
             byte[] bytes = new byte[data.size()];
             for(int i=0;i<data.size();i++) {
@@ -138,7 +138,7 @@ class RNFetchBlobFS {
             promise.resolve(data.size());
         } catch (FileNotFoundException e) {
             // According to https://docs.oracle.com/javase/7/docs/api/java/io/FileOutputStream.html
-            promise.reject("ENOENT", "File '" + path + "' does not exist and could not be created, or it is a directory");
+            promise.reject("ENOENT", "File '" + path + "' does not exist and could not be created");
         } catch (Exception e) {
             promise.reject("EUNSPECIFIED", e.getLocalizedMessage());
         }
@@ -266,8 +266,8 @@ class RNFetchBlobFS {
         String resolved = normalizePath(path);
         if(resolved != null)
             path = resolved;
-        try {
 
+        try {
             int chunkSize = encoding.equalsIgnoreCase("base64") ? 4095 : 4096;
             if(bufferSize > 0)
                 chunkSize = bufferSize;
@@ -276,7 +276,6 @@ class RNFetchBlobFS {
 
             if(resolved != null && path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
                 fs = RNFetchBlob.RCTContext.getAssets().open(path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, ""));
-
             }
             // fix issue 287
             else if(resolved == null) {
@@ -336,7 +335,14 @@ class RNFetchBlobFS {
                 emitStreamEvent(streamId, "end", "");
             fs.close();
             buffer = null;
-
+        } catch (FileNotFoundException err) {
+            emitStreamEvent(
+                    streamId,
+                    "error",
+                    "ENOENT",
+                    "No such file '" + path + "'"
+            );
+        }
         } catch (Exception err) {
             emitStreamEvent(
                     streamId,
