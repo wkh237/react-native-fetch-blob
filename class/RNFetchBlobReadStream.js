@@ -45,7 +45,7 @@ export default class RNFetchBlobReadStream {
       }
       else {
         const err = new Error(detail)
-        err.code = code
+        err.code = code || 'EUNSPECIFIED'
         if(this._onError)
           this._onError(err)
         else
