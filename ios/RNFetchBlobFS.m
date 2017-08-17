@@ -199,7 +199,7 @@ NSMutableDictionary *fileStreams = nil;
             }
             else
             {
-                NSDictionary * payload = @{ @"event": FS_EVENT_ERROR, @"code": @"ENOENT", @"detail": @"Unable to resolve URI" };
+                NSDictionary * payload = @{ @"event": FS_EVENT_ERROR, @"code": @"EINVAL", @"detail": @"Unable to resolve URI" };
                 [event sendDeviceEventWithName:streamId body:payload];
             }
             // release buffer
@@ -759,10 +759,18 @@ RCT_EXPORT_METHOD(hash:(NSString *)path
             NSFileManager * fm = [NSFileManager defaultManager];
             NSOutputStream * os = [[NSOutputStream alloc] initToFileAtPath:dest append:NO];
             [os open];
-            // abort because the source file does not exist
-            if([fm fileExistsAtPath:path] == NO) {
+
+            BOOL isDir = NO;
+            BOOL exists = NO;
+            exists = [fm fileExistsAtPath:path isDirectory: &isDir];
+
+            if (isDir) {
+                return reject(@"EISDIR", [NSString stringWithFormat:@"Expecting a file but '%@' is a directory", path], nil);
+            }
+            if(!exists) {
                 return reject(@"ENOENT", [NSString stringWithFormat: @"No such file '%@'", path ], nil);
             }
+
             long size = [fm attributesOfItemAtPath:path error:nil].fileSize;
             long max = MIN(size, [end longValue]);
 

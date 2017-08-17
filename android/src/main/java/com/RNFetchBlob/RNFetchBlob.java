@@ -132,7 +132,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             };
             RCTContext.addLifecycleEventListener(listener);
         } catch(Exception ex) {
-            promise.reject(ex.getLocalizedMessage());
+            promise.reject("EUNSPECIFIED", ex.getLocalizedMessage());
         }
     }
 
@@ -355,7 +355,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
         DownloadManager dm = (DownloadManager) RCTContext.getSystemService(RCTContext.DOWNLOAD_SERVICE);
         String path = RNFetchBlobFS.normalizePath(config.getString("path"));
         if(path == null) {
-            promise.reject("RNFetchblob.addCompleteDownload can not resolve URI:" + config.getString("path"), "RNFetchblob.addCompleteDownload can not resolve URI:" + path);
+            promise.reject("EINVAL", "RNFetchblob.addCompleteDownload can not resolve URI:" + + config.getString("path"));
             return;
         }
         try {
@@ -372,7 +372,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             promise.resolve(null);
         }
         catch(Exception ex) {
-            promise.reject("RNFetchblob.addCompleteDownload failed", ex.getStackTrace().toString());
+            promise.reject("EUNSPECIFIED", ex.getLocalizedMessage());
         }
 
     }
