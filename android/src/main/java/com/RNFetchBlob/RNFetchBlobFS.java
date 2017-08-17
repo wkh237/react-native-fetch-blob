@@ -218,7 +218,7 @@ class RNFetchBlobFS {
             if (msg.contains("EISDIR")) {
                 promise.reject("EISDIR", "Expecting a file but '" + path + "' is a directory; " +  msg);
             } else {
-                promise.reject("ENOENT", "No such file or directory '" + path + "'; " + msg);
+                promise.reject("ENOENT", "No such file '" + path + "'; " + msg);
             }
         }
         catch(Exception err) {
