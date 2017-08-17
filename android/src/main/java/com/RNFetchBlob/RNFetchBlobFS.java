@@ -367,8 +367,12 @@ class RNFetchBlobFS {
      */
     void writeStream(String path, String encoding, boolean append, Callback callback) {
         File dest = new File(path);
-        if(!dest.exists() || dest.isDirectory()) {
-            callback.invoke("target path `" + path + "` may not exist or it is a folder");
+        if(!dest.exists()) {
+            callback.invoke("ENOENT", "No such file `" + path + "'");
+            return;
+        }
+        if(dest.isDirectory()) {
+            callback.invoke("EISDIR", "Expecting a file but '" + path + "' is a directory");
             return;
         }
         try {
@@ -377,11 +381,10 @@ class RNFetchBlobFS {
             String streamId = UUID.randomUUID().toString();
             RNFetchBlobFS.fileStreams.put(streamId, this);
             this.writeStreamInstance = fs;
-            callback.invoke(null, streamId);
+            callback.invoke(null, null, streamId);
         } catch(Exception err) {
-            callback.invoke("EUNSPECIFIED: Failed to create write stream at path `" + path + "` " + err.getLocalizedMessage());
+            callback.invoke("EUNSPECIFIED", "Failed to create write stream at path `" + path + "`; " + err.getLocalizedMessage());
         }
-
     }
 
     /**

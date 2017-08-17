@@ -82,9 +82,11 @@ function writeStream(
     return Promise.reject(addCode('EINVAL', new TypeError('Missing argument "path" ')))
   }
   return new Promise((resolve, reject) => {
-    RNFetchBlob.writeStream(path, encoding, append, (err, streamId: string) => {
+    RNFetchBlob.writeStream(path, encoding, append, (errCode, errMsg, streamId: string) => {
       if (err)
-        reject(new Error(err))
+        const err = new Error(errMsg)
+        err.code = errCode
+        reject(err)
       else
         resolve(new RNFetchBlobWriteStream(streamId, encoding))
     })

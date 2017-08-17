@@ -212,7 +212,7 @@ RCT_EXPORT_METHOD(pathForAppGroup:(NSString *)groupName
     if(path) {
         resolve(path);
     } else {
-        reject(@"RNFetchBlob pathForAppGroup Error", @"could not find path for app group", nil);
+        reject(@"EUNSPECIFIED", @"could not find path for app group", nil);
     }
 }
 
@@ -240,12 +240,16 @@ RCT_EXPORT_METHOD(writeStream:(NSString *)path withEncoding:(NSString *)encoding
     NSFileManager * fm = [NSFileManager defaultManager];
     BOOL isDir = nil;
     BOOL exist = [fm fileExistsAtPath:path isDirectory:&isDir];
-    if( exist == NO || isDir == YES) {
-        callback(@[[NSString stringWithFormat:@"target path `%@` may not exist or it is a folder", path]]);
+    if(exist == NO) {
+        callback(@[@"ENOENT", [NSString stringWithFormat:@"No such file `%@`", path]]);
+        return;
+    }
+    if(isDir == YES) {
+        callback(@[@"EISDIR", [NSString stringWithFormat:@"Expecting a file but '%@' is a directory", path]]);
         return;
     }
     NSString * streamId = [fileStream openWithPath:path encode:encoding appendData:append];
-    callback(@[[NSNull null], streamId]);
+    callback(@[[NSNull null], @[NSNull null], streamId]);
 }
 
 #pragma mark - fs.writeArrayChunk
