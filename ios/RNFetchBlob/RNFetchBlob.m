@@ -159,14 +159,14 @@ RCT_EXPORT_METHOD(createFile:(NSString *)path
     }
 
     if ([fm fileExistsAtPath:path]) {
-        reject(@"EEXIST", @[[NSString stringWithFormat:@"File '%@' already exists", path]], nil);
+        reject(@"EEXIST", [NSString stringWithFormat:@"File '%@' already exists", path], nil);
     }
     else {
         BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
         if(success == YES)
             resolve(@[[NSNull null]]);
         else
-            reject(@"EUNSPECIFIED", @[[NSString stringWithFormat:@"Failed to create new file at path '%@', please ensure the folder exists", path]], nil);
+            reject(@"EUNSPECIFIED", [NSString stringWithFormat:@"Failed to create new file at path '%@', please ensure the folder exists", path], nil);
     }
 }
 
@@ -189,14 +189,14 @@ RCT_EXPORT_METHOD(createFileASCII:(NSString *)path
     [fileContent appendBytes:bytes length:dataArray.count];
 
     if ([fm fileExistsAtPath:path]) {
-        reject(@"EEXIST", @[[NSString stringWithFormat:@"File '%@' already exists", path]], nil);
+        reject(@"EEXIST", [NSString stringWithFormat:@"File '%@' already exists", path], nil);
     }
     else {
         BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
         if(success == YES)
             resolve(@[[NSNull null]]);
         else
-            reject(@"EUNSPECIFIED", @[[NSString stringWithFormat:@"failed to create new file at path '%@', please ensure the folder exists", path]], nil);
+            reject(@"EUNSPECIFIED", [NSString stringWithFormat:@"failed to create new file at path '%@', please ensure the folder exists", path], nil);
     }
 
     free(bytes);
@@ -238,16 +238,24 @@ RCT_EXPORT_METHOD(writeStream:(NSString *)path withEncoding:(NSString *)encoding
 {
     RNFetchBlobFS * fileStream = [[RNFetchBlobFS alloc] initWithBridgeRef:self.bridge];
     NSFileManager * fm = [NSFileManager defaultManager];
-    BOOL isDir = nil;
-    BOOL exist = [fm fileExistsAtPath:path isDirectory:&isDir];
-    if(exist == NO) {
-        callback(@[@"ENOENT", [NSString stringWithFormat:@"No such file `%@`", path]]);
-        return;
+    NSString * folder = [path stringByDeletingLastPathComponent];
+
+    BOOL isDir = NO;
+    BOOL exists = [fm fileExistsAtPath:path isDirectory: &isDir];
+
+    if(!exists) {
+        [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:&err];
+        if(err != nil) {
+            callback(@[@"ENOTDIR", [NSString stringWithFormat:@"Failed to create parent directory of '%@'; error: %@", path, [err description]]]);
+        }
+        if(![fm createFileAtPath:path contents:nil attributes:nil]) {
+            callback(@[@"ENOENT", [NSString stringWithFormat:@"File '%@' does not exist and could not be created", path]]);
+        }
     }
-    if(isDir == YES) {
+    else if(isDir) {
         callback(@[@"EISDIR", [NSString stringWithFormat:@"Expecting a file but '%@' is a directory", path]]);
-        return;
     }
+
     NSString * streamId = [fileStream openWithPath:path encode:encoding appendData:append];
     callback(@[[NSNull null], @[NSNull null], streamId]);
 }
@@ -323,7 +331,7 @@ RCT_EXPORT_METHOD(ls:(NSString *)path resolver:(RCTPromiseResolveBlock)resolve r
         return reject(@"ENOENT", [NSString stringWithFormat:@"No such file '%@'", path], nil);
     }
     if(isDir == NO) {
-        return reject(@"ENODIR", [NSString stringWithFormat:@"Not a directory '%@'", path], nil);
+        return reject(@"ENOTDIR", [NSString stringWithFormat:@"Not a directory '%@'", path], nil);
     }
     NSError * error = nil;
     NSArray * result = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];

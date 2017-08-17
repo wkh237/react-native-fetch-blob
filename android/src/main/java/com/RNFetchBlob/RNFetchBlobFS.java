@@ -59,7 +59,7 @@ class RNFetchBlobFS {
             if(!f.exists()) {
                 if(!dir.exists()) {
                     if (!dir.mkdirs()) {
-                        promise.reject("EUNSPECIFIED", "Failed to create parent directory '" + path + "'");
+                        promise.reject("EUNSPECIFIED", "Failed to create parent directory of '" + path + "'");
                         return;
                     }
                 }
@@ -118,7 +118,7 @@ class RNFetchBlobFS {
             if(!f.exists()) {
                 if(!dir.exists()) {
                     if (!dir.mkdirs()) {
-                        promise.reject("EUNSPECIFIED", "Failed to create parent directory '" + path + "'");
+                        promise.reject("ENOTDIR", "Failed to create parent directory of '" + path + "'");
                         return;
                     }
                 }
@@ -366,16 +366,26 @@ class RNFetchBlobFS {
      * @param callback  Callback
      */
     void writeStream(String path, String encoding, boolean append, Callback callback) {
-        File dest = new File(path);
-        if(!dest.exists()) {
-            callback.invoke("ENOENT", "No such file `" + path + "'");
-            return;
-        }
-        if(dest.isDirectory()) {
-            callback.invoke("EISDIR", "Expecting a file but '" + path + "' is a directory");
-            return;
-        }
         try {
+            File dest = new File(path);
+            File dir = dest.getParentFile();
+
+            if(!dest.exists()) {
+                if(!dir.exists()) {
+                    if (!dir.mkdirs()) {
+                        callback.invoke("ENOTDIR", "Failed to create parent directory of '" + path + "'");
+                        return;
+                    }
+                }
+                if(!dest.createNewFile()) {
+                    callback.invoke("ENOENT", "File '" + path + "' does not exist and could not be created");
+                    return;
+                }
+            } else if(dest.isDirectory()) {
+                callback.invoke("EISDIR", "Expecting a file but '" + path + "' is a directory");
+                return;
+            }
+
             OutputStream fs = new FileOutputStream(path, append);
             this.encoding = encoding;
             String streamId = UUID.randomUUID().toString();
@@ -609,7 +619,7 @@ class RNFetchBlobFS {
                 return;
             }
             if (!src.isDirectory()) {
-                promise.reject("ENODIR", "Not a directory '" + path + "'");
+                promise.reject("ENOTDIR", "Not a directory '" + path + "'");
                 return;
             }
             String[] files = new File(path).list();

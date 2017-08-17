@@ -349,7 +349,7 @@ NSMutableDictionary *fileStreams = nil;
 
         BOOL isDir = NO;
         BOOL exists = NO;
-        exists = [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory: &isDir];
+        exists = [fm fileExistsAtPath:path isDirectory: &isDir];
 
         if (isDir) {
             return reject(@"EISDIR", [NSString stringWithFormat:@"Expecting a file but '%@' is a directory", path], nil);
@@ -358,7 +358,7 @@ NSMutableDictionary *fileStreams = nil;
         if(!exists) {
             [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:&err];
             if(err != nil) {
-                return reject(@"EUNSPECIFIED", @[[NSString stringWithFormat:@"Failed to create parent directory '%@', error: %@", path, [err description]]]], nil);
+                return reject(@"ENOTDIR", [NSString stringWithFormat:@"Failed to create parent directory of '%@'; error: %@", path, [err description]], nil);
             }
             if(![fm createFileAtPath:path contents:nil attributes:nil]) {
                 return reject(@"ENOENT", [NSString stringWithFormat:@"File '%@' does not exist and could not be created", path], nil);
@@ -426,7 +426,7 @@ NSMutableDictionary *fileStreams = nil;
         if(!exists) {
             [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:&err];
             if(err != nil) {
-                return reject(@"EUNSPECIFIED", @[[NSString stringWithFormat:@"Failed to create parent directory '%@', error: %@", path, [err description]]]], nil);
+                return reject(@"EUNSPECIFIED", [NSString stringWithFormat:@"Failed to create parent directory of '%@'; error: %@", path, [err description]], nil);
             }
         }
 
@@ -616,7 +616,7 @@ RCT_EXPORT_METHOD(hash:(NSString *)path
     BOOL isDir = NO;
     NSError * err = nil;
     if([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir]) {
-        reject(@"EEXIST", @[[NSString stringWithFormat:@"%@ '%@' already exists", isDir ? @"Directory" : @"File", path]], nil);
+        reject(@"EEXIST", [NSString stringWithFormat:@"%@ '%@' already exists", isDir ? @"Directory" : @"File", path], nil);
     }
     else {
         [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&err];
@@ -625,7 +625,7 @@ RCT_EXPORT_METHOD(hash:(NSString *)path
         resolve(@YES);
     }
     else {
-        reject(@"EUNSPECIFIED", @[[NSString stringWithFormat:@"Error creating folder '%@', error: %@", path, [err description]]]], nil);
+        reject(@"EUNSPECIFIED", [NSString stringWithFormat:@"Error creating folder '%@', error: %@", path, [err description]], nil);
     }
 }
 
