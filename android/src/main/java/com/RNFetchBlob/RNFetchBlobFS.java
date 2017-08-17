@@ -57,7 +57,7 @@ class RNFetchBlobFS {
             File dir = f.getParentFile();
 
             if(!f.exists()) {
-                if(!dir.exists()) {
+                if(dir != null && !dir.exists()) {
                     if (!dir.mkdirs()) {
                         promise.reject("EUNSPECIFIED", "Failed to create parent directory of '" + path + "'");
                         return;
@@ -116,7 +116,7 @@ class RNFetchBlobFS {
             File dir = f.getParentFile();
 
             if(!f.exists()) {
-                if(!dir.exists()) {
+                if(dir != null && !dir.exists()) {
                     if (!dir.mkdirs()) {
                         promise.reject("ENOTDIR", "Failed to create parent directory of '" + path + "'");
                         return;
@@ -371,7 +371,7 @@ class RNFetchBlobFS {
             File dir = dest.getParentFile();
 
             if(!dest.exists()) {
-                if(!dir.exists()) {
+                if(dir != null && !dir.exists()) {
                     if (!dir.mkdirs()) {
                         callback.invoke("ENOTDIR", "Failed to create parent directory of '" + path + "'");
                         return;
