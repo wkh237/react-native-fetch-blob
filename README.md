@@ -236,7 +236,7 @@ RNFetchBlob
     console.log('The file saved to ', res.path())
     // Beware that when using a file path as Image source on Android,
     // you must prepend "file://"" before the file path
-    imageView = <Image source={{ uri : Platform.OS === 'android' ? 'file://' + res.path()  : '' + res.path() }}/>
+    imageView = <Image source={{ uri : Platform.OS === 'android' ? 'file://' + res.path() : '' + res.path() }}/>
   })
 ```
 
