@@ -239,7 +239,7 @@ RCT_EXPORT_METHOD(writeStream:(NSString *)path withEncoding:(NSString *)encoding
     RNFetchBlobFS * fileStream = [[RNFetchBlobFS alloc] initWithBridgeRef:self.bridge];
     NSFileManager * fm = [NSFileManager defaultManager];
     NSString * folder = [path stringByDeletingLastPathComponent];
-
+    NSError* err = nil;
     BOOL isDir = NO;
     BOOL exists = [fm fileExistsAtPath:path isDirectory: &isDir];
 
@@ -257,7 +257,7 @@ RCT_EXPORT_METHOD(writeStream:(NSString *)path withEncoding:(NSString *)encoding
     }
 
     NSString * streamId = [fileStream openWithPath:path encode:encoding appendData:append];
-    callback(@[[NSNull null], @[NSNull null], streamId]);
+    callback(@[[NSNull null], [NSNull null], streamId]);
 }
 
 #pragma mark - fs.writeArrayChunk
@@ -467,7 +467,8 @@ RCT_EXPORT_METHOD(readFile:(NSString *)path
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    [RNFetchBlobFS readFile:path encoding:encoding onComplete:^(id content, NSString * code, NSString * err) {
+    
+    [RNFetchBlobFS readFile:path encoding:encoding onComplete:^(NSData * content, NSString * code, NSString * err) {
         if(err != nil) {
             reject(code, err, nil);
             return;
