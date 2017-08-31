@@ -358,7 +358,7 @@ NSMutableDictionary *fileStreams = nil;
         if(!exists) {
             [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:&err];
             if(err != nil) {
-                return reject(@"ENOTDIR", [NSString stringWithFormat:@"Failed to create parent directory of '%@'; error: %@", path, [err description]], nil);
+                return reject(@"ENODIR", [NSString stringWithFormat:@"Failed to create parent directory of '%@'; error: %@", path, [err description]], nil);
             }
             if(![fm createFileAtPath:path contents:nil attributes:nil]) {
                 return reject(@"ENOENT", [NSString stringWithFormat:@"File '%@' does not exist and could not be created", path], nil);
@@ -620,6 +620,7 @@ NSMutableDictionary *fileStreams = nil;
     NSError * err = nil;
     if([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir]) {
         reject(@"EEXIST", [NSString stringWithFormat:@"%@ '%@' already exists", isDir ? @"Directory" : @"File", path], nil);
+        return;
     }
     else {
         [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&err];
