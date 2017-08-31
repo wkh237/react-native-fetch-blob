@@ -469,7 +469,7 @@ NSMutableDictionary *fileStreams = nil;
 
 + (void) readFile:(NSString *)path
          encoding:(NSString *)encoding
-       onComplete:(void (^)(id content, NSString * codeStr, NSString * errMsg))onComplete
+       onComplete:(void (^)(NSData * content, NSString * codeStr, NSString * errMsg))onComplete
 {
     [[self class] getPathFromUri:path completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
         __block NSData * fileContent;
@@ -535,10 +535,10 @@ NSMutableDictionary *fileStreams = nil;
 
 # pragma mark - hash
 
-RCT_EXPORT_METHOD(hash:(NSString *)path
++ (void) hash:(NSString *)path
                   algorithm:(NSString *)algorithm
                   resolver:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject)
+                  rejecter:(RCTPromiseRejectBlock)reject
 {
     BOOL isDir = NO;
     BOOL exists = NO;
@@ -547,7 +547,7 @@ RCT_EXPORT_METHOD(hash:(NSString *)path
     if (isDir) {
         return reject(@"EISDIR", [NSString stringWithFormat:@"Expecting a file but '%@' is a directory", path], nil);
     }
-    if (!fileExists) {
+    if (!exists) {
         return reject(@"ENOENT", [NSString stringWithFormat:@"No such file '%@'", path], nil);
     }
 
@@ -556,11 +556,13 @@ RCT_EXPORT_METHOD(hash:(NSString *)path
     NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&error];
 
     if (error) {
-        return [self reject:reject withError:error];
+        reject(@"EUNKNOWN", [error description], nil);
+        return;
     }
 
     if ([attributes objectForKey:NSFileType] == NSFileTypeDirectory) {
-        return reject(@"EISDIR", [NSString stringWithFormat:@"Expecting a file but '%@' is a directory", path], nil);
+        reject(@"EISDIR", [NSString stringWithFormat:@"Expecting a file but '%@' is a directory", path], nil);
+        return;
     }
 
     NSData *content = [[NSFileManager defaultManager] contentsAtPath:path];
@@ -599,7 +601,8 @@ RCT_EXPORT_METHOD(hash:(NSString *)path
     } else if ([algorithm isEqualToString:@"sha512"]) {
         CC_SHA512(content.bytes, (CC_LONG)content.length, buffer);
     } else {
-        return reject(@"EINVAL", [NSString stringWithFormat:@"Invalid algorithm '%@', must be one of md5, sha1, sha224, sha256, sha384, sha512", algorithm], nil);
+        reject(@"EINVAL", [NSString stringWithFormat:@"Invalid algorithm '%@', must be one of md5, sha1, sha224, sha256, sha384, sha512", algorithm], nil);
+        return;
     }
 
     NSMutableString *output = [NSMutableString stringWithCapacity:digestLength * 2];
@@ -617,6 +620,7 @@ RCT_EXPORT_METHOD(hash:(NSString *)path
     NSError * err = nil;
     if([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir]) {
         reject(@"EEXIST", [NSString stringWithFormat:@"%@ '%@' already exists", isDir ? @"Directory" : @"File", path], nil);
+        return;
     }
     else {
         [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&err];
