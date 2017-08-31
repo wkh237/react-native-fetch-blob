@@ -341,11 +341,12 @@ NSMutableDictionary *fileStreams = nil;
         encoding = [encoding lowercaseString];
         if(![fm fileExistsAtPath:folder]) {
             [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:&err];
-            [fm createFileAtPath:path contents:nil attributes:nil];
-        }
-        if(err != nil) {
-            reject(@"RNFetchBlob writeFile Error", @"could not create file at path", nil);
-            return;
+            if(err != nil) {
+                return reject(@"ENOTDIR", [NSString stringWithFormat:@"Failed to create parent directory of '%@'; error: %@", path, [err description]], nil);
+            }
+            if(![fm createFileAtPath:path contents:nil attributes:nil]) {
+                return reject(@"ENOENT", [NSString stringWithFormat:@"File '%@' does not exist and could not be created", path], nil);
+            }
         }
         NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
         NSData * content = nil;
