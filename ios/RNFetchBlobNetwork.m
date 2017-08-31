@@ -106,8 +106,12 @@ NSOperationQueue *taskQueue;
 - (id)init {
     self = [super init];
     if(taskQueue == nil) {
-        taskQueue = [[NSOperationQueue alloc] init];
-        taskQueue.maxConcurrentOperationCount = 10;
+        @synchronized ([RNFetchBlobNetwork class]) {
+            if (taskQueue == nil) {
+                taskQueue = [[NSOperationQueue alloc] init];
+                taskQueue.maxConcurrentOperationCount = 10;
+            }
+        }
     }
     return self;
 }
@@ -241,7 +245,8 @@ NSOperationQueue *taskQueue;
     }
 
     __block NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
-    [taskTable setObject:task forKey:taskId];
+    
+    [taskTable setObject:@{ @"session" : task, @"isCancelled" : @NO } forKey:taskId];
     [task resume];
 
     // network status indicator
@@ -499,6 +504,11 @@ NSOperationQueue *taskQueue;
     {
         errMsg = [error localizedDescription];
     }
+    NSDictionary * taskSession = [taskTable objectForKey:taskId];
+    BOOL isCancelled = [taskSession valueForKey:@"isCancelled"];
+    if(isCancelled) {
+        errMsg = @"task cancelled";
+    }
 
     if(respFile == YES)
     {
@@ -579,9 +589,16 @@ NSOperationQueue *taskQueue;
 
 + (void) cancelRequest:(NSString *)taskId
 {
-    NSURLSessionDataTask * task = [taskTable objectForKey:taskId];
-    if(task != nil && task.state == NSURLSessionTaskStateRunning)
-        [task cancel];
+    NSDictionary * task = [taskTable objectForKey:taskId];
+    
+    if(task != nil) {
+        NSURLSessionDataTask * session = [task objectForKey:@"session"];
+        if(session.state == NSURLSessionTaskStateRunning) {
+            [task setValue:@NO forKey:@"isCancelled"];
+            [session cancel];
+        }
+    }
+    
 }
 
 

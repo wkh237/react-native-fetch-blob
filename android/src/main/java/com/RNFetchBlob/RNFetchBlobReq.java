@@ -87,6 +87,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     }
 
     public static HashMap<String, Call> taskTable = new HashMap<>();
+    public static HashMap<String, Long> androidDownloadManagerTaskTable = new HashMap<>();
     static HashMap<String, RNFetchBlobProgressConfig> progressReport = new HashMap<>();
     static HashMap<String, RNFetchBlobProgressConfig> uploadProgressReport = new HashMap<>();
     static ConnectionPool pool = new ConnectionPool();
@@ -142,6 +143,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             call.cancel();
             taskTable.remove(taskId);
         }
+
+        if (androidDownloadManagerTaskTable.containsKey(taskId)) {
+            long downloadManagerIdForTaskId = androidDownloadManagerTaskTable.get(taskId).longValue();
+            Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
+            DownloadManager dm = (DownloadManager) appCtx.getSystemService(Context.DOWNLOAD_SERVICE);
+            dm.remove(downloadManagerIdForTaskId);
+        }
     }
 
     @Override
@@ -179,6 +187,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
                 DownloadManager dm = (DownloadManager) appCtx.getSystemService(Context.DOWNLOAD_SERVICE);
                 downloadManagerId = dm.enqueue(req);
+                androidDownloadManagerTaskTable.put(taskId, Long.valueOf(downloadManagerId));
                 appCtx.registerReceiver(this, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
                 return;
             }
@@ -445,6 +454,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
     private void releaseTaskResource() {
         if(taskTable.containsKey(taskId))
             taskTable.remove(taskId);
+        if(androidDownloadManagerTaskTable.containsKey(taskId))
+            androidDownloadManagerTaskTable.remove(taskId);
         if(uploadProgressReport.containsKey(taskId))
             uploadProgressReport.remove(taskId);
         if(progressReport.containsKey(taskId))
@@ -642,6 +653,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
             long id = intent.getExtras().getLong(DownloadManager.EXTRA_DOWNLOAD_ID);
             if (id == this.downloadManagerId) {
+                releaseTaskResource(); // remove task ID from task map
+
                 DownloadManager.Query query = new DownloadManager.Query();
                 query.setFilterById(downloadManagerId);
                 DownloadManager dm = (DownloadManager) appCtx.getSystemService(Context.DOWNLOAD_SERVICE);
