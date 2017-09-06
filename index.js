@@ -2,6 +2,20 @@
 // Use of this source code is governed by a MIT-style license that can be
 // found in the LICENSE file.
 
+/*
+ * Currently JavaScriptCore does not provide a `self` reference
+ * to the global object, which is utilized by browser libraries (i.e bluebird)
+ * to have a reliably reference to the global object which works in browsers
+ * and web-workers alike.
+ *
+ * SOURCE: https://github.com/johanneslumpe/react-native-browser-polyfill/blob/master/polyfills/globalself.js
+ *
+ * Fixes an issue raised as part of #212
+ * See https://github.com/wkh237/react-native-fetch-blob/issues/212#issuecomment-326189470 (comment and below)
+ */
+if (typeof global.self === "undefined") global.self = global;
+
+
 import {
   NativeModules,
   DeviceEventEmitter,
