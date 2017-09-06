@@ -151,10 +151,12 @@ class RNFetchBlobFS {
      * @param promise  JS promise
      */
     static void readFile(String path, String encoding, final Promise promise) {
-        String resolved = normalizePath(path);
-        if(resolved != null)
-            path = resolved;
         try {
+            String resolved = normalizePath(path);
+            if(resolved != null) {
+                path = resolved;
+            }
+
             byte[] bytes;
             int bytesRead;
             int length;  // max. array length limited to "int", also see https://stackoverflow.com/a/10787175/544779
@@ -268,11 +270,12 @@ class RNFetchBlobFS {
      * @param bufferSize    Buffer size of read stream, default to 4096 (4095 when encode is `base64`)
      */
     void readStream(String path, String encoding, int bufferSize, int tick, final String streamId) {
-        String resolved = normalizePath(path);
-        if(resolved != null)
-            path = resolved;
-
         try {
+            String resolved = normalizePath(path);
+            if(resolved != null) {
+                path = resolved;
+            }
+
             int chunkSize = encoding.equalsIgnoreCase("base64") ? 4095 : 4096;
             if(bufferSize > 0)
                 chunkSize = bufferSize;
@@ -288,6 +291,16 @@ class RNFetchBlobFS {
             }
             else {
                 fs = new FileInputStream(new File(path));
+            }
+
+            if (fs == null) {
+                emitStreamEvent(
+                        streamId,
+                        "error",
+                        "ENOENT",
+                        "Failed to create a read stream for '" + path + "'"
+                );
+                return;
             }
 
             byte[] buffer = new byte[chunkSize];
@@ -336,8 +349,10 @@ class RNFetchBlobFS {
                 error = true;
             }
 
-            if(!error)
+            if(!error) {
                 emitStreamEvent(streamId, "end", "");
+            }
+
             fs.close();
             buffer = null;
         } catch (FileNotFoundException err) {
@@ -796,6 +811,40 @@ class RNFetchBlobFS {
 
     static void hash(String path, String algorithm, Promise promise) {
         try {
+            String resolved = normalizePath(path);
+            if(resolved != null) {
+                path = resolved;
+            }
+
+            InputStream inputStream;
+
+            if(resolved != null && path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
+                inputStream = RNFetchBlob.RCTContext.getAssets().open(path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, ""));
+            }
+            else if(resolved == null) {
+                inputStream = RNFetchBlob.RCTContext.getContentResolver().openInputStream(Uri.parse(path));
+            }
+            else {
+                File file = new File(path);
+
+                if (file.isDirectory()) {
+                    promise.reject("EISDIR", "Expecting a file but '" + path + "' is a directory");
+                    return;
+                }
+
+                if (!file.exists()) {
+                    promise.reject("ENOENT", "No such file '" + path + "'");
+                    return;
+                }
+
+                inputStream = new FileInputStream(file);
+            }
+
+            if (inputStream == null) {
+                promise.reject("ENOENT", "No such file '" + path + "', (failed to create a read-stream)");
+                return;
+            }
+
             Map<String, String> algorithms = new HashMap<>();
 
             algorithms.put("md5", "MD5");
@@ -810,22 +859,9 @@ class RNFetchBlobFS {
                 return;
             }
 
-            File file = new File(path);
-
-            if (file.isDirectory()) {
-                promise.reject("EISDIR", "Expecting a file but '" + path + "' is a directory");
-                return;
-            }
-
-            if (!file.exists()) {
-                promise.reject("ENOENT", "No such file '" + path + "'");
-                return;
-            }
-
             MessageDigest md = MessageDigest.getInstance(algorithms.get(algorithm));
 
-            FileInputStream inputStream = new FileInputStream(path);
-            byte[] buffer = new byte[(int)file.length()];
+            byte[] buffer = new byte[16384];  // use 16 KB chunks, quite arbitrarily
 
             int read;
             while ((read = inputStream.read(buffer)) != -1) {
@@ -833,8 +869,9 @@ class RNFetchBlobFS {
             }
 
             StringBuilder hexString = new StringBuilder();
-            for (byte digestByte : md.digest())
+            for (byte digestByte : md.digest()) {
                 hexString.append(String.format("%02x", digestByte));
+            }
 
             promise.resolve(hexString.toString());
         } catch (Exception e) {
