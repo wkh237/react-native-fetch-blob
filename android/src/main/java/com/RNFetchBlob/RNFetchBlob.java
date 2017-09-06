@@ -24,7 +24,6 @@ import com.facebook.react.modules.network.OkHttpClientProvider;
 import okhttp3.OkHttpClient;
 import okhttp3.JavaNetCookieJar;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -37,10 +36,11 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     private final OkHttpClient mClient;
 
+    // TODO Quote: "Do not place Android context classes in static fields; this is a memory leak"
     static ReactApplicationContext RCTContext;
     private static LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
     private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
-    static LinkedBlockingQueue<Runnable> fsTaskQueue = new LinkedBlockingQueue<>();
+    // static LinkedBlockingQueue<Runnable> fsTaskQueue = new LinkedBlockingQueue<>();
     private static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
     private static boolean ActionViewVisible = false;
     private static SparseArray<Promise> promiseTable = new SparseArray<>();

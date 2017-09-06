@@ -8,7 +8,7 @@ public class RNFetchBlobProgressConfig {
     enum ReportType {
         Upload,
         Download
-    };
+    }
 
     private long lastTick = 0;
     private int tick = 0;

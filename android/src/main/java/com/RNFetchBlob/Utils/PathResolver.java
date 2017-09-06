@@ -17,10 +17,8 @@ import java.io.FileOutputStream;
 public class PathResolver {
     public static String getRealPathFromURI(final Context context, final Uri uri) {
 
-        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
-
         // DocumentProvider
-        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && DocumentsContract.isDocumentUri(context, uri)) {
             // ExternalStorageProvider
             if (isExternalStorageDocument(uri)) {
                 final String docId = DocumentsContract.getDocumentId(uri);
@@ -135,8 +133,8 @@ public class PathResolver {
      * @param selectionArgs (Optional) Selection arguments used in the query.
      * @return The value of the _data column, which is typically a file path.
      */
-    public static String getDataColumn(Context context, Uri uri, String selection,
-                                       String[] selectionArgs) {
+    private static String getDataColumn(Context context, Uri uri, String selection,
+                                        String[] selectionArgs) {
 
         Cursor cursor = null;
         String result = null;
@@ -169,7 +167,7 @@ public class PathResolver {
      * @param uri The Uri to check.
      * @return Whether the Uri authority is ExternalStorageProvider.
      */
-    public static boolean isExternalStorageDocument(Uri uri) {
+    private static boolean isExternalStorageDocument(Uri uri) {
         return "com.android.externalstorage.documents".equals(uri.getAuthority());
     }
 
@@ -177,7 +175,7 @@ public class PathResolver {
      * @param uri The Uri to check.
      * @return Whether the Uri authority is DownloadsProvider.
      */
-    public static boolean isDownloadsDocument(Uri uri) {
+    private static boolean isDownloadsDocument(Uri uri) {
         return "com.android.providers.downloads.documents".equals(uri.getAuthority());
     }
 
@@ -185,7 +183,7 @@ public class PathResolver {
      * @param uri The Uri to check.
      * @return Whether the Uri authority is MediaProvider.
      */
-    public static boolean isMediaDocument(Uri uri) {
+    private static boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
 
@@ -193,7 +191,7 @@ public class PathResolver {
      * @param uri The Uri to check.
      * @return Whether the Uri authority is Google Photos.
      */
-    public static boolean isGooglePhotosUri(Uri uri) {
+    private static boolean isGooglePhotosUri(Uri uri) {
         return "com.google.android.apps.photos.content".equals(uri.getAuthority());
     }
 

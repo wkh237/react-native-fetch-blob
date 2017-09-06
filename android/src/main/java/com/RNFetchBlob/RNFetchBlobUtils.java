@@ -1,5 +1,7 @@
 package com.RNFetchBlob;
 
+import android.annotation.SuppressLint;
+
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -19,7 +21,7 @@ import okhttp3.OkHttpClient;
 
 public class RNFetchBlobUtils {
 
-    public static String getMD5(String input) {
+    static String getMD5(String input) {
         String result = null;
 
         try {
@@ -53,15 +55,17 @@ public class RNFetchBlobUtils {
                 .emit(RNFetchBlobConst.EVENT_MESSAGE, args);
     }
 
-    public static OkHttpClient.Builder getUnsafeOkHttpClient(OkHttpClient client) {
+    static OkHttpClient.Builder getUnsafeOkHttpClient(OkHttpClient client) {
         try {
             // Create a trust manager that does not validate certificate chains
             final TrustManager[] trustAllCerts = new TrustManager[]{
                     new X509TrustManager() {
+                        @SuppressLint("TrustAllX509TrustManager")
                         @Override
                         public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
                         }
 
+                        @SuppressLint("TrustAllX509TrustManager")
                         @Override
                         public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
                         }
@@ -80,8 +84,10 @@ public class RNFetchBlobUtils {
             final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 
             OkHttpClient.Builder builder = client.newBuilder();
+            // Warning: sslSocketFactory is deprecated
             builder.sslSocketFactory(sslSocketFactory);
             builder.hostnameVerifier(new HostnameVerifier() {
+                @SuppressLint("BadHostnameVerifier")
                 @Override
                 public boolean verify(String hostname, SSLSession session) {
                     return true;

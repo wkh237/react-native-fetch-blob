@@ -306,7 +306,7 @@ class RNFetchBlobFS {
             } else if (encoding.equalsIgnoreCase("ascii")) {
                 while ((cursor = fs.read(buffer)) != -1) {
                     WritableArray chunk = Arguments.createArray();
-                    for(int i =0;i<cursor;i++)
+                    for(int i=0;i<cursor;i++)
                     {
                         chunk.pushInt((int)buffer[i]);
                     }
@@ -607,8 +607,8 @@ class RNFetchBlobFS {
 
     /**
      * List content of folder
-     * @param path Target folder
-     * @param callback  JS context callback
+     * @param path  Target folder
+     * @param promise  JS context promise
      */
     static void ls(String path, Promise promise) {
         try {
@@ -674,7 +674,7 @@ class RNFetchBlobFS {
                 if(read <= 0) {
                     break;
                 }
-                out.write(buffer, 0, (int) Math.min(remain, read));
+                out.write(buffer, 0, Math.min(remain, read));
                 now += read;
             }
             in.close();
