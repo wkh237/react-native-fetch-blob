@@ -28,9 +28,9 @@ export default class RNFetchBlobReadStream {
     this.path = path
     this.closed = false
     this.tick = tick
-    this._onData = () => {}
-    this._onEnd = () => {}
-    this._onError = () => {}
+    this._onData = null
+    this._onEnd = null
+    this._onError = null
     this.streamId = 'RNFBRS'+ UUID()
 
     // register for file stream event
