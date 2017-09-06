@@ -32,7 +32,7 @@ class RNFetchBlobBody extends RequestBody{
     private RNFetchBlobReq.RequestType requestType;
     private MediaType mime;
     private File bodyCache;
-    int reported = 0;
+    // int reported = 0;
     private Boolean chunkedEncoding = false;
 
     RNFetchBlobBody(String taskId) {
@@ -147,16 +147,19 @@ class RNFetchBlobBody extends RequestBody{
                     String assetName = orgPath.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, "");
                     return RNFetchBlob.RCTContext.getAssets().open(assetName);
                 } catch (Exception e) {
-                    throw new Exception("error when getting request stream from asset : " +e.getLocalizedMessage());
+                    throw new Exception("error when getting request stream from asset : " + e.getLocalizedMessage());
                 }
             } else {
                 File f = new File(RNFetchBlobFS.normalizePath(orgPath));
                 try {
-                    if(!f.exists())
-                        f.createNewFile();
+                    if(!f.exists()) {
+                        if(!f.createNewFile()) {
+                            throw new IllegalStateException("Couldn't create file: " + orgPath);
+                        }
+                    }
                     return new FileInputStream(f);
                 } catch (Exception e) {
-                    throw new Exception("error when getting request stream: " +e.getLocalizedMessage());
+                    throw new Exception("error when getting request stream: " + e.getLocalizedMessage());
                 }
             }
         }

@@ -1,7 +1,7 @@
 package com.RNFetchBlob.Response;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
+// import android.util.Log;
 
 import com.RNFetchBlob.RNFetchBlobConst;
 import com.RNFetchBlob.RNFetchBlobProgressConfig;
@@ -53,8 +53,11 @@ public class RNFetchBlobFileResp extends ResponseBody {
                 throw new IllegalStateException("Couldn't create dir: " + parent);
             }
 
-            if(!f.exists())
-                f.createNewFile();
+            if(!f.exists()) {
+                if(!f.createNewFile()) {
+                    throw new IllegalStateException("Couldn't create file: " + path);
+                }
+            }
             ofStream = new FileOutputStream(new File(path), appendToExistingFile);
         }
     }
