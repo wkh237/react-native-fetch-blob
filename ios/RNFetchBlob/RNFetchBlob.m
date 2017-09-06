@@ -296,8 +296,10 @@ RCT_EXPORT_METHOD(unlink:(NSString *)path callback:(RCTResponseSenderBlock) call
 {
     NSError * error = nil;
     NSString * tmpPath = nil;
-    [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
-    if(error == nil || [[NSFileManager defaultManager] fileExistsAtPath:path] == NO)
+
+    BOOL success = [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
+
+    if((success && error == nil) || [[NSFileManager defaultManager] fileExistsAtPath:path] == NO)
         callback(@[[NSNull null]]);
     else
         callback(@[[NSString stringWithFormat:@"failed to unlink file or path at %@", path]]);
@@ -310,8 +312,8 @@ RCT_EXPORT_METHOD(removeSession:(NSArray *)paths callback:(RCTResponseSenderBloc
     NSString * tmpPath = nil;
 
     for(NSString * path in paths) {
-        [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
-        if(error != nil) {
+        BOOL success = [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
+        if(!success || error != nil) {
             callback(@[[NSString stringWithFormat:@"failed to remove session path at %@", path]]);
             return;
         }
@@ -467,7 +469,7 @@ RCT_EXPORT_METHOD(readFile:(NSString *)path
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    
+
     [RNFetchBlobFS readFile:path encoding:encoding onComplete:^(NSData * content, NSString * code, NSString * err) {
         if(err != nil) {
             reject(code, err, nil);
