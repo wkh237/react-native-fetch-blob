@@ -173,13 +173,20 @@ class RNFetchBlobFS {
             // issue 287
             else if(resolved == null) {
                 InputStream in = RNFetchBlob.RCTContext.getContentResolver().openInputStream(Uri.parse(path));
-                // TODO See https://developer.android.com/reference/java/io/InputStream.html#available()
-                // Quote: "Note that while some implementations of InputStream will return the total number of bytes
-                // in the stream, many will not. It is never correct to use the return value of this method to
-                // allocate a buffer intended to hold all data in this stream."
-                length = in.available();
-                bytes = new byte[length];
-                bytesRead = in.read(bytes);
+                if(in == null) {
+                    throw new FileNotFoundException();
+                }
+                bytesRead = 0;
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buf = new byte[8192];
+                while(true) {
+                    int n = in.read(buf);
+                    if( n < 0 ) break;
+                    bytesRead += n;
+                    baos.write(buf, 0, n);
+                }
+                length = bytesRead;
+                bytes = baos.toByteArray();
                 in.close();
             }
             else {
@@ -248,7 +255,12 @@ class RNFetchBlobFS {
         state = Environment.getExternalStorageState();
         if (state.equals(Environment.MEDIA_MOUNTED)) {
             res.put("SDCardDir", Environment.getExternalStorageDirectory().getAbsolutePath());
-            res.put("SDCardApplicationDir", ctx.getExternalFilesDir(null).getParentFile().getAbsolutePath());
+            final File externalFilesDir = ctx.getExternalFilesDir(null);
+            if (externalFilesDir == null) {
+                res.put("SDCardApplicationDir", null);
+            } else {
+                res.put("SDCardApplicationDir", externalFilesDir.getParentFile().getAbsolutePath());
+            }
         }
         res.put("MainBundleDir", ctx.getApplicationInfo().dataDir);
         return res;
@@ -304,7 +316,7 @@ class RNFetchBlobFS {
             }
 
             byte[] buffer = new byte[chunkSize];
-            int cursor = 0;
+            int cursor;
             boolean error = false;
 
             if (encoding.equalsIgnoreCase("utf8")) {
@@ -354,6 +366,7 @@ class RNFetchBlobFS {
             }
 
             fs.close();
+            //noinspection UnusedAssignment
             buffer = null;
         } catch (FileNotFoundException err) {
             emitStreamEvent(
@@ -659,7 +672,7 @@ class RNFetchBlobFS {
      * @param end   End byte offset
      * @param encode NOT IMPLEMENTED
      */
-    static void slice(String path, String dest, int start, int end, String encode, Promise promise) {
+    static void slice(String path, String dest, int start, int end, @SuppressWarnings("UnusedParameters") String encode, Promise promise) {
         try {
             path = normalizePath(path);
             File source = new File(path);
@@ -1098,7 +1111,7 @@ class RNFetchBlobFS {
     static String normalizePath(String path) {
         if(path == null)
             return null;
-        if(!path.matches("\\w+\\:.*"))
+        if(!path.matches("\\w+:.*"))
             return path;
         if(path.startsWith("file://")) {
             return path.replace("file://", "");
