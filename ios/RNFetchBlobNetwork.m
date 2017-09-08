@@ -505,7 +505,7 @@ NSOperationQueue *taskQueue;
         errMsg = [error localizedDescription];
     }
     NSDictionary * taskSession = [taskTable objectForKey:taskId];
-    BOOL isCancelled = [taskSession valueForKey:@"isCancelled"];
+    BOOL isCancelled = [[taskSession valueForKey:@"isCancelled"] boolValue];
     if(isCancelled) {
         errMsg = @"task cancelled";
     }
