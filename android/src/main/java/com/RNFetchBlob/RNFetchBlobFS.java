@@ -728,7 +728,7 @@ class RNFetchBlobFS {
                 }
                 File src = new File(args[0]);
                 if(!src.exists()) {
-                    callback.invoke("failed to lstat path `" + args[0] + "` because it does not exist or it is not a folder");
+                    callback.invoke("failed to lstat path `" + args[0] + "` because it does not exist");
                     return 0;
                 }
                 if(src.isDirectory()) {
