@@ -733,10 +733,12 @@ class RNFetchBlobFS {
                 }
                 if(src.isDirectory()) {
                     String [] files = src.list();
-                    // File => list(): "If this abstract pathname does not denote a directory, then this method returns null."
-                    // We excluded that possibility above - ignore the "can produce NullPointerException" warning of the IDE.
-                    for(String p : files) {
-                        res.pushMap(statFile(src.getPath() + "/" + p));
+                    if (files == null) {
+                        callback.invoke("failed to lstat path `" + args[0] + "`, failed to get a list of files in this directory (reason unknown)");
+                    } else {
+                        for(String p : files) {
+                            res.pushMap(statFile(src.getPath() + "/" + p));
+                        }
                     }
                 }
                 else {
