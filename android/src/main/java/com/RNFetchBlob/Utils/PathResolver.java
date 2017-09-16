@@ -75,17 +75,20 @@ public class PathResolver {
                 try {
                     InputStream attachment = context.getContentResolver().openInputStream(uri);
                     if (attachment != null) {
-                        String filename = getContentName(context.getContentResolver(), uri);
-                        if (filename != null) {
-                            File file = new File(context.getCacheDir(), filename);
-                            FileOutputStream tmp = new FileOutputStream(file);
-                            byte[] buffer = new byte[1024];
-                            while (attachment.read(buffer) > 0) {
-                                tmp.write(buffer);
+                        try {
+                            String filename = getContentName(context.getContentResolver(), uri);
+                            if (filename != null) {
+                                File file = new File(context.getCacheDir(), filename);
+                                FileOutputStream tmp = new FileOutputStream(file);
+                                byte[] buffer = new byte[1024];
+                                while (attachment.read(buffer) > 0) {
+                                    tmp.write(buffer);
+                                }
+                                tmp.close();
+                                return file.getAbsolutePath();
                             }
-                            tmp.close();
+                        } finally {
                             attachment.close();
-                            return file.getAbsolutePath();
                         }
                     }
                 } catch (Exception e) {
