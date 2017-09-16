@@ -80,11 +80,16 @@ public class PathResolver {
                             if (filename != null) {
                                 File file = new File(context.getCacheDir(), filename);
                                 FileOutputStream tmp = new FileOutputStream(file);
-                                byte[] buffer = new byte[1024];
-                                while (attachment.read(buffer) > 0) {
-                                    tmp.write(buffer);
+                                try {
+                                    byte[] buffer = new byte[1024];
+                                    int read;
+                                    do {
+                                        read = attachment.read(buffer);
+                                        tmp.write(buffer, 0, read);
+                                    } while(read > 0);
+                                } finally {
+                                    tmp.close();
                                 }
-                                tmp.close();
                                 return file.getAbsolutePath();
                             }
                         } finally {
