@@ -917,10 +917,13 @@ class RNFetchBlobFS {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             args.putString("internal_free", String.valueOf(stat.getFreeBytes()));
             args.putString("internal_total", String.valueOf(stat.getTotalBytes()));
-            StatFs statEx = new StatFs(Environment.getExternalStorageDirectory().getPath());
-            args.putString("external_free", String.valueOf(statEx.getFreeBytes()));
-            args.putString("external_total", String.valueOf(statEx.getTotalBytes()));
-
+            try {
+                StatFs statEx = new StatFs(Environment.getExternalStorageDirectory().getPath());
+                args.putString("external_free", String.valueOf(statEx.getFreeBytes()));
+                args.putString("external_total", String.valueOf(statEx.getTotalBytes()));
+            } catch(IllegalArgumentException err) {
+                // Do nothing
+            }
         }
         callback.invoke(null ,args);
     }
