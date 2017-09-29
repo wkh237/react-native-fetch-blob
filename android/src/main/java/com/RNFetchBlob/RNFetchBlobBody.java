@@ -351,8 +351,6 @@ public class RNFetchBlobBody extends RequestBody{
                 } else if (data.startsWith(RNFetchBlobConst.CONTENT_PREFIX)) {
                     try {
                         String contentUri = data.substring(RNFetchBlobConst.CONTENT_PREFIX.length());
-                        RNFetchBlobUtils.emitWarningEvent("contentUri=" + contentUri);
-
                         long length = ctx.getContentResolver().openInputStream(Uri.parse(contentUri)).available();
                         total += length;
                     } catch (IOException e) {
