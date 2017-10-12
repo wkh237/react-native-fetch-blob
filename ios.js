@@ -12,7 +12,7 @@ import {
 const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
 
 /**
- * Open a file using UIDocumentInteractionController
+ * Preview a file using UIDocumentInteractionController
  * @param  {string]} path Path of the file to be open.
  * @param  {string} scheme URI scheme that needs to support, optional
  * @return {Promise}
@@ -25,7 +25,7 @@ function previewDocument(path:string, scheme:string) {
 }
 
 /**
- * Preview a file using UIDocumentInteractionController
+ * Open a file using UIDocumentInteractionController
  * @param  {string]} path Path of the file to be open.
  * @param  {string} scheme URI scheme that needs to support, optional
  * @return {Promise}
