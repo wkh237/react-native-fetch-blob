@@ -156,6 +156,17 @@ NSOperationQueue *taskQueue;
     return ret;
 }
 
+- (void) removeUploadTempFile {
+    if (!uploadTempFile) {
+        return;
+    }
+
+    NSError *error;
+    if (![[NSFileManager defaultManager] removeItemAtURL:uploadTempFile error:&error]) {
+        NSLog(@"Failed to remove upload temporary file: %@", error.localizedDescription);
+    }
+}
+
 // send HTTP request
 - (void) sendRequest:(__weak NSDictionary  * _Nullable )options
        contentLength:(long) contentLength
@@ -563,6 +574,7 @@ NSOperationQueue *taskQueue;
 
 
     callback(@[ errMsg, rnfbRespType, respStr]);
+    [self removeUploadTempFile];
 
     @synchronized(taskTable, uploadProgressTable, progressTable)
     {
