@@ -261,20 +261,12 @@ NSOperationQueue *taskQueue;
     if (path && [req.HTTPMethod isEqualToString:@"POST"]) {
         task = [session uploadTaskWithRequest:req fromFile:[NSURL fileURLWithPath:path]];
     } else if (uploadTask && [req.HTTPBody length] > 0) {
-        NSString *tempPath = [RNFetchBlobFS getTempPath];
-        NSURL *tempRootDir = [NSURL fileURLWithPath:tempPath isDirectory:YES];
-        NSURL *tempDir = [tempRootDir URLByAppendingPathComponent:[[NSProcessInfo processInfo] globallyUniqueString]];
         NSError *error;
-        if (![[NSFileManager defaultManager] createDirectoryAtURL:tempDir withIntermediateDirectories:YES attributes:nil error:&error]) {
+        task = [self uploadTaskWithBodyOfRequest:req session:session error:&error];
+        if (!task) {
             callback(@[error.localizedDescription]);
             return;
         }
-        uploadTempFile = [tempDir URLByAppendingPathComponent:taskId];
-        if (![req.HTTPBody writeToURL:uploadTempFile options:NSDataWritingAtomic error:&error]) {
-            callback(@[error.localizedDescription]);
-            return;
-        }
-        task = [session uploadTaskWithRequest:req fromFile:uploadTempFile];
     } else {
         task = [session dataTaskWithRequest:req];
     }
@@ -287,6 +279,21 @@ NSOperationQueue *taskQueue;
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
     __block UIApplication * app = [UIApplication sharedApplication];
 
+}
+
+- (NSURLSessionUploadTask *) uploadTaskWithBodyOfRequest:(NSURLRequest *)req session:(NSURLSession *)session error:(NSError **)error
+{
+    NSString *tempPath = [RNFetchBlobFS getTempPath];
+    NSURL *tempRootDir = [NSURL fileURLWithPath:tempPath isDirectory:YES];
+    NSURL *tempDir = [tempRootDir URLByAppendingPathComponent:[[NSProcessInfo processInfo] globallyUniqueString]];
+    if (![[NSFileManager defaultManager] createDirectoryAtURL:tempDir withIntermediateDirectories:YES attributes:nil error:error]) {
+        return nil;
+    }
+    uploadTempFile = [tempDir URLByAppendingPathComponent:taskId];
+    if (![req.HTTPBody writeToURL:uploadTempFile options:NSDataWritingAtomic error:error]) {
+        return nil;
+    }
+    return [session uploadTaskWithRequest:req fromFile:uploadTempFile];
 }
 
 // #115 Invoke fetch.expire event on those expired requests so that the expired event can be handled
