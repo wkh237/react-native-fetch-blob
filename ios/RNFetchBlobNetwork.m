@@ -83,6 +83,8 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     ResponseFormat responseFormat;
     BOOL * followRedirect;
     BOOL backgroundTask;
+    BOOL uploadTask;
+    NSURL * uploadTempFile;
 }
 
 @end
@@ -171,6 +173,7 @@ NSOperationQueue *taskQueue;
     self.options = options;
     
     backgroundTask = [options valueForKey:@"IOSBackgroundTask"] == nil ? NO : [[options valueForKey:@"IOSBackgroundTask"] boolValue];
+    uploadTask = [options valueForKey:@"IOSUploadTask"] == nil ? NO : [[options valueForKey:@"IOSUploadTask"] boolValue];
     followRedirect = [options valueForKey:@"followRedirect"] == nil ? YES : [[options valueForKey:@"followRedirect"] boolValue];
     isIncrement = [options valueForKey:@"increment"] == nil ? NO : [[options valueForKey:@"increment"] boolValue];
     redirects = [[NSMutableArray alloc] init];
@@ -246,6 +249,21 @@ NSOperationQueue *taskQueue;
     __block NSURLSessionDataTask * task;
     if (path && [req.HTTPMethod isEqualToString:@"POST"]) {
         task = [session uploadTaskWithRequest:req fromFile:path];
+    } else if (uploadTask && [req.HTTPBody length] > 0) {
+        NSString *tempPath = [RNFetchBlobFS getTempPath];
+        NSURL *tempRootDir = [NSURL fileURLWithPath:tempPath isDirectory:YES];
+        NSURL *tempDir = [tempRootDir URLByAppendingPathComponent:[[NSProcessInfo processInfo] globallyUniqueString]];
+        NSError *error;
+        if (![[NSFileManager defaultManager] createDirectoryAtURL:tempDir withIntermediateDirectories:YES attributes:nil error:&error]) {
+            callback(@[error.localizedDescription]);
+            return;
+        }
+        uploadTempFile = [tempDir URLByAppendingPathComponent:taskId];
+        if (![req.HTTPBody writeToURL:uploadTempFile options:NSDataWritingAtomic error:&error]) {
+            callback(@[error.localizedDescription]);
+            return;
+        }
+        task = [session uploadTaskWithRequest:req fromFile:uploadTempFile];
     } else {
         task = [session dataTaskWithRequest:req];
     }
