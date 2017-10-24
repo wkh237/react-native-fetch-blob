@@ -40,11 +40,12 @@ function openDocument(path: string, scheme: string, name: string) {
 
 /**
  * Preview a file using UIDocumentInteractionController
- * @param  {string]} path Path of the file to be open.
+ * @param  {string} path Path of the file to be open.
  * @param  {string} scheme URI scheme that needs to support, optional
- * @param  {string} name The name of the target file, optional
- * @param
- * @param
+ * @param  {string} fontFamily The name of the font family
+ * @param  {string} hexString The color in hex format
+ * @param  {number} fontSize Size of the font
+ * @param  {string} barTintColor The color of the navigation bar in hex format
  * @return {Promise}
  */
 function openDocumentWithFont(
@@ -52,6 +53,7 @@ function openDocumentWithFont(
   fontFamily: string,
   fontSize: number,
   hexString: string,
+  barTintColor: string,
   scheme: string
 ) {
   if (Platform.OS === 'ios') {
@@ -60,6 +62,7 @@ function openDocumentWithFont(
       fontFamily,
       fontSize,
       hexString,
+      barTintColor,
       scheme
     )
   }
