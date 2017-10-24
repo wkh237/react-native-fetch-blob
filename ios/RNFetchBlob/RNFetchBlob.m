@@ -315,7 +315,6 @@ RCT_EXPORT_METHOD(ls:(NSString *)path callback:(RCTResponseSenderBlock) callback
 #pragma mark - fs.stat
 RCT_EXPORT_METHOD(stat:(NSString *)target callback:(RCTResponseSenderBlock) callback)
 {
-
     [RNFetchBlobFS getPathFromUri:target completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
         __block NSMutableArray * result;
         if(path != nil)
@@ -536,11 +535,40 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
 
 # pragma mark - open file with UIDocumentInteractionController and delegate
 
-RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme name:(NSString*)name resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+- (void)openDocument:(NSString *)uri
+              scheme:(NSString *)scheme
+            resolver:(RCTPromiseResolveBlock)resolve
+            rejecter:(RCTPromiseRejectBlock)reject
+          fontFamily:(NSString *)fontFamily
+            fontSize:(float)fontSize
+           hexString:(NSString *)hexString
 {
     NSString * utf8uri = [uri stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSURL * url = [[NSURL alloc] initWithString:utf8uri];
     // NSURL * url = [[NSURL alloc] initWithString:uri];
+    if (fontFamily) {
+        NSMutableDictionary *titleBarAttributes = [NSMutableDictionary dictionaryWithDictionary: [[UINavigationBar appearance] titleTextAttributes]];
+        [titleBarAttributes setValue:[UIFont fontWithName:fontFamily size:fontSize] forKey:NSFontAttributeName];
+        unsigned rgbValue = 0;
+        NSScanner *scanner = [NSScanner scannerWithString:hexString];
+        [scanner setScanLocation:1]; // bypass '#' character
+        [scanner scanHexInt:&rgbValue];
+        [titleBarAttributes setValue:[UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 \
+                                                     green:((float)((rgbValue & 0x00FF00) >>  8))/255.0 \
+                                                      blue:((float)((rgbValue & 0x0000FF) >>  0))/255.0 \
+                                                     alpha:1.0] forKey:NSForegroundColorAttributeName];
+        [[UINavigationBar appearance] setTitleTextAttributes:titleBarAttributes];
+        
+        NSMutableDictionary *attributes = [NSMutableDictionary dictionaryWithDictionary: [[UIBarButtonItem appearance] titleTextAttributesForState:UIControlStateNormal]];
+        [attributes setValue:[UIFont fontWithName:fontFamily size:fontSize] forKey:NSFontAttributeName];
+        [[UIBarButtonItem appearance] setTitleTextAttributes:attributes forState:UIControlStateNormal];
+        [[UIBarButtonItem appearance] setTintColor: [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 \
+                                                                    green:((float)((rgbValue & 0x00FF00) >>  8))/255.0 \
+                                                                     blue:((float)((rgbValue & 0x0000FF) >>  0))/255.0 \
+                                                                    alpha:1.0]];
+        [[UINavigationBar appearance] setBarTintColor: [UIColor whiteColor]];
+    }
+    
     documentController = [UIDocumentInteractionController interactionControllerWithURL:url];
     documentController.delegate = self;
     documentController.name = name;
@@ -553,6 +581,16 @@ RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme name:(NS
     } else {
         reject(@"RNFetchBlob could not open document", @"scheme is not supported", nil);
     }
+}
+
+RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString*)scheme resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject fontFamily:(NSString*)fontFamily fontSize:(float)fontSize hexString:(NSString*)hexString)
+{
+    [self openDocument:uri scheme:scheme resolver:resolver rejecter:rejecter fontFamily:fontFamily fontSize:fontSize hexString:hexString];
+}
+
+RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme name:(NSString*)name resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+{
+    [self openDocument:uri scheme:scheme resolver:resolver rejecter:rejecter fontFamily:nil fontSize:NULL hexString:nil];
 }
 
 # pragma mark - exclude from backup key
@@ -576,7 +614,7 @@ RCT_EXPORT_METHOD(df:(RCTResponseSenderBlock)callback)
     [RNFetchBlobFS df:callback];
 }
 
-- (UIViewController *) documentInteractionControllerViewControllerForPreview: (UIDocumentInteractionController *) controller
+- (UIViewController *)documentInteractionControllerViewControllerForPreview:(UIDocumentInteractionController *)controller
 {
     UIWindow *window = [UIApplication sharedApplication].keyWindow;
     return window.rootViewController;
