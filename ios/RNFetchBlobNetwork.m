@@ -244,7 +244,7 @@ NSOperationQueue *taskQueue;
     }
 
     __block NSURLSessionDataTask * task;
-    if (path && req.HTTPMethod == @"POST") {
+    if (path && [req.HTTPMethod isEqualToString:@"POST"]) {
         task = [session uploadTaskWithRequest:req fromFile:path];
     } else {
         task = [session dataTaskWithRequest:req];
