@@ -262,7 +262,7 @@ NSOperationQueue *taskQueue;
         task = [session uploadTaskWithRequest:req fromFile:[NSURL fileURLWithPath:path]];
     } else if (uploadTask && [req.HTTPBody length] > 0) {
         NSError *error;
-        task = [self uploadTaskWithBodyOfRequest:req session:session error:&error];
+        task = [self uploadTaskWithBodyOfRequest:req session:session inBackground:backgroundTask error:&error];
         if (!task) {
             callback(@[error.localizedDescription]);
             return;
@@ -281,8 +281,12 @@ NSOperationQueue *taskQueue;
 
 }
 
-- (NSURLSessionUploadTask *) uploadTaskWithBodyOfRequest:(NSURLRequest *)req session:(NSURLSession *)session error:(NSError **)error
+- (NSURLSessionUploadTask *) uploadTaskWithBodyOfRequest:(NSURLRequest *)req session:(NSURLSession *)session inBackground:(BOOL)background error:(NSError **)error
 {
+    if (!background) {
+        return [session uploadTaskWithRequest:req fromData:req.HTTPBody];
+    }
+
     NSString *tempPath = [RNFetchBlobFS getTempPath];
     NSURL *tempRootDir = [NSURL fileURLWithPath:tempPath isDirectory:YES];
     NSURL *tempDir = [tempRootDir URLByAppendingPathComponent:[[NSProcessInfo processInfo] globallyUniqueString]];
