@@ -259,7 +259,7 @@ NSOperationQueue *taskQueue;
 
     __block NSURLSessionDataTask * task;
     if (path && [req.HTTPMethod isEqualToString:@"POST"]) {
-        task = [session uploadTaskWithRequest:req fromFile:path];
+        task = [session uploadTaskWithRequest:req fromFile:[NSURL fileURLWithPath:path]];
     } else if (uploadTask && [req.HTTPBody length] > 0) {
         NSString *tempPath = [RNFetchBlobFS getTempPath];
         NSURL *tempRootDir = [NSURL fileURLWithPath:tempPath isDirectory:YES];
