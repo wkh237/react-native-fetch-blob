@@ -32,7 +32,7 @@ dispatch_queue_t fsQueue;
 
 - (dispatch_queue_t) methodQueue {
     if(commonTaskQueue == nil)
-        commonTaskQueue = dispatch_queue_create("RNFetchBlob.queue", DISPATCH_QUEUE_SERIAL);
+    commonTaskQueue = dispatch_queue_create("RNFetchBlob.queue", DISPATCH_QUEUE_SERIAL);
     return commonTaskQueue;
 }
 
@@ -48,9 +48,9 @@ RCT_EXPORT_MODULE();
     self = [super init];
     self.filePathPrefix = FILE_PREFIX;
     if(commonTaskQueue == nil)
-        commonTaskQueue = dispatch_queue_create("RNFetchBlob.queue", DISPATCH_QUEUE_SERIAL);
+    commonTaskQueue = dispatch_queue_create("RNFetchBlob.queue", DISPATCH_QUEUE_SERIAL);
     if(fsQueue == nil)
-        fsQueue = dispatch_queue_create("RNFetchBlob.fs.queue", DISPATCH_QUEUE_SERIAL);
+    fsQueue = dispatch_queue_create("RNFetchBlob.fs.queue", DISPATCH_QUEUE_SERIAL);
     BOOL isDir;
     // if temp folder not exists, create one
     if(![[NSFileManager defaultManager] fileExistsAtPath: [RNFetchBlobFS getTempPath] isDirectory:&isDir]) {
@@ -66,8 +66,7 @@ RCT_EXPORT_MODULE();
     return @{
              @"MainBundleDir" : [RNFetchBlobFS getMainBundleDir],
              @"DocumentDir": [RNFetchBlobFS getDocumentDir],
-             @"CacheDir" : [RNFetchBlobFS getCacheDir],
-             @"LibraryDir" : [RNFetchBlobFS getLibraryDir]
+             @"CacheDir" : [RNFetchBlobFS getCacheDir]
              };
 }
 
@@ -80,7 +79,7 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
                   form:(NSArray *)form
                   callback:(RCTResponseSenderBlock)callback)
 {
-
+    
     [RNFetchBlobReqBuilder buildMultipartRequest:options
                                           taskId:taskId
                                           method:method
@@ -88,20 +87,20 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
                                          headers:headers
                                             form:form
                                       onComplete:^(__weak NSURLRequest *req, long bodyLength)
-    {
-        // something went wrong when building the request body
-        if(req == nil)
-        {
-            callback(@[@"RNFetchBlob.fetchBlobForm failed to create request body"]);
-        }
-        // send HTTP request
-        else
-        {
-            RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-            [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
-        }
-    }];
-
+     {
+         // something went wrong when building the request body
+         if(req == nil)
+         {
+             callback(@[@"RNFetchBlob.fetchBlobForm failed to create request body"]);
+         }
+         // send HTTP request
+         else
+         {
+             RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
+             [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+         }
+     }];
+    
 }
 
 
@@ -120,27 +119,27 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
                                      headers:headers
                                         body:body
                                   onComplete:^(NSURLRequest *req, long bodyLength)
-    {
-        // something went wrong when building the request body
-        if(req == nil)
-        {
-            callback(@[@"RNFetchBlob.fetchBlob failed to create request body"]);
-        }
-        // send HTTP request
-        else
-        {
-            __block RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-            [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
-        }
-    }];
+     {
+         // something went wrong when building the request body
+         if(req == nil)
+         {
+             callback(@[@"RNFetchBlob.fetchBlob failed to create request body"]);
+         }
+         // send HTTP request
+         else
+         {
+             __block RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
+             [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+         }
+     }];
 }
 
 #pragma mark - fs.createFile
 RCT_EXPORT_METHOD(createFile:(NSString *)path data:(NSString *)data encoding:(NSString *)encoding callback:(RCTResponseSenderBlock)callback) {
-
+    
     NSFileManager * fm = [NSFileManager defaultManager];
     NSData * fileContent = nil;
-
+    
     if([[encoding lowercaseString] isEqualToString:@"utf8"]) {
         fileContent = [[NSData alloc] initWithData:[data dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES]];
     }
@@ -154,24 +153,24 @@ RCT_EXPORT_METHOD(createFile:(NSString *)path data:(NSString *)data encoding:(NS
     else {
         fileContent = [[NSData alloc] initWithData:[data dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES]];
     }
-
+    
     BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
     if(success == YES)
-        callback(@[[NSNull null]]);
+    callback(@[[NSNull null]]);
     else
-        callback(@[[NSString stringWithFormat:@"failed to create new file at path %@ please ensure the folder exists"]]);
-
+    callback(@[[NSString stringWithFormat:@"failed to create new file at path %@ please ensure the folder exists"]]);
+    
 }
 
 #pragma mark - fs.createFileASCII
 // method for create file with ASCII content
 RCT_EXPORT_METHOD(createFileASCII:(NSString *)path data:(NSArray *)dataArray callback:(RCTResponseSenderBlock)callback) {
-
+    
     NSFileManager * fm = [NSFileManager defaultManager];
     NSMutableData * fileContent = [NSMutableData alloc];
     // prevent stack overflow, alloc on heap
     char * bytes = (char*) malloc([dataArray count]);
-
+    
     for(int i = 0; i < dataArray.count; i++) {
         bytes[i] = [[dataArray objectAtIndex:i] charValue];
     }
@@ -179,10 +178,10 @@ RCT_EXPORT_METHOD(createFileASCII:(NSString *)path data:(NSArray *)dataArray cal
     BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
     free(bytes);
     if(success == YES)
-        callback(@[[NSNull null]]);
+    callback(@[[NSNull null]]);
     else
-        callback(@[[NSString stringWithFormat:@"failed to create new file at path %@ please ensure the folder exists"]]);
-
+    callback(@[[NSString stringWithFormat:@"failed to create new file at path %@ please ensure the folder exists"]]);
+    
 }
 
 #pragma mark - fs.pathForAppGroup
@@ -191,7 +190,7 @@ RCT_EXPORT_METHOD(pathForAppGroup:(NSString *)groupName
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     NSString * path = [RNFetchBlobFS getPathForAppGroup:groupName];
-
+    
     if(path) {
         resolve(path);
     } else {
@@ -269,9 +268,9 @@ RCT_EXPORT_METHOD(unlink:(NSString *)path callback:(RCTResponseSenderBlock) call
     NSString * tmpPath = nil;
     [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
     if(error == nil || [[NSFileManager defaultManager] fileExistsAtPath:path] == NO)
-        callback(@[[NSNull null]]);
+    callback(@[[NSNull null]]);
     else
-        callback(@[[NSString stringWithFormat:@"failed to unlink file or path at %@", path]]);
+    callback(@[[NSString stringWithFormat:@"failed to unlink file or path at %@", path]]);
 }
 
 #pragma mark - fs.removeSession
@@ -279,7 +278,7 @@ RCT_EXPORT_METHOD(removeSession:(NSArray *)paths callback:(RCTResponseSenderBloc
 {
     NSError * error = nil;
     NSString * tmpPath = nil;
-
+    
     for(NSString * path in paths) {
         [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
         if(error != nil) {
@@ -288,7 +287,7 @@ RCT_EXPORT_METHOD(removeSession:(NSArray *)paths callback:(RCTResponseSenderBloc
         }
     }
     callback(@[[NSNull null]]);
-
+    
 }
 
 #pragma mark - fs.ls
@@ -304,12 +303,12 @@ RCT_EXPORT_METHOD(ls:(NSString *)path callback:(RCTResponseSenderBlock) callback
     }
     NSError * error = nil;
     NSArray * result = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
-
+    
     if(error == nil)
-        callback(@[[NSNull null], result == nil ? [NSNull null] :result ]);
+    callback(@[[NSNull null], result == nil ? [NSNull null] :result ]);
     else
-        callback(@[[error localizedDescription], [NSNull null]]);
-
+    callback(@[[error localizedDescription], [NSNull null]]);
+    
 }
 
 #pragma mark - fs.stat
@@ -323,19 +322,19 @@ RCT_EXPORT_METHOD(stat:(NSString *)target callback:(RCTResponseSenderBlock) call
             BOOL exist = nil;
             BOOL isDir = nil;
             NSError * error = nil;
-
+            
             exist = [fm fileExistsAtPath:path isDirectory:&isDir];
             if(exist == NO) {
                 callback(@[[NSString stringWithFormat:@"failed to stat path `%@` for it is not exist or it is not exist", path]]);
                 return ;
             }
             result = [RNFetchBlobFS stat:path error:&error];
-
+            
             if(error == nil)
-                callback(@[[NSNull null], result]);
+            callback(@[[NSNull null], result]);
             else
-                callback(@[[error localizedDescription], [NSNull null]]);
-
+            callback(@[[error localizedDescription], [NSNull null]]);
+            
         }
         else if(asset != nil)
         {
@@ -357,9 +356,9 @@ RCT_EXPORT_METHOD(lstat:(NSString *)path callback:(RCTResponseSenderBlock) callb
     NSFileManager* fm = [NSFileManager defaultManager];
     BOOL exist = nil;
     BOOL isDir = nil;
-
+    
     path = [RNFetchBlobFS getPathOfAsset:path];
-
+    
     exist = [fm fileExistsAtPath:path isDirectory:&isDir];
     if(exist == NO) {
         callback(@[[NSString stringWithFormat:@"failed to list path `%@` for it is not exist or it is not exist", path]]);
@@ -367,7 +366,7 @@ RCT_EXPORT_METHOD(lstat:(NSString *)path callback:(RCTResponseSenderBlock) callb
     }
     NSError * error = nil;
     NSArray * files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
-
+    
     NSMutableArray * res = [[NSMutableArray alloc] init];
     if(isDir == YES) {
         for(NSString * p in files) {
@@ -378,19 +377,19 @@ RCT_EXPORT_METHOD(lstat:(NSString *)path callback:(RCTResponseSenderBlock) callb
     else {
         [res addObject:[RNFetchBlobFS stat:path error:&error]];
     }
-
+    
     if(error == nil)
-        callback(@[[NSNull null], res == nil ? [NSNull null] :res ]);
+    callback(@[[NSNull null], res == nil ? [NSNull null] :res ]);
     else
-        callback(@[[error localizedDescription], [NSNull null]]);
-
+    callback(@[[error localizedDescription], [NSNull null]]);
+    
 }
 
 #pragma mark - fs.cp
 RCT_EXPORT_METHOD(cp:(NSString*)src toPath:(NSString *)dest callback:(RCTResponseSenderBlock) callback)
 {
-
-//    path = [RNFetchBlobFS getPathOfAsset:path];
+    
+    //    path = [RNFetchBlobFS getPathOfAsset:path];
     [RNFetchBlobFS getPathFromUri:src completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
         NSError * error = nil;
         if(path == nil)
@@ -401,14 +400,14 @@ RCT_EXPORT_METHOD(cp:(NSString*)src toPath:(NSString *)dest callback:(RCTRespons
         else
         {
             BOOL result = [[NSFileManager defaultManager] copyItemAtURL:[NSURL fileURLWithPath:path] toURL:[NSURL fileURLWithPath:dest] error:&error];
-
+            
             if(error == nil)
-                callback(@[[NSNull null], @YES]);
+            callback(@[[NSNull null], @YES]);
             else
-                callback(@[[error localizedDescription], @NO]);
+            callback(@[[error localizedDescription], @NO]);
         }
     }];
-
+    
 }
 
 
@@ -417,12 +416,12 @@ RCT_EXPORT_METHOD(mv:(NSString *)path toPath:(NSString *)dest callback:(RCTRespo
 {
     NSError * error = nil;
     BOOL result = [[NSFileManager defaultManager] moveItemAtURL:[NSURL fileURLWithPath:path] toURL:[NSURL fileURLWithPath:dest] error:&error];
-
+    
     if(error == nil)
-        callback(@[[NSNull null], @YES]);
+    callback(@[[NSNull null], @YES]);
     else
-        callback(@[[error localizedDescription], @NO]);
-
+    callback(@[[error localizedDescription], @NO]);
+    
 }
 
 #pragma mark - fs.mkdir
@@ -433,7 +432,7 @@ RCT_EXPORT_METHOD(mkdir:(NSString *)path callback:(RCTResponseSenderBlock) callb
         return;
     }
     else
-        [RNFetchBlobFS mkdir:path];
+    [RNFetchBlobFS mkdir:path];
     callback(@[[NSNull null]]);
 }
 
@@ -443,7 +442,7 @@ RCT_EXPORT_METHOD(readFile:(NSString *)path
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-
+    
     [RNFetchBlobFS readFile:path encoding:encoding onComplete:^(id content, NSString * err) {
         if(err != nil)
         {
@@ -466,11 +465,11 @@ RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding 
 {
     if(bufferSize == nil) {
         if([[encoding lowercaseString] isEqualToString:@"base64"])
-            bufferSize = 4095;
+        bufferSize = 4095;
         else
-            bufferSize = 4096;
+        bufferSize = 4096;
     }
-
+    
     dispatch_async(fsQueue, ^{
         [RNFetchBlobFS readStream:path encoding:encoding bufferSize:bufferSize tick:tick streamId:streamId bridgeRef:_bridge];
     });
@@ -479,7 +478,7 @@ RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding 
 #pragma mark - fs.getEnvionmentDirs
 RCT_EXPORT_METHOD(getEnvironmentDirs:(RCTResponseSenderBlock) callback)
 {
-
+    
     callback(@[
                [RNFetchBlobFS getDocumentDir],
                [RNFetchBlobFS getCacheDir],
@@ -490,13 +489,13 @@ RCT_EXPORT_METHOD(getEnvironmentDirs:(RCTResponseSenderBlock) callback)
 RCT_EXPORT_METHOD(cancelRequest:(NSString *)taskId callback:(RCTResponseSenderBlock)callback) {
     [RNFetchBlobNetwork cancelRequest:taskId];
     callback(@[[NSNull null], taskId]);
-
+    
 }
 
 #pragma mark - net.enableProgressReport
 RCT_EXPORT_METHOD(enableProgressReport:(NSString *)taskId interval:(nonnull NSNumber*)interval count:(nonnull NSNumber*)count)
 {
-
+    
     RNFetchBlobProgress * cfg = [[RNFetchBlobProgress alloc] initWithType:Download interval:interval count:count];
     [RNFetchBlobNetwork enableProgressReport:taskId config:cfg];
 }
@@ -523,10 +522,10 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
     UIViewController *rootCtrl = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
     documentController.delegate = self;
     if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
-      CGRect rect = CGRectMake(0.0, 0.0, 0.0, 0.0);
-      dispatch_sync(dispatch_get_main_queue(), ^{
-          [documentController  presentOptionsMenuFromRect:rect inView:rootCtrl.view animated:YES];
-      });
+        CGRect rect = CGRectMake(0.0, 0.0, 0.0, 0.0);
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            [documentController  presentOptionsMenuFromRect:rect inView:rootCtrl.view animated:YES];
+        });
         resolve(@[[NSNull null]]);
     } else {
         reject(@"RNFetchBlob could not open document", @"scheme is not supported", nil);
@@ -535,13 +534,7 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
 
 # pragma mark - open file with UIDocumentInteractionController and delegate
 
-- (void)openDocument:(NSString *)uri
-              scheme:(NSString *)scheme
-            resolver:(RCTPromiseResolveBlock)resolve
-            rejecter:(RCTPromiseRejectBlock)reject
-          fontFamily:(NSString *)fontFamily
-            fontSize:(float)fontSize
-           hexString:(NSString *)hexString
+RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString*)scheme resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject fontFamily:(NSString*)fontFamily fontSize:(CGFloat)fontSize hexString:(NSString*)hexString)
 {
     NSString * utf8uri = [uri stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSURL * url = [[NSURL alloc] initWithString:utf8uri];
@@ -571,8 +564,7 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
     
     documentController = [UIDocumentInteractionController interactionControllerWithURL:url];
     documentController.delegate = self;
-    documentController.name = name;
-
+    
     if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
         dispatch_sync(dispatch_get_main_queue(), ^{
             [documentController presentPreviewAnimated:YES];
@@ -583,14 +575,9 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
     }
 }
 
-RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString*)scheme resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject fontFamily:(NSString*)fontFamily fontSize:(float)fontSize hexString:(NSString*)hexString)
-{
-    [self openDocument:uri scheme:scheme resolver:resolver rejecter:rejecter fontFamily:fontFamily fontSize:fontSize hexString:hexString];
-}
-
 RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme name:(NSString*)name resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
-    [self openDocument:uri scheme:scheme resolver:resolver rejecter:rejecter fontFamily:nil fontSize:NULL hexString:nil];
+    [self openDocument:uri scheme:scheme resolver:resolve rejecter:reject fontFamily:nil fontSize:0.0f hexString:nil];
 }
 
 # pragma mark - exclude from backup key
@@ -605,7 +592,7 @@ RCT_EXPORT_METHOD(excludeFromBackupKey:(NSString *)url resolver:(RCTPromiseResol
     } else {
         reject(@"RNFetchBlob could not open document", [error description], nil);
     }
-
+    
 }
 
 
@@ -640,3 +627,5 @@ RCT_EXPORT_METHOD(openFileHandle:(NSString *)uri
 
 
 @end
+
+
