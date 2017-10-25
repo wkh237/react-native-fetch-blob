@@ -295,6 +295,7 @@ NSOperationQueue *taskQueue;
     }
     uploadTempFile = [tempDir URLByAppendingPathComponent:taskId];
     if (![req.HTTPBody writeToURL:uploadTempFile options:NSDataWritingAtomic error:error]) {
+        uploadTempFile = nil;
         return nil;
     }
     return [session uploadTaskWithRequest:req fromFile:uploadTempFile];
