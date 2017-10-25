@@ -92,6 +92,7 @@
 				A15C300F1CD25C330074CB35 /* Products */,
 				8BD9ABDFAF76406291A798F2 /* Libraries */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
 		};
 		A15C300F1CD25C330074CB35 /* Products */ = {

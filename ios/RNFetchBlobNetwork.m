@@ -83,6 +83,8 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     ResponseFormat responseFormat;
     BOOL * followRedirect;
     BOOL backgroundTask;
+    BOOL uploadTask;
+    NSURL * uploadTempFile;
 }
 
 @end
@@ -154,6 +156,17 @@ NSOperationQueue *taskQueue;
     return ret;
 }
 
+- (void) removeUploadTempFile {
+    if (!uploadTempFile) {
+        return;
+    }
+
+    NSError *error;
+    if (![[NSFileManager defaultManager] removeItemAtURL:uploadTempFile error:&error]) {
+        NSLog(@"Failed to remove upload temporary file: %@", error.localizedDescription);
+    }
+}
+
 // send HTTP request
 - (void) sendRequest:(__weak NSDictionary  * _Nullable )options
        contentLength:(long) contentLength
@@ -171,6 +184,7 @@ NSOperationQueue *taskQueue;
     self.options = options;
     
     backgroundTask = [options valueForKey:@"IOSBackgroundTask"] == nil ? NO : [[options valueForKey:@"IOSBackgroundTask"] boolValue];
+    uploadTask = [options valueForKey:@"IOSUploadTask"] == nil ? NO : [[options valueForKey:@"IOSUploadTask"] boolValue];
     followRedirect = [options valueForKey:@"followRedirect"] == nil ? YES : [[options valueForKey:@"followRedirect"] boolValue];
     isIncrement = [options valueForKey:@"increment"] == nil ? NO : [[options valueForKey:@"increment"] boolValue];
     redirects = [[NSMutableArray alloc] init];
@@ -244,8 +258,15 @@ NSOperationQueue *taskQueue;
     }
 
     __block NSURLSessionDataTask * task;
-    if (path && req.HTTPMethod == @"POST") {
-        task = [session uploadTaskWithRequest:req fromFile:path];
+    if (path && [req.HTTPMethod isEqualToString:@"POST"]) {
+        task = [session uploadTaskWithRequest:req fromFile:[NSURL fileURLWithPath:path]];
+    } else if (uploadTask && [req.HTTPBody length] > 0) {
+        NSError *error;
+        task = [self uploadTaskWithBodyOfRequest:req session:session inBackground:backgroundTask error:&error];
+        if (!task) {
+            callback(@[error.localizedDescription]);
+            return;
+        }
     } else {
         task = [session dataTaskWithRequest:req];
     }
@@ -258,6 +279,26 @@ NSOperationQueue *taskQueue;
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
     __block UIApplication * app = [UIApplication sharedApplication];
 
+}
+
+- (NSURLSessionUploadTask *) uploadTaskWithBodyOfRequest:(NSURLRequest *)req session:(NSURLSession *)session inBackground:(BOOL)background error:(NSError **)error
+{
+    if (!background) {
+        return [session uploadTaskWithRequest:req fromData:req.HTTPBody];
+    }
+
+    NSString *tempPath = [RNFetchBlobFS getTempPath];
+    NSURL *tempRootDir = [NSURL fileURLWithPath:tempPath isDirectory:YES];
+    NSURL *tempDir = [tempRootDir URLByAppendingPathComponent:[[NSProcessInfo processInfo] globallyUniqueString]];
+    if (![[NSFileManager defaultManager] createDirectoryAtURL:tempDir withIntermediateDirectories:YES attributes:nil error:error]) {
+        return nil;
+    }
+    uploadTempFile = [tempDir URLByAppendingPathComponent:taskId];
+    if (![req.HTTPBody writeToURL:uploadTempFile options:NSDataWritingAtomic error:error]) {
+        uploadTempFile = nil;
+        return nil;
+    }
+    return [session uploadTaskWithRequest:req fromFile:uploadTempFile];
 }
 
 // #115 Invoke fetch.expire event on those expired requests so that the expired event can be handled
@@ -545,6 +586,7 @@ NSOperationQueue *taskQueue;
 
 
     callback(@[ errMsg, rnfbRespType, respStr]);
+    [self removeUploadTempFile];
 
     @synchronized(taskTable, uploadProgressTable, progressTable)
     {
