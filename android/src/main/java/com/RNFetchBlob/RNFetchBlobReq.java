@@ -323,7 +323,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
                     try {
-                        Response originalResponse = chain.proceed(req);
+                        Response originalResponse = chain.proceed(chain.request());
                         ResponseBody extended;
                         switch (responseType) {
                             case KeepInMemory:
