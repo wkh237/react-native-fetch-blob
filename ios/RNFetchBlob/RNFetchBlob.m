@@ -11,7 +11,6 @@
 #import "RNFetchBlobReqBuilder.h"
 #import "RNFetchBlobProgress.h"
 
-
 __strong RCTBridge * bridgeRef;
 dispatch_queue_t commonTaskQueue;
 dispatch_queue_t fsQueue;
@@ -32,7 +31,7 @@ dispatch_queue_t fsQueue;
 
 - (dispatch_queue_t) methodQueue {
     if(commonTaskQueue == nil) {
-         commonTaskQueue = dispatch_queue_create("RNFetchBlob.queue", DISPATCH_QUEUE_SERIAL);
+        commonTaskQueue = dispatch_queue_create("RNFetchBlob.queue", DISPATCH_QUEUE_SERIAL);
     }
     return commonTaskQueue;
 }
@@ -160,7 +159,7 @@ RCT_EXPORT_METHOD(createFile:(NSString *)path data:(NSString *)data encoding:(NS
     
     BOOL success = [fm createFileAtPath:path contents:fileContent attributes:NULL];
     if(success == YES) {
-     callback(@[[NSNull null]]);
+        callback(@[[NSNull null]]);
     } else {
         callback(@[[NSString stringWithFormat:@"failed to create new file at path %@ please ensure the folder exists"]]);
     }
@@ -542,37 +541,10 @@ RCT_EXPORT_METHOD(previewDocument:(NSString*)uri scheme:(NSString *)scheme resol
 
 # pragma mark - open file with UIDocumentInteractionController and delegate
 
-RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString*)scheme resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject fontFamily:(NSString*)fontFamily fontSize:(CGFloat)fontSize hexString:(NSString*)hexString barTintColor:(NSString*)barTintColor)
+RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString*)scheme resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
     NSString * utf8uri = [uri stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSURL * url = [[NSURL alloc] initWithString:utf8uri];
-    // NSURL * url = [[NSURL alloc] initWithString:uri];
-    if (fontFamily) {
-        NSMutableDictionary *titleBarAttributes = [NSMutableDictionary dictionaryWithDictionary: [[UINavigationBar appearance] titleTextAttributes]];
-        [titleBarAttributes setValue:[UIFont fontWithName:fontFamily size:fontSize] forKey:NSFontAttributeName];
-        unsigned rgbValue = 0;
-        NSScanner *scanner = [NSScanner scannerWithString:hexString];
-        [scanner setScanLocation:1]; // bypass '#' character
-        [scanner scanHexInt:&rgbValue];
-        [titleBarAttributes setValue:[UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 \
-                                                     green:((float)((rgbValue & 0x00FF00) >>  8))/255.0 \
-                                                      blue:((float)((rgbValue & 0x0000FF) >>  0))/255.0 \
-                                                     alpha:1.0] forKey:NSForegroundColorAttributeName];
-        [[UINavigationBar appearance] setTitleTextAttributes:titleBarAttributes];
-        
-        NSMutableDictionary *attributes = [NSMutableDictionary dictionaryWithDictionary: [[UIBarButtonItem appearance] titleTextAttributesForState:UIControlStateNormal]];
-        [attributes setValue:[UIFont fontWithName:fontFamily size:fontSize] forKey:NSFontAttributeName];
-        [[UIBarButtonItem appearance] setTitleTextAttributes:attributes forState:UIControlStateNormal];
-        [[UIBarButtonItem appearance] setTintColor: [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 \
-                                                                    green:((float)((rgbValue & 0x00FF00) >>  8))/255.0 \
-                                                                     blue:((float)((rgbValue & 0x0000FF) >>  0))/255.0 \
-                                                                    alpha:1.0]];
-        [[UINavigationBar appearance] setBarTintColor: [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 \
-                                                                       green:((float)((rgbValue & 0x00FF00) >>  8))/255.0 \
-                                                                        blue:((float)((rgbValue & 0x0000FF) >>  0))/255.0 \
-                                                                       alpha:1.0]]];
-    }
-    
     documentController = [UIDocumentInteractionController interactionControllerWithURL:url];
     documentController.delegate = self;
     
@@ -586,9 +558,56 @@ RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString*)scheme resolver:
     }
 }
 
-RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme name:(NSString*)name resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(openDocumentWithFont:(NSString*)uri fontFamily:(NSString*)fontFamily fontSize:(CGFloat)fontSize hexString:(NSString*)hexString backgroundColor:(NSString*)backgroundColor scheme:(NSString*)scheme resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
-    [self openDocument:uri scheme:scheme resolver:resolve rejecter:reject fontFamily:nil fontSize:0.0f hexString:nil, barTintColor:nil];
+    NSString * utf8uri = [uri stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    NSURL * url = [[NSURL alloc] initWithString:utf8uri];
+    // NSURL * url = [[NSURL alloc] initWithString:uri];
+    unsigned rgbValue = 0;
+    NSScanner *scanner = [NSScanner scannerWithString:hexString];
+    if (fontFamily) {
+        NSMutableDictionary *titleBarAttributes = [NSMutableDictionary dictionaryWithDictionary: [[UINavigationBar appearance] titleTextAttributes]];
+        [titleBarAttributes setValue:[UIFont fontWithName:fontFamily size:fontSize] forKey:NSFontAttributeName];
+        [scanner setScanLocation:1]; // bypass '#' character
+        [scanner scanHexInt:&rgbValue];
+        
+        [titleBarAttributes setValue:[UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 \
+                                                     green:((float)((rgbValue & 0x00FF00) >>  8))/255.0 \
+                                                      blue:((float)((rgbValue & 0x0000FF) >>  0))/255.0 \
+                                                     alpha:1.0] forKey:NSForegroundColorAttributeName];
+        [[UINavigationBar appearance] setTitleTextAttributes:titleBarAttributes];
+        
+        NSMutableDictionary *attributes = [NSMutableDictionary dictionaryWithDictionary: [[UIBarButtonItem appearance] titleTextAttributesForState:UIControlStateNormal]];
+        [attributes setValue:[UIFont fontWithName:fontFamily size:fontSize] forKey:NSFontAttributeName];
+        [[UIBarButtonItem appearance] setTitleTextAttributes:attributes forState:UIControlStateNormal];
+        [[UIBarButtonItem appearance] setTintColor: [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 \
+                                                                    green:((float)((rgbValue & 0x00FF00) >>  8))/255.0 \
+                                                                     blue:((float)((rgbValue & 0x0000FF) >>  0))/255.0 \
+                                                                    alpha:1.0]];
+    }
+    
+    if (backgroundColor) {
+        scanner = [NSScanner scannerWithString:backgroundColor];
+        [scanner setScanLocation:1];
+        [scanner scanHexInt:&rgbValue];
+        
+        [[UINavigationBar appearance] setBackgroundColor:[UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 \
+                                                                         green:((float)((rgbValue & 0x00FF00) >>  8))/255.0 \
+                                                                          blue:((float)((rgbValue & 0x0000FF) >>  0))/255.0 \
+                                                                         alpha:1.0]];
+    }
+    
+    documentController = [UIDocumentInteractionController interactionControllerWithURL:url];
+    documentController.delegate = self;
+    
+    if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            [documentController presentPreviewAnimated:YES];
+        });
+        resolve(@[[NSNull null]]);
+    } else {
+        reject(@"RNFetchBlob could not open document", @"scheme is not supported", nil);
+    }
 }
 
 # pragma mark - exclude from backup key

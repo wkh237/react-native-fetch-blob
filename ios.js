@@ -29,23 +29,22 @@ function previewDocument(path: string, scheme: string) {
  * Preview a file using UIDocumentInteractionController
  * @param  {string]} path Path of the file to be open.
  * @param  {string} scheme URI scheme that needs to support, optional
- * @param  {string} name The name of the target file, optional
  * @return {Promise}
  */
-function openDocument(path: string, scheme: string, name: string) {
+function openDocument(path: string, scheme: string) {
   if (Platform.OS === 'ios') {
-    return RNFetchBlob.openDocument('file://' + path, scheme, name)
+    return RNFetchBlob.openDocument('file://' + path, scheme)
   }
 }
 
 /**
  * Preview a file using UIDocumentInteractionController
  * @param  {string} path Path of the file to be open.
- * @param  {string} scheme URI scheme that needs to support, optional
  * @param  {string} fontFamily The name of the font family
  * @param  {string} hexString The color in hex format
  * @param  {number} fontSize Size of the font
- * @param  {string} barTintColor The color of the navigation bar in hex format
+ * @param  {string} backgroundColor The color of the navigation bar in hex format
+ * @param  {string} scheme URI scheme that needs to support, optional
  * @return {Promise}
  */
 function openDocumentWithFont(
@@ -53,16 +52,16 @@ function openDocumentWithFont(
   fontFamily: string,
   fontSize: number,
   hexString: string,
-  barTintColor: string,
+  backgroundColor: string,
   scheme: string
 ) {
   if (Platform.OS === 'ios') {
-    return RNFetchBlob.openDocument(
+    return RNFetchBlob.openDocumentWithFont(
       'file://' + path,
       fontFamily,
       fontSize,
       hexString,
-      barTintColor,
+      backgroundColor,
       scheme
     )
   }
@@ -80,6 +79,7 @@ function excludeFromBackupKey(url: string) {
 
 export default {
   openDocument,
+  openDocumentWithFont,
   previewDocument,
   excludeFromBackupKey
 }
