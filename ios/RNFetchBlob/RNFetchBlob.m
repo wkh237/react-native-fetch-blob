@@ -545,9 +545,12 @@ RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme resolver
 
     if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
         dispatch_sync(dispatch_get_main_queue(), ^{
-            [documentController presentPreviewAnimated:YES];
+            if([documentController presentPreviewAnimated:YES]) {
+                resolve(@[[NSNull null]]);
+            } else {
+                reject(@"RNFetchBlob could not open document", @"document is not supported", nil);
+            }
         });
-        resolve(@[[NSNull null]]);
     } else {
         reject(@"RNFetchBlob could not open document", @"scheme is not supported", nil);
     }
