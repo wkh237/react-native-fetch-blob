@@ -229,7 +229,13 @@ function fetch(...args:any):Promise {
   }
 
   // from remote HTTP(S)
+  let promiseResolve;
+  let promiseReject;
+
   let promise = new Promise((resolve, reject) => {
+    promiseResolve = resolve;
+    promiseReject = reject;
+    
     let nativeMethodName = Array.isArray(body) ? 'fetchBlobForm' : 'fetchBlob'
 
     // on progress event listener
@@ -370,6 +376,7 @@ function fetch(...args:any):Promise {
     subscriptionUpload.remove()
     stateEvent.remove()
     RNFetchBlob.cancelRequest(taskId, fn)
+    promiseReject(new Error("canceled"))
   }
   promise.taskId = taskId
 
