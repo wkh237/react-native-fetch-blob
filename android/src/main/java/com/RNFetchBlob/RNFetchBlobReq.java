@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.util.Base64;
 
 import com.RNFetchBlob.Response.RNFetchBlobDefaultResp;
