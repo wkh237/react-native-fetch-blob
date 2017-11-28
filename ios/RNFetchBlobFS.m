@@ -34,7 +34,7 @@ long openedHandleCount = 0;
 ////////////////////////////////////////
 @interface RNFetchBlobFS() {
     UIDocumentInteractionController * docCtrl;
-    
+
 }
 @end
 @implementation RNFetchBlobFS
@@ -261,11 +261,11 @@ long openedHandleCount = 0;
                     [asciiArray addObject:[NSNumber numberWithChar:bytePtr[i]]];
                 }
             }
-            
+
             NSDictionary * payload = @{ @"event": FS_EVENT_DATA,  @"detail" : asciiArray };
             [event sendDeviceEventWithName:streamId body:payload];
         }
-        
+
     }
     @catch (NSException * ex)
     {
@@ -463,9 +463,9 @@ long openedHandleCount = 0;
                 return;
             }
             fileContent = [NSData dataWithContentsOfFile:path];
-            
+
         }
-        
+
         if(encoding != nil)
         {
             if([[encoding lowercaseString] isEqualToString:@"utf8"])
@@ -492,7 +492,7 @@ long openedHandleCount = 0;
         {
             onComplete(fileContent, nil);
         }
-        
+
     }];
 }
 
@@ -575,11 +575,11 @@ long openedHandleCount = 0;
 
 // Write file chunk into an opened stream
 - (void)writeEncodeChunk:(NSString *) chunk {
-    NSMutableData * decodedData = [NSData alloc];
+    NSData * decodedData = nil;
     if([[self.encoding lowercaseString] isEqualToString:@"base64"]) {
-        decodedData = [[NSData alloc] initWithBase64EncodedData:chunk options:0];
+        decodedData = [[NSData alloc] initWithBase64EncodedString:chunk options: NSDataBase64DecodingIgnoreUnknownCharacters];
     }
-    if([[self.encoding lowercaseString] isEqualToString:@"utf8"]) {
+    else if([[self.encoding lowercaseString] isEqualToString:@"utf8"]) {
         decodedData = [chunk dataUsingEncoding:NSUTF8StringEncoding];
     }
     else if([[self.encoding lowercaseString] isEqualToString:@"ascii"]) {
@@ -775,7 +775,7 @@ long openedHandleCount = 0;
     if (dictionary) {
         NSNumber *fileSystemSizeInBytes = [dictionary objectForKey: NSFileSystemSize];
         NSNumber *freeFileSystemSizeInBytes = [dictionary objectForKey:NSFileSystemFreeSize];
-        
+
         callback(@[[NSNull null], @{
                   @"free" : freeFileSystemSizeInBytes,
                   @"total" : fileSystemSizeInBytes,
@@ -803,60 +803,4 @@ long openedHandleCount = 0;
     return;
 }
 
-+ (void) openFileHandle:(NSString * )uri
-                   mode:(NSString *)mode
-               resolver:(RCTPromiseResolveBlock)resolve
-               rejecter:(RCTPromiseRejectBlock)reject
-{
-    openedHandleCount ++;
-    RNFetchBlobFileHandle * handle;
-    handle = [[RNFetchBlobFileHandle alloc] initWithPath:uri mode:mode];
-    
-    if(fileHandles == nil)
-    {
-        fileHandles = [[NSMutableDictionary alloc] init];
-        [fileHandles setObject:handle forKey:[NSNumber numberWithLong:openedHandleCount]];
-    }
-    resolve([NSNumber numberWithLong:openedHandleCount]);
-}
-
-+ (void) writeFileHandle:(NSNumber *)hid
-                encoding:(NSString *)encoding
-                    data:(NSString *)data
-                offset:(NSNumber *)offset
-                resolver:(RCTPromiseResolveBlock)resolve
-                rejecter:(RCTPromiseRejectBlock)reject
-{
-    if(fileHandles == nil)
-        return;
-    NSNumber * handleId = [NSNumber numberWithLong:[hid longValue]];
-    RNFetchBlobFileHandle * handle = [fileHandles objectForKey:handleId];
-    [handle write:encoding data:data offset:offset onComplete:^(NSNumber *written) {
-        resolve([NSNull null]);
-    }];
-    
-}
-
-+ (void) readFileHandle:(NSNumber *)hid
-                encoding:(NSString *)encoding
-                offset:(NSNumber *)offset
-                length:(NSNumber *)length
-               resolver:(RCTPromiseResolveBlock)resolve
-               rejecter:(RCTPromiseRejectBlock)reject
-{
-    if(fileHandles == nil)
-        return;
-    NSNumber * handleId = [NSNumber numberWithLong:[hid longValue]];
-    [fileHandles objectForKey:handleId];
-    RNFetchBlobFileHandle * handle = [fileHandles objectForKey:handleId];
-    id result = [handle read:encoding offset:offset length:length];
-    if(![encoding isEqualToString:@"ascii"])
-    {
-        resolve((NSString *) result);
-    }
-    else
-    {
-        resolve((NSArray *) result);
-    }
-}
 @end

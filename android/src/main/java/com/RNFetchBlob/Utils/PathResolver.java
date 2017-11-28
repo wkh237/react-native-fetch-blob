@@ -64,8 +64,16 @@ public class PathResolver {
 
                 return getDataColumn(context, contentUri, selection, selectionArgs);
             }
+            else if ("content".equalsIgnoreCase(uri.getScheme())) {
+
+                // Return the remote address
+                if (isGooglePhotosUri(uri))
+                    return uri.getLastPathSegment();
+
+                return getDataColumn(context, uri, null, null);
+            }
             // Other Providers
-            else {
+            else{
                 try {
                     InputStream attachment = context.getContentResolver().openInputStream(uri);
                     if (attachment != null) {
@@ -131,6 +139,7 @@ public class PathResolver {
                                        String[] selectionArgs) {
 
         Cursor cursor = null;
+        String result = null;
         final String column = "_data";
         final String[] projection = {
                 column
@@ -141,13 +150,18 @@ public class PathResolver {
                     null);
             if (cursor != null && cursor.moveToFirst()) {
                 final int index = cursor.getColumnIndexOrThrow(column);
-                return cursor.getString(index);
+                result = cursor.getString(index);
             }
-        } finally {
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
+        finally {
             if (cursor != null)
                 cursor.close();
         }
-        return null;
+        return result;
     }
 
 
