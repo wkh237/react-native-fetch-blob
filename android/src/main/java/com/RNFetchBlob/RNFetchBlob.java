@@ -151,7 +151,6 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             };
             RCTContext.addLifecycleEventListener(listener);
         } catch (Exception ex) {
-            ex.printStackTrace();
             promise.reject(ex.getLocalizedMessage());
         }
     }
