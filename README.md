@@ -5,6 +5,11 @@
 A project committed to making file access and data transfer easier and more efficient for React Native developers.
 > For Firebase Storage solution, please upgrade to the latest version for the best compatibility.
 
+## RNFB MAINTAINER GONE MISSING (Help Wanted)
+
+wkh237's last Github activity was in September 2017. Since there is a lot of work on issues and PRs that is left, is there anybody who else who could provide a maintained fork in the meantime? Create an issue and address me (@lll000111) and I'll add a link to your maintained repo fork right here.
+
+
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
 - File API supports regular files, Asset files, and CameraRoll files
