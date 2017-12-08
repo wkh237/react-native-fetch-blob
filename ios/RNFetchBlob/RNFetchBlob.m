@@ -298,7 +298,7 @@ RCT_EXPORT_METHOD(ls:(NSString *)path callback:(RCTResponseSenderBlock) callback
     BOOL isDir = nil;
     exist = [fm fileExistsAtPath:path isDirectory:&isDir];
     if(exist == NO || isDir == NO) {
-        callback(@[[NSString stringWithFormat:@"failed to list path `%@` for it is not exist or it is not a folder", path]]);
+        callback(@[[NSString stringWithFormat:@"failed to list path `%@` because it does not exist or it is not a folder", path]]);
         return ;
     }
     NSError * error = nil;
