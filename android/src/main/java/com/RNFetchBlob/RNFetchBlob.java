@@ -105,8 +105,8 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     @ReactMethod
     public void actionViewIntent(String path, String mime, final Promise promise) {
         try {
-            Uri uriForFile = FileProvider.getUriForFile(getCurrentActivity(), "com.RNFetchBlob.provider",
-                    new File(path));
+            Uri uriForFile = FileProvider.getUriForFile(getCurrentActivity(),
+                    this.getReactApplicationContext().getPackageName() + ".provider", new File(path));
 
             if (Build.VERSION.SDK_INT >= 24) {
                 // Create the intent with data and type
