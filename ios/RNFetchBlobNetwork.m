@@ -105,29 +105,35 @@ NSOperationQueue *taskQueue;
 // constructor
 - (id)init {
     self = [super init];
-    if(taskQueue == nil) {
-        taskQueue = [[NSOperationQueue alloc] init];
-        taskQueue.maxConcurrentOperationCount = 10;
+    @synchronized ([RNFetchBlobNetwork class]) {
+        if (taskQueue == nil) {
+            taskQueue = [[NSOperationQueue alloc] init];
+            taskQueue.maxConcurrentOperationCount = 10;
+        }
     }
     return self;
 }
 
 + (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config
 {
-    if(progressTable == nil)
-    {
-        progressTable = [[NSMutableDictionary alloc] init];
+    @synchronized ([RNFetchBlobNetwork class]) {
+        if(progressTable == nil)
+        {
+            progressTable = [[NSMutableDictionary alloc] init];
+        }
+        [progressTable setValue:config forKey:taskId];
     }
-    [progressTable setValue:config forKey:taskId];
 }
 
 + (void) enableUploadProgress:(NSString *) taskId config:(RNFetchBlobProgress *)config
 {
-    if(uploadProgressTable == nil)
-    {
-        uploadProgressTable = [[NSMutableDictionary alloc] init];
+    @synchronized ([RNFetchBlobNetwork class]) {
+        if(uploadProgressTable == nil)
+        {
+            uploadProgressTable = [[NSMutableDictionary alloc] init];
+        }
+        [uploadProgressTable setValue:config forKey:taskId];
     }
-    [uploadProgressTable setValue:config forKey:taskId];
 }
 
 // removing case from headers
@@ -241,8 +247,10 @@ NSOperationQueue *taskQueue;
     }
 
     __block NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
-    [taskTable setObject:task forKey:taskId];
-    [task resume];
+    @synchronized ([RNFetchBlobNetwork class]){
+        [taskTable setObject:task forKey:taskId];
+        [task resume];
+    }
 
     // network status indicator
     if([[options objectForKey:CONFIG_INDICATOR] boolValue] == YES)
@@ -254,21 +262,22 @@ NSOperationQueue *taskQueue;
 // #115 Invoke fetch.expire event on those expired requests so that the expired event can be handled
 + (void) emitExpiredTasks
 {
-    NSEnumerator * emu =  [expirationTable keyEnumerator];
-    NSString * key;
+    @synchronized ([RNFetchBlobNetwork class]){
+        NSEnumerator * emu =  [expirationTable keyEnumerator];
+        NSString * key;
 
-    while((key = [emu nextObject]))
-    {
-        RCTBridge * bridge = [RNFetchBlob getRCTBridge];
-        NSData * args = @{ @"taskId": key };
-        [bridge.eventDispatcher sendDeviceEventWithName:EVENT_EXPIRE body:args];
+        while((key = [emu nextObject]))
+        {
+            RCTBridge * bridge = [RNFetchBlob getRCTBridge];
+            NSData * args = @{ @"taskId": key };
+            [bridge.eventDispatcher sendDeviceEventWithName:EVENT_EXPIRE body:args];
 
+        }
+
+        // clear expired task entries
+        [expirationTable removeAllObjects];
+        expirationTable = [[NSMapTable alloc] init];
     }
-
-    // clear expired task entries
-    [expirationTable removeAllObjects];
-    expirationTable = [[NSMapTable alloc] init];
-
 }
 
 ////////////////////////////////////////
@@ -448,10 +457,18 @@ NSOperationQueue *taskQueue;
     {
         [writeStream write:[data bytes] maxLength:[data length]];
     }
-    RNFetchBlobProgress * pconfig = [progressTable valueForKey:taskId];
+    
     if(expectedBytes == 0)
         return;
+    
+    RNFetchBlobProgress * pconfig;
+    
+    @synchronized ([RNFetchBlobNetwork class]){
+        pconfig = [progressTable valueForKey:taskId];
+    }
+        
     NSNumber * now =[NSNumber numberWithFloat:((float)receivedBytes/(float)expectedBytes)];
+    
     if(pconfig != nil && [pconfig shouldReport:now])
     {
         [self.bridge.eventDispatcher
@@ -461,11 +478,9 @@ NSOperationQueue *taskQueue;
                 @"written": [NSString stringWithFormat:@"%d", receivedBytes],
                 @"total": [NSString stringWithFormat:@"%d", expectedBytes],
                 @"chunk": chunkString
-            }
+                }
          ];
     }
-    received = nil;
-
 }
 
 - (void) URLSession:(NSURLSession *)session didBecomeInvalidWithError:(nullable NSError *)error
@@ -537,7 +552,7 @@ NSOperationQueue *taskQueue;
 
     callback(@[ errMsg, rnfbRespType, respStr]);
 
-    @synchronized(taskTable, uploadProgressTable, progressTable)
+    @synchronized ([RNFetchBlobNetwork class])
     {
         if([taskTable objectForKey:taskId] == nil)
             NSLog(@"object released by ARC.");
@@ -556,17 +571,23 @@ NSOperationQueue *taskQueue;
 // upload progress handler
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didSendBodyData:(int64_t)bytesSent totalBytesSent:(int64_t)totalBytesWritten totalBytesExpectedToSend:(int64_t)totalBytesExpectedToWrite
 {
-    RNFetchBlobProgress * pconfig = [uploadProgressTable valueForKey:taskId];
     if(totalBytesExpectedToWrite == 0)
         return;
+    
+    RNFetchBlobProgress * pconfig;
+    
+    @synchronized ([RNFetchBlobNetwork class]) {
+        pconfig = [uploadProgressTable valueForKey:taskId];
+    }
+    
     NSNumber * now = [NSNumber numberWithFloat:((float)totalBytesWritten/(float)totalBytesExpectedToWrite)];
     if(pconfig != nil && [pconfig shouldReport:now]) {
         [self.bridge.eventDispatcher
          sendDeviceEventWithName:EVENT_PROGRESS_UPLOAD
          body:@{
                 @"taskId": taskId,
-                @"written": [NSString stringWithFormat:@"%d", totalBytesWritten],
-                @"total": [NSString stringWithFormat:@"%d", totalBytesExpectedToWrite]
+                @"written": [NSString stringWithFormat:@"%ld", (long) totalBytesWritten],
+                @"total": [NSString stringWithFormat:@"%ld", (long) totalBytesExpectedToWrite]
                 }
          ];
     }
@@ -574,7 +595,12 @@ NSOperationQueue *taskQueue;
 
 + (void) cancelRequest:(NSString *)taskId
 {
-    NSURLSessionDataTask * task = [taskTable objectForKey:taskId];
+    NSURLSessionDataTask * task;
+    
+    @synchronized ([RNFetchBlobNetwork class]) {
+        task = [taskTable objectForKey:taskId];
+    }
+    
     if(task != nil && task.state == NSURLSessionTaskStateRunning)
         [task cancel];
 }
