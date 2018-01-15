@@ -38,7 +38,7 @@ dispatch_queue_t fsQueue;
 
 + (RCTBridge *)getRCTBridge
 {
-    RCTRootView * rootView = [[UIApplication sharedApplication] keyWindow].rootViewController.view;
+    RCTRootView * rootView = (RCTRootView*) [[UIApplication sharedApplication] keyWindow].rootViewController.view;
     return rootView.bridge;
 }
 
@@ -128,7 +128,7 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
         // send HTTP request
         else
         {
-            __block RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
+            RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
             [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
         }
     }];

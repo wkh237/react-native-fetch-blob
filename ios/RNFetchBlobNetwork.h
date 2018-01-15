@@ -20,39 +20,31 @@
 #define RNFetchBlobNetwork_h
 
 
-
 typedef void(^CompletionHander)(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error);
 typedef void(^DataTaskCompletionHander) (NSData * _Nullable resp, NSURLResponse * _Nullable response, NSError * _Nullable error);
 
 @interface RNFetchBlobNetwork : NSObject  <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate>
 
 @property (nullable, nonatomic) NSString * taskId;
-@property (nonatomic) int expectedBytes;
-@property (nonatomic) int receivedBytes;
+@property (nonatomic) long long expectedBytes;
+@property (nonatomic) long long receivedBytes;
 @property (nonatomic) BOOL isServerPush;
 @property (nullable, nonatomic) NSMutableData * respData;
-@property (strong, nonatomic) RCTResponseSenderBlock callback;
+@property (nullable, strong, nonatomic) RCTResponseSenderBlock callback;
 @property (nullable, nonatomic) RCTBridge * bridge;
 @property (nullable, nonatomic) NSDictionary * options;
 @property (nullable, nonatomic) RNFetchBlobFS * fileStream;
-@property (strong, nonatomic) CompletionHander fileTaskCompletionHandler;
-@property (strong, nonatomic) DataTaskCompletionHander dataTaskCompletionHandler;
 @property (nullable, nonatomic) NSError * error;
 
 
 + (NSMutableDictionary  * _Nullable ) normalizeHeaders:(NSDictionary * _Nullable)headers;
-+ (void) cancelRequest:(NSString *)taskId;
-+ (void) enableProgressReport:(NSString *) taskId;
-+ (void) enableUploadProgress:(NSString *) taskId;
++ (void) cancelRequest:(NSString * _Nonnull)taskId;
 + (void) emitExpiredTasks;
++ (void) enableProgressReport:(NSString * _Nonnull) taskId config:(RNFetchBlobProgress * _Nullable)config;
++ (void) enableUploadProgress:(NSString * _Nonnull) taskId config:(RNFetchBlobProgress * _Nullable)config;
 
 - (nullable id) init;
-- (void) sendRequest;
 - (void) sendRequest:(NSDictionary  * _Nullable )options contentLength:(long)contentLength bridge:(RCTBridge * _Nullable)bridgeRef taskId:(NSString * _Nullable)taskId withRequest:(NSURLRequest * _Nullable)req callback:(_Nullable RCTResponseSenderBlock) callback;
-+ (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config;
-+ (void) enableUploadProgress:(NSString *) taskId config:(RNFetchBlobProgress *)config;
-
-
 
 @end
 

@@ -70,18 +70,17 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
 
 @interface RNFetchBlobNetwork ()
 {
-    BOOL * respFile;
+    BOOL respFile;
     BOOL isNewPart;
-    BOOL * isIncrement;
+    BOOL isIncrement;
     NSMutableData * partBuffer;
     NSString * destPath;
     NSOutputStream * writeStream;
     long bodyLength;
-    NSMutableDictionary * respInfo;
     NSInteger respStatus;
     NSMutableArray * redirects;
     ResponseFormat responseFormat;
-    BOOL * followRedirect;
+    BOOL followRedirect;
     BOOL backgroundTask;
 }
 
@@ -97,8 +96,6 @@ NSOperationQueue *taskQueue;
 @synthesize callback;
 @synthesize bridge;
 @synthesize options;
-@synthesize fileTaskCompletionHandler;
-@synthesize dataTaskCompletionHandler;
 @synthesize error;
 
 
@@ -121,7 +118,7 @@ NSOperationQueue *taskQueue;
         {
             progressTable = [[NSMutableDictionary alloc] init];
         }
-        [progressTable setValue:config forKey:taskId];
+        if (config) [progressTable setValue:config forKey:taskId];
     }
 }
 
@@ -132,7 +129,7 @@ NSOperationQueue *taskQueue;
         {
             uploadProgressTable = [[NSMutableDictionary alloc] init];
         }
-        [uploadProgressTable setValue:config forKey:taskId];
+        if (config) [uploadProgressTable setValue:config forKey:taskId];
     }
 }
 
@@ -193,9 +190,8 @@ NSOperationQueue *taskQueue;
         responseFormat = AUTO;
 
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
-    NSString * ext = [self.options valueForKey:CONFIG_FILE_EXT];
 	NSString * key = [self.options valueForKey:CONFIG_KEY];
-    __block NSURLSession * session;
+    NSURLSession * session;
 
     bodyLength = contentLength;
 
@@ -246,16 +242,15 @@ NSOperationQueue *taskQueue;
         respFile = NO;
     }
 
-    __block NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
+    NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
     @synchronized ([RNFetchBlobNetwork class]){
         [taskTable setObject:task forKey:taskId];
-        [task resume];
     }
+    [task resume];
 
     // network status indicator
     if([[options objectForKey:CONFIG_INDICATOR] boolValue] == YES)
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
-    __block UIApplication * app = [UIApplication sharedApplication];
 
 }
 
@@ -269,7 +264,7 @@ NSOperationQueue *taskQueue;
         while((key = [emu nextObject]))
         {
             RCTBridge * bridge = [RNFetchBlob getRCTBridge];
-            NSData * args = @{ @"taskId": key };
+            id args = @{ @"taskId": key };
             [bridge.eventDispatcher sendDeviceEventWithName:EVENT_EXPIRE body:args];
 
         }
@@ -352,23 +347,14 @@ NSOperationQueue *taskQueue;
             {
                 respType = @"blob";
                 // for XMLHttpRequest, switch response data handling strategy automatically
-                if([options valueForKey:@"auto"] == YES) {
+                if([options valueForKey:@"auto"]) {
                     respFile = YES;
                     destPath = [RNFetchBlobFS getTempPath:taskId withExtension:@""];
                 }
             }
-        }
-        else
+        } else {
             respType = @"text";
-        respInfo = @{
-                     @"taskId": taskId,
-                     @"state": @"2",
-                     @"headers": headers,
-                     @"redirects": redirects,
-                     @"respType" : respType,
-                     @"timeout" : @NO,
-                     @"status": [NSNumber numberWithInteger:statusCode]
-                    };
+        }
 
 #pragma mark - handling cookies
         // # 153 get cookies
@@ -383,11 +369,16 @@ NSOperationQueue *taskQueue;
 
         [self.bridge.eventDispatcher
          sendDeviceEventWithName: EVENT_STATE_CHANGE
-         body:respInfo
+         body:@{
+                @"taskId": taskId,
+                @"state": @"2",
+                @"headers": headers,
+                @"redirects": redirects,
+                @"respType" : respType,
+                @"timeout" : @NO,
+                @"status": [NSNumber numberWithInteger:statusCode]
+                }
         ];
-        headers = nil;
-        respInfo = nil;
-
     }
     else
         NSLog(@"oops");
@@ -475,8 +466,8 @@ NSOperationQueue *taskQueue;
          sendDeviceEventWithName:EVENT_PROGRESS
          body:@{
                 @"taskId": taskId,
-                @"written": [NSString stringWithFormat:@"%d", receivedBytes],
-                @"total": [NSString stringWithFormat:@"%d", expectedBytes],
+                @"written": [NSString stringWithFormat:@"%ld", (long) receivedBytes],
+                @"total": [NSString stringWithFormat:@"%ld", (long) expectedBytes],
                 @"chunk": chunkString
                 }
          ];
@@ -494,16 +485,11 @@ NSOperationQueue *taskQueue;
 {
 
     self.error = error;
-    NSString * errMsg = [NSNull null];
-    NSString * respStr = [NSNull null];
-    NSString * rnfbRespType = @"";
+    NSString * errMsg;
+    NSString * respStr;
+    NSString * rnfbRespType;
 
     [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-
-    if(respInfo == nil)
-    {
-        respInfo = [NSNull null];
-    }
 
     if(error != nil)
     {
@@ -550,7 +536,11 @@ NSOperationQueue *taskQueue;
     }
 
 
-    callback(@[ errMsg, rnfbRespType, respStr]);
+    callback(@[
+               errMsg ?: [NSNull null],
+               rnfbRespType ?: @"",
+               respStr ?: [NSNull null]
+               ]);
 
     @synchronized ([RNFetchBlobNetwork class])
     {
@@ -608,7 +598,7 @@ NSOperationQueue *taskQueue;
 
 - (void) URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable credantial))completionHandler
 {
-    BOOL trusty = [options valueForKey:CONFIG_TRUSTY];
+    BOOL trusty = [[options valueForKey:CONFIG_TRUSTY] boolValue];
     if(!trusty)
     {
         completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
