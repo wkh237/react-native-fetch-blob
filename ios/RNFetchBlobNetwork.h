@@ -22,18 +22,8 @@
 
 @interface RNFetchBlobNetwork : NSObject  <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate>
 
-@property (nullable, nonatomic) NSString * taskId;
-@property (nonatomic) long long expectedBytes;
-@property (nonatomic) long long receivedBytes;
-@property (nonatomic) BOOL isServerPush;
-@property (nullable, nonatomic) NSMutableData * respData;
-@property (nullable, strong, nonatomic) RCTResponseSenderBlock callback;
-@property (nullable, nonatomic) RCTBridge * bridge;
-@property (nullable, nonatomic) NSDictionary * options;
-@property (nullable, nonatomic) RNFetchBlobFS * fileStream;
-@property (nullable, nonatomic) NSError * error;
 
-
++ (_Nullable instancetype)sharedInstance;
 + (NSMutableDictionary  * _Nullable ) normalizeHeaders:(NSDictionary * _Nullable)headers;
 + (void) cancelRequest:(NSString * _Nonnull)taskId;
 + (void) emitExpiredTasks;
@@ -41,7 +31,7 @@
 + (void) enableUploadProgress:(NSString * _Nonnull) taskId config:(RNFetchBlobProgress * _Nullable)config;
 
 - (nullable id) init;
-- (void) sendRequest:(NSDictionary  * _Nullable )options contentLength:(long)contentLength bridge:(RCTBridge * _Nullable)bridgeRef taskId:(NSString * _Nullable)taskId withRequest:(NSURLRequest * _Nullable)req callback:(_Nullable RCTResponseSenderBlock) callback;
++ (void) sendRequest:(NSDictionary  * _Nullable )options contentLength:(long)contentLength bridge:(RCTBridge * _Nullable)bridgeRef taskId:(NSString * _Nullable)taskId withRequest:(NSURLRequest * _Nullable)req callback:(_Nullable RCTResponseSenderBlock) callback;
 
 @end
 

@@ -96,8 +96,12 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
         // send HTTP request
         else
         {
-            RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-            [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+            [RNFetchBlobNetwork sendRequest:options
+                              contentLength:bodyLength
+                                     bridge:self.bridge
+                                     taskId:taskId
+                                withRequest:req
+                                   callback:callback];
         }
     }];
 
@@ -128,8 +132,12 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
         // send HTTP request
         else
         {
-            RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-            [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+            [RNFetchBlobNetwork sendRequest:options
+                              contentLength:bodyLength
+                                     bridge:self.bridge
+                                     taskId:taskId
+                                withRequest:req
+                                   callback:callback];
         }
     }];
 }
