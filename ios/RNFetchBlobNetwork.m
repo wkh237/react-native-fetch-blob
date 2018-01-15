@@ -137,7 +137,6 @@ NSOperationQueue *taskQueue;
 // removing case from headers
 + (NSMutableDictionary *) normalizeHeaders:(NSDictionary *)headers
 {
-
     NSMutableDictionary * mheaders = [[NSMutableDictionary alloc]init];
     for(NSString * key in headers) {
         [mheaders setValue:[headers valueForKey:key] forKey:[key lowercaseString]];
