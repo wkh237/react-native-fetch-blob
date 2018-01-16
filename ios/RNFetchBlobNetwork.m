@@ -69,7 +69,7 @@ static void initialize_tables() {
     return _sharedInstance;
 }
 
-+ (void) sendRequest:(__weak NSDictionary  * _Nullable )options
+- (void) sendRequest:(__weak NSDictionary  * _Nullable )options
        contentLength:(long) contentLength
               bridge:(RCTBridge * _Nullable)bridgeRef
               taskId:(NSString * _Nullable)taskId
@@ -82,29 +82,42 @@ static void initialize_tables() {
                   bridge:bridgeRef
                   taskId:taskId
              withRequest:req
-      taskOperationQueue:[self sharedInstance].taskQueue
+      taskOperationQueue:self.taskQueue
                 callback:callback];
     
     @synchronized([RNFetchBlobNetwork class]) {
-        [[self sharedInstance].requestsTable setObject:request forKey:taskId];
+        [self.requestsTable setObject:request forKey:taskId];
     }
 }
 
-+ (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config
+- (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config
 {
     if (config) {
         @synchronized ([RNFetchBlobNetwork class]) {
-            [[self sharedInstance].requestsTable objectForKey:taskId].progressConfig = config;
+            [self.requestsTable objectForKey:taskId].progressConfig = config;
         }
     }
 }
 
-+ (void) enableUploadProgress:(NSString *) taskId config:(RNFetchBlobProgress *)config
+- (void) enableUploadProgress:(NSString *) taskId config:(RNFetchBlobProgress *)config
 {
     if (config) {
         @synchronized ([RNFetchBlobNetwork class]) {
-            [[self sharedInstance].requestsTable objectForKey:taskId].uploadProgressConfig = config;
+            [self.requestsTable objectForKey:taskId].uploadProgressConfig = config;
         }
+    }
+}
+
+- (void) cancelRequest:(NSString *)taskId
+{
+    NSURLSessionDataTask * task;
+    
+    @synchronized ([RNFetchBlobNetwork class]) {
+        task = [self.requestsTable objectForKey:taskId].task;
+    }
+    
+    if(task && task.state == NSURLSessionTaskStateRunning) {
+        [task cancel];
     }
 }
 
@@ -115,7 +128,7 @@ static void initialize_tables() {
     for(NSString * key in headers) {
         [mheaders setValue:[headers valueForKey:key] forKey:[key lowercaseString]];
     }
-
+    
     return mheaders;
 }
 
@@ -137,19 +150,6 @@ static void initialize_tables() {
         // clear expired task entries
         [expirationTable removeAllObjects];
         expirationTable = [[NSMapTable alloc] init];
-    }
-}
-
-+ (void) cancelRequest:(NSString *)taskId
-{
-    NSURLSessionDataTask * task;
-    
-    @synchronized ([RNFetchBlobNetwork class]) {
-        task = [[self sharedInstance].requestsTable objectForKey:taskId].task;
-    }
-    
-    if(task && task.state == NSURLSessionTaskStateRunning) {
-        [task cancel];
     }
 }
 
