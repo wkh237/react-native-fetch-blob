@@ -58,7 +58,7 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     CC_MD5(str, (CC_LONG)strlen(str), result);
     
     NSMutableString *ret = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH*2];
-    for(int i = 0; i<CC_MD5_DIGEST_LENGTH; i++) {
+    for (int i = 0; i<CC_MD5_DIGEST_LENGTH; i++) {
         [ret appendFormat:@"%02x",result[i]];
     }
     return ret;
@@ -81,21 +81,26 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     self.receivedBytes = 0;
     self.options = options;
     
-    backgroundTask = [options valueForKey:@"IOSBackgroundTask"] == nil ? NO : [[options valueForKey:@"IOSBackgroundTask"] boolValue];
+    backgroundTask = [[options valueForKey:@"IOSBackgroundTask"] boolValue];
+    // when followRedirect not set in options, defaults to TRUE
     followRedirect = [options valueForKey:@"followRedirect"] == nil ? YES : [[options valueForKey:@"followRedirect"] boolValue];
-    isIncrement = [options valueForKey:@"increment"] == nil ? NO : [[options valueForKey:@"increment"] boolValue];
+    isIncrement = [[options valueForKey:@"increment"] boolValue];
     redirects = [[NSMutableArray alloc] init];
-    if(req.URL != nil)
+    
+    if (req.URL) {
         [redirects addObject:req.URL.absoluteString];
+    }
     
     // set response format
     NSString * rnfbResp = [req.allHTTPHeaderFields valueForKey:@"RNFB-Response"];
-    if([[rnfbResp lowercaseString] isEqualToString:@"base64"])
+    
+    if ([[rnfbResp lowercaseString] isEqualToString:@"base64"]) {
         responseFormat = BASE64;
-    else if([[rnfbResp lowercaseString] isEqualToString:@"utf8"])
+    } else if ([[rnfbResp lowercaseString] isEqualToString:@"utf8"]) {
         responseFormat = UTF8;
-    else
+    } else {
         responseFormat = AUTO;
+    }
     
     NSString * path = [self.options valueForKey:CONFIG_FILE_PATH];
     NSString * key = [self.options valueForKey:CONFIG_KEY];
@@ -108,44 +113,46 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     
     defaultConfigObject = [NSURLSessionConfiguration defaultSessionConfiguration];
     
-    if(backgroundTask)
-    {
+    if (backgroundTask) {
         defaultConfigObject = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:taskId];
     }
     
-    // set request timeout
+    // request timeout, -1 if not set in options
     float timeout = [options valueForKey:@"timeout"] == nil ? -1 : [[options valueForKey:@"timeout"] floatValue];
-    if(timeout > 0)
-    {
+    
+    if (timeout > 0) {
         defaultConfigObject.timeoutIntervalForRequest = timeout/1000;
     }
+    
     defaultConfigObject.HTTPMaximumConnectionsPerHost = 10;
     session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:operationQueue];
-    if(path != nil || [self.options valueForKey:CONFIG_USE_TEMP]!= nil)
-    {
+    
+    if (path || [self.options valueForKey:CONFIG_USE_TEMP]) {
         respFile = YES;
         
         NSString* cacheKey = taskId;
-        if (key != nil) {
+        if (key) {
             cacheKey = [self md5:key];
-            if (cacheKey == nil) {
+            
+            if (!cacheKey) {
                 cacheKey = taskId;
             }
             
             destPath = [RNFetchBlobFS getTempPath:cacheKey withExtension:[self.options valueForKey:CONFIG_FILE_EXT]];
+            
             if ([[NSFileManager defaultManager] fileExistsAtPath:destPath]) {
                 callback(@[[NSNull null], RESP_TYPE_PATH, destPath]);
+                
                 return;
             }
         }
         
-        if(path != nil)
+        if (path) {
             destPath = path;
-        else
+        } else {
             destPath = [RNFetchBlobFS getTempPath:cacheKey withExtension:[self.options valueForKey:CONFIG_FILE_EXT]];
-    }
-    else
-    {
+        }
+    } else {
         respData = [[NSMutableData alloc] init];
         respFile = NO;
     }
@@ -154,9 +161,9 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     [self.task resume];
     
     // network status indicator
-    if([[options objectForKey:CONFIG_INDICATOR] boolValue] == YES)
+    if ([[options objectForKey:CONFIG_INDICATOR] boolValue]) {
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
-    
+    }
 }
 
 ////////////////////////////////////////
@@ -179,18 +186,14 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     NSInteger statusCode = [(NSHTTPURLResponse *)response statusCode];
     NSString * respType = @"";
     respStatus = statusCode;
+    
     if ([response respondsToSelector:@selector(allHeaderFields)])
     {
         NSDictionary *headers = [httpResponse allHeaderFields];
         NSString * respCType = [[RNFetchBlobReqBuilder getHeaderIgnoreCases:@"Content-Type" fromHeaders:headers] lowercaseString];
-        if(self.isServerPush == NO)
-        {
-            self.isServerPush = [[respCType lowercaseString] RNFBContainsString:@"multipart/x-mixed-replace;"];
-        }
-        if(self.isServerPush)
-        {
-            if(partBuffer != nil)
-            {
+        
+        if (self.isServerPush) {
+            if (partBuffer) {
                 [self.bridge.eventDispatcher
                  sendDeviceEventWithName:EVENT_SERVER_PUSH
                  body:@{
@@ -199,39 +202,37 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
                         }
                  ];
             }
+            
             partBuffer = [[NSMutableData alloc] init];
             completionHandler(NSURLSessionResponseAllow);
+
             return;
+        } else {
+            self.isServerPush = [[respCType lowercaseString] RNFBContainsString:@"multipart/x-mixed-replace;"];
         }
-        if(respCType != nil)
+        
+        if(respCType)
         {
             NSArray * extraBlobCTypes = [options objectForKey:CONFIG_EXTRA_BLOB_CTYPE];
-            if([respCType RNFBContainsString:@"text/"])
-            {
+            
+            if ([respCType RNFBContainsString:@"text/"]) {
                 respType = @"text";
-            }
-            else if([respCType RNFBContainsString:@"application/json"])
-            {
+            } else if ([respCType RNFBContainsString:@"application/json"]) {
                 respType = @"json";
-            }
-            // If extra blob content type is not empty, check if response type matches
-            else if( extraBlobCTypes !=  nil) {
-                for(NSString * substr in extraBlobCTypes)
-                {
-                    if([respCType RNFBContainsString:[substr lowercaseString]])
-                    {
+            } else if(extraBlobCTypes) { // If extra blob content type is not empty, check if response type matches
+                for (NSString * substr in extraBlobCTypes) {
+                    if ([respCType RNFBContainsString:[substr lowercaseString]]) {
                         respType = @"blob";
                         respFile = YES;
                         destPath = [RNFetchBlobFS getTempPath:taskId withExtension:nil];
                         break;
                     }
                 }
-            }
-            else
-            {
+            } else {
                 respType = @"blob";
+                
                 // for XMLHttpRequest, switch response data handling strategy automatically
-                if([options valueForKey:@"auto"]) {
+                if ([options valueForKey:@"auto"]) {
                     respFile = YES;
                     destPath = [RNFetchBlobFS getTempPath:taskId withExtension:@""];
                 }
@@ -242,11 +243,10 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
         
 #pragma mark - handling cookies
         // # 153 get cookies
-        if(response.URL != nil)
-        {
+        if (response.URL) {
             NSHTTPCookieStorage * cookieStore = [NSHTTPCookieStorage sharedHTTPCookieStorage];
             NSArray<NSHTTPCookie *> * cookies = [NSHTTPCookie cookiesWithResponseHeaderFields: headers forURL:response.URL];
-            if(cookies != nil && [cookies count] > 0) {
+            if (cookies.count) {
                 [cookieStore setCookies:cookies forURL:response.URL mainDocumentURL:nil];
             }
         }
@@ -263,19 +263,21 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
                 @"status": [NSNumber numberWithInteger:statusCode]
                 }
          ];
-    }
-    else
+    } else {
         NSLog(@"oops");
+    }
     
-    if(respFile == YES)
+    if (respFile)
     {
         @try{
             NSFileManager * fm = [NSFileManager defaultManager];
             NSString * folder = [destPath stringByDeletingLastPathComponent];
-            if(![fm fileExistsAtPath:folder])
-            {
+            
+            if (![fm fileExistsAtPath:folder]) {
                 [fm createDirectoryAtPath:folder withIntermediateDirectories:YES attributes:NULL error:nil];
             }
+            
+            // if not set overwrite in options, defaults to TRUE
             BOOL overwrite = [options valueForKey:@"overwrite"] == nil ? YES : [[options valueForKey:@"overwrite"] boolValue];
             BOOL appendToExistingFile = [destPath RNFBContainsString:@"?append=true"];
             
@@ -283,14 +285,14 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
             
             // For solving #141 append response data if the file already exists
             // base on PR#139 @kejinliang
-            if(appendToExistingFile)
-            {
+            if (appendToExistingFile) {
                 destPath = [destPath stringByReplacingOccurrencesOfString:@"?append=true" withString:@""];
             }
-            if (![fm fileExistsAtPath:destPath])
-            {
+            
+            if (![fm fileExistsAtPath:destPath]) {
                 [fm createFileAtPath:destPath contents:[[NSData alloc] init] attributes:nil];
             }
+            
             writeStream = [[NSOutputStream alloc] initToFileAtPath:destPath append:appendToExistingFile];
             [writeStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
             [writeStream open];
@@ -309,9 +311,10 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
 - (void) URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data
 {
     // For #143 handling multipart/x-mixed-replace response
-    if(self.isServerPush)
+    if (self.isServerPush)
     {
         [partBuffer appendData:data];
+        
         return ;
     }
     
@@ -319,27 +322,23 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     receivedBytes += [received longValue];
     NSString * chunkString = @"";
     
-    if(isIncrement == YES)
-    {
+    if (isIncrement) {
         chunkString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
     }
     
-    if(respFile == NO)
-    {
+    if (respFile) {
+        [writeStream write:[data bytes] maxLength:[data length]];
+    } else {
         [respData appendData:data];
     }
-    else
-    {
-        [writeStream write:[data bytes] maxLength:[data length]];
-    }
     
-    if(expectedBytes == 0)
+    if (expectedBytes == 0) {
         return;
+    }
     
     NSNumber * now =[NSNumber numberWithFloat:((float)receivedBytes/(float)expectedBytes)];
     
-    if([self.progressConfig shouldReport:now])
-    {
+    if ([self.progressConfig shouldReport:now]) {
         [self.bridge.eventDispatcher
          sendDeviceEventWithName:EVENT_PROGRESS
          body:@{
@@ -354,8 +353,9 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
 
 - (void) URLSession:(NSURLSession *)session didBecomeInvalidWithError:(nullable NSError *)error
 {
-    if([session isEqual:session])
+    if ([session isEqual:session]) {
         session = nil;
+    }
 }
 
 
@@ -369,44 +369,32 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     
     [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
     
-    if(error != nil)
-    {
+    if (error) {
         errMsg = [error localizedDescription];
     }
     
-    if(respFile == YES)
-    {
+    if (respFile) {
         [writeStream close];
         rnfbRespType = RESP_TYPE_PATH;
         respStr = destPath;
-    }
-    // base64 response
-    else {
+    } else { // base64 response
         // #73 fix unicode data encoding issue :
         // when response type is BASE64, we should first try to encode the response data to UTF8 format
         // if it turns out not to be `nil` that means the response data contains valid UTF8 string,
         // in order to properly encode the UTF8 string, use URL encoding before BASE64 encoding.
         NSString * utf8 = [[NSString alloc] initWithData:respData encoding:NSUTF8StringEncoding];
         
-        if(responseFormat == BASE64)
-        {
+        if (responseFormat == BASE64) {
             rnfbRespType = RESP_TYPE_BASE64;
             respStr = [respData base64EncodedStringWithOptions:0];
-        }
-        else if (responseFormat == UTF8)
-        {
+        } else if (responseFormat == UTF8) {
             rnfbRespType = RESP_TYPE_UTF8;
             respStr = utf8;
-        }
-        else
-        {
-            if(utf8 != nil)
-            {
+        } else {
+            if (utf8) {
                 rnfbRespType = RESP_TYPE_UTF8;
                 respStr = utf8;
-            }
-            else
-            {
+            } else {
                 rnfbRespType = RESP_TYPE_BASE64;
                 respStr = [respData base64EncodedStringWithOptions:0];
             }
@@ -429,12 +417,13 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
 // upload progress handler
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didSendBodyData:(int64_t)bytesSent totalBytesSent:(int64_t)totalBytesWritten totalBytesExpectedToSend:(int64_t)totalBytesExpectedToWrite
 {
-    if(totalBytesExpectedToWrite == 0)
+    if (totalBytesExpectedToWrite == 0) {
         return;
+    }
     
     NSNumber * now = [NSNumber numberWithFloat:((float)totalBytesWritten/(float)totalBytesExpectedToWrite)];
 
-    if([self.uploadProgressConfig shouldReport:now]) {
+    if ([self.uploadProgressConfig shouldReport:now]) {
         [self.bridge.eventDispatcher
          sendDeviceEventWithName:EVENT_PROGRESS_UPLOAD
          body:@{
@@ -449,14 +438,10 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
 
 - (void) URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable credantial))completionHandler
 {
-    BOOL trusty = [[options valueForKey:CONFIG_TRUSTY] boolValue];
-    if(!trusty)
-    {
-        completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
-    }
-    else
-    {
+    if ([[options valueForKey:CONFIG_TRUSTY] boolValue]) {
         completionHandler(NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
+    } else {
+        completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
     }
 }
 
@@ -469,14 +454,13 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
 - (void) URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler
 {
     
-    if(followRedirect)
-    {
-        if(request.URL != nil)
+    if (followRedirect) {
+        if (request.URL) {
             [redirects addObject:[request.URL absoluteString]];
+        }
+        
         completionHandler(request);
-    }
-    else
-    {
+    } else {
         completionHandler(nil);
     }
 }

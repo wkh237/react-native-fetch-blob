@@ -36,8 +36,7 @@ NSMapTable * expirationTable;
 
 __attribute__((constructor))
 static void initialize_tables() {
-    if(expirationTable == nil)
-    {
+    if (expirationTable == nil) {
         expirationTable = [[NSMapTable alloc] init];
     }
 }
@@ -62,6 +61,7 @@ static void initialize_tables() {
 + (RNFetchBlobNetwork* _Nullable)sharedInstance {
     static id _sharedInstance = nil;
     static dispatch_once_t onceToken;
+
     dispatch_once(&onceToken, ^{
         _sharedInstance = [[self alloc] init];
     });
@@ -116,7 +116,7 @@ static void initialize_tables() {
         task = [self.requestsTable objectForKey:taskId].task;
     }
     
-    if(task && task.state == NSURLSessionTaskStateRunning) {
+    if (task && task.state == NSURLSessionTaskStateRunning) {
         [task cancel];
     }
 }
@@ -125,7 +125,7 @@ static void initialize_tables() {
 + (NSMutableDictionary *) normalizeHeaders:(NSDictionary *)headers
 {
     NSMutableDictionary * mheaders = [[NSMutableDictionary alloc]init];
-    for(NSString * key in headers) {
+    for (NSString * key in headers) {
         [mheaders setValue:[headers valueForKey:key] forKey:[key lowercaseString]];
     }
     
@@ -139,7 +139,7 @@ static void initialize_tables() {
         NSEnumerator * emu =  [expirationTable keyEnumerator];
         NSString * key;
         
-        while((key = [emu nextObject]))
+        while ((key = [emu nextObject]))
         {
             RCTBridge * bridge = [RNFetchBlob getRCTBridge];
             id args = @{ @"taskId": key };
