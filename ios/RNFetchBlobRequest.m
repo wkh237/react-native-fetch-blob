@@ -419,16 +419,6 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
                rnfbRespType ?: @"",
                respStr ?: [NSNull null]
                ]);
-    /*
-    @synchronized ([RNFetchBlobNetwork class])
-    {
-        if([taskTable objectForKey:taskId] == nil)
-            NSLog(@"object released by ARC.");
-        else
-            [taskTable removeObjectForKey:taskId];
-        [uploadProgressTable removeObjectForKey:taskId];
-        [progressTable removeObjectForKey:taskId];
-    }*/
     
     respData = nil;
     receivedBytes = 0;
