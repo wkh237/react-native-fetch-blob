@@ -374,7 +374,11 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     });
     
     if (error) {
-        errMsg = [error localizedDescription];
+        if (error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled) {
+            errMsg = @"task cancelled";
+        } else {
+            errMsg = [error localizedDescription];
+        }
     }
     
     if (respFile) {
