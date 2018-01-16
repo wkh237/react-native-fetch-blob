@@ -6,6 +6,9 @@
 //  Copyright © 2016 wkh237. All rights reserved.
 //
 
+#ifndef RNFetchBlobNetwork_h
+#define RNFetchBlobNetwork_h
+
 #import <Foundation/Foundation.h>
 #import "RNFetchBlobProgress.h"
 #import "RNFetchBlobFS.h"
@@ -16,9 +19,6 @@
 #else
 #import "RCTBridgeModule.h"
 #endif
-
-#ifndef RNFetchBlobNetwork_h
-#define RNFetchBlobNetwork_h
 
 
 @interface RNFetchBlobNetwork : NSObject  <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate>

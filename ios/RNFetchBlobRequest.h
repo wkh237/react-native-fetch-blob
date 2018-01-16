@@ -6,6 +6,9 @@
 //  Copyright © 2018 wkh237.github.io. All rights reserved.
 //
 
+#ifndef RNFetchBlobRequest_h
+#define RNFetchBlobRequest_h
+
 #import <Foundation/Foundation.h>
 
 #import "RNFetchBlobProgress.h"
@@ -15,9 +18,6 @@
 #else
 #import "RCTBridgeModule.h"
 #endif
-
-#ifndef RNFetchBlobRequest_h
-#define RNFetchBlobRequest_h
 
 @interface RNFetchBlobRequest : NSObject <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate>
 
