@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "RNFetchBlobProgress.h"
 #import "RNFetchBlobFS.h"
+#import "RNFetchBlobRequest.h"
 
 #if __has_include(<React/RCTAssert.h>)
 #import <React/RCTBridgeModule.h>
@@ -22,8 +23,10 @@
 
 @interface RNFetchBlobNetwork : NSObject  <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDataDelegate>
 
+@property(nonnull, nonatomic) NSOperationQueue *taskQueue;
+@property(nonnull, nonatomic) NSMapTable<NSString*, RNFetchBlobRequest*> * requestsTable;
 
-+ (_Nullable instancetype)sharedInstance;
++ (RNFetchBlobNetwork* _Nullable)sharedInstance;
 + (NSMutableDictionary  * _Nullable ) normalizeHeaders:(NSDictionary * _Nullable)headers;
 + (void) cancelRequest:(NSString * _Nonnull)taskId;
 + (void) emitExpiredTasks;

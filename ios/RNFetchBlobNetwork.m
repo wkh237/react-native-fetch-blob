@@ -13,7 +13,6 @@
 #import "RNFetchBlob.h"
 #import "RNFetchBlobConst.h"
 #import "RNFetchBlobProgress.h"
-#import "RNFetchBlobRequest.h"
 
 #if __has_include(<React/RCTAssert.h>)
 #import <React/RCTRootView.h>
@@ -46,23 +45,21 @@ static void initialize_tables() {
 
 @implementation RNFetchBlobNetwork
 
-NSOperationQueue *taskQueue;
-NSMapTable<NSString*, RNFetchBlobRequest*> * requestsTable;
 
 - (id)init {
     self = [super init];
     if (self) {
-        requestsTable = [NSMapTable mapTableWithKeyOptions:NSMapTableStrongMemory valueOptions:NSMapTableWeakMemory];
+        self.requestsTable = [NSMapTable mapTableWithKeyOptions:NSMapTableStrongMemory valueOptions:NSMapTableWeakMemory];
         
-        taskQueue = [[NSOperationQueue alloc] init];
-        taskQueue.qualityOfService = NSQualityOfServiceUtility;
-        taskQueue.maxConcurrentOperationCount = 10;
+        self.taskQueue = [[NSOperationQueue alloc] init];
+        self.taskQueue.qualityOfService = NSQualityOfServiceUtility;
+        self.taskQueue.maxConcurrentOperationCount = 10;
     }
     
     return self;
 }
 
-+ (instancetype)sharedInstance {
++ (RNFetchBlobNetwork* _Nullable)sharedInstance {
     static id _sharedInstance = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -85,11 +82,11 @@ NSMapTable<NSString*, RNFetchBlobRequest*> * requestsTable;
                   bridge:bridgeRef
                   taskId:taskId
              withRequest:req
-      taskOperationQueue:taskQueue
+      taskOperationQueue:[self sharedInstance].taskQueue
                 callback:callback];
     
     @synchronized([RNFetchBlobNetwork class]) {
-        [requestsTable setObject:request forKey:taskId];
+        [[self sharedInstance].requestsTable setObject:request forKey:taskId];
     }
 }
 
@@ -97,7 +94,7 @@ NSMapTable<NSString*, RNFetchBlobRequest*> * requestsTable;
 {
     if (config) {
         @synchronized ([RNFetchBlobNetwork class]) {
-            [requestsTable objectForKey:taskId].progressConfig = config;
+            [[self sharedInstance].requestsTable objectForKey:taskId].progressConfig = config;
         }
     }
 }
@@ -106,7 +103,7 @@ NSMapTable<NSString*, RNFetchBlobRequest*> * requestsTable;
 {
     if (config) {
         @synchronized ([RNFetchBlobNetwork class]) {
-            [requestsTable objectForKey:taskId].uploadProgressConfig = config;
+            [[self sharedInstance].requestsTable objectForKey:taskId].uploadProgressConfig = config;
         }
     }
 }
@@ -148,7 +145,7 @@ NSMapTable<NSString*, RNFetchBlobRequest*> * requestsTable;
     NSURLSessionDataTask * task;
     
     @synchronized ([RNFetchBlobNetwork class]) {
-        task = [requestsTable objectForKey:taskId].task;
+        task = [[self sharedInstance].requestsTable objectForKey:taskId].task;
     }
     
     if(task && task.state == NSURLSessionTaskStateRunning) {
