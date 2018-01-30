@@ -689,6 +689,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
 
             }
+        }else if (DownloadManager.ACTION_NOTIFICATION_CLICKED.equals(action)) {
+            Context appCtx = RNFetchBlob.RCTContext.getApplicationContext();
+            Intent dm = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
+            dm.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            appCtx.startActivity(dm);
         }
     }
 
