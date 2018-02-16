@@ -109,9 +109,18 @@ function readStream(
   tick?: number = 10
 ): Promise<RNFetchBlobReadStream> {
   if (typeof path !== 'string') {
-    return Promise.reject(addCode('EINVAL', new TypeError('Missing argument "path" ')))
+    return Promise.reject(addCode('EINVAL', new TypeError('Missing argument "path"')))
   }
-  return Promise.resolve(new RNFetchBlobReadStream(path, encoding, bufferSize, tick))
+
+  return exists(path).then((exists) => {
+    if (exists) {
+      return new RNFetchBlobReadStream(path, encoding, bufferSize, tick)
+    } else {
+      const err = new Error('No such file "' + path + '"')
+      err.code = 'ENOENT'
+      throw err;
+    }
+  })
 }
 
 /**
