@@ -10,7 +10,7 @@ A project committed to making file access and data transfer easier and more effi
 
 ## RNFB MAINTAINER GONE MISSING (Help Wanted)
 
-wkh237's last Github activity was in September 2017, and he has not reacted to emails either. Since there is a lot of work on issues and PRs that needs to be done, is there anybody who could provide a maintained fork of this package in the meantime? Create an issue and address (ping) me ([@lll000111](https://github.com/lll000111)), or send me an email, and I'll add a link to your maintained repo fork right here. I don't have admin rights, I cannot accept PRs, I cannot given anyone else rights on this repo, somebody needs to fork it and become a full maintainer.
+wkh237's last Github activity was in September 2017, and he has not reacted to emails either. Since there is a lot of work on issues and PRs that needs to be done, is there anybody who could provide a maintained fork of this package in the meantime? Create an issue and address (ping) me ([@lll000111](https://github.com/lll000111)), or send me an email, and I'll add a link to your maintained repo fork right here. I don't have admin rights, I cannot accept PRs, I cannot give anyone else rights on this repo, somebody needs to fork it and become a full maintainer.
 
 <br>
 <br>
