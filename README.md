@@ -6,7 +6,7 @@ wkh237's last Github activity was in September 2017, and he has not reacted to e
 
 ## About Pull Requests
 
-I cannot (@lll000111) handle them, I'm not the owner. My own PRs are still in the queue waiting for review from the owner. I coulöd merge the PRs of others but not my own... but since I am in no position to do anything with this repo, I don't do mobile development, I don't even have a smart phone, I won't merge anything. **In any case though,** you should not send PRs for `master` but against the `0.10.9` branch. It already is quite different from `master`. So try that branch first if you want to patch, not `master`, even for your own fork.
+I (@lll000111) cannot handle them, I'm not the owner. My own PRs are still in the queue waiting for review from the owner. I could merge the PRs of others but not my own(!)... but since I am in no position to manage this repo &mdash; I don't do mobile development, I don't even have a smart phone &mdash; I won't merge anything. **In any case though,** you should not send PRs for `master` but against the `0.10.9` branch. It already is quite different from `master`. So try that branch first if you want to patch, not `master`, even for your own fork and your private patches.
 
 <br>
 <br>
