@@ -1,19 +1,23 @@
+## RNFB MAINTAINER GONE MISSING (Help Wanted)
+
+wkh237's last Github activity was in September 2017, and he has not reacted to emails either. Since there is a lot of work on issues and PRs that needs to be done, is there anybody who could provide a maintained fork of this package in the meantime? Create an issue and address (ping) me ([@lll000111](https://github.com/lll000111)), or send me an email, and I'll add a link to your maintained repo fork right here. I don't have admin rights, I cannot accept PRs, I cannot give anyone else rights on this repo, somebody needs to fork it and become a full maintainer.
+
+<br>
+
+## About Pull Requests
+
+I cannot (@lll000111) handle them, I'm not the owner. My own PRs are still in the queue waiting for review from the owner. I coulöd merge the PRs of others but not my own... but since I am in no position to do anything with this repo, I don't do mobile development, I don't even have a smart phone, I won't merge anything. **In any case though,** you should not send PRs for `master` but against the `0.10.9` branch. It already is quite different from `master`. So try that branch first if you want to patch, not `master`, even for your own fork.
+
+<br>
+<br>
+<br>
+
 # react-native-fetch-blob
 [![release](https://img.shields.io/github/release/wkh237/react-native-fetch-blob.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/releases) [![npm](https://img.shields.io/npm/v/react-native-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/react-native-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![](https://img.shields.io/badge/Wiki-Public-brightgreen.svg?style=flat-square)](https://github.com/wkh237/react-native-fetch-blob/wiki) [![npm](https://img.shields.io/npm/l/react-native-fetch-blob.svg?maxAge=2592000&style=flat-square)]()
 
 
 A project committed to making file access and data transfer easier and more efficient for React Native developers.
 > For Firebase Storage solution, please upgrade to the latest version for the best compatibility.
-
-<br>
-<br>
-
-## RNFB MAINTAINER GONE MISSING (Help Wanted)
-
-wkh237's last Github activity was in September 2017, and he has not reacted to emails either. Since there is a lot of work on issues and PRs that needs to be done, is there anybody who could provide a maintained fork of this package in the meantime? Create an issue and address (ping) me ([@lll000111](https://github.com/lll000111)), or send me an email, and I'll add a link to your maintained repo fork right here. I don't have admin rights, I cannot accept PRs, I cannot give anyone else rights on this repo, somebody needs to fork it and become a full maintainer.
-
-<br>
-<br>
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
