@@ -10,4 +10,4 @@ That means issues and PRs should be posted there.
 
 ---
 
-Posted by https://github.com/lll000111/ ("Collaborator" in this repo) on 22 March, 2018
+Posted by [@lll000111](https://github.com/lll000111/) ("Collaborator" in this repo) on 22 March, 2018
