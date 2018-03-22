@@ -1,15 +1,13 @@
-## RNFB MAINTAINER GONE MISSING (Help Wanted)
+## New Maintainers
 
-wkh237's last Github activity was in September 2017, and he has not reacted to emails either. Since there is a lot of work on issues and PRs that needs to be done, is there anybody who could provide a maintained fork of this package in the meantime? Create an issue and address (ping) me ([@lll000111](https://github.com/lll000111)), or send me an email, and I'll add a link to your maintained repo fork right here. I don't have admin rights, I cannot accept PRs, I cannot give anyone else rights on this repo, somebody needs to fork it and become a full maintainer.
+We make quite a bit of use of react-native-fetch-blob at Jolt and would like to maintain the project.  Feel free to open issues, PRs, etc. here as you would on the original repository.  We will be investigating a new npm namespace under which to publish future versions of this library.
 
 <br>
 
 ## About Pull Requests
 
-I (@lll000111) cannot handle them, I'm not the owner. My own PRs are still in the queue waiting for review from the owner. I could merge the PRs of others but not my own(!)... but since I am in no position to manage this repo &mdash; I don't do mobile development, I don't even have a smart phone &mdash; I won't merge anything. **In any case though,** you should not send PRs for `master` but against the `0.10.9` branch. It already is quite different from `master`. So try that branch first if you want to patch, not `master`, even for your own fork and your private patches.
+The `0.10.9` branch is the next branch intended to be released, so patches and pull requests should be applied to that branch if possible.
 
-<br>
-<br>
 <br>
 
 # react-native-fetch-blob
