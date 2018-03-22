@@ -1,7 +1,17 @@
-## RNFB MAINTAINER GONE MISSING (Help Wanted)
+## RNFB MAINTAINER GONE MISSING (New Repository Location)
 
-wkh237's last Github activity was in September 2017, and he has not reacted to emails either. Since there is a lot of work on issues and PRs that needs to be done, is there anybody who could provide a maintained fork of this package in the meantime? Create an issue and address (ping) me ([@lll000111](https://github.com/lll000111)), or send me an email, and I'll add a link to your maintained repo fork right here. I don't have admin rights, I cannot accept PRs, I cannot give anyone else rights on this repo, somebody needs to fork it and become a full maintainer.
+wkh237's last Github activity was in September 2017, and he has not reacted to emails either. This repository no longer is the main location of "react-native-fetch-blob".
 
+**UPDATE 22 March, 2018**
+
+The owners of this fork have agreed to maintain this package:
+
+https://github.com/joltup/react-native-fetch-blob
+
+That means issues and PRs should be posted there.
+
+
+<br>
 <br>
 
 ## About Pull Requests
