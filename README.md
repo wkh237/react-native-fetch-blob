@@ -6,7 +6,7 @@ We make quite a bit of use of react-native-fetch-blob at Jolt and would like to 
 
 ## About Pull Requests
 
-The `0.10.9` branch is the next branch intended to be released, so patches and pull requests should be applied to that branch if possible.
+Bugfixes should be applied to the `0.10.9` branch and new features should be applied to the `0.11.0`. Documentation/README updates can be applied directly to `master`.
 
 <br>
 
