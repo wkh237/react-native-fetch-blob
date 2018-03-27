@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.SparseArray;
 
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Callback;
@@ -34,26 +35,23 @@ import static com.RNFetchBlob.RNFetchBlobConst.GET_CONTENT_INTENT;
 
 public class RNFetchBlob extends ReactContextBaseJavaModule {
 
-    // Cookies
-    private final ForwardingCookieHandler mCookieHandler;
-    private final CookieJarContainer mCookieJarContainer;
     private final OkHttpClient mClient;
 
     static ReactApplicationContext RCTContext;
-    static LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
-    static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    private static LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
+    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
     static LinkedBlockingQueue<Runnable> fsTaskQueue = new LinkedBlockingQueue<>();
-    static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
-    static public boolean ActionViewVisible = false;
-    static HashMap<Integer, Promise> promiseTable = new HashMap<>();
+    private static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    private static boolean ActionViewVisible = false;
+    private static SparseArray<Promise> promiseTable = new SparseArray<>();
 
     public RNFetchBlob(ReactApplicationContext reactContext) {
 
         super(reactContext);
 
         mClient = OkHttpClientProvider.getOkHttpClient();
-        mCookieHandler = new ForwardingCookieHandler(reactContext);
-        mCookieJarContainer = (CookieJarContainer) mClient.cookieJar();
+        ForwardingCookieHandler mCookieHandler = new ForwardingCookieHandler(reactContext);
+        CookieJarContainer mCookieJarContainer = (CookieJarContainer) mClient.cookieJar();
         mCookieJarContainer.setCookieJar(new JavaNetCookieJar(mCookieHandler));
 
         RCTContext = reactContext;
@@ -85,11 +83,21 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void createFile(final String path, final String content, final String encode, final Callback callback) {
+    public void createFile(final String path, final String content, final String encode, final Promise promise) {
         threadPool.execute(new Runnable() {
             @Override
             public void run() {
-                RNFetchBlobFS.createFile(path, content, encode, callback);
+                RNFetchBlobFS.createFile(path, content, encode, promise);
+            }
+        });
+    }
+
+    @ReactMethod
+    public void createFileASCII(final String path, final ReadableArray dataArray, final Promise promise) {
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS.createFileASCII(path, dataArray, promise);
             }
         });
     }
@@ -123,7 +131,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             };
             RCTContext.addLifecycleEventListener(listener);
         } catch(Exception ex) {
-            promise.reject(ex.getLocalizedMessage());
+            promise.reject("EUNSPECIFIED", ex.getLocalizedMessage());
         }
     }
 
@@ -148,8 +156,8 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void mkdir(String path, Callback callback) {
-        RNFetchBlobFS.mkdir(path, callback);
+    public void mkdir(String path, Promise promise) {
+        RNFetchBlobFS.mkdir(path, promise);
     }
 
     @ReactMethod
@@ -173,8 +181,8 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void ls(String path, Callback callback) {
-        RNFetchBlobFS.ls(path, callback);
+    public void ls(String path, Promise promise) {
+        RNFetchBlobFS.ls(path, promise);
     }
 
     @ReactMethod
@@ -262,11 +270,21 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void hash(final String path, final String algorithm, final Promise promise) {
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS.hash(path, algorithm, promise);
+            }
+        });
+    }
+
     /**
      * @param path Stream file path
      * @param encoding Stream encoding, should be one of `base64`, `ascii`, and `utf8`
      * @param bufferSize Stream buffer size, default to 4096 or 4095(base64).
      */
+    @ReactMethod
     public void readStream(final String path, final String encoding, final int bufferSize, final int tick, final String streamId) {
         final ReactApplicationContext ctx = this.getReactApplicationContext();
         fsThreadPool.execute(new Runnable() {
@@ -340,10 +358,10 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void addCompleteDownload (ReadableMap config, Promise promise) {
-        DownloadManager dm = (DownloadManager) RNFetchBlob.RCTContext.getSystemService(RNFetchBlob.RCTContext.DOWNLOAD_SERVICE);
+        DownloadManager dm = (DownloadManager) RCTContext.getSystemService(RCTContext.DOWNLOAD_SERVICE);
         String path = RNFetchBlobFS.normalizePath(config.getString("path"));
         if(path == null) {
-            promise.reject("RNFetchblob.addCompleteDownload can not resolve URI:" + config.getString("path"), "RNFetchblob.addCompleteDownload can not resolve URI:" + path);
+            promise.reject("EINVAL", "RNFetchblob.addCompleteDownload can not resolve URI:" + config.getString("path"));
             return;
         }
         try {
@@ -360,7 +378,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             promise.resolve(null);
         }
         catch(Exception ex) {
-            promise.reject("RNFetchblob.addCompleteDownload failed", ex.getStackTrace().toString());
+            promise.reject("EUNSPECIFIED", ex.getLocalizedMessage());
         }
 
     }
