@@ -727,7 +727,7 @@ public class RNFetchBlobFS {
      * @param encoding Encoding of initial data.
      * @param callback RCT bridge callback.
      */
-    static void createFile(String path, String data, String encoding, Callback callback) {
+    static void createFile(String path, String data, String encoding, Promise promise) {
         try {
             File dest = new File(path);
             boolean created = dest.createNewFile();
@@ -735,7 +735,7 @@ public class RNFetchBlobFS {
                 String orgPath = data.replace(RNFetchBlobConst.FILE_PREFIX, "");
                 File src = new File(orgPath);
                 if(!src.exists()) {
-                    callback.invoke("RNfetchBlob writeFileError", "source file : " + data + "not exists");
+                    promise.reject("RNfetchBlob writeFileError", "source file : " + data + "not exists");
                     return ;
                 }
                 FileInputStream fin = new FileInputStream(src);
@@ -751,15 +751,15 @@ public class RNFetchBlobFS {
             }
             else {
                 if (!created) {
-                    callback.invoke("create file error: failed to create file at path `" + path + "` for its parent path may not exists, or the file already exists. If you intended to overwrite the existing file use fs.writeFile instead.");
+                    Promise.reject("create file error: failed to create file at path `" + path + "` for its parent path may not exists, or the file already exists. If you intended to overwrite the existing file use fs.writeFile instead.");
                     return;
                 }
                 OutputStream ostream = new FileOutputStream(dest);
                 ostream.write(RNFetchBlobFS.stringToBytes(data, encoding));
             }
-            callback.invoke(null, path);
+            promise.resolve(path);
         } catch(Exception err) {
-            callback.invoke(err.getLocalizedMessage());
+            promise.reject(err.getLocalizedMessage());
         }
     }
 
@@ -769,16 +769,16 @@ public class RNFetchBlobFS {
      * @param data  Content of new file
      * @param callback  JS context callback
      */
-    static void createFileASCII(String path, ReadableArray data, Callback callback) {
+    static void createFileASCII(String path, ReadableArray data, Promise promise) {
         try {
             File dest = new File(path);
             if(dest.exists()) {
-                callback.invoke("create file error: failed to create file at path `" + path + "`, file already exists.");
+                promise.reject("create file error: failed to create file at path `" + path + "`, file already exists.");
                 return;
             }
             boolean created = dest.createNewFile();
             if(!created) {
-                callback.invoke("create file error: failed to create file at path `" + path + "` for its parent path may not exists");
+                promise.reject("create file error: failed to create file at path `" + path + "` for its parent path may not exists");
                 return;
             }
             OutputStream ostream = new FileOutputStream(dest);
@@ -788,9 +788,9 @@ public class RNFetchBlobFS {
             }
             ostream.write(chunk);
             chunk = null;
-            callback.invoke(null, path);
+            promise.resolve(path);
         } catch(Exception err) {
-            callback.invoke(err.getLocalizedMessage());
+            promise.reject(err.getLocalizedMessage());
         }
     }
 

@@ -85,11 +85,11 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void createFile(final String path, final String content, final String encode, final Callback callback) {
+    public void createFile(final String path, final String content, final String encode, final Promise promise) {
         threadPool.execute(new Runnable() {
             @Override
             public void run() {
-                RNFetchBlobFS.createFile(path, content, encode, callback);
+                RNFetchBlobFS.createFile(path, content, encode, promise);
             }
         });
     }
@@ -128,11 +128,11 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void createFileASCII(final String path, final ReadableArray dataArray, final Callback callback) {
+    public void createFileASCII(final String path, final ReadableArray dataArray, final Promise promise) {
         threadPool.execute(new Runnable() {
             @Override
             public void run() {
-                RNFetchBlobFS.createFileASCII(path, dataArray, callback);
+                RNFetchBlobFS.createFileASCII(path, dataArray, promise);
             }
         });
     }
