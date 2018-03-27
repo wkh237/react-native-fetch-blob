@@ -590,10 +590,12 @@ File Access APIs
 - [dirs](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#dirs)
 - [createFile](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#createfilepath-data-encodingpromise)
 - [writeFile (0.6.0)](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#writefilepathstring-contentstring--array-encodingstring-appendbooleanpromise)
-- [appendFile (0.6.0) ](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#appendfilepathstring-contentstring--array-encodingstringpromise)
+- [appendFile (0.6.0) ](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#appendfilepathstring-contentstring--arraynumber-encodingstring-promisenumber)
 - [readFile (0.6.0)](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#readfilepath-encodingpromise)
-- [readStream](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#readstreampath-encoding-buffersizepromise)
-- [writeStream](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#writestreampathstring-encodingstring-appendbooleanpromise)
+- [readStream](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#readstreampath-encoding-buffersize-interval-promisernfbreadstream)
+- [hash (0.10.9)](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#hashpath-algorithm-promise)
+- [writeStream](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#writestreampathstring-encodingstringpromise)
+- [hash](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#hashpath-algorithmpromise)
 - [unlink](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#unlinkpathstringpromise)
 - [mkdir](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#mkdirpathstringpromise)
 - [ls](https://github.com/wkh237/react-native-fetch-blob/wiki/File-System-Access-API#lspathstringpromise)
@@ -643,6 +645,45 @@ RNFetchBlob.fs.readStream(
 
 When using `writeStream`, the stream object becomes writable, and you can then perform operations like `write` and `close`.
 
+Since version 0.10.9 `write()` resolves with the `RNFetchBlob` instance so you can promise-chain write calls:
+
+```js
+RNFetchBlob.fs.writeStream(
+    PATH_TO_FILE,
+    // encoding, should be one of `base64`, `utf8`, `ascii`
+    'utf8',
+    // should data append to existing content ?
+    true
+)
+.then(ofstream => ofstream.write('foo'))
+.then(ofstream => ofstream.write('bar'))
+.then(ofstream => ofstream.write('foobar'))
+.then(ofstream => ofstream.close())
+.catch(console.error)
+```
+
+or 
+
+```js
+RNFetchBlob.fs.writeStream(
+    PATH_TO_FILE,
+    // encoding, should be one of `base64`, `utf8`, `ascii`
+    'utf8',
+    // should data append to existing content ?
+    true
+)
+.then(stream => Promise.all([
+    stream.write('foo'),
+    stream.write('bar'),
+    stream.write('foobar')
+]))
+// Use array destructuring to get the stream object from the first item of the array we get from Promise.all()
+.then(([stream]) => stream.close())
+.catch(console.error)
+```
+
+You should **NOT** do something like this:
+
 ```js
 RNFetchBlob.fs.writeStream(
     PATH_TO_FILE,
@@ -651,12 +692,17 @@ RNFetchBlob.fs.writeStream(
     // should data append to existing content ?
     true)
 .then((ofstream) => {
+    // BAD IDEA - Don't do this, those writes are unchecked:
     ofstream.write('foo')
     ofstream.write('bar')
     ofstream.close()
 })
-
+.catch(console.error)  // Cannot catch any write() errors!
 ```
+
+The problem with the above code is that the promises from the `ofstream.write()` calls are detached and "Lost".
+That means the entire promise chain A) resolves without waiting for the writes to finish and B) any errors caused by them are lost.
+That code may _seem_ to work if there are no errors, but those writes are of the type "fire and forget": You start them and then turn away and never know if they really succeeded.
 
 ### Cache File Management
 

@@ -13,7 +13,7 @@ const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
 
 /**
  * Send an intent to open the file.
- * @param  {string]} path Path of the file to be open.
+ * @param  {string} path Path of the file to be open.
  * @param  {string} mime MIME type string
  * @return {Promise}
  */
