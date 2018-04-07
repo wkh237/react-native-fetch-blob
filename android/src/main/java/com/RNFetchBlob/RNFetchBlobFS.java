@@ -246,10 +246,36 @@ class RNFetchBlobFS {
         state = Environment.getExternalStorageState();
         if (state.equals(Environment.MEDIA_MOUNTED)) {
             res.put("SDCardDir", Environment.getExternalStorageDirectory().getAbsolutePath());
-            res.put("SDCardApplicationDir", ctx.getExternalFilesDir(null).getParentFile().getAbsolutePath());
+            try {
+                res.put("SDCardApplicationDir", ctx.getExternalFilesDir(null).getParentFile().getAbsolutePath());
+            } catch(Exception e) {
+                res.put("SDCardApplicationDir", "");
+            }
         }
         res.put("MainBundleDir", ctx.getApplicationInfo().dataDir);
         return res;
+    }
+
+    static public void getSDCardDir(Promise promise) {
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            promise.resolve(Environment.getExternalStorageDirectory().getAbsolutePath());
+        } else {
+            promise.reject("RNFetchBlob.getSDCardDir", "External storage not mounted");
+        }
+
+    }
+
+    static public void getSDCardApplicationDir(ReactApplicationContext ctx, Promise promise) {
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            try {
+                final String path = ctx.getExternalFilesDir(null).getParentFile().getAbsolutePath();
+                promise.resolve(path);
+            } catch (Exception e) {
+                promise.reject("RNFetchBlob.getSDCardApplicationDir", e.getLocalizedMessage());
+            }
+        } else {
+            promise.reject("RNFetchBlob.getSDCardApplicationDir", "External storage not mounted");
+        }
     }
 
     /**
