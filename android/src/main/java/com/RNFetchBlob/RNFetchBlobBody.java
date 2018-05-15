@@ -68,7 +68,7 @@ class RNFetchBlobBody extends RequestBody{
         try {
             switch (requestType) {
                 case SingleFile:
-                    requestStream = getReuqestStream();
+                    requestStream = getRequestStream();
                     contentLength = requestStream.available();
                     break;
                 case AsIs:
@@ -135,7 +135,7 @@ class RNFetchBlobBody extends RequestBody{
         return true;
     }
 
-    private InputStream getReuqestStream() throws Exception {
+    private InputStream getRequestStream() throws Exception {
 
         // upload from storage
         if (rawBody.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
