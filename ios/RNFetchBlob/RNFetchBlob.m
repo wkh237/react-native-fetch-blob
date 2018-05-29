@@ -70,6 +70,11 @@ RCT_EXPORT_MODULE();
              };
 }
 
+(BOOL)requiresMainQueueSetup
+{
+    return NO;
+}
+
 // Fetch blob data request
 RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
                   taskId:(NSString *)taskId
@@ -577,7 +582,11 @@ RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme resolver
 
     if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
         dispatch_sync(dispatch_get_main_queue(), ^{
-            [documentController presentPreviewAnimated:YES];
+            if([documentController presentPreviewAnimated:YES]) {
+                resolve(@[[NSNull null]]);
+            } else {
+                reject(@"EINVAL", @"document is not supported", nil);
+            }
         });
         resolve(@[[NSNull null]]);
     } else {

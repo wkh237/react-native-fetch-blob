@@ -93,7 +93,8 @@ if(!RNFetchBlob || !RNFetchBlob.fetchBlobForm || !RNFetchBlob.fetchBlob) {
 }
 
 function wrap(path:string):string {
-  return 'RNFetchBlob-file://' + path
+  const prefix = path.startsWith('content://') ? 'RNFetchBlob-content://' : 'RNFetchBlob-file://';
+  return prefix + path;
 }
 
 /**
@@ -576,4 +577,4 @@ export default {
   wrap,
   polyfill,
   JSONStream
-}
+};
