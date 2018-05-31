@@ -29,11 +29,11 @@ import okio.Timeout;
  */
 public class RNFetchBlobFileResp extends ResponseBody {
 
-    private String mTaskId;
-    private ResponseBody originalBody;
+    private final String mTaskId;
+    private final ResponseBody originalBody;
     private String mPath;
     private long bytesDownloaded = 0;
-    private ReactApplicationContext rctContext;
+    private final ReactApplicationContext rctContext;
     private FileOutputStream ofStream;
 
     public RNFetchBlobFileResp(ReactApplicationContext ctx, String taskId, ResponseBody body, String path, boolean overwrite) throws IOException {

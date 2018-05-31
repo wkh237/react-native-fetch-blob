@@ -48,12 +48,17 @@ public class PathResolver {
                 final String type = split[0];
 
                 Uri contentUri = null;
-                if ("image".equals(type)) {
-                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                } else if ("video".equals(type)) {
-                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-                } else if ("audio".equals(type)) {
-                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+
+                switch(type) {
+                    case "image":
+                        contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                        break;
+                    case "video":
+                        contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                        break;
+                    case "audio":
+                        contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                        break;
                 }
 
                 final String selection = "_id=?";

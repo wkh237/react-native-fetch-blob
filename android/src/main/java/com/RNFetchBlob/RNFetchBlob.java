@@ -2,6 +2,7 @@ package com.RNFetchBlob;
 
 import android.app.Activity;
 import android.app.DownloadManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.SparseArray;
@@ -38,14 +39,14 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     private final OkHttpClient mClient;
 
-    // TODO Quote: "Do not place Android context classes in static fields; this is a memory leak"
     static ReactApplicationContext RCTContext;
-    private static LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
-    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+
     // static LinkedBlockingQueue<Runnable> fsTaskQueue = new LinkedBlockingQueue<>();
-    private static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    private static final LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
+    private static final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    private static final ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    private static final SparseArray<Promise> promiseTable = new SparseArray<>();
     private static boolean ActionViewVisible = false;
-    private static SparseArray<Promise> promiseTable = new SparseArray<>();
 
     public RNFetchBlob(ReactApplicationContext reactContext) {
 
@@ -179,6 +180,23 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
         RNFetchBlobFS.ls(path, promise);
     }
 
+    /**
+     * @param path Stream file path
+     * @param encoding Stream encoding, should be one of `base64`, `ascii`, and `utf8`
+     * @param bufferSize Stream buffer size, default to 4096 or 4095(base64).
+     */
+    @ReactMethod
+    public void readStream(final String path, final String encoding, final int bufferSize, final int tick, final String streamId) {
+        final ReactApplicationContext ctx = this.getReactApplicationContext();
+        fsThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS fs = new RNFetchBlobFS(ctx);
+                fs.readStream(path, encoding, bufferSize, tick, streamId);
+            }
+        });
+    }
+
     @ReactMethod
     public void writeStream(String path, String encode, boolean append, Callback callback) {
         new RNFetchBlobFS(this.getReactApplicationContext()).writeStream(path, encode, append, callback);
@@ -275,23 +293,6 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
         });
     }
 
-    /**
-     * @param path Stream file path
-     * @param encoding Stream encoding, should be one of `base64`, `ascii`, and `utf8`
-     * @param bufferSize Stream buffer size, default to 4096 or 4095(base64).
-     */
-    @ReactMethod
-    public void readStream(final String path, final String encoding, final int bufferSize, final int tick, final String streamId) {
-        final ReactApplicationContext ctx = this.getReactApplicationContext();
-        fsThreadPool.execute(new Runnable() {
-            @Override
-            public void run() {
-                RNFetchBlobFS fs = new RNFetchBlobFS(ctx);
-                fs.readStream(path, encoding, bufferSize, tick, streamId);
-            }
-        });
-    }
-
     @ReactMethod
     public void cancelRequest(String taskId, Callback callback) {
         try {
@@ -354,7 +355,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void addCompleteDownload (ReadableMap config, Promise promise) {
-        DownloadManager dm = Objects.requireNonNull((DownloadManager) RCTContext.getSystemService(RCTContext.DOWNLOAD_SERVICE));
+        DownloadManager dm = Objects.requireNonNull((DownloadManager) RCTContext.getSystemService(Context.DOWNLOAD_SERVICE));
         String path = RNFetchBlobFS.normalizePath(config.getString("path"));
         if(path == null) {
             promise.reject("EINVAL", "RNFetchblob.addCompleteDownload can not resolve URI:" + config.getString("path"));

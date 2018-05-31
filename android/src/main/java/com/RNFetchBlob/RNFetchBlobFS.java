@@ -32,11 +32,11 @@ import java.util.UUID;
 
 class RNFetchBlobFS {
 
-    private ReactApplicationContext mCtx;
-    private DeviceEventManagerModule.RCTDeviceEventEmitter emitter;
+    private final ReactApplicationContext mCtx;
+    private final DeviceEventManagerModule.RCTDeviceEventEmitter emitter;
     private String encoding = "base64";
     private OutputStream writeStreamInstance = null;
-    private static HashMap<String, RNFetchBlobFS> fileStreams = new HashMap<>();
+    private static final HashMap<String, RNFetchBlobFS> fileStreams = new HashMap<>();
 
     RNFetchBlobFS(ReactApplicationContext ctx) {
         this.mCtx = ctx;

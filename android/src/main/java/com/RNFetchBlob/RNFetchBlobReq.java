@@ -87,31 +87,31 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
         BASE64
     }
 
-    public static HashMap<String, Call> taskTable = new HashMap<>();
-    public static HashMap<String, Long> androidDownloadManagerTaskTable = new HashMap<>();
-    static HashMap<String, RNFetchBlobProgressConfig> progressReport = new HashMap<>();
-    static HashMap<String, RNFetchBlobProgressConfig> uploadProgressReport = new HashMap<>();
-    static ConnectionPool pool = new ConnectionPool();
+    private static final HashMap<String, Call> taskTable = new HashMap<>();
+    private static final HashMap<String, Long> androidDownloadManagerTaskTable = new HashMap<>();
+    static final HashMap<String, RNFetchBlobProgressConfig> progressReport = new HashMap<>();
+    static final HashMap<String, RNFetchBlobProgressConfig> uploadProgressReport = new HashMap<>();
+    private static final ConnectionPool pool = new ConnectionPool();
 
-    RNFetchBlobConfig options;
-    String taskId;
-    String method;
-    String url;
-    String rawRequestBody;
+    final RNFetchBlobConfig options;
+    final String taskId;
+    final String method;
+    final String url;
+    final String rawRequestBody;
     String destPath;
-    ReadableArray rawRequestBodyArray;
-    ReadableMap headers;
-    Callback callback;
+    final ReadableArray rawRequestBodyArray;
+    final ReadableMap headers;
+    final Callback callback;
     long contentLength;
     long downloadManagerId;
     RNFetchBlobBody requestBody;
     RequestType requestType;
-    ResponseType responseType;
+    final ResponseType responseType;
     ResponseFormat responseFormat = ResponseFormat.Auto;
     WritableMap respInfo;
     boolean timeout = false;
-    ArrayList<String> redirects = new ArrayList<>();
-    OkHttpClient client;
+    final ArrayList<String> redirects = new ArrayList<>();
+    final OkHttpClient client;
 
     public RNFetchBlobReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, OkHttpClient client, final Callback callback) {
         this.method = method.toUpperCase();

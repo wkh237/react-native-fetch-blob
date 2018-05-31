@@ -29,7 +29,7 @@ class RNFetchBlobBody extends RequestBody{
     private InputStream requestStream;
     private long contentLength = 0;
     private ReadableArray form;
-    private String mTaskId;
+    private final String mTaskId;
     private String rawBody;
     private RNFetchBlobReq.RequestType requestType;
     private MediaType mime;
@@ -387,7 +387,7 @@ class RNFetchBlobBody extends RequestBody{
     private class FormField {
         public String name;
         String filename;
-        String mime;
+        final String mime;
         public String data;
 
         FormField(ReadableMap rawData) {

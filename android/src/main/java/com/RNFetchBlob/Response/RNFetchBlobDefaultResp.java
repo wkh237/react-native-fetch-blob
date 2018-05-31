@@ -26,10 +26,10 @@ import okio.Timeout;
  */
 public class RNFetchBlobDefaultResp extends ResponseBody {
 
-    private String mTaskId;
-    private ReactApplicationContext rctContext;
-    private ResponseBody originalBody;
-    private boolean isIncrement;
+    private final String mTaskId;
+    private final ReactApplicationContext rctContext;
+    private final ResponseBody originalBody;
+    private final boolean isIncrement;
 
     public RNFetchBlobDefaultResp(ReactApplicationContext ctx, String taskId, ResponseBody body, boolean isIncrement) {
         this.rctContext = ctx;
@@ -55,7 +55,7 @@ public class RNFetchBlobDefaultResp extends ResponseBody {
 
     private class ProgressReportingSource implements Source {
 
-        BufferedSource mOriginalSource;
+        final BufferedSource mOriginalSource;
         long bytesRead = 0;
 
         ProgressReportingSource(BufferedSource originalSource) {
