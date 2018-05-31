@@ -1,6 +1,11 @@
 apply plugin: 'com.android.library'
 
 repositories {
+    maven {
+        // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+        // https://github.com/facebook/react-native/blob/1e8f3b11027fe0a7514b4fc97d0798d3c64bc895/local-cli/templates/HelloWorld/android/build.gradle#L21
+        url "${project.rootDir}/../node_modules/react-native/android"
+    }
     mavenCentral()
 }
 
@@ -17,7 +22,7 @@ android {
     compileSdkVersion 23
     buildToolsVersion "23.0.1"
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 19
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
@@ -34,6 +39,6 @@ android {
 
 dependencies {
     compile 'com.facebook.react:react-native:+'
-    //compile 'com.squareup.okhttp3:okhttp:+'
-    //{RNFetchBlob_PRE_0.28_DEPDENDENCY}
+    // compile 'com.squareup.okhttp3:okhttp:3.6.0'
+    compile 'com.squareup.okhttp3:okhttp:+'
 }
