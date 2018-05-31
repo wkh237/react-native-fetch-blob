@@ -7,7 +7,6 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.security.MessageDigest;
-import java.security.cert.CertificateException;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -38,11 +37,9 @@ public class RNFetchBlobUtils {
             result = sb.toString();
         } catch (Exception ex) {
             ex.printStackTrace();
-        } finally {
-            // TODO: Is discarding errors the intent? (https://www.owasp.org/index.php/Return_Inside_Finally_Block)
-            return result;
         }
 
+        return result;
     }
 
     public static void emitWarningEvent(String data) {
@@ -62,12 +59,12 @@ public class RNFetchBlobUtils {
                     new X509TrustManager() {
                         @SuppressLint("TrustAllX509TrustManager")
                         @Override
-                        public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                        public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) {
                         }
 
                         @SuppressLint("TrustAllX509TrustManager")
                         @Override
-                        public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                        public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) {
                         }
 
                         @Override

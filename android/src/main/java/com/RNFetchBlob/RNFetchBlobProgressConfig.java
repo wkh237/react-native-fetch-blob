@@ -12,9 +12,9 @@ public class RNFetchBlobProgressConfig {
 
     private long lastTick = 0;
     private int tick = 0;
-    private int count = -1;
-    private int interval = -1;
-    private boolean enable = false;
+    private int count;
+    private int interval;
+    private boolean enable;
     private ReportType type = ReportType.Download;
 
     RNFetchBlobProgressConfig(boolean report, int interval, int count, ReportType type) {

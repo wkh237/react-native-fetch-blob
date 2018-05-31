@@ -13,6 +13,7 @@ import com.RNFetchBlob.RNFetchBlobUtils;
 import java.io.File;
 import java.io.InputStream;
 import java.io.FileOutputStream;
+import java.util.Objects;
 
 public class PathResolver {
     public static String getRealPathFromURI(final Context context, final Uri uri) {
@@ -120,7 +121,7 @@ public class PathResolver {
     }
 
     private static String getContentName(ContentResolver resolver, Uri uri) {
-        Cursor cursor = resolver.query(uri, null, null, null, null);
+        Cursor cursor = Objects.requireNonNull(resolver.query(uri, null, null, null, null));
         cursor.moveToFirst();
         int nameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
         if (nameIndex >= 0) {
@@ -141,19 +142,16 @@ public class PathResolver {
      * @param selectionArgs (Optional) Selection arguments used in the query.
      * @return The value of the _data column, which is typically a file path.
      */
-    private static String getDataColumn(Context context, Uri uri, String selection,
-                                        String[] selectionArgs) {
-
+    private static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
         Cursor cursor = null;
         String result = null;
         final String column = "_data";
         final String[] projection = {
-                column
+            column
         };
 
         try {
-            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
-                    null);
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,null);
             if (cursor != null && cursor.moveToFirst()) {
                 final int index = cursor.getColumnIndexOrThrow(column);
                 result = cursor.getString(index);

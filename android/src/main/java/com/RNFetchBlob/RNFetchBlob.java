@@ -21,10 +21,12 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.network.ForwardingCookieHandler;
 import com.facebook.react.modules.network.CookieJarContainer;
 import com.facebook.react.modules.network.OkHttpClientProvider;
+
 import okhttp3.OkHttpClient;
 import okhttp3.JavaNetCookieJar;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -59,7 +61,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             @Override
             public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
                 if(requestCode == GET_CONTENT_INTENT && resultCode == RESULT_OK) {
-                    Uri d = data.getData();
+                    Uri d = Objects.requireNonNull(data.getData());
                     promiseTable.get(GET_CONTENT_INTENT).resolve(d.toString());
                     promiseTable.remove(GET_CONTENT_INTENT);
                 }
@@ -352,14 +354,14 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void addCompleteDownload (ReadableMap config, Promise promise) {
-        DownloadManager dm = (DownloadManager) RCTContext.getSystemService(RCTContext.DOWNLOAD_SERVICE);
+        DownloadManager dm = Objects.requireNonNull((DownloadManager) RCTContext.getSystemService(RCTContext.DOWNLOAD_SERVICE));
         String path = RNFetchBlobFS.normalizePath(config.getString("path"));
         if(path == null) {
             promise.reject("EINVAL", "RNFetchblob.addCompleteDownload can not resolve URI:" + config.getString("path"));
             return;
         }
         try {
-            WritableMap stat = RNFetchBlobFS.statFile(path);
+            WritableMap stat = Objects.requireNonNull(RNFetchBlobFS.statFile(path));
             dm.addCompletedDownload(
                     config.hasKey("title") ? config.getString("title") : "",
                     config.hasKey("description") ? config.getString("description") : "",

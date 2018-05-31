@@ -672,7 +672,7 @@ class RNFetchBlobFS {
      * @param end   End byte offset
      * @param encode NOT IMPLEMENTED
      */
-    static void slice(String path, String dest, int start, int end, @SuppressWarnings("UnusedParameters") String encode, Promise promise) {
+    static void slice(String path, String dest, int start, int end, String encode, Promise promise) {
         try {
             path = normalizePath(path);
             File source = new File(path);

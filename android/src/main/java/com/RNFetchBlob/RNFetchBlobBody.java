@@ -18,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
@@ -124,16 +125,17 @@ class RNFetchBlobBody extends RequestBody{
         }
     }
 
-    boolean clearRequestBody() {
+    void clearRequestBody() {
         try {
             if (bodyCache != null && bodyCache.exists()) {
-                bodyCache.delete();
+                boolean result = bodyCache.delete();
+                if (!result) {
+                    throw new IOException("Failed to delete '" + bodyCache + "'");
+                }
             }
         } catch(Exception e) {
             RNFetchBlobUtils.emitWarningEvent(e.getLocalizedMessage());
-            return false;
         }
-        return true;
     }
 
     private InputStream getRequestStream() throws Exception {
@@ -185,7 +187,7 @@ class RNFetchBlobBody extends RequestBody{
     /**
      * Create a temp file that contains content of multipart form data content
      * @return The cache file object
-     * @throws IOException
+     * @throws IOException Throws exception
      */
     private File createMultipartBodyCache() throws IOException {
         String boundary = "RNFetchBlob-" + mTaskId;
@@ -201,8 +203,8 @@ class RNFetchBlobBody extends RequestBody{
             // skip invalid fields
             if(field.name == null || field.data == null)
                 continue;
-            String data = field.data.trim();
-            String name = field.name.trim();
+            String data = field.data;
+            String name = field.name;
             // form begin
             String header = "--" + boundary + "\r\n";
             if (field.filename != null) {
@@ -239,7 +241,7 @@ class RNFetchBlobBody extends RequestBody{
                     String contentURI = data.substring(RNFetchBlobConst.CONTENT_PREFIX.length());
                     InputStream is = null;
                     try {
-                        is = ctx.getContentResolver().openInputStream(Uri.parse(contentURI));
+                        is = Objects.requireNonNull(ctx.getContentResolver().openInputStream(Uri.parse(contentURI)));
                         pipeStreamToFileStream(is, os);
                     } catch(Exception e) {
                         RNFetchBlobUtils.emitWarningEvent("Failed to create form data from content URI:" + contentURI + ", " + e.getLocalizedMessage());
@@ -279,7 +281,7 @@ class RNFetchBlobBody extends RequestBody{
      * Pipe input stream to request body output stream
      * @param stream    The input stream
      * @param sink      The request body buffer sink
-     * @throws IOException
+     * @throws IOException Throws exception
      */
     private void pipeStreamToSink(InputStream stream, BufferedSink sink) throws IOException {
         byte[] chunk = new byte[10240];
@@ -297,7 +299,7 @@ class RNFetchBlobBody extends RequestBody{
      * Pipe input stream to a file
      * @param is    The input stream
      * @param os    The output stream to a file
-     * @throws IOException
+     * @throws IOException Throws exception
      */
     private void pipeStreamToFileStream(InputStream is, FileOutputStream os) throws IOException {
 
@@ -350,7 +352,7 @@ class RNFetchBlobBody extends RequestBody{
                     String contentURI = data.substring(RNFetchBlobConst.CONTENT_PREFIX.length());
                     InputStream is = null;
                     try {
-                        is = ctx.getContentResolver().openInputStream(Uri.parse(contentURI));
+                        is = Objects.requireNonNull(ctx.getContentResolver().openInputStream(Uri.parse(contentURI)));
                         long length = is.available();
                         total += length;
                     } catch(Exception e) {
