@@ -7,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.support.v4.content.FileProvider;
-import android.util.SparseArray;
 
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Callback;
@@ -24,8 +23,6 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.network.ForwardingCookieHandler;
 import com.facebook.react.modules.network.CookieJarContainer;
 import com.facebook.react.modules.network.OkHttpClientProvider;
-import com.squareup.okhttp.OkHttpClient;
-
 import okhttp3.OkHttpClient;
 import okhttp3.JavaNetCookieJar;
 
@@ -41,23 +38,26 @@ import static com.RNFetchBlob.RNFetchBlobConst.GET_CONTENT_INTENT;
 
 public class RNFetchBlob extends ReactContextBaseJavaModule {
 
+    // Cookies
+    private final ForwardingCookieHandler mCookieHandler;
+    private final CookieJarContainer mCookieJarContainer;
     private final OkHttpClient mClient;
 
     static ReactApplicationContext RCTContext;
-    private static LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
-    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    static LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
+    static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
     static LinkedBlockingQueue<Runnable> fsTaskQueue = new LinkedBlockingQueue<>();
-    private static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
-    private static boolean ActionViewVisible = false;
-    private static SparseArray<Promise> promiseTable = new SparseArray<>();
+    static ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
+    static public boolean ActionViewVisible = false;
+    static HashMap<Integer, Promise> promiseTable = new HashMap<>();
 
     public RNFetchBlob(ReactApplicationContext reactContext) {
 
         super(reactContext);
 
         mClient = OkHttpClientProvider.getOkHttpClient();
-        ForwardingCookieHandler mCookieHandler = new ForwardingCookieHandler(reactContext);
-        CookieJarContainer mCookieJarContainer = (CookieJarContainer) mClient.cookieJar();
+        mCookieHandler = new ForwardingCookieHandler(reactContext);
+        mCookieJarContainer = (CookieJarContainer) mClient.cookieJar();
         mCookieJarContainer.setCookieJar(new JavaNetCookieJar(mCookieHandler));
 
         RCTContext = reactContext;
@@ -89,23 +89,14 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void createFile(final String path, final String content, final String encode, final Promise promise) {
+    public void createFile(final String path, final String content, final String encode, final Callback callback) {
         threadPool.execute(new Runnable() {
             @Override
             public void run() {
-                RNFetchBlobFS.createFile(path, content, encode, promise);
+                RNFetchBlobFS.createFile(path, content, encode, callback);
             }
         });
-    }
 
-    @ReactMethod
-    public void createFileASCII(final String path, final ReadableArray dataArray, final Promise promise) {
-        threadPool.execute(new Runnable() {
-            @Override
-            public void run() {
-                RNFetchBlobFS.createFileASCII(path, dataArray, promise);
-            }
-        });
     }
 
     @ReactMethod
@@ -156,8 +147,19 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             };
             RCTContext.addLifecycleEventListener(listener);
         } catch(Exception ex) {
-            promise.reject("EUNSPECIFIED", ex.getLocalizedMessage());
+            promise.reject(ex.getLocalizedMessage());
         }
+    }
+
+    @ReactMethod
+    public void createFileASCII(final String path, final ReadableArray dataArray, final Callback callback) {
+        threadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                RNFetchBlobFS.createFileASCII(path, dataArray, callback);
+            }
+        });
+
     }
 
     @ReactMethod
@@ -171,8 +173,8 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void mkdir(String path, Promise promise) {
-        RNFetchBlobFS.mkdir(path, promise);
+    public void mkdir(String path, Callback callback) {
+        RNFetchBlobFS.mkdir(path, callback);
     }
 
     @ReactMethod
@@ -188,6 +190,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                 RNFetchBlobFS.cp(path, dest, callback);
             }
         });
+
     }
 
     @ReactMethod
@@ -196,8 +199,8 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void ls(String path, Promise promise) {
-        RNFetchBlobFS.ls(path, promise);
+    public void ls(String path, Callback callback) {
+        RNFetchBlobFS.ls(path, callback);
     }
 
     @ReactMethod
@@ -248,6 +251,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                 RNFetchBlobFS.writeFile(path, encoding, data, append, promise);
             }
         });
+
     }
 
     @ReactMethod
@@ -282,24 +286,15 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                 new RNFetchBlobFS(ctx).scanFile(p, m, callback);
             }
         });
+
     }
 
     @ReactMethod
-    public void hash(final String path, final String algorithm, final Promise promise) {
-        threadPool.execute(new Runnable() {
-            @Override
-            public void run() {
-                RNFetchBlobFS.hash(path, algorithm, promise);
-            }
-        });
-    }
-
     /**
      * @param path Stream file path
      * @param encoding Stream encoding, should be one of `base64`, `ascii`, and `utf8`
      * @param bufferSize Stream buffer size, default to 4096 or 4095(base64).
      */
-    @ReactMethod
     public void readStream(final String path, final String encoding, final int bufferSize, final int tick, final String streamId) {
         final ReactApplicationContext ctx = this.getReactApplicationContext();
         fsThreadPool.execute(new Runnable() {
@@ -373,10 +368,10 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void addCompleteDownload (ReadableMap config, Promise promise) {
-        DownloadManager dm = (DownloadManager) RCTContext.getSystemService(RCTContext.DOWNLOAD_SERVICE);
+        DownloadManager dm = (DownloadManager) RNFetchBlob.RCTContext.getSystemService(RNFetchBlob.RCTContext.DOWNLOAD_SERVICE);
         String path = RNFetchBlobFS.normalizePath(config.getString("path"));
         if(path == null) {
-            promise.reject("EINVAL", "RNFetchblob.addCompleteDownload can not resolve URI:" + config.getString("path"));
+            promise.reject("RNFetchblob.addCompleteDownload can not resolve URI:" + config.getString("path"), "RNFetchblob.addCompleteDownload can not resolve URI:" + path);
             return;
         }
         try {
@@ -393,18 +388,9 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
             promise.resolve(null);
         }
         catch(Exception ex) {
-            promise.reject("EUNSPECIFIED", ex.getLocalizedMessage());
+            promise.reject("RNFetchblob.addCompleteDownload failed", ex.getStackTrace().toString());
         }
 
     }
 
-    @ReactMethod
-    public void getSDCardDir(Promise promise) {
-        RNFetchBlobFS.getSDCardDir(promise);
-    }
-
-    @ReactMethod
-    public void getSDCardApplicationDir(Promise promise) {
-        RNFetchBlobFS.getSDCardApplicationDir(this.getReactApplicationContext(), promise);
-    }
 }
