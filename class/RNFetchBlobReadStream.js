@@ -92,8 +92,8 @@ export default class RNFetchBlobReadStream{
     }
 
     /**
-     * Closes the system's underlying read stream. Read streams are automatically closed when the end is reached. If
-     * the stream is already closed nothing happens.
+     * This function can be used to cancel a read stream. It is not needed if you get the whole stream because when
+     * a stream's end is reached it is closed automatically. If the stream is already closed nothing happens.
      * @returns {Promise<void>}
      */
     close (): Promise<void> {
