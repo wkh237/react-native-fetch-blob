@@ -4,13 +4,12 @@ import android.content.res.AssetFileDescriptor;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Environment;
 import android.os.StatFs;
-import android.os.SystemClock;
 import android.util.Base64;
 
 import com.RNFetchBlob.Utils.PathResolver;
+
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
@@ -18,7 +17,6 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -26,21 +24,37 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+
+import javax.annotation.Nullable;
 
 class RNFetchBlobFS {
 
     private final ReactApplicationContext mCtx;
-    private final DeviceEventManagerModule.RCTDeviceEventEmitter emitter;
-    private String encoding = "base64";
-    private OutputStream writeStreamInstance = null;
-    private static final HashMap<String, RNFetchBlobFS> fileStreams = new HashMap<>();
+
+    static private class StreamData {
+        InputStream readStreamInstance;
+        OutputStream writeStreamInstance;
+        String encoding;
+
+        StreamData(@Nullable InputStream inputStream, @Nullable OutputStream outputStream, String encoding) {
+            this.readStreamInstance = inputStream;
+            this.writeStreamInstance = outputStream;
+            this.encoding = encoding.toLowerCase();
+        }
+    }
+
+    private static final HashMap<String, StreamData> fileStreams = new HashMap<>();
+
+    private static final List<String> ENCODINGS = Arrays.asList("ascii","utf8","base64");
 
     RNFetchBlobFS(ReactApplicationContext ctx) {
         this.mCtx = ctx;
-        this.emitter = ctx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
     }
 
     /**
@@ -52,6 +66,14 @@ class RNFetchBlobFS {
      */
     static void writeFile(String path, String encoding, String data, final boolean append, final Promise promise) {
         try {
+            if (!ENCODINGS.contains(encoding.toLowerCase()) && !encoding.equalsIgnoreCase(RNFetchBlobConst.DATA_ENCODE_URI)) {
+                promise.reject(
+                    "EINVAL",
+                    "Unrecognized encoding '" + encoding + "', should be one of 'base64', 'utf8', 'ascii' or '" + RNFetchBlobConst.DATA_ENCODE_URI + "'"
+                );
+                return;
+            }
+
             int written;
             File f = new File(path);
             File dir = f.getParentFile();
@@ -152,6 +174,11 @@ class RNFetchBlobFS {
      */
     static void readFile(String path, String encoding, final Promise promise) {
         try {
+            if (!ENCODINGS.contains(encoding.toLowerCase())) {
+                promise.reject("EINVAL", "Unrecognized encoding `" + encoding + "`, should be one of `base64`, `utf8`, `ascii`");
+                return;
+            }
+
             String resolved = normalizePath(path);
             if(resolved != null) {
                 path = resolved;
@@ -217,9 +244,6 @@ class RNFetchBlobFS {
                 case "utf8" :
                     promise.resolve(new String(bytes));
                     break;
-                default:
-                    promise.resolve(new String(bytes));
-                    break;
             }
         }
         catch(FileNotFoundException err) {
@@ -276,23 +300,24 @@ class RNFetchBlobFS {
     }
 
     /**
-     * Create a file stream for read
+     * Create a file stream for reading
      * @param path  File stream target path
      * @param encoding  File stream decoder, should be one of `base64`, `utf8`, `ascii`
-     * @param bufferSize    Buffer size of read stream, default to 4096 (4095 when encode is `base64`)
+     * @param callback JS context callback
      */
-    void readStream(String path, String encoding, int bufferSize, int tick, final String streamId) {
+    static void readStream(String path, String encoding, Callback callback) {
+        if (!ENCODINGS.contains(encoding.toLowerCase())) {
+            callback.invoke("EINVAL", "Unrecognized encoding `" + encoding + "`, should be one of `base64`, `utf8`, `ascii`");
+            return;
+        }
+
+        InputStream fs;
+
         try {
             String resolved = normalizePath(path);
             if(resolved != null) {
                 path = resolved;
             }
-
-            int chunkSize = encoding.equalsIgnoreCase("base64") ? 4095 : 4096;
-            if(bufferSize > 0)
-                chunkSize = bufferSize;
-
-            InputStream fs;
 
             if(resolved != null && path.startsWith(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET)) {
                 fs = RNFetchBlob.RCTContext.getAssets().open(path.replace(RNFetchBlobConst.FILE_PREFIX_BUNDLE_ASSET, ""));
@@ -305,84 +330,70 @@ class RNFetchBlobFS {
                 fs = new FileInputStream(new File(path));
             }
 
-            if (fs == null) {
-                emitStreamEvent(
-                        streamId,
-                        "error",
-                        "ENOENT",
-                        "Failed to create a read stream for '" + path + "'"
-                );
-                return;
+            String streamId = UUID.randomUUID().toString();
+            RNFetchBlobFS.fileStreams.put(streamId, new StreamData(fs, null, encoding));
+            callback.invoke(null, null, streamId);
+        } catch (FileNotFoundException err) {
+            callback.invoke("ENOENT", "No such file '" + path + "'");
+        } catch (Exception err) {
+            callback.invoke("EUNSPECIFIED", "Failed to create read stream at path `" + path + "`; " + err.getLocalizedMessage());
+        }
+    }
+
+    /**
+     * Write a chunk of data into a file stream.
+     * @param streamId File stream ID
+     * @param bufferSize Amount of data to read in bytes
+     * @param callback JS context callback
+     */
+    static void readChunk(String streamId, int bufferSize, Callback callback) {
+        try {
+            StreamData d = Objects.requireNonNull(fileStreams.get(streamId), "No stream found with id " + streamId);
+
+            int chunkSize = d.encoding.equals("base64") ? 4095 : 4096;
+            if(bufferSize > 0) {
+                chunkSize = bufferSize;
             }
 
             byte[] buffer = new byte[chunkSize];
-            int cursor;
-            boolean error = false;
 
-            if (encoding.equalsIgnoreCase("utf8")) {
-                CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
-                while ((cursor = fs.read(buffer)) != -1) {
+            int cursor = d.readStreamInstance.read(buffer);
+            if (cursor == -1) {
+                // Close automatically
+                d.readStreamInstance.close();
+                fileStreams.remove(streamId);
+                callback.invoke(null, null, null);
+                return;
+            }
+
+            switch(d.encoding) {
+                case "utf8": {
+                    CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
                     encoder.encode(ByteBuffer.wrap(buffer).asCharBuffer());
                     String chunk = new String(buffer, 0, cursor);
-                    emitStreamEvent(streamId, "data", chunk);
-                    if(tick > 0)
-                        SystemClock.sleep(tick);
+                    callback.invoke(null, null, chunk);
+                    break;
                 }
-            } else if (encoding.equalsIgnoreCase("ascii")) {
-                while ((cursor = fs.read(buffer)) != -1) {
+                case "ascii": {
                     WritableArray chunk = Arguments.createArray();
-                    for(int i=0;i<cursor;i++)
-                    {
-                        chunk.pushInt((int)buffer[i]);
+                    for(int i = 0; i < cursor; i++) {
+                        chunk.pushInt((int) buffer[i]);
                     }
-                    emitStreamEvent(streamId, "data", chunk);
-                    if(tick > 0)
-                        SystemClock.sleep(tick);
+                    callback.invoke(null, null, chunk);
+                    break;
                 }
-            } else if (encoding.equalsIgnoreCase("base64")) {
-                while ((cursor = fs.read(buffer)) != -1) {
+                case "base64":
                     if(cursor < chunkSize) {
                         byte[] copy = new byte[cursor];
                         System.arraycopy(buffer, 0, copy, 0, cursor);
-                        emitStreamEvent(streamId, "data", Base64.encodeToString(copy, Base64.NO_WRAP));
+                        callback.invoke(null, null, Base64.encodeToString(copy, Base64.NO_WRAP));
+                    } else {
+                        callback.invoke(null, null, Base64.encodeToString(buffer, Base64.NO_WRAP));
                     }
-                    else
-                        emitStreamEvent(streamId, "data", Base64.encodeToString(buffer, Base64.NO_WRAP));
-                    if(tick > 0)
-                        SystemClock.sleep(tick);
-                }
-            } else {
-                emitStreamEvent(
-                        streamId,
-                        "error",
-                        "EINVAL",
-                        "Unrecognized encoding `" + encoding + "`, should be one of `base64`, `utf8`, `ascii`"
-                );
-                error = true;
+                    break;
             }
-
-            if(!error) {
-                emitStreamEvent(streamId, "end", "");
-            }
-
-            fs.close();
-            //noinspection UnusedAssignment
-            buffer = null;
-        } catch (FileNotFoundException err) {
-            emitStreamEvent(
-                    streamId,
-                    "error",
-                    "ENOENT",
-                    "No such file '" + path + "'"
-            );
         } catch (Exception err) {
-            emitStreamEvent(
-                    streamId,
-                    "error",
-                    "EUNSPECIFIED",
-                    "Failed to convert data to " + encoding + " encoded string. This might be because this encoding cannot be used for this data."
-            );
-            err.printStackTrace();
+            callback.invoke("EUNSPECIFIED", err.getLocalizedMessage());
         }
     }
 
@@ -393,7 +404,12 @@ class RNFetchBlobFS {
      * @param append  Flag represents if the file stream overwrite existing content
      * @param callback  Callback
      */
-    void writeStream(String path, String encoding, boolean append, Callback callback) {
+    static void writeStream(final String path, final String encoding, final boolean append, final Callback callback) {
+        if (!ENCODINGS.contains(encoding.toLowerCase())) {
+            callback.invoke("EINVAL", "Unrecognized encoding `" + encoding + "`, should be one of `base64`, `utf8`, `ascii`");
+            return;
+        }
+
         try {
             File dest = new File(path);
             File dir = dest.getParentFile();
@@ -405,6 +421,7 @@ class RNFetchBlobFS {
                         return;
                     }
                 }
+
                 if(!dest.createNewFile()) {
                     callback.invoke("ENOENT", "File '" + path + "' does not exist and could not be created");
                     return;
@@ -415,10 +432,8 @@ class RNFetchBlobFS {
             }
 
             OutputStream fs = new FileOutputStream(path, append);
-            this.encoding = encoding;
             String streamId = UUID.randomUUID().toString();
-            RNFetchBlobFS.fileStreams.put(streamId, this);
-            this.writeStreamInstance = fs;
+            RNFetchBlobFS.fileStreams.put(streamId, new StreamData(null, fs, encoding));
             callback.invoke(null, null, streamId);
         } catch(Exception err) {
             callback.invoke("EUNSPECIFIED", "Failed to create write stream at path `" + path + "`; " + err.getLocalizedMessage());
@@ -432,11 +447,10 @@ class RNFetchBlobFS {
      * @param callback JS context callback
      */
     static void writeChunk(String streamId, String data, Callback callback) {
-        RNFetchBlobFS fs = fileStreams.get(streamId);
-        OutputStream stream = fs.writeStreamInstance;
-        byte[] chunk = RNFetchBlobFS.stringToBytes(data, fs.encoding);
         try {
-            stream.write(chunk);
+            StreamData d = Objects.requireNonNull(fileStreams.get(streamId), "No stream found with id " + streamId);
+            byte[] chunk = RNFetchBlobFS.stringToBytes(data, d.encoding);
+            d.writeStreamInstance.write(chunk);
             callback.invoke();
         } catch (Exception e) {
             callback.invoke(e.getLocalizedMessage());
@@ -451,13 +465,12 @@ class RNFetchBlobFS {
      */
     static void writeArrayChunk(String streamId, ReadableArray data, Callback callback) {
         try {
-            RNFetchBlobFS fs = fileStreams.get(streamId);
-            OutputStream stream = fs.writeStreamInstance;
+            StreamData d = Objects.requireNonNull(fileStreams.get(streamId), "No stream found with id " + streamId);
             byte[] chunk = new byte[data.size()];
             for(int i =0; i< data.size();i++) {
                 chunk[i] = (byte) data.getInt(i);
             }
-            stream.write(chunk);
+            d.writeStreamInstance.write(chunk);
             callback.invoke();
         } catch (Exception e) {
             callback.invoke(e.getLocalizedMessage());
@@ -465,16 +478,20 @@ class RNFetchBlobFS {
     }
 
     /**
-     * Close file write stream by ID
+     * Close file read or write stream by ID
      * @param streamId Stream ID
      * @param callback JS context callback
      */
     static void closeStream(String streamId, Callback callback) {
         try {
-            RNFetchBlobFS fs = fileStreams.get(streamId);
-            OutputStream stream = fs.writeStreamInstance;
+            StreamData d = Objects.requireNonNull(fileStreams.get(streamId), "No stream found with id " + streamId);
             fileStreams.remove(streamId);
-            stream.close();
+            if (d.readStreamInstance != null) {
+                d.readStreamInstance.close();
+            }
+            if (d.writeStreamInstance != null) {
+                d.writeStreamInstance.close();
+            }
             callback.invoke();
         } catch(Exception err) {
             callback.invoke(err.getLocalizedMessage());
@@ -497,13 +514,12 @@ class RNFetchBlobFS {
 
     private static void deleteRecursive(File fileOrDirectory) throws IOException {
         if (fileOrDirectory.isDirectory()) {
-            File[] files = fileOrDirectory.listFiles();
-            if (files == null) {
-                throw new NullPointerException("Received null trying to list files of directory '" + fileOrDirectory + "'");
-            } else {
-                for (File child : files) {
-                    deleteRecursive(child);
-                }
+            File[] files = Objects.requireNonNull(
+                    fileOrDirectory.listFiles(),
+                    "Received null trying to list files of directory '" + fileOrDirectory + "'"
+            );
+            for (File child : files) {
+                deleteRecursive(child);
             }
         }
         boolean result = fileOrDirectory.delete();
@@ -670,9 +686,8 @@ class RNFetchBlobFS {
      * @param dest  Destination of created file
      * @param start Start byte offset in source file
      * @param end   End byte offset
-     * @param encode NOT IMPLEMENTED
      */
-    static void slice(String path, String dest, int start, int end, String encode, Promise promise) {
+    static void slice(String path, String dest, int start, int end, Promise promise) {
         try {
             path = normalizePath(path);
             File source = new File(path);
@@ -824,6 +839,11 @@ class RNFetchBlobFS {
         }
     }
 
+    /**
+     * @param path  Path to file
+     * @param algorithm  Hash algorithm
+     * @param promise Promise for Javascript
+     */
     static void hash(String path, String algorithm, Promise promise) {
         try {
             String resolved = normalizePath(path);
@@ -904,9 +924,13 @@ class RNFetchBlobFS {
      */
     static void createFile(String path, String data, String encoding, Promise promise) {
         try {
+            if (!ENCODINGS.contains(encoding.toLowerCase()) && !encoding.equalsIgnoreCase(RNFetchBlobConst.DATA_ENCODE_URI)) {
+                promise.reject("EINVAL", "Unrecognized encoding '" + encoding + "', should be one of 'base64', 'utf8', 'ascii', ");
+                return;
+            }
             File dest = new File(path);
             boolean created = dest.createNewFile();
-            if(encoding.equals(RNFetchBlobConst.DATA_ENCODE_URI)) {
+            if(encoding.equalsIgnoreCase(RNFetchBlobConst.DATA_ENCODE_URI)) {
                 String orgPath = data.replace(RNFetchBlobConst.FILE_PREFIX, "");
                 File src = new File(orgPath);
                 if(!src.exists()) {
@@ -925,7 +949,7 @@ class RNFetchBlobFS {
                 ostream.close();
             } else {
                 if (!created) {
-                    promise.reject("EEXIST", "File `" + path + "` already exists");
+                    promise.reject("EEXIST", "File '" + path + "' already exists");
                     return;
                 }
                 OutputStream ostream = new FileOutputStream(dest);
@@ -948,7 +972,7 @@ class RNFetchBlobFS {
             File dest = new File(path);
             boolean created = dest.createNewFile();
             if(!created) {
-                promise.reject("EEXIST", "File at path `" + path + "` already exists");
+                promise.reject("EEXIST", "File at path '" + path + "' already exists");
                 return;
             }
             OutputStream ostream = new FileOutputStream(dest);
@@ -965,15 +989,15 @@ class RNFetchBlobFS {
 
     static void df(Callback callback) {
         StatFs stat = new StatFs(Environment.getDataDirectory().getPath());
-        WritableMap args = Arguments.createMap();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            args.putString("internal_free", String.valueOf(stat.getFreeBytes()));
-            args.putString("internal_total", String.valueOf(stat.getTotalBytes()));
-            StatFs statEx = new StatFs(Environment.getExternalStorageDirectory().getPath());
-            args.putString("external_free", String.valueOf(statEx.getFreeBytes()));
-            args.putString("external_total", String.valueOf(statEx.getTotalBytes()));
 
-        }
+        WritableMap args = Arguments.createMap();
+
+        args.putString("internal_free", String.valueOf(stat.getFreeBytes()));
+        args.putString("internal_total", String.valueOf(stat.getTotalBytes()));
+        StatFs statEx = new StatFs(Environment.getExternalStorageDirectory().getPath());
+        args.putString("external_free", String.valueOf(statEx.getFreeBytes()));
+        args.putString("external_total", String.valueOf(statEx.getTotalBytes()));
+
         callback.invoke(null ,args);
     }
 
@@ -1024,47 +1048,16 @@ class RNFetchBlobFS {
      * @return  Converted data byte array
      */
     private static byte[] stringToBytes(String data, String encoding) {
-        if(encoding.equalsIgnoreCase("ascii")) {
-            return data.getBytes(Charset.forName("US-ASCII"));
+        switch (encoding.toLowerCase()) {
+            case "base64" :
+                return Base64.decode(data, Base64.NO_WRAP);
+            case "ascii" :
+                return data.getBytes(Charset.forName("US-ASCII"));
+            case "utf8" :
+                return data.getBytes(Charset.forName("UTF-8"));
         }
-        else if(encoding.toLowerCase().contains("base64")) {
-            return Base64.decode(data, Base64.NO_WRAP);
 
-        }
-        else if(encoding.equalsIgnoreCase("utf8")) {
-            return data.getBytes(Charset.forName("UTF-8"));
-        }
-        return data.getBytes(Charset.forName("US-ASCII"));
-    }
-
-    /**
-     * Private method for emit read stream event.
-     * @param streamName    ID of the read stream
-     * @param event Event name, `data`, `end`, `error`, etc.
-     * @param data  Event data
-     */
-    private void emitStreamEvent(String streamName, String event, String data) {
-        WritableMap eventData = Arguments.createMap();
-        eventData.putString("event", event);
-        eventData.putString("detail", data);
-        this.emitter.emit(streamName, eventData);
-    }
-
-    // "event" always is "data"...
-    private void emitStreamEvent(String streamName, String event, WritableArray data) {
-        WritableMap eventData = Arguments.createMap();
-        eventData.putString("event", event);
-        eventData.putArray("detail", data);
-        this.emitter.emit(streamName, eventData);
-    }
-
-    // "event" always is "error"...
-    private void emitStreamEvent(String streamName, String event, String code, String message) {
-        WritableMap eventData = Arguments.createMap();
-        eventData.putString("event", event);
-        eventData.putString("code", code);
-        eventData.putString("detail", message);
-        this.emitter.emit(streamName, eventData);
+        throw new IllegalArgumentException("Invalid encoding '" + encoding + "'");
     }
 
     /**

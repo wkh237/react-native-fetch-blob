@@ -44,7 +44,6 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     // static LinkedBlockingQueue<Runnable> fsTaskQueue = new LinkedBlockingQueue<>();
     private static final LinkedBlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
     private static final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(5, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
-    private static final ThreadPoolExecutor fsThreadPool = new ThreadPoolExecutor(2, 10, 5000, TimeUnit.MILLISECONDS, taskQueue);
     private static final SparseArray<Promise> promiseTable = new SparseArray<>();
     private static boolean ActionViewVisible = false;
 
@@ -140,11 +139,6 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void writeArrayChunk(final String streamId, final ReadableArray dataArray, final Callback callback) {
-        RNFetchBlobFS.writeArrayChunk(streamId, dataArray, callback);
-    }
-
-    @ReactMethod
     public void unlink(String path, Callback callback) {
         RNFetchBlobFS.unlink(path, callback);
     }
@@ -180,35 +174,33 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
         RNFetchBlobFS.ls(path, promise);
     }
 
-    /**
-     * @param path Stream file path
-     * @param encoding Stream encoding, should be one of `base64`, `ascii`, and `utf8`
-     * @param bufferSize Stream buffer size, default to 4096 or 4095(base64).
-     */
     @ReactMethod
-    public void readStream(final String path, final String encoding, final int bufferSize, final int tick, final String streamId) {
-        final ReactApplicationContext ctx = this.getReactApplicationContext();
-        fsThreadPool.execute(new Runnable() {
-            @Override
-            public void run() {
-                RNFetchBlobFS fs = new RNFetchBlobFS(ctx);
-                fs.readStream(path, encoding, bufferSize, tick, streamId);
-            }
-        });
+    public void readStream(final String path, final String encoding, final Callback callback) {
+        RNFetchBlobFS.readStream(path, encoding, callback);
     }
 
     @ReactMethod
-    public void writeStream(String path, String encode, boolean append, Callback callback) {
-        new RNFetchBlobFS(this.getReactApplicationContext()).writeStream(path, encode, append, callback);
+    public void readChunk(final String streamId, final int bufferSize, final Callback callback) {
+        RNFetchBlobFS.readChunk(streamId, bufferSize, callback);
     }
 
     @ReactMethod
-    public void writeChunk(String streamId, String data, Callback callback) {
+    public void writeStream(final String path, final String encode, final boolean append, final Callback callback) {
+        RNFetchBlobFS.writeStream(path, encode, append, callback);
+    }
+
+    @ReactMethod
+    public void writeChunk(final String streamId, final String data, final Callback callback) {
         RNFetchBlobFS.writeChunk(streamId, data, callback);
     }
 
     @ReactMethod
-    public void closeStream(String streamId, Callback callback) {
+    public void writeArrayChunk(final String streamId, final ReadableArray dataArray, final Callback callback) {
+        RNFetchBlobFS.writeArrayChunk(streamId, dataArray, callback);
+    }
+
+    @ReactMethod
+    public void closeStream(final String streamId, final Callback callback) {
         RNFetchBlobFS.closeStream(streamId, callback);
     }
 
@@ -305,7 +297,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void slice(String src, String dest, int start, int end, Promise promise) {
-        RNFetchBlobFS.slice(src, dest, start, end, "", promise);
+        RNFetchBlobFS.slice(src, dest, start, end, promise);
     }
 
     @ReactMethod
@@ -316,7 +308,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void df(final Callback callback) {
-        fsThreadPool.execute(new Runnable() {
+        threadPool.execute(new Runnable() {
             @Override
             public void run() {
                 RNFetchBlobFS.df(callback);
