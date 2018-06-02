@@ -484,7 +484,11 @@ class RNFetchBlobFS {
      */
     static void closeStream(String streamId, Callback callback) {
         try {
-            StreamData d = Objects.requireNonNull(fileStreams.get(streamId), "No stream found with id " + streamId);
+            StreamData d = fileStreams.get(streamId);
+            if (d == null) {
+                callback.invoke();
+                return;
+            }
             fileStreams.remove(streamId);
             if (d.readStreamInstance != null) {
                 d.readStreamInstance.close();
