@@ -24,6 +24,7 @@ export default class RNFetchBlobReadStream{
     // For compatibility with old RNFB streams
     bufferSize: number;
     tick: number;
+    paused: boolean;
     _timer: ?TimeoutID;
     _onData: ?Function;
     _onError: ?Function;
@@ -51,6 +52,7 @@ export default class RNFetchBlobReadStream{
 
         this.bufferSize = bufferSize;
         this.tick = tick;
+        this.paused = false;
 
         this._streamCreation = new Promise(
             (resolve, reject) => RNFetchBlob.readStream(
@@ -89,6 +91,11 @@ export default class RNFetchBlobReadStream{
         );
     }
 
+    /**
+     * Closes the system's underlying read stream. Read streams are automatically closed when the end is reached. If
+     * the stream is already closed nothing happens.
+     * @returns {Promise<void>}
+     */
     close (): Promise<void> {
         return this._streamCreation.then(() => {
             clearTimeout(this._timer);
@@ -145,6 +152,18 @@ export default class RNFetchBlobReadStream{
         this._onEnd = fn;
     }
 
+    // Extend the old API by adding pause() and resume()
+
+    pause () {
+        this.paused = true;
+        clearTimeout(this._timer);
+    }
+
+    resume () {
+        this.paused = false;
+        this._streamCreation.then(() => this._getData());
+    }
+
     _getData (): void {
         // The promise created by this function must not reject
         this.read(this.bufferSize)
@@ -154,7 +173,9 @@ export default class RNFetchBlobReadStream{
             }
             else {
                 this._onData(data);
-                this._timer = setTimeout(this._getData.bind(this), this.tick);
+                if (!this.paused) {
+                    this._timer = setTimeout(this._getData.bind(this), this.tick);
+                }
             }
         })
         .catch(err => {
