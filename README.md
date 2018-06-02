@@ -192,16 +192,20 @@ RNFetchBlob.fetch('GET', 'http://www.example.com/images/img1.png', {
     Authorization : 'Bearer access-token...',
     // more headers  ..
   })
-  // when response status code is 200
   .then((res) => {
-    // the conversion is done in native code
-    let base64Str = res.base64()
-    // the following conversions are done in js, it's SYNC
-    let text = res.text()
-    let json = res.json()
-
+    let status = res.info().status;
+    
+    if(status == 200) {
+      // the conversion is done in native code
+      let base64Str = res.base64()
+      // the following conversions are done in js, it's SYNC
+      let text = res.text()
+      let json = res.json()
+    } else {
+      // handle other status codes
+    }
   })
-  // Status code is not 200
+  // Something went wrong:
   .catch((errorMessage, statusCode) => {
     // error handling
   })
