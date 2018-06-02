@@ -17,12 +17,15 @@ export default class RNFetchBlobWriteStream{
     streamId: string;
     path: string;
     encoding: string;
-    append: boolean;
 
     _streamCreation: Promise<void>;
     _streamCreationError: ?Error;
 
-    constructor (path: string, encoding: string, append: boolean = false) {
+    constructor (
+        path: string,
+        encoding: string,
+        append: boolean = false
+    ): RNFetchBlobWriteStream {
         if (!ENCODINGS.includes(encoding)) {
             throw addCode(
                 'EINVAL',
@@ -32,7 +35,6 @@ export default class RNFetchBlobWriteStream{
 
         this.path = path;
         this.encoding = encoding;
-        this.append = append;
 
         this._streamCreation = new Promise(
             (resolve, reject) => RNFetchBlob.writeStream(
@@ -53,12 +55,12 @@ export default class RNFetchBlobWriteStream{
         );
     }
 
-    write (data: string): Promise<RNFetchBlobWriteStream> {
+    write (data: string | Array<number>): Promise<RNFetchBlobWriteStream> {
         return this._streamCreation.then(() =>
             new Promise(
                 (resolve, reject) => {
                     if (this.encoding.toLocaleLowerCase() === 'ascii' && !Array.isArray(data)) {
-                        reject(new Error('ascii input data must be an Array'));
+                        reject(new Error('ascii input data must be an Array of numbers 0..255'));
                         return;
                     }
 
@@ -86,14 +88,16 @@ export default class RNFetchBlobWriteStream{
         );
     }
 
+    /**
+     * Closes the system's underlying write stream. If the stream is already closed nothing happens.
+     * @returns {Promise<void>}
+     */
     close () {
         return this._streamCreation.then(() =>
             new Promise(
                 (resolve, reject) => {
                     try {
-                        RNFetchBlob.closeStream(this.streamId, () => {
-                            resolve();
-                        });
+                        RNFetchBlob.closeStream(this.streamId, () => resolve());
                     } catch (err) {
                         reject(addCode('EUNSPECIFIED', new Error(error)));
                     }
