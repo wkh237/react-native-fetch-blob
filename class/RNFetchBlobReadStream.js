@@ -14,9 +14,12 @@ function addCode (code: string, error: Error): Error {
 }
 
 export default class RNFetchBlobReadStream{
-    id: string;
+    streamId: string;
     path: string;
     encoding: 'utf8' | 'ascii' | 'base64';
+
+    _streamCreation: Promise<void>;
+    _streamCreationError: ?Error;
 
     // For compatibility with old RNFB streams
     bufferSize: number;
@@ -25,7 +28,6 @@ export default class RNFetchBlobReadStream{
     _onData: ?Function;
     _onError: ?Function;
     _onEnd: ?Function;
-    _streamCreationError: ?Error;
 
     constructor (
         path: string,
@@ -34,7 +36,10 @@ export default class RNFetchBlobReadStream{
         tick?: number = 10
     ): RNFetchBlobReadStream {
         if (!ENCODINGS.includes(encoding)) {
-            throw addCode('EINVAL', new Error("Unrecognized encoding `" + encoding + "`, should be one of `base64`, `utf8`, `ascii`"));
+            throw addCode(
+                'EINVAL',
+                new Error("Unrecognized encoding `" + encoding + "`, should be one of `base64`, `utf8`, `ascii`")
+            );
         }
 
         if (!path) {
@@ -47,45 +52,50 @@ export default class RNFetchBlobReadStream{
         this.bufferSize = bufferSize;
         this.tick = tick;
 
-        RNFetchBlob.readStream(
-            path,
-            encoding,
-            (errCode: string, errMsg: string, streamId: string) => {
-                if (errMsg) {
-                    this._streamCreationError = addCode(errCode, new Error(errMsg));
-                    throw this._streamCreationError;
+        this._streamCreation = new Promise(
+            (resolve, reject) => RNFetchBlob.readStream(
+                path,
+                encoding,
+                (errCode: string, errMsg: string, streamId: string) => {
+                    if (errMsg) {
+                        this._streamCreationError = addCode(errCode, new Error(errMsg));
+                        reject(this._streamCreationError);
+                    }
+                    else {
+                        this.streamId = streamId;
+                        resolve();
+                    }
                 }
-
-                this.id = streamId;
-                // Process queued write requests, if any
-            }
+            )
         );
     }
 
     // Return values: encoding "ascii": Array of 0..255; otherwise a string, UTF-8 or BASE64
     read (size: number): Promise<string | Array<number>> {
-        return new Promise((resolve, reject) => {
-            RNFetchBlob.readChunk(
-                this.id,
-                size,
-                (errCode, errMsg: string, data) => {
-                    if (errMsg) {
-                        reject(addCode(errCode, new Error(errMsg)));
-                    } else {
+        return this._streamCreation.then(() =>
+            new Promise(
+                (resolve, reject) => RNFetchBlob.readChunk(
+                    this.streamId,
+                    size,
+                    (errCode, errMsg: string, data) => {
+                        if (errMsg) {
+                            reject(addCode(errCode, new Error(errMsg)));
+                        }
+
                         resolve(data);
                     }
-                }
-            );
-        });
+                )
+            )
+        );
     }
 
     close (): Promise<void> {
-        return new Promise((resolve, reject) => {
+        return this._streamCreation.then(() => {
             clearTimeout(this._timer);
             try {
-                RNFetchBlob.closeStream(this.id, () => resolve());
+                RNFetchBlob.closeStream(this.streamId, () => resolve());
             } catch (err) {
-                reject(addCode('EUNSPECIFIED', new Error(error)));
+                throw addCode('EUNSPECIFIED', new Error(error));
             }
         });
     }
@@ -103,33 +113,36 @@ export default class RNFetchBlobReadStream{
 
         if (this._streamCreationError !== undefined) {
             this._onError(this._streamCreationError);
-        } else {
-            this._getData();
+        }
+        else {
+            this._streamCreation.then(() => this._getData());
         }
     }
 
     onData (fn) {
-        if (typeof fn === 'function') {
-            this._onData = fn;
+        if (typeof fn !== 'function') {
+            throw new TypeError('onData can only be set to a function');
         }
 
-        throw new TypeError('onData can only be set to a function');
+        this._onData = fn;
     }
 
     onError (fn) {
-        if (typeof fn === 'function') {
-            this._onError = fn;
+        if (typeof fn !== 'function') {
+            throw new TypeError('onError can only be set to a function');
         }
 
-        throw new TypeError('onError can only be set to a function');
+        this._onError = fn;
+
+        this._streamCreation.catch(err => fn(err));
     }
 
     onEnd (fn) {
-        if (typeof fn === 'function') {
-            this._onEnd = fn;
+        if (typeof fn !== 'function') {
+            throw new TypeError('onEnd can only be set to a function');
         }
 
-        throw new TypeError('onEnd can only be set to a function');
+        this._onEnd = fn;
     }
 
     _getData (): void {
@@ -139,14 +152,14 @@ export default class RNFetchBlobReadStream{
             if (data === null) {
                 this._onEnd();
             }
-            this._onData(data);
-        })
-        .then(() => {
-            this._timer = setTimeout(this._getData.bind(this), this.tick);
+            else {
+                this._onData(data);
+                this._timer = setTimeout(this._getData.bind(this), this.tick);
+            }
         })
         .catch(err => {
             clearTimeout(this._timer);
             this._onError(err);
-        })
+        });
     }
 }

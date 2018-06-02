@@ -14,10 +14,13 @@ function addCode (code: string, error: Error): Error {
 }
 
 export default class RNFetchBlobWriteStream{
-    id: string;
+    streamId: string;
     path: string;
     encoding: string;
     append: boolean;
+
+    _streamCreation: Promise<void>;
+    _streamCreationError: ?Error;
 
     constructor (path: string, encoding: string, append: boolean = false) {
         if (!ENCODINGS.includes(encoding)) {
@@ -27,65 +30,75 @@ export default class RNFetchBlobWriteStream{
             );
         }
 
-        this.id = null;
         this.path = path;
         this.encoding = encoding;
         this.append = append;
-        this._queue = [];
 
-        RNFetchBlob.writeStream(
-            path,
-            encoding,
-            append,
-            (errCode: string, errMsg: string , streamId: string) => {
-                if (errMsg) {
-                    throw addCode(errCode, new Error(errMsg));
+        this._streamCreation = new Promise(
+            (resolve, reject) => RNFetchBlob.writeStream(
+                path,
+                encoding,
+                append,
+                (errCode: string, errMsg: string, streamId: string) => {
+                    if (errMsg) {
+                        this._streamCreationError = addCode(errCode, new Error(errMsg));
+                        reject(this._streamCreationError);
+                    }
+                    else {
+                        this.streamId = streamId;
+                        resolve();
+                    }
                 }
-
-                this.id = streamId;
-                // Process queued write requests, if any
-            }
+            )
         );
     }
 
     write (data: string): Promise<RNFetchBlobWriteStream> {
-        return new Promise((resolve, reject) => {
-            if (this.encoding.toLocaleLowerCase() === 'ascii' && !Array.isArray(data)) {
-                reject(new Error('ascii input data must be an Array'));
-                return;
-            }
+        return this._streamCreation.then(() =>
+            new Promise(
+                (resolve, reject) => {
+                    if (this.encoding.toLocaleLowerCase() === 'ascii' && !Array.isArray(data)) {
+                        reject(new Error('ascii input data must be an Array'));
+                        return;
+                    }
 
-            const cb = error => {
-                if (error) {
-                    reject(addCode('EUNSPECIFIED', new Error(error)));
-                }
-                else {
-                    resolve(this);
-                }
-            };
+                    const cb = error => {
+                        if (error) {
+                            reject(addCode('EUNSPECIFIED', new Error(error)));
+                        }
+                        else {
+                            resolve(this);
+                        }
+                    };
 
-            try {
-                if (this.encoding === 'ascii') {
-                    RNFetchBlob.writeArrayChunk(this.id, data, cb);
+                    try {
+                        if (this.encoding === 'ascii') {
+                            RNFetchBlob.writeArrayChunk(this.streamId, data, cb);
+                        }
+                        else {
+                            RNFetchBlob.writeChunk(this.streamId, data, cb);
+                        }
+                    } catch (err) {
+                        reject(addCode('EUNSPECIFIED', new Error(error)));
+                    }
                 }
-                else {
-                    RNFetchBlob.writeChunk(this.id, data, cb);
-                }
-            } catch (err) {
-                reject(addCode('EUNSPECIFIED', new Error(error)));
-            }
-        });
+            )
+        );
     }
 
     close () {
-        return new Promise((resolve, reject) => {
-            try {
-                RNFetchBlob.closeStream(this.id, () => {
-                    resolve();
-                });
-            } catch (err) {
-                reject(addCode('EUNSPECIFIED', new Error(error)));
-            }
-        });
+        return this._streamCreation.then(() =>
+            new Promise(
+                (resolve, reject) => {
+                    try {
+                        RNFetchBlob.closeStream(this.streamId, () => {
+                            resolve();
+                        });
+                    } catch (err) {
+                        reject(addCode('EUNSPECIFIED', new Error(error)));
+                    }
+                }
+            )
+        );
     }
 }

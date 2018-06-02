@@ -73,17 +73,21 @@ function createFile (path: string, data: string, encoding: 'base64' | 'ascii' | 
  * Create file stream from file at `path`.
  * @param  {string} path   The file path.
  * @param  {string} encoding Data encoding, should be one of `base64`, `utf8`, `ascii`
+ * @param {number} [bufferSize=10240]
+ * @param {number} [tick=10]
  * @return {RNFetchBlobReadStream} RNFetchBlobReadStream instance.
  */
 function createReadStream (
     path: string,
-    encoding: 'utf8' | 'ascii' | 'base64' = 'utf8'
+    encoding: 'utf8' | 'ascii' | 'base64' = 'utf8',
+    bufferSize?: number = 10240,
+    tick?: number = 10
 ): RNFetchBlobReadStream {
     if (typeof path !== 'string') {
         throw addCode('EINVAL', new TypeError('Missing argument "path"'));
     }
 
-    return new RNFetchBlobReadStream(path, encoding);
+    return new RNFetchBlobReadStream(path, encoding, bufferSize, tick);
 }
 
 /**
@@ -102,7 +106,7 @@ function createWriteStream (
         throw addCode('EINVAL', new TypeError('Missing argument "path" '));
     }
 
-    return new RNFetchBlobWriteStream(streamId, encoding);
+    return new RNFetchBlobWriteStream(path, encoding, append);
 }
 
 /**

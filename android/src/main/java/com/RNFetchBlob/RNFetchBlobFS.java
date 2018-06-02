@@ -331,7 +331,7 @@ class RNFetchBlobFS {
             }
 
             String streamId = UUID.randomUUID().toString();
-            RNFetchBlobFS.fileStreams.put(streamId, new StreamData(fs, null, encoding));
+            fileStreams.put(streamId, new StreamData(fs, null, encoding));
             callback.invoke(null, null, streamId);
         } catch (FileNotFoundException err) {
             callback.invoke("ENOENT", "No such file '" + path + "'");
@@ -433,7 +433,7 @@ class RNFetchBlobFS {
 
             OutputStream fs = new FileOutputStream(path, append);
             String streamId = UUID.randomUUID().toString();
-            RNFetchBlobFS.fileStreams.put(streamId, new StreamData(null, fs, encoding));
+            fileStreams.put(streamId, new StreamData(null, fs, encoding));
             callback.invoke(null, null, streamId);
         } catch(Exception err) {
             callback.invoke("EUNSPECIFIED", "Failed to create write stream at path `" + path + "`; " + err.getLocalizedMessage());
