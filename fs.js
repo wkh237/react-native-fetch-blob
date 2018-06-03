@@ -5,10 +5,9 @@
 // import type {RNFetchBlobConfig, RNFetchBlobNative, RNFetchBlobStream} from './types'
 
 import {NativeModules, Platform} from 'react-native';
-import RNFetchBlobSession from './class/RNFetchBlobSession';
-import RNFetchBlobFile from './class/RNFetchBlobFile';
-import RNFetchBlobWriteStream from "./class/RNFetchBlobWriteStream";
 import RNFetchBlobReadStream from "./class/RNFetchBlobReadStream";
+import RNFetchBlobSession from './class/RNFetchBlobSession';
+import RNFetchBlobWriteStream from "./class/RNFetchBlobWriteStream";
 
 const RNFetchBlob: RNFetchBlobNative = NativeModules.RNFetchBlob;
 
@@ -40,8 +39,7 @@ function session (name: string): RNFetchBlobSession {
     let s = RNFetchBlobSession.getSession(name);
     if (s) {
         return new RNFetchBlobSession(name);
-    }
-    else {
+    } else {
         RNFetchBlobSession.setSession(name, []);
         return new RNFetchBlobSession(name, []);
     }
@@ -62,9 +60,11 @@ function createFile (path: string, data: string, encoding: 'base64' | 'ascii' | 
     if (encoding.toLowerCase() === 'ascii') {
         return Array.isArray(data) ?
             RNFetchBlob.createFileASCII(path, data) :
-            Promise.reject(addCode('EINVAL', new TypeError('`data` of ASCII file must be an array with 0..255 numbers')));
-    }
-    else {
+            Promise.reject(addCode(
+                'EINVAL',
+                new TypeError('`data` of ASCII file must be an array with 0..255 numbers')
+            ));
+    } else {
         return RNFetchBlob.createFile(path, data, encoding);
     }
 }
@@ -159,16 +159,17 @@ function writeFile (path: string, data: string | Array<number>, encoding: ?strin
     if (encoding.toLocaleLowerCase() === 'ascii') {
         if (!Array.isArray(data)) {
             return Promise.reject(addCode('EINVAL', new TypeError('"data" must be an Array when encoding is "ascii"')));
-        }
-        else {
+        } else {
             return RNFetchBlob.writeFileArray(path, data, false);
         }
     }
     else {
         if (typeof data !== 'string') {
-            return Promise.reject(addCode('EINVAL', new TypeError(`"data" must be a String when encoding is "utf8" or "base64", but it is "${typeof data}"`)));
-        }
-        else {
+            return Promise.reject(addCode(
+                'EINVAL',
+                new TypeError(`"data" must be a String when encoding is "utf8" or "base64", but it is "${typeof data}"`)
+            ));
+        } else {
             return RNFetchBlob.writeFile(path, encoding, data, false);
         }
     }
@@ -181,17 +182,21 @@ function appendFile (path: string, data: string | Array<number>, encoding?: stri
 
     if (encoding.toLocaleLowerCase() === 'ascii') {
         if (!Array.isArray(data)) {
-            return Promise.reject(addCode('EINVAL', new TypeError('`data` of ASCII file must be an array with 0..255 numbers')));
-        }
-        else {
+            return Promise.reject(addCode(
+                'EINVAL',
+                new TypeError('`data` of ASCII file must be an array with 0..255 numbers')
+            ));
+        } else {
             return RNFetchBlob.writeFileArray(path, data, true);
         }
     }
     else {
         if (typeof data !== 'string') {
-            return Promise.reject(addCode('EINVAL'), new TypeError(`"data" must be a String when encoding is "utf8" or "base64", but it is "${typeof data}"`));
-        }
-        else {
+            return Promise.reject(
+                addCode('EINVAL'),
+                new TypeError(`"data" must be a String when encoding is "utf8" or "base64", but it is "${typeof data}"`)
+            );
+        } else {
             return RNFetchBlob.writeFile(path, encoding, data, true);
         }
     }
@@ -200,9 +205,9 @@ function appendFile (path: string, data: string | Array<number>, encoding?: stri
 /**
  * Show statistic data of a path.
  * @param  {string} path Target path
- * @return {RNFetchBlobFile}
+ * @return {Object}
  */
-function stat (path: string): Promise<RNFetchBlobFile> {
+function stat (path: string): Promise<Object> {
     return new Promise((resolve, reject) => {
         if (typeof path !== 'string') {
             return reject(addCode('EINVAL', new TypeError('Missing argument "path" ')));
@@ -211,8 +216,7 @@ function stat (path: string): Promise<RNFetchBlobFile> {
         RNFetchBlob.stat(path, (err, stat) => {
             if (err) {
                 reject(new Error(err));
-            }
-            else {
+            } else {
                 if (stat) {
                     stat.size = parseInt(stat.size);
                     stat.lastModified = parseInt(stat.lastModified);
@@ -238,8 +242,7 @@ function scanFile (pairs: any): Promise {
         RNFetchBlob.scanFile(pairs, (err) => {
             if (err) {
                 reject(addCode('EUNSPECIFIED', new Error(err)));
-            }
-            else {
+            } else {
                 resolve();
             }
         });
@@ -263,8 +266,7 @@ function cp (path: string, dest: string): Promise<boolean> {
         RNFetchBlob.cp(path, dest, (err, res) => {
             if (err) {
                 reject(addCode('EUNSPECIFIED', new Error(err)));
-            }
-            else {
+            } else {
                 resolve(res);
             }
         });
@@ -280,15 +282,14 @@ function mv (path: string, dest: string): Promise<boolean> {
         RNFetchBlob.mv(path, dest, (err, res) => {
             if (err) {
                 reject(addCode('EUNSPECIFIED', new Error(err)));
-            }
-            else {
+            } else {
                 resolve(res);
             }
         });
     });
 }
 
-function lstat (path: string): Promise<Array<RNFetchBlobFile>> {
+function lstat (path: string): Promise<Array<Object>> {
     return new Promise((resolve, reject) => {
         if (typeof path !== 'string') {
             return reject(addCode('EINVAL', new TypeError('Missing argument "path" ')));
@@ -297,8 +298,7 @@ function lstat (path: string): Promise<Array<RNFetchBlobFile>> {
         RNFetchBlob.lstat(path, (err, stat) => {
             if (err) {
                 reject(addCode('EUNSPECIFIED', new Error(err)));
-            }
-            else {
+            } else {
                 resolve(stat);
             }
         });
@@ -327,8 +327,7 @@ function unlink (path: string): Promise {
         RNFetchBlob.unlink(path, (err) => {
             if (err) {
                 reject(addCode('EUNSPECIFIED', new Error(err)));
-            }
-            else {
+            } else {
                 resolve();
             }
         });
@@ -411,8 +410,7 @@ function df (): Promise<{ free: number, total: number }> {
         RNFetchBlob.df((err, stat) => {
             if (err) {
                 reject(addCode('EUNSPECIFIED', new Error(err)));
-            }
-            else {
+            } else {
                 resolve(stat);
             }
         });

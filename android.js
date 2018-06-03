@@ -2,14 +2,9 @@
 // Use of this source code is governed by a MIT-style license that can be
 // found in the LICENSE file.
 
-import {
-  NativeModules,
-  DeviceEventEmitter,
-  Platform,
-  NativeAppEventEmitter,
-} from 'react-native'
+import {NativeModules, Platform} from 'react-native';
 
-const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
+const RNFetchBlob: RNFetchBlobNative = NativeModules.RNFetchBlob;
 
 /**
  * Send an intent to open the file.
@@ -17,30 +12,33 @@ const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
  * @param  {string} mime MIME type string
  * @return {Promise}
  */
-function actionViewIntent(path:string, mime:string = 'text/plain') {
-  if(Platform.OS === 'android')
-    return RNFetchBlob.actionViewIntent(path, mime)
-  else
-    return Promise.reject('RNFetchBlob.android.actionViewIntent only supports Android.')
+function actionViewIntent (path: string, mime: string = 'text/plain') {
+    if (Platform.OS === 'android') {
+        return RNFetchBlob.actionViewIntent(path, mime);
+    } else {
+        return Promise.reject('RNFetchBlob.android.actionViewIntent only supports Android.');
+    }
 }
 
-function getContentIntent(mime:string) {
-  if(Platform.OS === 'android')
-    return RNFetchBlob.getContentIntent(mime)
-  else
-    return Promise.reject('RNFetchBlob.android.getContentIntent only supports Android.')
+function getContentIntent (mime: string) {
+    if (Platform.OS === 'android') {
+        return RNFetchBlob.getContentIntent(mime);
+    } else {
+        return Promise.reject('RNFetchBlob.android.getContentIntent only supports Android.');
+    }
 }
 
-function addCompleteDownload(config) {
-  if(Platform.OS === 'android')
-    return RNFetchBlob.addCompleteDownload(config)
-  else
-    return Promise.reject('RNFetchBlob.android.addCompleteDownload only supports Android.')
+function addCompleteDownload (config) {
+    if (Platform.OS === 'android') {
+        return RNFetchBlob.addCompleteDownload(config);
+    } else {
+        return Promise.reject('RNFetchBlob.android.addCompleteDownload only supports Android.');
+    }
 }
 
 
 export default {
-  actionViewIntent,
-  getContentIntent,
-  addCompleteDownload
-}
+    actionViewIntent,
+    getContentIntent,
+    addCompleteDownload
+};

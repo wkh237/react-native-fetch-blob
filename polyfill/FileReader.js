@@ -2,90 +2,90 @@
 // Use of this source code is governed by a MIT-style license that can be
 // found in the LICENSE file.
 
-import RNFetchBlob from '../index.js'
-import ProgressEvent from './ProgressEvent.js'
-import EventTarget from './EventTarget'
-import Blob from './Blob'
-import Log from '../utils/log.js'
-import fs from '../fs'
+import Log from '../utils/log.js';
+import Blob from './Blob';
+import EventTarget from './EventTarget';
 
-const log = new Log('FileReader')
+const log = new Log('FileReader');
 
-log.level(3)
+log.level(3);
 
 export default class FileReader extends EventTarget {
 
-  static get EMPTY(){
-    return 0
-  }
-  static get LOADING(){
-    return 1
-  }
-  static get DONE(){
-    return 2
-  }
+    // properties
+    _readState: number = 0;
+    _error: any;
+    // event handlers
+    onloadstart: (e: Event) => void;
+    onprogress: (e: Event) => void;
+    onload: (e: Event) => void;
+    onabort: (e: Event) => void;
+    onerror: (e: Event) => void;
+    onloadend: (e: Event) => void;
 
-  // properties
-  _readState:number = 0;
-  _result:any;
-  _error:any;
-
-  get isRNFBPolyFill(){ return true }
-
-  // event handlers
-  onloadstart:(e:Event) => void;
-  onprogress:(e:Event) => void;
-  onload:(e:Event) => void;
-  onabort:(e:Event) => void;
-  onerror:(e:Event) => void;
-  onloadend:(e:Event) => void;
-
-  constructor() {
-    super()
-    log.verbose('file reader const')
-    this._result = null
-  }
-
-  abort() {
-    log.verbose('abort')
-  }
-
-  readAsArrayBuffer(b:Blob) {
-    log.verbose('readAsArrayBuffer', b)
-  }
-
-  readAsBinaryString(b:Blob) {
-    log.verbose('readAsBinaryString', b)
-  }
-
-  readAsText(b:Blob, label:?string) {
-    log.verbose('readAsText', b, label)
-  }
-
-  readAsDataURL(b:Blob) {
-    log.verbose('readAsDataURL', b)
-  }
-
-  dispatchEvent(event, e) {
-    log.verbose('dispatch event', event, e)
-    super.dispatchEvent(event, e)
-    if(typeof this[`on${event}`] === 'function') {
-      this[`on${event}`](e)
+    constructor () {
+        super();
+        log.verbose('file reader const');
+        this._result = null;
     }
-  }
 
-  // private methods
+    static get EMPTY () {
+        return 0;
+    }
 
-  // getters and setters
+    static get LOADING () {
+        return 1;
+    }
 
-  get readyState() {
-    return this._readyState
-  }
+    static get DONE () {
+        return 2;
+    }
 
-  get result() {
-    return this._result
-  }
+    _result: any;
 
+    get result () {
+        return this._result;
+    }
+
+    get isRNFBPolyFill () {
+        return true;
+    }
+
+    get readyState () {
+        return this._readyState;
+    }
+
+    abort () {
+        log.verbose('abort');
+    }
+
+    readAsArrayBuffer (b: Blob) {
+        log.verbose('readAsArrayBuffer', b);
+    }
+
+    readAsBinaryString (b: Blob) {
+        log.verbose('readAsBinaryString', b);
+    }
+
+    readAsText (b: Blob, label: ?string) {
+        log.verbose('readAsText', b, label);
+    }
+
+    // private methods
+
+    // getters and setters
+
+    readAsDataURL (b: Blob) {
+        log.verbose('readAsDataURL', b);
+    }
+
+    dispatchEvent (event, e) {
+        log.verbose('dispatch event', event, e);
+        super.dispatchEvent(event, e);
+        if (typeof this[`on${event}`] === 'function') {
+            this[`on${event}`](e);
+        }
+    }
 
 
 }

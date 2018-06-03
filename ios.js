@@ -2,14 +2,9 @@
 // Use of this source code is governed by a MIT-style license that can be
 // found in the LICENSE file.
 
-import {
-  NativeModules,
-  DeviceEventEmitter,
-  Platform,
-  NativeAppEventEmitter,
-} from 'react-native'
+import {NativeModules, Platform} from 'react-native';
 
-const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
+const RNFetchBlob: RNFetchBlobNative = NativeModules.RNFetchBlob;
 
 /**
  * Open a file using UIDocumentInteractionController
@@ -17,11 +12,13 @@ const RNFetchBlob:RNFetchBlobNative = NativeModules.RNFetchBlob
  * @param  {string} scheme URI scheme that needs to support, optional
  * @return {Promise}
  */
-function previewDocument(path:string, scheme:string) {
-  if(Platform.OS === 'ios')
-    return RNFetchBlob.previewDocument('file://' + path, scheme)
-  else
-    return Promise.reject('RNFetchBlob.openDocument only supports IOS.')
+function previewDocument (path: string, scheme: string) {
+    if (Platform.OS === 'ios') {
+        return RNFetchBlob.previewDocument('file://' + path, scheme);
+    }
+    else {
+        return Promise.reject('RNFetchBlob.openDocument only supports IOS.');
+    }
 }
 
 /**
@@ -30,25 +27,27 @@ function previewDocument(path:string, scheme:string) {
  * @param  {string} scheme URI scheme that needs to support, optional
  * @return {Promise}
  */
-function openDocument(path:string, scheme:string) {
-  if(Platform.OS === 'ios')
-    return RNFetchBlob.openDocument('file://' + path, scheme)
-  else
-    return Promise.reject('RNFetchBlob.previewDocument only supports IOS.')
+function openDocument (path: string, scheme: string) {
+    if (Platform.OS === 'ios') {
+        return RNFetchBlob.openDocument('file://' + path, scheme);
+    }
+    else {
+        return Promise.reject('RNFetchBlob.previewDocument only supports IOS.');
+    }
 }
 
 /**
  * Set excludeFromBackupKey to a URL to prevent the resource to be backuped to
  * iCloud.
- * @param  {string} url URL of the resource, only file URL is supported
+ * @param  {string} path URL of the resource, only file URL is supported
  * @return {Promise}
  */
-function excludeFromBackupKey(path:string) {
-  return RNFetchBlob.excludeFromBackupKey('file://' + path);
+function excludeFromBackupKey (path: string) {
+    return RNFetchBlob.excludeFromBackupKey('file://' + path);
 }
 
 export default {
-  openDocument,
-  previewDocument,
-  excludeFromBackupKey
-}
+    openDocument,
+    previewDocument,
+    excludeFromBackupKey
+};

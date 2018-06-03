@@ -13,7 +13,7 @@ function addCode (code: string, error: Error): Error {
     return error;
 }
 
-export default class RNFetchBlobReadStream{
+export default class RNFetchBlobReadStream {
     streamId: string;
     path: string;
     encoding: 'utf8' | 'ascii' | 'base64';

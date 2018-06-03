@@ -13,21 +13,22 @@
  * Fixes an issue raised as part of #212
  * See https://github.com/wkh237/react-native-fetch-blob/issues/212#issuecomment-326189470 (comment and below)
  */
-if (typeof global.self === "undefined") global.self = global;
+if (typeof global.self === "undefined") {
+    global.self = global;
+}
 
-
+import base64 from 'base-64';
+import _ from 'lodash';
 import {AppState, DeviceEventEmitter, NativeModules, Platform} from 'react-native';
-import type {RNFetchBlobConfig, RNFetchBlobNative, RNFetchBlobResponseInfo, RNFetchBlobStream} from './types';
-import URIUtil from './utils/uri';
+import android from './android';
 //import StatefulPromise from './class/StatefulPromise.js'
 import fs from './fs';
-import getUUID from './utils/uuid';
-import base64 from 'base-64';
-import polyfill from './polyfill';
-import _ from 'lodash';
-import android from './android';
 import ios from './ios';
 import JSONStream from './json-stream';
+import polyfill from './polyfill';
+import type {RNFetchBlobConfig, RNFetchBlobNative, RNFetchBlobResponseInfo, RNFetchBlobStream} from './types';
+import URIUtil from './utils/uri';
+import getUUID from './utils/uuid';
 
 const {
     RNFetchBlobSession,
@@ -128,7 +129,6 @@ function fetchFile (options = {}, method, url, headers = {}, body): Promise {
     let _progress, _uploadProgress, _stateChange;
 
     switch (method.toLowerCase()) {
-
         case 'post':
             break;
 
@@ -159,8 +159,9 @@ function fetchFile (options = {}, method, url, headers = {}, body): Promise {
                 _stateChange(info);
                 stream.onData((chunk) => {
                     _progress && _progress(cursor, total, chunk);
-                    if (headers.noCache)
+                    if (headers.noCache) {
                         return;
+                    }
                     cacheData += chunk;
                 });
                 stream.onError((err) => {
@@ -238,8 +239,9 @@ function fetch (method, url, headers, body): Promise {
         });
 
         stateEvent = emitter.addListener('RNFetchBlobState', (e) => {
-            if (e.taskId === taskId)
+            if (e.taskId === taskId) {
                 respInfo = e;
+            }
             promise.onStateChange && promise.onStateChange(e);
         });
 
@@ -390,7 +392,7 @@ function fetch (method, url, headers, body): Promise {
 /**
  * RNFetchBlob response object class.
  */
-class FetchBlobResponse{
+class FetchBlobResponse {
     taskId: string;
     path: () => string | null;
     type: 'base64' | 'path' | 'utf8';
