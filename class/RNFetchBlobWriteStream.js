@@ -29,7 +29,7 @@ export default class RNFetchBlobWriteStream {
         if (!ENCODINGS.includes(encoding)) {
             throw addCode(
                 'EINVAL',
-                new Error("Unrecognized encoding `" + encoding + "`, should be one of `base64`, `utf8`, `ascii`")
+                new Error('Unrecognized encoding "' + encoding + '", should be one of "base64", "utf8", "ascii", "uri"')
             );
         }
 

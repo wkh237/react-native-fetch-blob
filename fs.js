@@ -5,9 +5,9 @@
 // import type {RNFetchBlobConfig, RNFetchBlobNative, RNFetchBlobStream} from './types'
 
 import {NativeModules, Platform} from 'react-native';
-import RNFetchBlobReadStream from "./class/RNFetchBlobReadStream";
+import RNFetchBlobReadStream from './class/RNFetchBlobReadStream';
 import RNFetchBlobSession from './class/RNFetchBlobSession';
-import RNFetchBlobWriteStream from "./class/RNFetchBlobWriteStream";
+import RNFetchBlobWriteStream from './class/RNFetchBlobWriteStream';
 
 const RNFetchBlob: RNFetchBlobNative = NativeModules.RNFetchBlob;
 
@@ -56,7 +56,11 @@ function asset (path: string): string {
     return 'bundle-assets://' + path;
 }
 
-function createFile (path: string, data: string, encoding: 'base64' | 'ascii' | 'utf8' = 'utf8'): Promise<string> {
+function createFile (
+    path: string,
+    data: string,
+    encoding: 'base64' | 'ascii' | 'utf8' | 'uri' = 'utf8'
+): Promise<string> {
     if (encoding.toLowerCase() === 'ascii') {
         return Array.isArray(data) ?
             RNFetchBlob.createFileASCII(path, data) :
@@ -99,7 +103,7 @@ function createReadStream (
  */
 function createWriteStream (
     path: string,
-    encoding?: 'utf8' | 'ascii' | 'base64' = 'utf8',
+    encoding?: 'utf8' | 'ascii' | 'base64' | 'uri' = 'utf8',
     append?: boolean = false
 ): RNFetchBlobWriteStream {
     if (typeof path !== 'string') {
@@ -114,7 +118,7 @@ function createWriteStream (
  * @param  {string} path Path of directory to be created
  * @return {Promise}
  */
-function mkdir (path: string): Promise {
+function mkdir (path: string): Promise<void> {
     if (typeof path !== 'string') {
         return Promise.reject(addCode('EINVAL', new TypeError('Missing argument "path" ')));
     }
@@ -123,12 +127,16 @@ function mkdir (path: string): Promise {
 }
 
 /**
- * Returns the path for the app group.
+ * Returns the path for the app group. iOS only
  * @param  {string} groupName Name of app group
  * @return {Promise}
  */
-function pathForAppGroup (groupName: string): Promise {
-    return RNFetchBlob.pathForAppGroup(groupName);
+function pathForAppGroup (groupName: string): Promise<string> {
+    if (Platform.OS === 'ios') {
+        return RNFetchBlob.pathForAppGroup(groupName);
+    }
+
+    throw new Error('function is available on iOS only');
 }
 
 /**
@@ -136,7 +144,10 @@ function pathForAppGroup (groupName: string): Promise {
  * @param  {'base64' | 'utf8' | 'ascii'} encoding Encoding of read stream.
  * @return {Promise<Array<number> | string>}
  */
-function readFile (path: string, encoding: string = 'utf8'): Promise<any> {
+function readFile (
+    path: string,
+    encoding?: 'base64' | 'ascii' | 'utf8' = 'utf8'
+): Promise<string | Array<number>> {
     if (typeof path !== 'string') {
         return Promise.reject(addCode('EINVAL', new TypeError('Missing argument "path" ')));
     }
@@ -151,7 +162,11 @@ function readFile (path: string, encoding: string = 'utf8'): Promise<any> {
  * @param  {string} encoding Encoding of data (Optional).
  * @return {Promise}
  */
-function writeFile (path: string, data: string | Array<number>, encoding: ?string = 'utf8'): Promise {
+function writeFile (
+    path: string,
+    data: string | Array<number>,
+    encoding?: 'base64' | 'ascii' | 'utf8' | 'uri' = 'utf8'
+): Promise<void> {
     if (typeof path !== 'string') {
         return Promise.reject(addCode('EINVAL', new TypeError('Missing argument "path" ')));
     }
@@ -175,7 +190,11 @@ function writeFile (path: string, data: string | Array<number>, encoding: ?strin
     }
 }
 
-function appendFile (path: string, data: string | Array<number>, encoding?: string = 'utf8'): Promise<number> {
+function appendFile (
+    path: string,
+    data: string | Array<number>,
+    encoding?: 'utf8' | 'ascii' | 'base64' | 'uri' = 'utf8'
+): Promise<number> {
     if (typeof path !== 'string') {
         return Promise.reject(addCode('EINVAL', new TypeError('Missing argument "path" ')));
     }
@@ -233,7 +252,7 @@ function stat (path: string): Promise<Object> {
  * @param  {Array<Object<string, string>>} pairs Array contains Key value pairs with key `path` and `mime`.
  * @return {Promise}
  */
-function scanFile (pairs: any): Promise {
+function scanFile (pairs: *): Promise<*> {
     return new Promise((resolve, reject) => {
         if (pairs === undefined) {
             return reject(addCode('EINVAL', new TypeError('Missing argument')));
@@ -249,7 +268,10 @@ function scanFile (pairs: any): Promise {
     });
 }
 
-function hash (path: string, algorithm: string): Promise<string> {
+function hash (
+    path: string,
+    algorithm: 'md5' | 'sha1' | 'sha224' | 'sha256' | 'sha384' | 'sha512'
+): Promise<string> {
     if (typeof path !== 'string' || typeof algorithm !== 'string') {
         return Promise.reject(addCode('EINVAL', new TypeError('Missing argument "path" and/or "algorithm"')));
     }
@@ -318,7 +340,7 @@ function ls (path: string): Promise<Array<String>> {
  * @param  {string}   path:string Path of target file.
  * @return {Promise}
  */
-function unlink (path: string): Promise {
+function unlink (path: string): Promise<void> {
     return new Promise((resolve, reject) => {
         if (typeof path !== 'string') {
             return reject(addCode('EINVAL', new TypeError('Missing argument "path" ')));
@@ -357,7 +379,7 @@ function exists (path: string): Promise<boolean> {
 }
 
 // Helper used by slice()
-function normalize (num, size) {
+function normalize (num: number, size: number): number {
     if (num < 0) {
         return Math.max(0, size + num);
     }
@@ -369,7 +391,8 @@ function normalize (num, size) {
     return num;
 }
 
-function slice (src: string, dest: string, start: number, end: number): Promise {
+// Resolves with the "dest" parameter path string in case of success
+function slice (src: string, dest: string, start: number, end: number): Promise<string> {
     if (typeof src !== 'string' || typeof dest !== 'string') {
         return reject(addCode('EINVAL', new TypeError('Missing argument "src" and/or "destination"')));
     }
@@ -389,7 +412,7 @@ function slice (src: string, dest: string, start: number, end: number): Promise 
     return p.then(() => RNFetchBlob.slice(src, dest, start, end));
 }
 
-function isDir (path: string): Promise<bool> {
+function isDir (path: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
         if (typeof path !== 'string') {
             return reject(addCode('EINVAL', new TypeError('Missing argument "path" ')));
@@ -405,6 +428,8 @@ function isDir (path: string): Promise<bool> {
     });
 }
 
+// iOS: {free, total}
+// Android: {internal_free, internal_total, external_free, external_total}
 function df (): Promise<{ free: number, total: number }> {
     return new Promise((resolve, reject) => {
         RNFetchBlob.df((err, stat) => {

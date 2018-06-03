@@ -39,12 +39,12 @@ export default class RNFetchBlobReadStream {
         if (!ENCODINGS.includes(encoding)) {
             throw addCode(
                 'EINVAL',
-                new Error("Unrecognized encoding `" + encoding + "`, should be one of `base64`, `utf8`, `ascii`")
+                new Error('Unrecognized encoding "' + encoding + '", should be one of "base64", "utf8", "ascii"')
             );
         }
 
         if (!path) {
-            throw addCode('EINVAL', Error('RNFetchBlob could not open file stream with empty `path`'));
+            throw addCode('EINVAL', Error('RNFetchBlob could not open file stream with empty "path"'));
         }
 
         this.encoding = encoding;
