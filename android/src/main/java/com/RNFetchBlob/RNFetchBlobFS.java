@@ -213,7 +213,11 @@ public class RNFetchBlobFS {
         state = Environment.getExternalStorageState();
         if (state.equals(Environment.MEDIA_MOUNTED)) {
             res.put("SDCardDir", Environment.getExternalStorageDirectory().getAbsolutePath());
-            res.put("SDCardApplicationDir", ctx.getExternalFilesDir(null).getParentFile().getAbsolutePath());
+
+            File externalDirectory = ctx.getExternalFilesDir(null);
+            if (externalDirectory != null) {
+                res.put("SDCardApplicationDir", externalDirectory.getParentFile().getAbsolutePath());
+            }
         }
         res.put("MainBundleDir", ctx.getApplicationInfo().dataDir);
         return res;
