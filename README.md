@@ -79,6 +79,11 @@ After `0.10.3` you can install this package directly from Github
 # replace <branch_name> with any one of the branches
 npm install --save github:wkh237/react-native-fetch-blob-package#<branch_name>
 ```
+
+**Manually Link Native Modules**
+
+If automatically linking doesn't work for you, see instructions on [manually linking](https://github.com/joltup/react-native-fetch-blob/wiki/Manually-Link-Package#index).
+
 **Automatically Link Native Modules**
 
 For 0.29.2+ projects, simply link native packages via the following command (note: rnpm has been merged into react-native)
