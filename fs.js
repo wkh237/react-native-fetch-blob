@@ -21,8 +21,8 @@ const dirs = {
   DownloadDir : RNFetchBlob.DownloadDir,
   DCIMDir : RNFetchBlob.DCIMDir,
   SDCardDir: RNFetchBlob.SDCardDir,
-  SDCardApplicationDir: RNFetchBlob.SDCardApplicationDir,
-  MainBundleDir : RNFetchBlob.MainBundleDir,
+  SDCardApplicationDir: RNFetchBlob.SDCardApplicationDir, // Deprecated
+  MainBundleDir : RNFetchBlob.MainBundleDir, // Depracated
   LibraryDir : RNFetchBlob.LibraryDir
 }
 
