@@ -1,9 +1,37 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.RNFetchBlob">
 
-    <application
-        android:label="@string/app_name">
+    <!-- Required to access Google Play Licensing -->
+    <uses-permission android:name="com.android.vending.CHECK_LICENSE" />
 
+    <!-- Required to download files from Google Play -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Required to keep CPU alive while downloading files
+        (NOT to keep screen awake) -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Required to poll the state of the network connection
+        and respond to changes -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Required to check whether Wi-Fi is enabled -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <!-- Required to read and write the expansion files on shared storage -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <application android:label="@string/app_name">
+
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
     </application>
 
 </manifest>
