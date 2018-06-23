@@ -27,7 +27,7 @@
     }
   },
   "repository": {
-    "url": "https://github.com/joltup/react-native-fetch-blob.git"
+    "url": "https://github.com/joltup/rn-fetch-blob.git"
   },
   "author": "Joltup",
   "license": "MIT",
