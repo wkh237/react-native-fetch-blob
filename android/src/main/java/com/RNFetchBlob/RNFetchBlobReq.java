@@ -266,7 +266,8 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     requestType = RequestType.SingleFile;
                 }
                 if(rawRequestBody != null) {
-                    if(rawRequestBody.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
+                    if (rawRequestBody.startsWith(RNFetchBlobConst.FILE_PREFIX)
+                            || rawRequestBody.startsWith(RNFetchBlobConst.CONTENT_PREFIX)) {
                         requestType = RequestType.SingleFile;
                     }
                     else if (cType.toLowerCase().contains(";base64") || cType.toLowerCase().startsWith("application/octet")) {

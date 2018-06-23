@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
+import android.net.Uri;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okio.BufferedSink;
@@ -68,7 +69,7 @@ class RNFetchBlobBody extends RequestBody{
         try {
             switch (requestType) {
                 case SingleFile:
-                    requestStream = getReuqestStream();
+                    requestStream = getRequestStream();
                     contentLength = requestStream.available();
                     break;
                 case AsIs:
@@ -135,7 +136,7 @@ class RNFetchBlobBody extends RequestBody{
         return true;
     }
 
-    private InputStream getReuqestStream() throws Exception {
+    private InputStream getRequestStream() throws Exception {
 
         // upload from storage
         if (rawBody.startsWith(RNFetchBlobConst.FILE_PREFIX)) {
@@ -158,6 +159,13 @@ class RNFetchBlobBody extends RequestBody{
                 } catch (Exception e) {
                     throw new Exception("error when getting request stream: " +e.getLocalizedMessage());
                 }
+            }
+        } else if (rawBody.startsWith(RNFetchBlobConst.CONTENT_PREFIX)) {
+            String contentURI = rawBody.substring(RNFetchBlobConst.CONTENT_PREFIX.length());
+            try {
+                return RNFetchBlob.RCTContext.getContentResolver().openInputStream(Uri.parse(contentURI));
+            } catch (Exception e) {
+                throw new Exception("error when getting request stream for content URI: " + contentURI, e);
             }
         }
         // base 64 encoded
@@ -222,6 +230,20 @@ class RNFetchBlobBody extends RequestBody{
                         }
                         else {
                             RNFetchBlobUtils.emitWarningEvent("Failed to create form data from path :" + orgPath + ", file not exists.");
+                        }
+                    }
+                } else if (data.startsWith(RNFetchBlobConst.CONTENT_PREFIX)) {
+                    String contentURI = data.substring(RNFetchBlobConst.CONTENT_PREFIX.length());
+                    InputStream is = null;
+                    try {
+                        is = ctx.getContentResolver().openInputStream(Uri.parse(contentURI));
+                        pipeStreamToFileStream(is, os);
+                    } catch(Exception e) {
+                        RNFetchBlobUtils.emitWarningEvent(
+                                "Failed to create form data from content URI:" + contentURI + ", " + e.getLocalizedMessage());
+                    } finally {
+                        if (is != null) {
+                            is.close();
                         }
                     }
                 }
@@ -289,7 +311,7 @@ class RNFetchBlobBody extends RequestBody{
      * Compute approximate content length for form data
      * @return ArrayList<FormField>
      */
-    private ArrayList<FormField> countFormDataLength() {
+    private ArrayList<FormField> countFormDataLength() throws IOException {
         long total = 0;
         ArrayList<FormField> list = new ArrayList<>();
         ReactApplicationContext ctx = RNFetchBlob.RCTContext;
@@ -319,6 +341,21 @@ class RNFetchBlobBody extends RequestBody{
                     else {
                         File file = new File(RNFetchBlobFS.normalizePath(orgPath));
                         total += file.length();
+                    }
+                } else if (data.startsWith(RNFetchBlobConst.CONTENT_PREFIX)) {
+                    String contentURI = data.substring(RNFetchBlobConst.CONTENT_PREFIX.length());
+                    InputStream is = null;
+                    try {
+                        is = ctx.getContentResolver().openInputStream(Uri.parse(contentURI));
+                        long length = is.available();
+                        total += length;
+                    } catch(Exception e) {
+                        RNFetchBlobUtils.emitWarningEvent(
+                                "Failed to estimate form data length from content URI:" + contentURI + ", " + e.getLocalizedMessage());
+                    } finally {
+                        if (is != null) {
+                            is.close();
+                        }
                     }
                 }
                 // base64 embedded file content
