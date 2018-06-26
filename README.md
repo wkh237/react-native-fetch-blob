@@ -120,7 +120,7 @@ If you're going to access external storage (say, SD card storage) for `Android 5
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 +   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />                                               
 +   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />                                              
-
++   <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
     ...
 
 ```
