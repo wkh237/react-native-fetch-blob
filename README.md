@@ -180,7 +180,7 @@ To sum up:
 
 ### Download example: Fetch files that need authorization token
 
-Most simple way is download to memory and stored as BASE64 encoded string, this is handy when the response data is small.
+Most simple way is download to memory and stored as BASE64 encoded string, this is handy when the response data is small. Note that when it comes to authorization, not only can you use an authorization token, but this package will automatically pass the cookies created by normal js requests such as axios and fetch. Therefore, if you are using traditional cookie-based ways to authorize your user, you don't need to do anything before this package works.
 
 ```js
 
