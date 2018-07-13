@@ -69,7 +69,7 @@ After `0.10.3` you can install this package directly from Github
 
 ```sh
 # replace <branch_name> with any one of the branches
-npm install --save github:joltup/rn-fetch-blob-package#<branch_name>
+npm install --save github:joltup/rn-fetch-blob#<branch_name>
 ```
 
 **Manually Link Native Modules**
