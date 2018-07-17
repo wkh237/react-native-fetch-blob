@@ -600,17 +600,6 @@ class RNFetchBlobFS {
             return;
         }
 
-        //Check if the output file directory exists.
-        File dir = new File(dest);
-        if (!dir.exists())
-        {
-            if (!dir.mkdirs())
-            {
-                callback.invoke("Output directory creation failed.");
-                return;
-            }
-        }
-
         try {
             InputStream in = new FileInputStream(path);
             OutputStream out = new FileOutputStream(dest);
