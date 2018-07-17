@@ -604,7 +604,11 @@ class RNFetchBlobFS {
         File dir = new File(dest);
         if (!dir.exists())
         {
-            dir.mkdirs();
+            if (!dir.mkdirs())
+            {
+                callback.invoke("Output directory creation failed.");
+                return;
+            }
         }
 
         try {
@@ -622,7 +626,7 @@ class RNFetchBlobFS {
 
             src.delete(); //remove original file
         } catch (FileNotFoundException exception) {
-            callback.invoke(exception.toString());
+            callback.invoke("Source file not found.");
             return;
         } catch (Exception e) {
             callback.invoke(e.toString());
