@@ -790,7 +790,7 @@ By default, rn-fetch-blob does NOT allow connection to unknown certification pro
 RNFetchBlob.config({
   trusty : true
 })
-.then('GET', 'https://mysite.com')
+.fetch('GET', 'https://mysite.com')
 .then((resp) => {
   // ...
 })
