@@ -528,7 +528,7 @@ RNFetchBlob
     })
 ```
 
-Your app might not have right to remove/change the file created by Download Manager, therefore you might need to [set custom location to the download task](https://github.com/joltup/rn-fetch-blob/issues/236).
+Your app might not have right to remove/change the file created by Download Manager, therefore you might need to [set custom location to the download task](https://github.com/wkh237/react-native-fetch-blob/issues/236).
 
 **Download Notification and Visibility in Download App (Android Only)**
 
