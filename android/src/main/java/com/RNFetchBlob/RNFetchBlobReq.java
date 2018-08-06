@@ -266,7 +266,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     requestType = RequestType.Form;
                 }
                 else if(cType.isEmpty()) {
-                    builder.header("Content-Type", "application/octet-stream");
+                    if(!cType.equalsIgnoreCase("")) {
+                      builder.header("Content-Type", "application/octet-stream");
+                    }
                     requestType = RequestType.SingleFile;
                 }
                 if(rawRequestBody != null) {
