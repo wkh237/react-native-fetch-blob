@@ -53,6 +53,8 @@ static void initialize_tables() {
         self.taskQueue = [[NSOperationQueue alloc] init];
         self.taskQueue.qualityOfService = NSQualityOfServiceUtility;
         self.taskQueue.maxConcurrentOperationCount = 10;
+        self.rebindProgressDict = [NSMutableDictionary dictionary];
+        self.rebindUploadProgressDict = [NSMutableDictionary dictionary];
     }
     
     return self;
@@ -87,14 +89,33 @@ static void initialize_tables() {
     
     @synchronized([RNFetchBlobNetwork class]) {
         [self.requestsTable setObject:request forKey:taskId];
+        [self checkProgressConfig];
     }
+}
+
+- (void) checkProgressConfig {
+    //reconfig progress
+    [self.rebindProgressDict enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, RNFetchBlobProgress * _Nonnull config, BOOL * _Nonnull stop) {
+        [self enableProgressReport:key config:config];
+    }];
+    [self.rebindProgressDict removeAllObjects];
+    
+    //reconfig uploadProgress
+    [self.rebindUploadProgressDict enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, RNFetchBlobProgress * _Nonnull config, BOOL * _Nonnull stop) {
+        [self enableUploadProgress:key config:config];
+    }];
+    [self.rebindUploadProgressDict removeAllObjects];
 }
 
 - (void) enableProgressReport:(NSString *) taskId config:(RNFetchBlobProgress *)config
 {
     if (config) {
         @synchronized ([RNFetchBlobNetwork class]) {
-            [self.requestsTable objectForKey:taskId].progressConfig = config;
+            if (![self.requestsTable objectForKey:taskId]) {
+                [self.rebindProgressDict setValue:config forKey:taskId];
+            } else {
+                [self.requestsTable objectForKey:taskId].progressConfig = config;
+            }
         }
     }
 }
@@ -103,7 +124,11 @@ static void initialize_tables() {
 {
     if (config) {
         @synchronized ([RNFetchBlobNetwork class]) {
-            [self.requestsTable objectForKey:taskId].uploadProgressConfig = config;
+            if (![self.requestsTable objectForKey:taskId]) {
+                [self.rebindUploadProgressDict setValue:config forKey:taskId];
+            } else {
+                [self.requestsTable objectForKey:taskId].uploadProgressConfig = config;
+            }
         }
     }
 }
