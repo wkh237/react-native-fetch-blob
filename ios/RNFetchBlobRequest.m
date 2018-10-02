@@ -101,7 +101,7 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     
     NSString * filepath = [options valueForKey:@"uploadFilePath"];
 
-    if (uploadTask && ![[NSFileManager defaultManager] fileExistsAtPath:filepath]) {
+    if (uploadTask && ![[NSFileManager defaultManager] fileExistsAtPath:[NSURL URLWithString:filepath].path]) {
         RCTLog(@"[RNFetchBlobRequest] sendRequest uploadTask file doesn't exist %@", filepath);
         callback(@[@"uploadTask file doesn't exist", @"", [NSNull null]]);
         return;
