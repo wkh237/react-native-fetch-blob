@@ -100,6 +100,12 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     uploadTask = [options valueForKey:@"IOSUploadTask"] == nil ? NO : [[options valueForKey:@"IOSUploadTask"] boolValue];
     
     NSString * filepath = [options valueForKey:@"uploadFilePath"];
+
+    if (uploadTask && ![[NSFileManager defaultManager] fileExistsAtPath:filepath]) {
+        RCTLog(@"[RNFetchBlobRequest] sendRequest uploadTask file doesn't exist %@", filepath);
+        callback(@[@"uploadTask file doesn't exist", @"", [NSNull null]]);
+        return;
+    }
     
     // when followRedirect not set in options, defaults to TRUE
     followRedirect = [options valueForKey:@"followRedirect"] == nil ? YES : [[options valueForKey:@"followRedirect"] boolValue];
