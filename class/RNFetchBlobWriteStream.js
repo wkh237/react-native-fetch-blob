@@ -63,7 +63,7 @@ export default class RNFetchBlobWriteStream {
                         reject(new Error('ascii input data must be an Array of numbers 0..255'));
                         return;
                     }
-                    else if (typeof data !== 'string) {
+                    else if (typeof data !== 'string') {
                         reject(new Error('Input data must be a string (utf8 or base64)'));
                         return;
                     }
