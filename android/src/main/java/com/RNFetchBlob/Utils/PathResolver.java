@@ -13,14 +13,13 @@ import com.RNFetchBlob.RNFetchBlobUtils;
 import java.io.File;
 import java.io.InputStream;
 import java.io.FileOutputStream;
+import java.util.Objects;
 
 public class PathResolver {
     public static String getRealPathFromURI(final Context context, final Uri uri) {
 
-        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
-
         // DocumentProvider
-        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && DocumentsContract.isDocumentUri(context, uri)) {
             // ExternalStorageProvider
             if (isExternalStorageDocument(uri)) {
                 final String docId = DocumentsContract.getDocumentId(uri);
@@ -49,12 +48,17 @@ public class PathResolver {
                 final String type = split[0];
 
                 Uri contentUri = null;
-                if ("image".equals(type)) {
-                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                } else if ("video".equals(type)) {
-                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-                } else if ("audio".equals(type)) {
-                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+
+                switch(type) {
+                    case "image":
+                        contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                        break;
+                    case "video":
+                        contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                        break;
+                    case "audio":
+                        contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                        break;
                 }
 
                 final String selection = "_id=?";
@@ -77,17 +81,25 @@ public class PathResolver {
                 try {
                     InputStream attachment = context.getContentResolver().openInputStream(uri);
                     if (attachment != null) {
-                        String filename = getContentName(context.getContentResolver(), uri);
-                        if (filename != null) {
-                            File file = new File(context.getCacheDir(), filename);
-                            FileOutputStream tmp = new FileOutputStream(file);
-                            byte[] buffer = new byte[1024];
-                            while (attachment.read(buffer) > 0) {
-                                tmp.write(buffer);
+                        try {
+                            String filename = getContentName(context.getContentResolver(), uri);
+                            if (filename != null) {
+                                File file = new File(context.getCacheDir(), filename);
+                                FileOutputStream tmp = new FileOutputStream(file);
+                                try {
+                                    byte[] buffer = new byte[1024];
+                                    int read;
+                                    do {
+                                        read = attachment.read(buffer);
+                                        tmp.write(buffer, 0, read);
+                                    } while(read > 0);
+                                } finally {
+                                    tmp.close();
+                                }
+                                return file.getAbsolutePath();
                             }
-                            tmp.close();
+                        } finally {
                             attachment.close();
-                            return file.getAbsolutePath();
                         }
                     }
                 } catch (Exception e) {
@@ -114,7 +126,7 @@ public class PathResolver {
     }
 
     private static String getContentName(ContentResolver resolver, Uri uri) {
-        Cursor cursor = resolver.query(uri, null, null, null, null);
+        Cursor cursor = Objects.requireNonNull(resolver.query(uri, null, null, null, null));
         cursor.moveToFirst();
         int nameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
         if (nameIndex >= 0) {
@@ -135,19 +147,16 @@ public class PathResolver {
      * @param selectionArgs (Optional) Selection arguments used in the query.
      * @return The value of the _data column, which is typically a file path.
      */
-    public static String getDataColumn(Context context, Uri uri, String selection,
-                                       String[] selectionArgs) {
-
+    private static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
         Cursor cursor = null;
         String result = null;
         final String column = "_data";
         final String[] projection = {
-                column
+            column
         };
 
         try {
-            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
-                    null);
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,null);
             if (cursor != null && cursor.moveToFirst()) {
                 final int index = cursor.getColumnIndexOrThrow(column);
                 result = cursor.getString(index);
@@ -169,7 +178,7 @@ public class PathResolver {
      * @param uri The Uri to check.
      * @return Whether the Uri authority is ExternalStorageProvider.
      */
-    public static boolean isExternalStorageDocument(Uri uri) {
+    private static boolean isExternalStorageDocument(Uri uri) {
         return "com.android.externalstorage.documents".equals(uri.getAuthority());
     }
 
@@ -177,7 +186,7 @@ public class PathResolver {
      * @param uri The Uri to check.
      * @return Whether the Uri authority is DownloadsProvider.
      */
-    public static boolean isDownloadsDocument(Uri uri) {
+    private static boolean isDownloadsDocument(Uri uri) {
         return "com.android.providers.downloads.documents".equals(uri.getAuthority());
     }
 
@@ -185,7 +194,7 @@ public class PathResolver {
      * @param uri The Uri to check.
      * @return Whether the Uri authority is MediaProvider.
      */
-    public static boolean isMediaDocument(Uri uri) {
+    private static boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
 
@@ -193,7 +202,7 @@ public class PathResolver {
      * @param uri The Uri to check.
      * @return Whether the Uri authority is Google Photos.
      */
-    public static boolean isGooglePhotosUri(Uri uri) {
+    private static boolean isGooglePhotosUri(Uri uri) {
         return "com.google.android.apps.photos.content".equals(uri.getAuthority());
     }
 

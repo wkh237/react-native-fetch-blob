@@ -3,9 +3,7 @@
 // found in the LICENSE file.
 
 export default class Event {
+    constructor () {
 
-  constructor() {
-
-  }
-
+    }
 }

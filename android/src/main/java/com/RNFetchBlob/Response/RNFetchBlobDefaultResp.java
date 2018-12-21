@@ -1,5 +1,7 @@
 package com.RNFetchBlob.Response;
 
+import android.support.annotation.NonNull;
+
 import com.RNFetchBlob.RNFetchBlobConst;
 import com.RNFetchBlob.RNFetchBlobProgressConfig;
 import com.RNFetchBlob.RNFetchBlobReq;
@@ -24,10 +26,10 @@ import okio.Timeout;
  */
 public class RNFetchBlobDefaultResp extends ResponseBody {
 
-    String mTaskId;
-    ReactApplicationContext rctContext;
-    ResponseBody originalBody;
-    boolean isIncrement = false;
+    private final String mTaskId;
+    private final ReactApplicationContext rctContext;
+    private final ResponseBody originalBody;
+    private final boolean isIncrement;
 
     public RNFetchBlobDefaultResp(ReactApplicationContext ctx, String taskId, ResponseBody body, boolean isIncrement) {
         this.rctContext = ctx;
@@ -53,7 +55,7 @@ public class RNFetchBlobDefaultResp extends ResponseBody {
 
     private class ProgressReportingSource implements Source {
 
-        BufferedSource mOriginalSource;
+        final BufferedSource mOriginalSource;
         long bytesRead = 0;
 
         ProgressReportingSource(BufferedSource originalSource) {
@@ -61,8 +63,7 @@ public class RNFetchBlobDefaultResp extends ResponseBody {
         }
 
         @Override
-        public long read(Buffer sink, long byteCount) throws IOException {
-
+        public long read(@NonNull Buffer sink, long byteCount) throws IOException {
             long read =  mOriginalSource.read(sink, byteCount);
             bytesRead += read > 0 ? read : 0;
             RNFetchBlobProgressConfig reportConfig = RNFetchBlobReq.getReportProgress(mTaskId);
@@ -91,8 +92,8 @@ public class RNFetchBlobDefaultResp extends ResponseBody {
         }
 
         @Override
-        public void close() throws IOException {
-
+        public void close() {
+            // Nothing
         }
     }
 

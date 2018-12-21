@@ -246,7 +246,12 @@ NSOperationQueue *taskQueue;
 
     __block NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
     
-    [taskTable setObject:@{ @"session" : task, @"isCancelled" : @NO } forKey:taskId];
+    // https://github.com/wkh237/react-native-fetch-blob/pull/668/commits/a2b9c3367eccef6d2135292b5609adb600df25ef
+    // [taskTable setObject:@{ @"session" : task, @"isCancelled" : @NO } forKey:taskId];
+    @synchronized(taskTable)
+    {
+        [taskTable setObject:task forKey:taskId];
+    }
     [task resume];
 
     // network status indicator

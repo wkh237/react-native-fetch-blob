@@ -1,7 +1,7 @@
 package com.RNFetchBlob.Response;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
+// import android.util.Log;
 
 import com.RNFetchBlob.RNFetchBlobConst;
 import com.RNFetchBlob.RNFetchBlobProgressConfig;
@@ -14,6 +14,7 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Objects;
 
 import okhttp3.MediaType;
 import okhttp3.ResponseBody;
@@ -28,35 +29,36 @@ import okio.Timeout;
  */
 public class RNFetchBlobFileResp extends ResponseBody {
 
-    String mTaskId;
-    ResponseBody originalBody;
-    String mPath;
-    long bytesDownloaded = 0;
-    ReactApplicationContext rctContext;
-    FileOutputStream ofStream;
+    private final String mTaskId;
+    private final ResponseBody originalBody;
+    private String mPath;
+    private long bytesDownloaded = 0;
+    private final ReactApplicationContext rctContext;
+    private FileOutputStream ofStream;
 
     public RNFetchBlobFileResp(ReactApplicationContext ctx, String taskId, ResponseBody body, String path, boolean overwrite) throws IOException {
         super();
         this.rctContext = ctx;
         this.mTaskId = taskId;
         this.originalBody = body;
-        assert path != null;
-        this.mPath = path;
-        if (path != null) {
-            boolean appendToExistingFile = !overwrite;
-            path = path.replace("?append=true", "");
-            mPath = path;
-            File f = new File(path);
+        this.mPath = Objects.requireNonNull(path);
+        boolean appendToExistingFile = !overwrite;
+        path = path.replace("?append=true", "");
+        mPath = path;
+        File f = new File(path);
 
-            File parent = f.getParentFile();
-            if(parent != null && !parent.exists() && !parent.mkdirs()){
-                throw new IllegalStateException("Couldn't create dir: " + parent);
-            }
-
-            if(!f.exists())
-                f.createNewFile();
-            ofStream = new FileOutputStream(new File(path), appendToExistingFile);
+        File parent = f.getParentFile();
+        if(parent != null && !parent.exists() && !parent.mkdirs()){
+            throw new IllegalStateException("Couldn't create dir: " + parent);
         }
+
+        if(!f.exists()) {
+            if(!f.createNewFile()) {
+                throw new IllegalStateException("Couldn't create file: " + path);
+            }
+        }
+
+        ofStream = new FileOutputStream(new File(path), appendToExistingFile);
     }
 
     @Override
@@ -77,7 +79,7 @@ public class RNFetchBlobFileResp extends ResponseBody {
 
     private class ProgressReportingSource implements Source {
         @Override
-        public long read(@NonNull Buffer sink, long byteCount) throws IOException {
+        public long read(@NonNull Buffer sink, long byteCount) {
             try {
                 byte[] bytes = new byte[(int) byteCount];
                 long read = originalBody.byteStream().read(bytes, 0, (int) byteCount);
@@ -108,7 +110,6 @@ public class RNFetchBlobFileResp extends ResponseBody {
         @Override
         public void close() throws IOException {
             ofStream.close();
-
         }
     }
 
