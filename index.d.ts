@@ -323,7 +323,7 @@ export interface FS {
      * @param path Path to the file
      * @param algorithm The hash algorithm to use
      */
-    hash(path: string, algorithm: HashAlgorithm);
+    hash(path: string, algorithm: HashAlgorithm): Promise<string>;
 
     /**
      * Create file stream from file at `path`.
