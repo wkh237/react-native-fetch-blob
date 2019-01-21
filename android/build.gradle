@@ -33,6 +33,6 @@ android {
 }
 
 dependencies {
-    compile 'com.facebook.react:react-native:+'
+    implementation 'com.facebook.react:react-native:+'
     //{RNFetchBlob_PRE_0.28_DEPDENDENCY}
 }
