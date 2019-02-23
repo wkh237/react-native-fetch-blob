@@ -523,7 +523,7 @@ class RNFetchBlobFS {
     static void mkdir(String path, Promise promise) {
         File dest = new File(path);
         if(dest.exists()) {
-            promise.reject("EEXIST", dest.isDirectory() ? "Folder" : "File" + " '" + path + "' already exists");
+            promise.reject("EEXIST", (dest.isDirectory() ? "Folder" : "File") + " '" + path + "' already exists");
             return;
         }
         try {
