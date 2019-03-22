@@ -241,7 +241,10 @@ NSOperationQueue *taskQueue;
     }
 
     __block NSURLSessionDataTask * task = [session dataTaskWithRequest:req];
-    [taskTable setObject:task forKey:taskId];
+    @synchronized(taskTable)
+    {
+        [taskTable setObject:task forKey:taskId];
+    }
     [task resume];
 
     // network status indicator
