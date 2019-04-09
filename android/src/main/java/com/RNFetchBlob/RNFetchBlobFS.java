@@ -176,7 +176,7 @@ public class RNFetchBlobFS {
                 case "ascii" :
                     WritableArray asciiResult = Arguments.createArray();
                     for(byte b : bytes) {
-                        asciiResult.pushInt((int)b);
+                        asciiResult.pushInt((int)b & 0xff);
                     }
                     promise.resolve(asciiResult);
                     break;
@@ -277,7 +277,7 @@ public class RNFetchBlobFS {
                     WritableArray chunk = Arguments.createArray();
                     for(int i =0;i<cursor;i++)
                     {
-                        chunk.pushInt((int)buffer[i]);
+                        chunk.pushInt((int)buffer[i] & 0xff);
                     }
                     emitStreamEvent(streamId, "data", chunk);
                     if(tick > 0)
