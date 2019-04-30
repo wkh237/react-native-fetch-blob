@@ -503,28 +503,12 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         // encoding will somehow break the UTF8 string format, to encode UTF8
                         // string correctly, we should do URL encoding before BASE64.
                         byte[] b = resp.body().bytes();
-                        CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
                         if(responseFormat == ResponseFormat.BASE64) {
                             callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_BASE64, android.util.Base64.encodeToString(b, Base64.NO_WRAP));
                             return;
                         }
-                        try {
-                            encoder.encode(ByteBuffer.wrap(b).asCharBuffer());
-                            // if the data contains invalid characters the following lines will be
-                            // skipped.
-                            String utf8 = new String(b);
-                            callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, utf8);
-                        }
-                        // This usually mean the data is contains invalid unicode characters, it's
-                        // binary data
-                        catch(CharacterCodingException ignored) {
-                            if(responseFormat == ResponseFormat.UTF8) {
-                                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, "");
-                            }
-                            else {
-                                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_BASE64, android.util.Base64.encodeToString(b, Base64.NO_WRAP));
-                            }
-                        }
+                        String utf8 = new String(b);
+                        callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, utf8);
                     }
                 } catch (IOException e) {
                     callback.invoke("RNFetchBlob failed to encode response data to BASE64 string.", null);
