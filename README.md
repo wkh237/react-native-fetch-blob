@@ -1,15 +1,11 @@
-# New Releases
-In order to publish new releases from this fork, we have renamed this project to
-`rn-fetch-blob` and published to `https://www.npmjs.com/package/rn-fetch-blob`.
-
-**Note**: If upgrading from the original fork change all references in your project from `react-native-fetch-blob` to `rn-fetch-blob`.  This includes `*.xcodeproj/project.pbxproj` and `android/**/*.gradle` depending on the platform used, failing to do so may cause build errors.
-
 # rn-fetch-blob
 [![release](https://img.shields.io/github/release/joltup/rn-fetch-blob.svg?style=flat-square)](https://github.com/joltup/rn-fetch-blob/releases) [![npm](https://img.shields.io/npm/v/rn-fetch-blob.svg?style=flat-square)](https://www.npmjs.com/package/rn-fetch-blob) ![](https://img.shields.io/badge/PR-Welcome-brightgreen.svg?style=flat-square) [![](https://img.shields.io/badge/Wiki-Public-brightgreen.svg?style=flat-square)](https://github.com/joltup/rn-fetch-blob/wiki) [![npm](https://img.shields.io/npm/l/rn-fetch-blob.svg?maxAge=2592000&style=flat-square)]()
 
-
 A project committed to making file access and data transfer easier and more efficient for React Native developers.
-> For Firebase Storage solution, please upgrade to the latest version for the best compatibility.
+
+# Version Compatibility Warning
+
+rn-fetch-blob version 0.10.16 is only compatible with react native 0.60 and up. It should have been a major version bump, we apologize for the mistake. If you are not yet upgraded to react native 0.60 or above, you should remain on rn-fetch-blob version 0.10.15
 
 ## Features
 - Transfer data directly from/to storage without BASE64 bridging
