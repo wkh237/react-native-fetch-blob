@@ -878,9 +878,11 @@ class RNFetchBlobFS {
             FileInputStream inputStream = new FileInputStream(path);
             byte[] buffer = new byte[(int)file.length()];
 
-            int read;
-            while ((read = inputStream.read(buffer)) != -1) {
-                md.update(buffer, 0, read);
+            if(file.length() != 0) {
+                int read;
+                while ((read = inputStream.read(buffer)) != -1) {
+                    md.update(buffer, 0, read);
+                }
             }
 
             StringBuilder hexString = new StringBuilder();
