@@ -622,7 +622,12 @@ RCT_EXPORT_METHOD(df:(RCTResponseSenderBlock)callback)
 - (UIViewController *) documentInteractionControllerViewControllerForPreview: (UIDocumentInteractionController *) controller
 {
     UIWindow *window = [UIApplication sharedApplication].keyWindow;
-    return window.rootViewController;
+    UIViewController *currentlyPresentedView = [window.rootViewController presentedViewController];
+    if (currentlyPresentedView == nil)
+    {
+        return window.rootViewController;
+    }
+    return currentlyPresentedView;
 }
 
 # pragma mark - check expired network events
