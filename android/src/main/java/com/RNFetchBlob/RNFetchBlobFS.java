@@ -69,32 +69,45 @@ class RNFetchBlobFS {
                 }
             }
 
-            FileOutputStream fout = new FileOutputStream(f, append);
             // write data from a file
             if(encoding.equalsIgnoreCase(RNFetchBlobConst.DATA_ENCODE_URI)) {
                 String normalizedData = normalizePath(data);
                 File src = new File(normalizedData);
                 if (!src.exists()) {
                     promise.reject("ENOENT", "No such file '" + path + "' " + "('" + normalizedData + "')");
-                    fout.close();
                     return;
                 }
-                FileInputStream fin = new FileInputStream(src);
                 byte[] buffer = new byte [10240];
                 int read;
                 written = 0;
-                while((read = fin.read(buffer)) > 0) {
-                    fout.write(buffer, 0, read);
-                    written += read;
+                FileInputStream fin = null;
+                FileOutputStream fout = null;
+                try {
+                    fin = new FileInputStream(src);
+                    fout = new FileOutputStream(f, append);
+                    while ((read = fin.read(buffer)) > 0) {
+                        fout.write(buffer, 0, read);
+                        written += read;
+                    }
+                } finally {
+                    if (fin != null) {
+                        fin.close();
+                    }
+                    if (fout != null) {
+                        fout.close();
+                    }
                 }
-                fin.close();
             }
             else {
                 byte[] bytes = stringToBytes(data, encoding);
-                fout.write(bytes);
-                written = bytes.length;
+                FileOutputStream fout = new FileOutputStream(f, append);
+                try {
+                    fout.write(bytes);
+                    written = bytes.length;
+                } finally {
+                    fout.close();
+                }
             }
-            fout.close();
             promise.resolve(written);
         } catch (FileNotFoundException e) {
             // According to https://docs.oracle.com/javase/7/docs/api/java/io/FileOutputStream.html
@@ -129,12 +142,15 @@ class RNFetchBlobFS {
             }
 
             FileOutputStream os = new FileOutputStream(f, append);
-            byte[] bytes = new byte[data.size()];
-            for(int i=0;i<data.size();i++) {
-                bytes[i] = (byte) data.getInt(i);
+            try {
+                byte[] bytes = new byte[data.size()];
+                for (int i = 0; i < data.size(); i++) {
+                    bytes[i] = (byte) data.getInt(i);
+                }
+                os.write(bytes);
+            } finally {
+                os.close();
             }
-            os.write(bytes);
-            os.close();
             promise.resolve(data.size());
         } catch (FileNotFoundException e) {
             // According to https://docs.oracle.com/javase/7/docs/api/java/io/FileOutputStream.html
