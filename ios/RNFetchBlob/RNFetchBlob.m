@@ -228,6 +228,18 @@ RCT_EXPORT_METHOD(pathForAppGroup:(NSString *)groupName
     }
 }
 
+#pragma mark - fs.syncPathAppGroup
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(syncPathAppGroup:(NSString *)groupName) {
+    NSURL *pathUrl = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:groupName];
+    NSString *path = [pathUrl path];
+
+    if(path) {
+        return path;
+    } else {
+        return @"";
+    }
+}
+
 #pragma mark - fs.exists
 RCT_EXPORT_METHOD(exists:(NSString *)path callback:(RCTResponseSenderBlock)callback) {
     [RNFetchBlobFS exists:path callback:callback];
