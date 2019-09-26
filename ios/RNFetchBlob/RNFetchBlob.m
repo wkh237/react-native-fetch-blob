@@ -68,9 +68,14 @@ RCT_EXPORT_MODULE();
 - (NSDictionary *)constantsToExport
 {
     return @{
-             @"MainBundleDir" : [RNFetchBlobFS getMainBundleDir],
+             @"CacheDir" : [RNFetchBlobFS getCacheDir],
              @"DocumentDir": [RNFetchBlobFS getDocumentDir],
-             @"CacheDir" : [RNFetchBlobFS getCacheDir]
+             @"DownloadDir" : [RNFetchBlobFS getDownloadDir],
+             @"LibraryDir" : [RNFetchBlobFS getLibraryDir],
+             @"MainBundleDir" : [RNFetchBlobFS getMainBundleDir],
+             @"MovieDir" : [RNFetchBlobFS getMovieDir],
+             @"MusicDir" : [RNFetchBlobFS getMusicDir],
+             @"PictureDir" : [RNFetchBlobFS getPictureDir],
              };
 }
 
