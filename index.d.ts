@@ -294,6 +294,7 @@ export interface Net {
     removeCookies(domain?: string): Promise<null>;
 }
 
+type HashAlgorithm = "md5" | "sha1" | "sha224" | "sha256" | "sha384" | "sha512";
 export interface FS {
     RNFetchBlobSession: RNFetchBlobSession;
 
@@ -316,6 +317,14 @@ export interface FS {
     session(name: string): RNFetchBlobSession;
 
     ls(path: string): Promise<string[]>;
+
+    /**
+     * Read the file from the given path and calculate a cryptographic hash sum over its contents.
+     *
+     * @param path Path to the file
+     * @param algorithm The hash algorithm to use
+     */
+    hash(path: string, algorithm: HashAlgorithm): Promise<string>;
 
     /**
      * Create file stream from file at `path`.
