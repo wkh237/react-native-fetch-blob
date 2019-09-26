@@ -20,7 +20,7 @@ rn-fetch-blob version 0.10.16 is only compatible with react native 0.60 and up. 
 * [Installation](#user-content-installation)
 * [HTTP Data Transfer](#user-content-http-data-transfer)
  * [Regular Request](#user-content-regular-request)
- * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
+ * [Download file](#download-example-fetch-files-that-need-authorization-token)
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
  * [Upload/Download progress](#user-content-uploaddownload-progress)
@@ -79,7 +79,7 @@ If automatically linking doesn't work for you, see instructions on [manually lin
 For 0.29.2+ projects, simply link native packages via the following command (note: rnpm has been merged into react-native)
 
 ```
-react-native link
+react-native link rn-fetch-blob
 ```
 
 As for projects < 0.29 you need `rnpm` to link native packages
@@ -91,7 +91,7 @@ rnpm link
 Optionally, use the following command to add Android permissions to `AndroidManifest.xml` automatically
 
 ```sh
-RNFB_ANDROID_PERMISSIONS=true react-native link
+RNFB_ANDROID_PERMISSIONS=true react-native link rn-fetch-blob
 ```
 
 pre 0.29 projects

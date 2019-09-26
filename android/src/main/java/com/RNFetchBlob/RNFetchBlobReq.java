@@ -36,10 +36,6 @@ import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -502,44 +498,38 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         // encoding will somehow break the UTF8 string format, to encode UTF8
                         // string correctly, we should do URL encoding before BASE64.
                         byte[] b = resp.body().bytes();
-                        CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
                         if(responseFormat == ResponseFormat.BASE64) {
                             callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_BASE64, android.util.Base64.encodeToString(b, Base64.NO_WRAP));
                             return;
                         }
-                        try {
-                            encoder.encode(ByteBuffer.wrap(b).asCharBuffer());
-                            // if the data contains invalid characters the following lines will be
-                            // skipped.
-                            String utf8 = new String(b);
-                            callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, utf8);
-                        }
-                        // This usually mean the data is contains invalid unicode characters, it's
-                        // binary data
-                        catch(CharacterCodingException ignored) {
-                            if(responseFormat == ResponseFormat.UTF8) {
-                                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, "");
-                            }
-                            else {
-                                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_BASE64, android.util.Base64.encodeToString(b, Base64.NO_WRAP));
-                            }
-                        }
+                        String utf8 = new String(b);
+                        callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, utf8);
                     }
                 } catch (IOException e) {
                     callback.invoke("RNFetchBlob failed to encode response data to BASE64 string.", null);
                 }
                 break;
             case FileStorage:
+                ResponseBody responseBody = resp.body();
+
                 try {
                     // In order to write response data to `destPath` we have to invoke this method.
                     // It uses customized response body which is able to report download progress
                     // and write response data to destination path.
-                    resp.body().bytes();
+                    responseBody.bytes();
                 } catch (Exception ignored) {
 //                    ignored.printStackTrace();
                 }
-                this.destPath = this.destPath.replace("?append=true", "");
-                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
+
+                RNFetchBlobFileResp rnFetchBlobFileResp = (RNFetchBlobFileResp) responseBody;
+
+                if(rnFetchBlobFileResp != null && rnFetchBlobFileResp.isDownloadComplete() == false){
+                    callback.invoke("RNFetchBlob failed. Download interrupted.", null);
+                }
+                else {
+                    this.destPath = this.destPath.replace("?append=true", "");
+                    callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
+                }
                 break;
             default:
                 try {
@@ -666,29 +656,39 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 DownloadManager dm = (DownloadManager) appCtx.getSystemService(Context.DOWNLOAD_SERVICE);
                 dm.query(query);
                 Cursor c = dm.query(query);
-
+                // #236 unhandled null check for DownloadManager.query() return value
+                if (c == null) {
+                    this.callback.invoke("Download manager failed to download from  " + this.url + ". Query was unsuccessful ", null, null);
+                    return;
+                }
 
                 String filePath = null;
-                // the file exists in media content database
-                if (c.moveToFirst()) {
-                    // #297 handle failed request
-                    int statusCode = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
-                    if(statusCode == DownloadManager.STATUS_FAILED) {
-                        this.callback.invoke("Download manager failed to download from  " + this.url + ". Status Code = " + statusCode, null, null);
-                        return;
-                    }
-                    String contentUri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
-                    if ( contentUri != null &&
-                            options.addAndroidDownloads.hasKey("mime") &&
-                            options.addAndroidDownloads.getString("mime").contains("image")) {
-                        Uri uri = Uri.parse(contentUri);
-                        Cursor cursor = appCtx.getContentResolver().query(uri, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
-                        // use default destination of DownloadManager
-                        if (cursor != null) {
-                            cursor.moveToFirst();
-                            filePath = cursor.getString(0);
-                            cursor.close();
+                try {    
+                    // the file exists in media content database
+                    if (c.moveToFirst()) {
+                        // #297 handle failed request
+                        int statusCode = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                        if(statusCode == DownloadManager.STATUS_FAILED) {
+                            this.callback.invoke("Download manager failed to download from  " + this.url + ". Status Code = " + statusCode, null, null);
+                            return;
                         }
+                        String contentUri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
+                        if ( contentUri != null &&
+                                options.addAndroidDownloads.hasKey("mime") &&
+                                options.addAndroidDownloads.getString("mime").contains("image")) {
+                            Uri uri = Uri.parse(contentUri);
+                            Cursor cursor = appCtx.getContentResolver().query(uri, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
+                            // use default destination of DownloadManager
+                            if (cursor != null) {
+                                cursor.moveToFirst();
+                                filePath = cursor.getString(0);
+                                cursor.close();
+                            }
+                        }
+                    }
+                } finally {
+                    if (c != null) {
+                        c.close();
                     }
                 }
 
