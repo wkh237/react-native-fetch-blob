@@ -20,7 +20,7 @@ rn-fetch-blob version 0.10.16 is only compatible with react native 0.60 and up. 
 * [Installation](#user-content-installation)
 * [HTTP Data Transfer](#user-content-http-data-transfer)
  * [Regular Request](#user-content-regular-request)
- * [Download file](#user-content-download-example--fetch-files-that-needs-authorization-token)
+ * [Download file](#download-example-fetch-files-that-need-authorization-token)
  * [Upload file](#user-content-upload-example--dropbox-files-upload-api)
  * [Multipart/form upload](#user-content-multipartform-data-example--post-form-data-with-file-and-data)
  * [Upload/Download progress](#user-content-uploaddownload-progress)
