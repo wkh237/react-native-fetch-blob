@@ -96,6 +96,7 @@ export interface FetchBlobResponse {
      */
     flush(): void;
     respInfo: RNFetchBlobResponseInfo;
+    info(): RNFetchBlobResponseInfo;
     session(name: string): RNFetchBlobSession | null;
     /**
      * Read file content with given encoding, if the response does not contains
