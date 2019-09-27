@@ -68,10 +68,6 @@ public class RNFetchBlobFileResp extends ResponseBody {
         return originalBody.contentLength();
     }
 
-    public boolean isDownloadComplete() {
-        return bytesDownloaded == contentLength();
-    }
-
     @Override
     public BufferedSource source() {
         ProgressReportingSource countable = new ProgressReportingSource();
