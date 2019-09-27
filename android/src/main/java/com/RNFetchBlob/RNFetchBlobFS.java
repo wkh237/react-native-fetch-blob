@@ -21,7 +21,9 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -339,7 +341,9 @@ class RNFetchBlobFS {
             boolean error = false;
 
             if (encoding.equalsIgnoreCase("utf8")) {
+                CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder();
                 while ((cursor = fs.read(buffer)) != -1) {
+                    encoder.encode(ByteBuffer.wrap(buffer).asCharBuffer());
                     String chunk = new String(buffer, 0, cursor);
                     emitStreamEvent(streamId, "data", chunk);
                     if(tick > 0)
