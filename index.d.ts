@@ -356,7 +356,7 @@ export interface FS {
      */
     writeFile(path: string, data: string | number[], encoding?: Encoding): Promise<void>;
 
-    appendFile(path: string, data: string | number[], encoding?: Encoding): Promise<void>;
+    appendFile(path: string, data: string | number[], encoding?: Encoding | "uri"): Promise<number>;
 
     /**
      * Wrapper method of readStream.
@@ -399,6 +399,7 @@ export interface Dirs {
     DocumentDir: string;
     CacheDir: string;
     PictureDir: string;
+    LibraryDir: string;
     MusicDir: string;
     MovieDir: string;
     DownloadDir: string;
@@ -432,7 +433,7 @@ export interface RNFetchBlobReadStream {
     onEnd(fn: () => void): void;
 }
 
-type Encoding = "utf8" | "ascii" | "base64";
+export type Encoding = "utf8" | "ascii" | "base64";
 
 /* tslint:disable-next-line interface-name*/
 export interface IOSApi {
@@ -606,11 +607,13 @@ export interface AddAndroidDownloads {
 
 export interface RNFetchBlobResponseInfo {
     taskId: string;
-    state: number;
+    state: string;
     headers: any;
+    redirects: string[];
     status: number;
     respType: "text" | "blob" | "" | "json";
     rnfbEncode: "path" | "base64" | "ascii" | "utf8";
+    timeout: boolean;
 }
 
 export interface RNFetchBlobStream {
@@ -623,8 +626,8 @@ export declare class RNFetchBlobFile {
 }
 
 export declare class RNFetchBlobStat {
-    lastModified: string;
-    size: string;
+    lastModified: number;
+    size: number;
     type: "directory" | "file";
     path: string;
     filename: string;
