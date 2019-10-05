@@ -895,9 +895,11 @@ class RNFetchBlobFS {
             int chunkSize = 4096 * 256; // 1Mb
             byte[] buffer = new byte[chunkSize];
 
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                md.update(buffer, 0, bytesRead);
+            if(file.length() != 0) {
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    md.update(buffer, 0, bytesRead);
+                }
             }
 
             StringBuilder hexString = new StringBuilder();
