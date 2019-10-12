@@ -121,8 +121,6 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                  // All the activity to be opened outside of an activity
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-                // All the activity to be opened outside of an activity
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 // Validate that the device can open the file
                 PackageManager pm = getCurrentActivity().getPackageManager();
                 if (intent.resolveActivity(pm) != null) {
