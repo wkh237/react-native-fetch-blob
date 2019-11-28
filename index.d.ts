@@ -547,6 +547,16 @@ export interface RNFetchBlobConfig {
     trusty?: boolean;
 
     /**
+     * Set this property to true will only do requests through the WiFi interface, and fail otherwise.
+     */
+    wifiOnly?: boolean;
+
+    /**
+     * Set this property so redirects are not automatically followed.
+     */
+    followRedirect?: boolean;
+
+    /**
      * Set this property to true will makes response data of the fetch stored in a temp file, by default the temp
      * file will stored in App's own root folder with file name template RNFetchBlob_tmp${timestamp}.
      */

@@ -124,6 +124,10 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
         defaultConfigObject.timeoutIntervalForRequest = timeout/1000;
     }
     
+    if([options valueForKey:CONFIG_WIFI_ONLY] != nil && ![options[CONFIG_WIFI_ONLY] boolValue]){
+        [defaultConfigObject setAllowsCellularAccess:NO];
+    }
+    
     defaultConfigObject.HTTPMaximumConnectionsPerHost = 10;
     session = [NSURLSession sessionWithConfiguration:defaultConfigObject delegate:self delegateQueue:operationQueue];
     

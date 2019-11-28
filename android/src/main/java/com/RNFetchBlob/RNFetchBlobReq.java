@@ -9,6 +9,9 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import androidx.annotation.NonNull;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.ConnectivityManager;
 import android.util.Base64;
 
 import com.RNFetchBlob.Response.RNFetchBlobDefaultResp;
@@ -36,6 +39,7 @@ import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.net.Proxy;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
@@ -229,6 +233,45 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 clientBuilder = RNFetchBlobUtils.getUnsafeOkHttpClient(client);
             } else {
                 clientBuilder = client.newBuilder();
+            }
+
+            // wifi only, need ACCESS_NETWORK_STATE permission
+            // and API level >= 21
+            if(this.options.wifiOnly){
+
+                boolean found = false;
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ConnectivityManager connectivityManager = (ConnectivityManager) RNFetchBlob.RCTContext.getSystemService(RNFetchBlob.RCTContext.CONNECTIVITY_SERVICE);
+                    Network[] networks = connectivityManager.getAllNetworks();
+
+                    for (Network network : networks) {
+                        //NetworkInfo netInfo = connectivityManager.getNetworkInfo(network);
+                        NetworkCapabilities caps = connectivityManager.getNetworkCapabilities(network);
+                        if(caps == null){
+                            continue;
+                        }
+
+                        // netinfo is deprecated
+                        //if (netInfo.getType() == ConnectivityManager.TYPE_WIFI && netInfo.getState() == NetworkInfo.State.CONNECTED) {
+                        if(caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)){
+                            clientBuilder.proxy(Proxy.NO_PROXY);
+                            clientBuilder.socketFactory(network.getSocketFactory());
+                            found = true;
+                            break;
+
+                        }
+                    }
+
+                    if(!found){
+                        callback.invoke("No available WiFi connections.", null, null);
+                        releaseTaskResource();
+                        return;
+                    }
+                }
+                else{
+                    RNFetchBlobUtils.emitWarningEvent("RNFetchBlob: wifiOnly was set, but SDK < 21. wifiOnly was ignored.");
+                }
             }
 
             final Request.Builder builder = new Request.Builder();
@@ -530,26 +573,16 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
                 break;
             case FileStorage:
-                ResponseBody responseBody = resp.body();
-
                 try {
                     // In order to write response data to `destPath` we have to invoke this method.
                     // It uses customized response body which is able to report download progress
                     // and write response data to destination path.
-                    responseBody.bytes();
+                    resp.body().bytes();
                 } catch (Exception ignored) {
 //                    ignored.printStackTrace();
                 }
-
-                RNFetchBlobFileResp rnFetchBlobFileResp = (RNFetchBlobFileResp) responseBody;
-
-                if(rnFetchBlobFileResp != null && rnFetchBlobFileResp.isDownloadComplete() == false){
-                    callback.invoke("RNFetchBlob failed. Download interrupted.", null);
-                }
-                else {
-                    this.destPath = this.destPath.replace("?append=true", "");
-                    callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
-                }
+                this.destPath = this.destPath.replace("?append=true", "");
+                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
                 break;
             default:
                 try {
