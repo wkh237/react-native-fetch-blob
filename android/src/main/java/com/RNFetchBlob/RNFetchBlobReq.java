@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import androidx.annotation.NonNull;
 import android.net.Network;
+import android.net.NetworkInfo;
 import android.net.NetworkCapabilities;
 import android.net.ConnectivityManager;
 import android.util.Base64;
@@ -246,14 +247,15 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     Network[] networks = connectivityManager.getAllNetworks();
 
                     for (Network network : networks) {
-                        //NetworkInfo netInfo = connectivityManager.getNetworkInfo(network);
+
+                        NetworkInfo netInfo = connectivityManager.getNetworkInfo(network);
                         NetworkCapabilities caps = connectivityManager.getNetworkCapabilities(network);
-                        if(caps == null){
+
+                        if(caps == null || netInfo == null){
                             continue;
                         }
 
-                        // Don't use P2P Wi-Fi on recent samsung devices
-                        if(caps.hasTransport(NetworkCapabilities.NET_CAPABILITY_WIFI_P2P)){
+                        if(!netInfo.isConnected()){
                             continue;
                         }
 
