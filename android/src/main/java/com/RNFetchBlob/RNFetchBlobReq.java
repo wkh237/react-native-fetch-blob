@@ -252,8 +252,11 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                             continue;
                         }
 
-                        // netinfo is deprecated
-                        //if (netInfo.getType() == ConnectivityManager.TYPE_WIFI && netInfo.getState() == NetworkInfo.State.CONNECTED) {
+                        // Don't use P2P Wi-Fi on recent samsung devices
+                        if(caps.hasTransport(NetworkCapabilities.NET_CAPABILITY_WIFI_P2P)){
+                            continue;
+                        }
+
                         if(caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)){
                             clientBuilder.proxy(Proxy.NO_PROXY);
                             clientBuilder.socketFactory(network.getSocketFactory());
