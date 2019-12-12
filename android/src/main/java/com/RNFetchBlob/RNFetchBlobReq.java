@@ -578,16 +578,27 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
                 break;
             case FileStorage:
+                ResponseBody responseBody = resp.body();
+
                 try {
                     // In order to write response data to `destPath` we have to invoke this method.
                     // It uses customized response body which is able to report download progress
                     // and write response data to destination path.
-                    resp.body().bytes();
+                    responseBody.bytes();
                 } catch (Exception ignored) {
 //                    ignored.printStackTrace();
                 }
-                this.destPath = this.destPath.replace("?append=true", "");
-                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
+
+                RNFetchBlobFileResp rnFetchBlobFileResp = (RNFetchBlobFileResp) responseBody;
+
+                if(rnFetchBlobFileResp != null && !rnFetchBlobFileResp.isDownloadComplete()){
+                    callback.invoke("RNFetchBlob failed. Download interrupted.", null);
+                }
+                else {
+                    this.destPath = this.destPath.replace("?append=true", "");
+                    callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_PATH, this.destPath);
+                }
+
                 break;
             default:
                 try {
