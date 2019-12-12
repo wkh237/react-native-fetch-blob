@@ -426,7 +426,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     }
                     catch (SocketTimeoutException e ){
                         timeout = true;
-                        RNFetchBlobUtils.emitWarningEvent("RNFetchBlob error when sending request : " + e.getLocalizedMessage());
+                        //RNFetchBlobUtils.emitWarningEvent("RNFetchBlob error when sending request : " + e.getLocalizedMessage());
                     } catch(Exception ex) {
 
                     }
@@ -721,7 +721,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 }
 
                 String filePath = null;
-                try {    
+                try {
                     // the file exists in media content database
                     if (c.moveToFirst()) {
                         // #297 handle failed request
