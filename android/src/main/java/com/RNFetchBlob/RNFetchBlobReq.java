@@ -462,7 +462,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     // check if this error caused by socket timeout
                     if(e.getClass().equals(SocketTimeoutException.class)) {
                         respInfo.putBoolean("timeout", true);
-                        callback.invoke("request timed out.", null, null);
+                        callback.invoke("The request timed out.", null, null);
                     }
                     else
                         callback.invoke(e.getLocalizedMessage(), null, null);
