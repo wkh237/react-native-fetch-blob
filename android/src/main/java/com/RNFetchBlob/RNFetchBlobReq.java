@@ -592,7 +592,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 RNFetchBlobFileResp rnFetchBlobFileResp = (RNFetchBlobFileResp) responseBody;
 
                 if(rnFetchBlobFileResp != null && !rnFetchBlobFileResp.isDownloadComplete()){
-                    callback.invoke("RNFetchBlob failed. Download interrupted.", null);
+                    callback.invoke("Download interrupted.", null);
                 }
                 else {
                     this.destPath = this.destPath.replace("?append=true", "");
