@@ -416,7 +416,7 @@ class RNFetchBlobFS {
             File dest = new File(path);
             File dir = dest.getParentFile();
 
-            if(!dest.exists()) {
+            if(!dest.)()) {
                 if(dir != null && !dir.exists()) {
                     if (!dir.mkdirs()) {
                         callback.invoke("ENOTDIR", "Failed to create parent directory of '" + path + "'");
@@ -671,7 +671,9 @@ class RNFetchBlobFS {
                 boolean isDir = new File(path).isDirectory();
                 callback.invoke(exist, isDir);
             }
-            callback.invoke(false, false);
+            else {
+                callback.invoke(false, false);
+            }
         }
     }
 
