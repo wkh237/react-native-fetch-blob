@@ -165,7 +165,7 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             if (options.addAndroidDownloads.getBoolean("useDownloadManager")) {
                 Uri uri = Uri.parse(url);
                 DownloadManager.Request req = new DownloadManager.Request(uri);
-                if(options.addAndroidDownloads.getBoolean("notification")) {
+                if(options.addAndroidDownloads.hasKey("notification") && options.addAndroidDownloads.getBoolean("notification")) {
                     req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
                 } else {
                     req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
@@ -562,11 +562,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                             String utf8 = new String(b);
                             callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, utf8);
                         }
-                        // This usually mean the data is contains invalid unicode characters, it's
-                        // binary data
+                        // This usually mean the data is contains invalid unicode characters but still valid data,
+                        // it's binary data, so send it as a normal string
                         catch(CharacterCodingException ignored) {
+                            
                             if(responseFormat == ResponseFormat.UTF8) {
-                                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, "");
+                                String utf8 = new String(b);
+                                callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_UTF8, utf8);
                             }
                             else {
                                 callback.invoke(null, RNFetchBlobConst.RNFB_RESPONSE_BASE64, android.util.Base64.encodeToString(b, Base64.NO_WRAP));
