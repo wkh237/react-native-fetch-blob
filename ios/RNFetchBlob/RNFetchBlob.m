@@ -165,7 +165,7 @@ RCT_EXPORT_METHOD(createFile:(NSString *)path
         fileContent = [[NSData alloc] initWithData:[data dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES]];
     }
     else if([[encoding lowercaseString] isEqualToString:@"base64"]) {
-        fileContent = [[NSData alloc] initWithBase64EncodedData:data options:0];
+        fileContent = [[NSData alloc] initWithBase64EncodedData:data options:NSDataBase64DecodingIgnoreUnknownCharacters];
     }
     else if([[encoding lowercaseString] isEqualToString:@"uri"]) {
         NSString * orgPath = [data stringByReplacingOccurrencesOfString:FILE_PREFIX withString:@""];
