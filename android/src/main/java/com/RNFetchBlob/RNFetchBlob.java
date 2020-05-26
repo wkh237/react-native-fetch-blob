@@ -118,10 +118,14 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
                 // Set flag to give temporary permission to external app to use FileProvider
                 intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                // All the activity to be opened outside of an activity
+                 // All the activity to be opened outside of an activity
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                // Don't validate that the intent can run, instead, let it throw an exception if it can't.
-                this.getReactApplicationContext().startActivity(intent);
+
+                // Validate that the device can open the file
+                PackageManager pm = getCurrentActivity().getPackageManager();
+                if (intent.resolveActivity(pm) != null) {
+                    this.getReactApplicationContext().startActivity(intent);
+                }
 
             } else {
                 Intent intent = new Intent(Intent.ACTION_VIEW)
