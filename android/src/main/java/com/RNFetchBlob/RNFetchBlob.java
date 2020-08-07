@@ -24,9 +24,9 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.network.ForwardingCookieHandler;
 import com.facebook.react.modules.network.CookieJarContainer;
 import com.facebook.react.modules.network.OkHttpClientProvider;
-import com.squareup.okhttp.OkHttpClient;
 
 import okhttp3.JavaNetCookieJar;
+import okhttp3.OkHttpClient;
 
 import java.io.File;
 import java.util.Map;
