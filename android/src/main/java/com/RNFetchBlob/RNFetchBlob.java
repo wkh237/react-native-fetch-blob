@@ -24,7 +24,8 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.network.ForwardingCookieHandler;
 import com.facebook.react.modules.network.CookieJarContainer;
 import com.facebook.react.modules.network.OkHttpClientProvider;
-import okhttp3.OkHttpClient;
+import com.squareup.okhttp.OkHttpClient;
+
 import okhttp3.JavaNetCookieJar;
 
 import java.io.File;
@@ -60,17 +61,12 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
         RCTContext = reactContext;
         reactContext.addActivityEventListener(new ActivityEventListener() {
             @Override
-            public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
+            public void onActivityResult(int requestCode, int resultCode, Intent data) {
                 if(requestCode == GET_CONTENT_INTENT && resultCode == RESULT_OK) {
                     Uri d = data.getData();
                     promiseTable.get(GET_CONTENT_INTENT).resolve(d.toString());
                     promiseTable.remove(GET_CONTENT_INTENT);
                 }
-            }
-
-            @Override
-            public void onNewIntent(Intent intent) {
-
             }
         });
     }
@@ -108,7 +104,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     @ReactMethod
     public void actionViewIntent(String path, String mime, final Promise promise) {
         try {
-            Uri uriForFile = FileProvider.getUriForFile(getCurrentActivity(),
+            Uri uriForFile = FileProvider.getUriForFile(this.getReactApplicationContext(),
                     this.getReactApplicationContext().getPackageName() + ".provider", new File(path));
 
             if (Build.VERSION.SDK_INT >= 24) {
@@ -336,7 +332,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
         fsThreadPool.execute(new Runnable() {
             @Override
             public void run() {
-                RNFetchBlobFS.df(callback);
+                RNFetchBlobFS.df(callback, getReactApplicationContext());
             }
         });
     }
@@ -404,7 +400,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void getSDCardDir(Promise promise) {
-        RNFetchBlobFS.getSDCardDir(promise);
+        RNFetchBlobFS.getSDCardDir(this.getReactApplicationContext(), promise);
     }
 
     @ReactMethod
