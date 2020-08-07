@@ -61,12 +61,17 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
         RCTContext = reactContext;
         reactContext.addActivityEventListener(new ActivityEventListener() {
             @Override
-            public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
                 if(requestCode == GET_CONTENT_INTENT && resultCode == RESULT_OK) {
                     Uri d = data.getData();
                     promiseTable.get(GET_CONTENT_INTENT).resolve(d.toString());
                     promiseTable.remove(GET_CONTENT_INTENT);
                 }
+            }
+
+            @Override
+            public void onNewIntent(Intent intent) {
+
             }
         });
     }
