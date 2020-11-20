@@ -69,32 +69,45 @@ class RNFetchBlobFS {
                 }
             }
 
-            FileOutputStream fout = new FileOutputStream(f, append);
             // write data from a file
             if(encoding.equalsIgnoreCase(RNFetchBlobConst.DATA_ENCODE_URI)) {
                 String normalizedData = normalizePath(data);
                 File src = new File(normalizedData);
                 if (!src.exists()) {
                     promise.reject("ENOENT", "No such file '" + path + "' " + "('" + normalizedData + "')");
-                    fout.close();
                     return;
                 }
-                FileInputStream fin = new FileInputStream(src);
                 byte[] buffer = new byte [10240];
                 int read;
                 written = 0;
-                while((read = fin.read(buffer)) > 0) {
-                    fout.write(buffer, 0, read);
-                    written += read;
+                FileInputStream fin = null;
+                FileOutputStream fout = null;
+                try {
+                    fin = new FileInputStream(src);
+                    fout = new FileOutputStream(f, append);
+                    while ((read = fin.read(buffer)) > 0) {
+                        fout.write(buffer, 0, read);
+                        written += read;
+                    }
+                } finally {
+                    if (fin != null) {
+                        fin.close();
+                    }
+                    if (fout != null) {
+                        fout.close();
+                    }
                 }
-                fin.close();
             }
             else {
                 byte[] bytes = stringToBytes(data, encoding);
-                fout.write(bytes);
-                written = bytes.length;
+                FileOutputStream fout = new FileOutputStream(f, append);
+                try {
+                    fout.write(bytes);
+                    written = bytes.length;
+                } finally {
+                    fout.close();
+                }
             }
-            fout.close();
             promise.resolve(written);
         } catch (FileNotFoundException e) {
             // According to https://docs.oracle.com/javase/7/docs/api/java/io/FileOutputStream.html
@@ -129,12 +142,15 @@ class RNFetchBlobFS {
             }
 
             FileOutputStream os = new FileOutputStream(f, append);
-            byte[] bytes = new byte[data.size()];
-            for(int i=0;i<data.size();i++) {
-                bytes[i] = (byte) data.getInt(i);
+            try {
+                byte[] bytes = new byte[data.size()];
+                for (int i = 0; i < data.size(); i++) {
+                    bytes[i] = (byte) data.getInt(i);
+                }
+                os.write(bytes);
+            } finally {
+                os.close();
             }
-            os.write(bytes);
-            os.close();
             promise.resolve(data.size());
         } catch (FileNotFoundException e) {
             // According to https://docs.oracle.com/javase/7/docs/api/java/io/FileOutputStream.html
@@ -246,10 +262,40 @@ class RNFetchBlobFS {
         state = Environment.getExternalStorageState();
         if (state.equals(Environment.MEDIA_MOUNTED)) {
             res.put("SDCardDir", Environment.getExternalStorageDirectory().getAbsolutePath());
-            res.put("SDCardApplicationDir", ctx.getExternalFilesDir(null).getParentFile().getAbsolutePath());
+
+            File externalDirectory = ctx.getExternalFilesDir(null);
+
+            if (externalDirectory != null) {
+                res.put("SDCardApplicationDir", externalDirectory.getParentFile().getAbsolutePath());
+            } else {
+              res.put("SDCardApplicationDir", "");
+            }
         }
         res.put("MainBundleDir", ctx.getApplicationInfo().dataDir);
+
         return res;
+    }
+
+    static public void getSDCardDir(Promise promise) {
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            promise.resolve(Environment.getExternalStorageDirectory().getAbsolutePath());
+        } else {
+            promise.reject("RNFetchBlob.getSDCardDir", "External storage not mounted");
+        }
+
+    }
+
+    static public void getSDCardApplicationDir(ReactApplicationContext ctx, Promise promise) {
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            try {
+                final String path = ctx.getExternalFilesDir(null).getParentFile().getAbsolutePath();
+                promise.resolve(path);
+            } catch (Exception e) {
+                promise.reject("RNFetchBlob.getSDCardApplicationDir", e.getLocalizedMessage());
+            }
+        } else {
+            promise.reject("RNFetchBlob.getSDCardApplicationDir", "External storage not mounted");
+        }
     }
 
     /**
@@ -460,7 +506,8 @@ class RNFetchBlobFS {
      */
     static void unlink(String path, Callback callback) {
         try {
-            RNFetchBlobFS.deleteRecursive(new File(path));
+            String normalizedPath = normalizePath(path);
+            RNFetchBlobFS.deleteRecursive(new File(normalizedPath));
             callback.invoke(null, true);
         } catch(Exception err) {
             callback.invoke(err.getLocalizedMessage(), false);
@@ -492,7 +539,7 @@ class RNFetchBlobFS {
     static void mkdir(String path, Promise promise) {
         File dest = new File(path);
         if(dest.exists()) {
-            promise.reject("EEXIST", dest.isDirectory() ? "Folder" : "File" + " '" + path + "' already exists");
+            promise.reject("EEXIST", (dest.isDirectory() ? "Folder" : "File") + " '" + path + "' already exists");
             return;
         }
         try {
@@ -518,6 +565,7 @@ class RNFetchBlobFS {
         path = normalizePath(path);
         InputStream in = null;
         OutputStream out = null;
+        String message = "";
 
         try {
             if(!isPathExists(path)) {
@@ -541,7 +589,7 @@ class RNFetchBlobFS {
                 out.write(buf, 0, len);
             }
         } catch (Exception err) {
-            callback.invoke(err.getLocalizedMessage());
+            message += err.getLocalizedMessage();
         } finally {
             try {
                 if (in != null) {
@@ -550,10 +598,16 @@ class RNFetchBlobFS {
                 if (out != null) {
                     out.close();
                 }
-                callback.invoke();
             } catch (Exception e) {
-                callback.invoke(e.getLocalizedMessage());
+                message += e.getLocalizedMessage();
             }
+        }
+        // Only call the callback once to prevent the app from crashing
+        // with an 'Illegal callback invocation from native module' exception.
+        if (message != "") {
+            callback.invoke(message);
+        } else {
+            callback.invoke();
         }
     }
 
@@ -569,16 +623,29 @@ class RNFetchBlobFS {
             callback.invoke("Source file at path `" + path + "` does not exist");
             return;
         }
+
         try {
-            boolean result = src.renameTo(new File(dest));
-            if (!result) {
-                callback.invoke("mv failed for unknown reasons");
-                return;
+            InputStream in = new FileInputStream(path);
+            OutputStream out = new FileOutputStream(dest);
+
+            //read source path to byte buffer. Write from input to output stream
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = in.read(buffer)) != -1) { //read is successful
+                out.write(buffer, 0, read);
             }
+            in.close();
+            out.flush();
+
+            src.delete(); //remove original file
+        } catch (FileNotFoundException exception) {
+            callback.invoke("Source file not found.");
+            return;
         } catch (Exception e) {
-            callback.invoke(e.getLocalizedMessage());
+            callback.invoke(e.toString());
             return;
         }
+
         callback.invoke();
     }
 
@@ -599,9 +666,14 @@ class RNFetchBlobFS {
         }
         else {
             path = normalizePath(path);
-            boolean exist = new File(path).exists();
-            boolean isDir = new File(path).isDirectory();
-            callback.invoke(exist, isDir);
+            if (path != null) {
+                boolean exist = new File(path).exists();
+                boolean isDir = new File(path).isDirectory();
+                callback.invoke(exist, isDir);
+            }
+            else {
+                callback.invoke(false, false);
+            }
         }
     }
 
@@ -825,11 +897,14 @@ class RNFetchBlobFS {
             MessageDigest md = MessageDigest.getInstance(algorithms.get(algorithm));
 
             FileInputStream inputStream = new FileInputStream(path);
-            byte[] buffer = new byte[(int)file.length()];
+            int chunkSize = 4096 * 256; // 1Mb
+            byte[] buffer = new byte[chunkSize];
 
-            int read;
-            while ((read = inputStream.read(buffer)) != -1) {
-                md.update(buffer, 0, read);
+            if(file.length() != 0) {
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    md.update(buffer, 0, bytesRead);
+                }
             }
 
             StringBuilder hexString = new StringBuilder();

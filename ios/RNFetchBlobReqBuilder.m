@@ -69,7 +69,7 @@
                 [mheaders setValue:[NSString stringWithFormat:@"%lu",[postData length]] forKey:@"Content-Length"];
                 [mheaders setValue:@"100-continue" forKey:@"Expect"];
                 // appaned boundary to content-type
-                [mheaders setValue:[NSString stringWithFormat:@"multipart/form-data; charset=utf-8; boundary=%@", boundary] forKey:@"content-type"];
+                [mheaders setValue:[NSString stringWithFormat:@"multipart/form-data; boundary=%@", boundary] forKey:@"content-type"];
                 [request setHTTPMethod: method];
                 [request setAllHTTPHeaderFields:mheaders];
                 onComplete(request, [formData length]);
@@ -277,7 +277,7 @@
     }
 }
 
-+(NSString *) getHeaderIgnoreCases:(NSString *)field fromHeaders:(NSMutableDictionary *) headers {
++(NSString *) getHeaderIgnoreCases:(NSString *)field fromHeaders:(NSDictionary *) headers {
 
     NSString * normalCase = [headers valueForKey:field];
     NSString * ignoredCase = [headers valueForKey:[field lowercaseString]];

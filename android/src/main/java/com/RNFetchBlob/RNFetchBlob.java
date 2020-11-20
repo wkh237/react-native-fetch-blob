@@ -3,7 +3,10 @@ package com.RNFetchBlob;
 import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
+import androidx.core.content.FileProvider;
 import android.util.SparseArray;
 
 import com.facebook.react.bridge.ActivityEventListener;
@@ -24,7 +27,7 @@ import com.facebook.react.modules.network.OkHttpClientProvider;
 import okhttp3.OkHttpClient;
 import okhttp3.JavaNetCookieJar;
 
-import java.util.HashMap;
+import java.io.File;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -100,16 +103,36 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                 RNFetchBlobFS.createFileASCII(path, dataArray, promise);
             }
         });
-
     }
 
     @ReactMethod
     public void actionViewIntent(String path, String mime, final Promise promise) {
         try {
-            Intent intent= new Intent(Intent.ACTION_VIEW)
-                    .setDataAndType(Uri.parse("file://" + path), mime);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            this.getReactApplicationContext().startActivity(intent);
+            Uri uriForFile = FileProvider.getUriForFile(getCurrentActivity(),
+                    this.getReactApplicationContext().getPackageName() + ".provider", new File(path));
+
+            if (Build.VERSION.SDK_INT >= 24) {
+                // Create the intent with data and type
+                Intent intent = new Intent(Intent.ACTION_VIEW)
+                        .setDataAndType(uriForFile, mime);
+
+                // Set flag to give temporary permission to external app to use FileProvider
+                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                 // All the activity to be opened outside of an activity
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                // Validate that the device can open the file
+                PackageManager pm = getCurrentActivity().getPackageManager();
+                if (intent.resolveActivity(pm) != null) {
+                    this.getReactApplicationContext().startActivity(intent);
+                }
+
+            } else {
+                Intent intent = new Intent(Intent.ACTION_VIEW)
+                        .setDataAndType(Uri.parse("file://" + path), mime).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                this.getReactApplicationContext().startActivity(intent);
+            }
             ActionViewVisible = true;
 
             final LifecycleEventListener listener = new LifecycleEventListener() {
@@ -164,7 +187,6 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                 RNFetchBlobFS.cp(path, dest, callback);
             }
         });
-
     }
 
     @ReactMethod
@@ -225,7 +247,6 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                 RNFetchBlobFS.writeFile(path, encoding, data, append, promise);
             }
         });
-
     }
 
     @ReactMethod
@@ -260,7 +281,6 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
                 new RNFetchBlobFS(ctx).scanFile(p, m, callback);
             }
         });
-
     }
 
     @ReactMethod
@@ -331,7 +351,7 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     @ReactMethod
     public void fetchBlob(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, final Callback callback) {
         new RNFetchBlobReq(options, taskId, method, url, headers, body, null, mClient, callback).run();
-}
+    }
 
     @ReactMethod
     public void fetchBlobForm(ReadableMap options, String taskId, String method, String url, ReadableMap headers, ReadableArray body, final Callback callback) {
@@ -353,6 +373,11 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
     @ReactMethod
     public void addCompleteDownload (ReadableMap config, Promise promise) {
         DownloadManager dm = (DownloadManager) RCTContext.getSystemService(RCTContext.DOWNLOAD_SERVICE);
+        if (config == null || !config.hasKey("path"))
+        {
+            promise.reject("EINVAL", "RNFetchblob.addCompleteDownload config or path missing.");
+            return;
+        }
         String path = RNFetchBlobFS.normalizePath(config.getString("path"));
         if(path == null) {
             promise.reject("EINVAL", "RNFetchblob.addCompleteDownload can not resolve URI:" + config.getString("path"));
@@ -377,4 +402,13 @@ public class RNFetchBlob extends ReactContextBaseJavaModule {
 
     }
 
+    @ReactMethod
+    public void getSDCardDir(Promise promise) {
+        RNFetchBlobFS.getSDCardDir(promise);
+    }
+
+    @ReactMethod
+    public void getSDCardApplicationDir(Promise promise) {
+        RNFetchBlobFS.getSDCardApplicationDir(this.getReactApplicationContext(), promise);
+    }
 }
