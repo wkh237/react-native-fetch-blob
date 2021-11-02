@@ -751,8 +751,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                 Cursor c = dm.query(query);
                 // #236 unhandled null check for DownloadManager.query() return value
                 if (c == null) {
-                    this.callback.invoke("Download manager failed to download from  " + this.url + ". Query was unsuccessful ", null, null);
-                    return;
+                    try {
+                        this.callback.invoke("Download manager failed to download from  " + this.url + ". Query was unsuccessful ", null, null);
+                        return;
+                    }
+                    catch(Exception e) {
+                        return;
+                    }
                 }
 
                 String filePath = null;
@@ -762,8 +767,13 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                         // #297 handle failed request
                         int statusCode = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
                         if(statusCode == DownloadManager.STATUS_FAILED) {
-                            this.callback.invoke("Download manager failed to download from  " + this.url + ". Status Code = " + statusCode, null, null);
-                            return;
+                            try {
+                                this.callback.invoke("Download manager failed to download from  " + this.url + ". Query was unsuccessful ", null, null);
+                                return;
+                            }
+                            catch(Exception e) {
+                                return;
+                            }
                         }
                         String contentUri = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
                         if ( contentUri != null &&
