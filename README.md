@@ -3,8 +3,6 @@
 
 A project committed to making file access and data transfer easier and more efficient for React Native developers.
 
-# ⚠️ Unmaintained ⚠️ 
-
 # Version Compatibility Warning
 
 rn-fetch-blob version 0.10.16 is only compatible with react native 0.60 and up. It should have been a major version bump, we apologize for the mistake. If you are not yet upgraded to react native 0.60 or above, you should remain on rn-fetch-blob version 0.10.15
