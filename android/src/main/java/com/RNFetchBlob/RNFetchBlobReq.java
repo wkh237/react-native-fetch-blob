@@ -392,8 +392,9 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
             clientBuilder.addInterceptor(new Interceptor() {
                 @Override
                 public Response intercept(@NonNull Chain chain) throws IOException {
+                    Response originalResponse = null;
                     try {
-                        Response originalResponse = chain.proceed(req);
+                        originalResponse = chain.proceed(req);
                         ResponseBody extended;
                         switch (responseType) {
                             case KeepInMemory:
@@ -423,13 +424,21 @@ public class RNFetchBlobReq extends BroadcastReceiver implements Runnable {
                     }
                     catch(SocketException e) {
                         timeout = true;
-                    }
-                    catch (SocketTimeoutException e ){
+                        if (originalResponse != null) {
+                            originalResponse.close();
+                        }
+                    } catch (SocketTimeoutException e) {
                         timeout = true;
-                        //RNFetchBlobUtils.emitWarningEvent("RNFetchBlob error when sending request : " + e.getLocalizedMessage());
-                    } catch(Exception ex) {
-
+                        if (originalResponse != null) {
+                            originalResponse.close();
+                        }
+                        //ReactNativeBlobUtilUtils.emitWarningEvent("ReactNativeBlobUtil error when sending request : " + e.getLocalizedMessage());
+                    } catch (Exception ex) {
+                        if (originalResponse != null) {
+                            originalResponse.close();
+                        }
                     }
+
                     return chain.proceed(chain.request());
                 }
             });
