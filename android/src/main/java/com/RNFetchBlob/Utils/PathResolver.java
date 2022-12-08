@@ -1,5 +1,6 @@
 package com.RNFetchBlob.Utils;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -7,7 +8,6 @@ import android.os.Build;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.content.ContentUris;
-import android.os.Environment;
 import android.content.ContentResolver;
 import com.RNFetchBlob.RNFetchBlobUtils;
 import java.io.File;
@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.FileOutputStream;
 
 public class PathResolver {
+    @TargetApi(19)
     public static String getRealPathFromURI(final Context context, final Uri uri) {
 
         final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
@@ -28,19 +29,32 @@ public class PathResolver {
                 final String type = split[0];
 
                 if ("primary".equalsIgnoreCase(type)) {
-                    return Environment.getExternalStorageDirectory() + "/" + split[1];
+                    return context.getExternalFilesDir(null) + "/" + split[1];
                 }
 
                 // TODO handle non-primary volumes
             }
             // DownloadsProvider
             else if (isDownloadsDocument(uri)) {
+                try {
+                    final String id = DocumentsContract.getDocumentId(uri);
+                    //Starting with Android O, this "id" is not necessarily a long (row number),
+                    //but might also be a "raw:/some/file/path" URL
+                    if (id != null && id.startsWith("raw:/")) {
+                        Uri rawuri = Uri.parse(id);
+                        String path = rawuri.getPath();
+                        return path;
+                    }
+                    final Uri contentUri = ContentUris.withAppendedId(
+                            Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
 
-                final String id = DocumentsContract.getDocumentId(uri);
-                final Uri contentUri = ContentUris.withAppendedId(
-                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
-
-                return getDataColumn(context, contentUri, null, null);
+                    return getDataColumn(context, contentUri, null, null);
+                }
+                catch (Exception ex) {
+                    //something went wrong, but android should still be able to handle the original uri by returning null here (see readFile(...))
+                    return null;
+                }
+                
             }
             // MediaProvider
             else if (isMediaDocument(uri)) {

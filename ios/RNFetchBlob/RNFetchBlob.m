@@ -38,8 +38,12 @@ dispatch_queue_t fsQueue;
 
 + (RCTBridge *)getRCTBridge
 {
-    RCTRootView * rootView = [[UIApplication sharedApplication] keyWindow].rootViewController.view;
+    RCTRootView * rootView = (RCTRootView*) [[UIApplication sharedApplication] keyWindow].rootViewController.view;
     return rootView.bridge;
+}
+
++ (BOOL)requiresMainQueueSetup {
+    return NO;
 }
 
 RCT_EXPORT_MODULE();
@@ -64,9 +68,14 @@ RCT_EXPORT_MODULE();
 - (NSDictionary *)constantsToExport
 {
     return @{
-             @"MainBundleDir" : [RNFetchBlobFS getMainBundleDir],
+             @"CacheDir" : [RNFetchBlobFS getCacheDir],
              @"DocumentDir": [RNFetchBlobFS getDocumentDir],
-             @"CacheDir" : [RNFetchBlobFS getCacheDir]
+             @"DownloadDir" : [RNFetchBlobFS getDownloadDir],
+             @"LibraryDir" : [RNFetchBlobFS getLibraryDir],
+             @"MainBundleDir" : [RNFetchBlobFS getMainBundleDir],
+             @"MovieDir" : [RNFetchBlobFS getMovieDir],
+             @"MusicDir" : [RNFetchBlobFS getMusicDir],
+             @"PictureDir" : [RNFetchBlobFS getPictureDir],
              };
 }
 
@@ -96,8 +105,12 @@ RCT_EXPORT_METHOD(fetchBlobForm:(NSDictionary *)options
         // send HTTP request
         else
         {
-            RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-            [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+            [[RNFetchBlobNetwork sharedInstance] sendRequest:options
+                                               contentLength:bodyLength
+                                                      bridge:self.bridge
+                                                      taskId:taskId
+                                                 withRequest:req
+                                                    callback:callback];
         }
     }];
 
@@ -128,8 +141,12 @@ RCT_EXPORT_METHOD(fetchBlob:(NSDictionary *)options
         // send HTTP request
         else
         {
-            __block RNFetchBlobNetwork * utils = [[RNFetchBlobNetwork alloc] init];
-            [utils sendRequest:options contentLength:bodyLength bridge:self.bridge taskId:taskId withRequest:req callback:callback];
+            [[RNFetchBlobNetwork sharedInstance] sendRequest:options
+                                               contentLength:bodyLength
+                                                      bridge:self.bridge
+                                                      taskId:taskId
+                                                 withRequest:req
+                                                    callback:callback];
         }
     }];
 }
@@ -148,7 +165,7 @@ RCT_EXPORT_METHOD(createFile:(NSString *)path
         fileContent = [[NSData alloc] initWithData:[data dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES]];
     }
     else if([[encoding lowercaseString] isEqualToString:@"base64"]) {
-        fileContent = [[NSData alloc] initWithBase64EncodedData:data options:0];
+        fileContent = [[NSData alloc] initWithBase64EncodedData:data options:NSDataBase64DecodingIgnoreUnknownCharacters];
     }
     else if([[encoding lowercaseString] isEqualToString:@"uri"]) {
         NSString * orgPath = [data stringByReplacingOccurrencesOfString:FILE_PREFIX withString:@""];
@@ -213,6 +230,18 @@ RCT_EXPORT_METHOD(pathForAppGroup:(NSString *)groupName
         resolve(path);
     } else {
         reject(@"EUNSPECIFIED", @"could not find path for app group", nil);
+    }
+}
+
+#pragma mark - fs.syncPathAppGroup
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(syncPathAppGroup:(NSString *)groupName) {
+    NSURL *pathUrl = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:groupName];
+    NSString *path = [pathUrl path];
+
+    if(path) {
+        return path;
+    } else {
+        return @"";
     }
 }
 
@@ -518,7 +547,7 @@ RCT_EXPORT_METHOD(getEnvironmentDirs:(RCTResponseSenderBlock) callback)
 
 #pragma mark - net.cancelRequest
 RCT_EXPORT_METHOD(cancelRequest:(NSString *)taskId callback:(RCTResponseSenderBlock)callback) {
-    [RNFetchBlobNetwork cancelRequest:taskId];
+    [[RNFetchBlobNetwork sharedInstance] cancelRequest:taskId];
     callback(@[[NSNull null], taskId]);
 
 }
@@ -528,14 +557,14 @@ RCT_EXPORT_METHOD(enableProgressReport:(NSString *)taskId interval:(nonnull NSNu
 {
 
     RNFetchBlobProgress * cfg = [[RNFetchBlobProgress alloc] initWithType:Download interval:interval count:count];
-    [RNFetchBlobNetwork enableProgressReport:taskId config:cfg];
+    [[RNFetchBlobNetwork sharedInstance] enableProgressReport:taskId config:cfg];
 }
 
 #pragma mark - net.enableUploadProgressReport
 RCT_EXPORT_METHOD(enableUploadProgressReport:(NSString *)taskId interval:(nonnull NSNumber*)interval count:(nonnull NSNumber*)count)
 {
     RNFetchBlobProgress * cfg = [[RNFetchBlobProgress alloc] initWithType:Upload interval:interval count:count];
-    [RNFetchBlobNetwork enableUploadProgress:taskId config:cfg];
+    [[RNFetchBlobNetwork sharedInstance] enableUploadProgress:taskId config:cfg];
 }
 
 #pragma mark - fs.slice
@@ -575,9 +604,12 @@ RCT_EXPORT_METHOD(openDocument:(NSString*)uri scheme:(NSString *)scheme resolver
 
     if(scheme == nil || [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:scheme]]) {
         dispatch_sync(dispatch_get_main_queue(), ^{
-            [documentController presentPreviewAnimated:YES];
+            if([documentController presentPreviewAnimated:YES]) {
+                resolve(@[[NSNull null]]);
+            } else {
+                reject(@"EINVAL", @"document is not supported", nil);
+            }
         });
-        resolve(@[[NSNull null]]);
     } else {
         reject(@"EINVAL", @"scheme is not supported", nil);
     }
@@ -607,7 +639,12 @@ RCT_EXPORT_METHOD(df:(RCTResponseSenderBlock)callback)
 - (UIViewController *) documentInteractionControllerViewControllerForPreview: (UIDocumentInteractionController *) controller
 {
     UIWindow *window = [UIApplication sharedApplication].keyWindow;
-    return window.rootViewController;
+    UIViewController *currentlyPresentedView = [window.rootViewController presentedViewController];
+    if (currentlyPresentedView == nil)
+    {
+        return window.rootViewController;
+    }
+    return currentlyPresentedView;
 }
 
 # pragma mark - check expired network events

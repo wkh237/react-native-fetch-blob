@@ -13,17 +13,17 @@ import RNFetchBlobFile from './class/RNFetchBlobFile'
 const RNFetchBlob: RNFetchBlobNative = NativeModules.RNFetchBlob
 
 const dirs = {
-  DocumentDir: RNFetchBlob.DocumentDir,
-  CacheDir: RNFetchBlob.CacheDir,
-  PictureDir: RNFetchBlob.PictureDir,
-  MusicDir: RNFetchBlob.MusicDir,
-  MovieDir: RNFetchBlob.MovieDir,
-  DownloadDir: RNFetchBlob.DownloadDir,
-  DCIMDir: RNFetchBlob.DCIMDir,
-  SDCardDir: RNFetchBlob.SDCardDir,
-  SDCardApplicationDir: RNFetchBlob.SDCardApplicationDir,
-  MainBundleDir: RNFetchBlob.MainBundleDir,
-  LibraryDir: RNFetchBlob.LibraryDir
+  DocumentDir :  RNFetchBlob.DocumentDir,
+  CacheDir : RNFetchBlob.CacheDir,
+  PictureDir : RNFetchBlob.PictureDir,
+  MusicDir : RNFetchBlob.MusicDir,
+  MovieDir : RNFetchBlob.MovieDir,
+  DownloadDir : RNFetchBlob.DownloadDir,
+  DCIMDir : RNFetchBlob.DCIMDir,
+  SDCardDir: RNFetchBlob.SDCardDir, // Depracated
+  SDCardApplicationDir: RNFetchBlob.SDCardApplicationDir, // Deprecated
+  MainBundleDir : RNFetchBlob.MainBundleDir,
+  LibraryDir : RNFetchBlob.LibraryDir
 }
 
 function addCode(code: string, error: Error): Error {
@@ -133,6 +133,19 @@ function mkdir(path: string): Promise {
  */
 function pathForAppGroup(groupName: string): Promise {
   return RNFetchBlob.pathForAppGroup(groupName)
+}
+
+/**
+ * Returns the path for the app group synchronous.
+ * @param  {string} groupName Name of app group
+ * @return {string} Path of App Group dir
+ */
+function syncPathAppGroup(groupName: string): string {
+  if (Platform.OS === 'ios') {
+    return RNFetchBlob.syncPathAppGroup(groupName);
+  } else {
+    return '';
+  }
 }
 
 /**
@@ -402,6 +415,7 @@ export default {
   writeFile,
   appendFile,
   pathForAppGroup,
+  syncPathAppGroup,
   readFile,
   hash,
   exists,
